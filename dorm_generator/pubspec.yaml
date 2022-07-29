@@ -1,0 +1,18 @@
+name: dorm_generator
+description: A new Flutter package project.
+version: 0.0.1
+
+environment:
+  sdk: ">=2.17.3 <3.0.0"
+
+dependencies:
+  build: ^2.3.0
+  analyzer: ^4.2.0
+  source_gen: ^1.2.2
+  dorm_annotations:
+    path: ../dorm_annotations
+  json_serializable: ^6.3.1
+
+dev_dependencies:
+  lints: ^2.0.0
+  build_runner: ^2.1.11

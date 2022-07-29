@@ -1,0 +1,18 @@
+name: dorm_example
+description: A new Flutter package project.
+version: 0.0.1
+
+environment:
+  sdk: ">=2.17.3 <3.0.0"
+  flutter: ">=1.17.1"
+
+dependencies:
+  dorm_annotations:
+    path: ..
+  json_annotation: ^4.6.0
+
+dev_dependencies:
+  build_runner: ^2.2.0
+  dorm_generator:
+    path: ../../dorm_generator
+  lints: ^2.0.0
