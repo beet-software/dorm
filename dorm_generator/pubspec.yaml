@@ -9,9 +9,13 @@ dependencies:
   build: ^2.3.0
   analyzer: ^4.2.0
   source_gen: ^1.2.2
-  dorm_annotations:
-    path: ../dorm_annotations
   json_serializable: ^6.3.1
+  
+  dorm_annotations:
+    git:
+      url: http://github.com/enzo-santos/dorm.git
+      ref: main
+      path: dorm_annotations
 
 dev_dependencies:
   lints: ^2.0.0
