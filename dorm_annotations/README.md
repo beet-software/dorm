@@ -9,11 +9,20 @@ Add the following entries to your *pubspec.yaml* file:
 ```yaml
 dependencies:
   dorm_annotations:
-  json_annotation:
+    git:
+      url: git@github.com:enzo-santos/dorm.git
+      ref: main
+      path: dorm_annotations
+
+  json_annotation: ^4.6.0
 
 dev_dependencies:
-  build_runner:
+  build_runner: ^2.2.0
   dorm_generator:
+    git:
+      url: git@github.com:enzo-santos/dorm.git
+      ref: main
+      path: dorm_generator
 ```
 
 Get your package dependencies:
