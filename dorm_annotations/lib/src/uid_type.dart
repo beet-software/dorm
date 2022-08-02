@@ -18,7 +18,7 @@ abstract class UidType {
   /// student will be 'school-id&unique-id'.
   const factory UidType.composite() = _CompositeUidType;
 
-  /// Uniquely identifies a model based on another model.
+  /// Uniquely identifies a model based on another model [type].
   ///
   /// If Student depends on School and 'unique-id' is a unique identifier for
   /// Student, using `UidType.sameAs(School)` guarantees that, whenever a student
@@ -28,10 +28,15 @@ abstract class UidType {
   /// This is suitable for 1:1 relationships.
   const factory UidType.sameAs(Type type) = _SameAsUidType;
 
+  /// Identifies a model based on [builder].
+  const factory UidType.custom(Object Function(Object) builder) =
+      _CustomUidType;
+
   T when<T>({
     required T Function() caseSimple,
     required T Function() caseComposite,
     required T Function(Type type) caseSameAs,
+    required T Function(Object Function(Object) builder) caseCustom,
   });
 }
 
@@ -43,6 +48,7 @@ class _SimpleUidType implements UidType {
     required T Function() caseSimple,
     required T Function() caseComposite,
     required T Function(Type type) caseSameAs,
+    required T Function(Object Function(Object) builder) caseCustom,
   }) {
     return caseSimple();
   }
@@ -56,6 +62,7 @@ class _CompositeUidType implements UidType {
     required T Function() caseSimple,
     required T Function() caseComposite,
     required T Function(Type type) caseSameAs,
+    required T Function(Object Function(Object) builder) caseCustom,
   }) {
     return caseComposite();
   }
@@ -71,7 +78,24 @@ class _SameAsUidType implements UidType {
     required T Function() caseSimple,
     required T Function() caseComposite,
     required T Function(Type type) caseSameAs,
+    required T Function(Object Function(Object) builder) caseCustom,
   }) {
     return caseSameAs(type);
+  }
+}
+
+class _CustomUidType implements UidType {
+  final Object Function(Object) builder;
+
+  const _CustomUidType(this.builder);
+
+  @override
+  T when<T>({
+    required T Function() caseSimple,
+    required T Function() caseComposite,
+    required T Function(Type type) caseSameAs,
+    required T Function(Object Function(Object) builder) caseCustom,
+  }) {
+    return caseCustom(builder);
   }
 }
