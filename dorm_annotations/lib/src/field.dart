@@ -1,5 +1,8 @@
+import 'package:meta/meta_meta.dart';
+
 enum QueryType { text, value, date }
 
+@Target({TargetKind.getter})
 class Field {
   final String? name;
   final QueryType? queryBy;
@@ -10,6 +13,7 @@ class Field {
   });
 }
 
+@Target({TargetKind.getter})
 class ForeignField extends Field {
   final Type referTo;
 
@@ -19,4 +23,3 @@ class ForeignField extends Field {
     required this.referTo,
   });
 }
-

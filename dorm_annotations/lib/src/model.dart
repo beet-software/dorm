@@ -1,6 +1,9 @@
+import 'package:meta/meta_meta.dart';
+
 import 'uid_type.dart';
 
-/// Represents an abstract model to be mapped.
+/// Represents an abstract schema to be mapped.
+@Target({TargetKind.classType})
 class Model {
   final String name;
   final String? repositoryName;
