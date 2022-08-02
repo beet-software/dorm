@@ -5,17 +5,36 @@ import 'package:dorm_annotations/dorm_annotations.dart';
 import 'package:dorm_generator/src/visitor.dart';
 import 'package:source_gen/source_gen.dart';
 
+class _SchemaNaming {
+  // _Schema
+  final String schemaName;
+
+  const _SchemaNaming(this.schemaName);
+
+  // Schema
+  String get modelName => schemaName.substring(1);
+
+  // SchemaData
+  String get dataName => '${modelName}Data';
+
+  // SchemaDependency
+  String get dependencyName => '${modelName}Dependency';
+
+  // SchemaEntity
+  String get entityName => '${modelName}Entity';
+}
+
 class _Model extends Model {
   final String displayName;
 
   const _Model({
     required String name,
     required String displayName,
-    String? repositoryName,
+    required super.uidType,
+    required super.repositoryName,
   })  : displayName = name,
         super(
           name: displayName,
-          repositoryName: repositoryName,
         );
 }
 
@@ -233,7 +252,23 @@ class _OrmWriter {
     sink.writeln('${name}Data data,');
     sink.writeln(') {');
     sink.writeln('return $name(');
-    sink.writeln('id: dependency.key(id),');
+    final UidType uidType = model.uidType;
+    sink.writeln(uidType.when(
+      caseSimple: () => 'id: id,',
+      caseComposite: () => 'id: dependency.key(id),',
+      caseSameAs: (type) {
+        final ForeignReferrer referrer = type as ForeignReferrer;
+        for (MapEntry<FieldElement, ForeignField> entry
+            in visitor.foreignFields.entries) {
+          final ForeignReferrer currentReferrer =
+              entry.value.referTo as ForeignReferrer;
+          if (currentReferrer.name != referrer.name) continue;
+          return 'id: dependency.${entry.key.name},';
+        }
+        throw StateError('invalid reference on UidType.sameAs: '
+            '${referrer.name}');
+      },
+    ));
     for (FieldElement element in visitor.foreignFields.keys) {
       sink.writeln('${element.name}: dependency.${element.name},');
     }
@@ -293,11 +328,33 @@ class OrmGenerator extends GeneratorForAnnotation<Model> {
       name: annotation.read('name').stringValue,
       displayName: element.name ?? '',
       repositoryName: annotation.read('repositoryName').literalValue as String?,
+      uidType: () {
+        final ConstantReader reader = annotation.read('uidType');
+        final String uidTypeName =
+            reader.objectValue.type!.getDisplayString(withNullability: false);
+
+        switch (uidTypeName) {
+          case '_SimpleUidType':
+            return const UidType.simple();
+          case '_CompositeUidType':
+            return const UidType.composite();
+          case '_SameAsUidType':
+            final ForeignReferrer referrer = ForeignReferrer(
+              name: reader
+                  .read('type')
+                  .typeValue
+                  .getDisplayString(withNullability: false),
+            );
+            return UidType.sameAs(referrer);
+        }
+        throw StateError('invalid uid type: $uidTypeName');
+      }(),
     );
     _visitedModels.add(_Model(
       name: name,
       displayName: model.name,
       repositoryName: model.repositoryName,
+      uidType: model.uidType,
     ));
     return _OrmWriter(model: model, visitor: visitor, name: name).write();
   }
