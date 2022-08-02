@@ -82,12 +82,14 @@ TeacherData _$TeacherDataFromJson(Map json) {
   );
   return TeacherData(
     name: json['nome'] as String,
+    ssn: json['cpf'] as String?,
   );
 }
 
 Map<String, dynamic> _$TeacherDataToJson(TeacherData instance) =>
     <String, dynamic>{
       'nome': instance.name,
+      'cpf': instance.ssn,
     };
 
 Teacher _$TeacherFromJson(Map json) {
@@ -99,11 +101,13 @@ Teacher _$TeacherFromJson(Map json) {
   return Teacher(
     id: json['_id'] as String,
     name: json['nome'] as String,
+    ssn: json['cpf'] as String?,
   );
 }
 
 Map<String, dynamic> _$TeacherToJson(Teacher instance) => <String, dynamic>{
       'nome': instance.name,
+      'cpf': instance.ssn,
       '_id': instance.id,
     };
 

@@ -173,10 +173,14 @@ class TeacherData {
   @JsonKey(name: 'nome', required: true, disallowNullValue: true)
   final String name;
 
+  @JsonKey(name: 'cpf')
+  final String? ssn;
+
   factory TeacherData.fromJson(Map json) => _$TeacherDataFromJson(json);
 
   const TeacherData({
     required this.name,
+    required this.ssn,
   });
 
   Map<String, Object?> toJson() => _$TeacherDataToJson(this);
@@ -193,6 +197,7 @@ class Teacher extends TeacherData implements _Teacher {
   const Teacher({
     required this.id,
     required super.name,
+    required super.ssn,
   });
 
   @override
@@ -223,8 +228,9 @@ class TeacherEntity implements Entity<TeacherData, Teacher> {
     TeacherData data,
   ) {
     return Teacher(
-      id: id,
+      id: $parseCustomUidValue(dependency, id, _Teacher._id(data)),
       name: data.name,
+      ssn: data.ssn,
     );
   }
 

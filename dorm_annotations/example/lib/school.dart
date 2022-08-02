@@ -8,6 +8,7 @@ part 'school.g.dart';
 @Model(
   name: 'escola',
   repositoryName: 'schools',
+  uidType: UidType.simple(),
 )
 abstract class _School {
   @Field(name: 'nome', queryBy: QueryType.text)
@@ -30,11 +31,21 @@ abstract class _Student {
 @Model(
   name: 'professor',
   repositoryName: 'teachers',
-  uidType: UidType.simple(),
+  uidType: UidType.custom(_Teacher._id),
 )
 abstract class _Teacher {
+  static CustomUidValue _id(Object data) {
+    data as TeacherData;
+    final String? ssn = data.ssn;
+    if (ssn == null) return const CustomUidValue.composite();
+    return CustomUidValue.value(ssn.replaceAll('[^0-9]', ''));
+  }
+
   @Field(name: 'nome', queryBy: QueryType.text)
   String get name;
+
+  @Field(name: 'cpf')
+  String? get ssn;
 }
 
 @Model(
