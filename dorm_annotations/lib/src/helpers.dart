@@ -33,7 +33,7 @@ String? $normalizeDate(DateTime? value) {
       '$day'.padLeft(2, '0');
 }
 
-String? $parseCustomUidValue(
+String $parseCustomUidValue(
   Dependency<Object> dependency,
   String id,
   CustomUidValue value,

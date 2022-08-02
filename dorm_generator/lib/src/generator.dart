@@ -2,6 +2,7 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:build/build.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
+import 'package:dorm_generator/src/utils.dart';
 import 'package:dorm_generator/src/visitor.dart';
 import 'package:source_gen/source_gen.dart';
 
@@ -33,9 +34,7 @@ class _Model extends Model {
     required super.uidType,
     required super.repositoryName,
   })  : displayName = name,
-        super(
-          name: displayName,
-        );
+        super(name: displayName);
 }
 
 class _OrmWriter {
@@ -252,23 +251,13 @@ class _OrmWriter {
     sink.writeln('${name}Data data,');
     sink.writeln(') {');
     sink.writeln('return $name(');
+
     final UidType uidType = model.uidType;
-    sink.writeln(uidType.when(
-      caseSimple: () => 'id: id,',
-      caseComposite: () => 'id: dependency.key(id),',
-      caseSameAs: (type) {
-        final ForeignReferrer referrer = type as ForeignReferrer;
-        for (MapEntry<FieldElement, ForeignField> entry
-            in visitor.foreignFields.entries) {
-          final ForeignReferrer currentReferrer =
-              entry.value.referTo as ForeignReferrer;
-          if (currentReferrer.name != referrer.name) continue;
-          return 'id: dependency.${entry.key.name},';
-        }
-        throw StateError('invalid reference on UidType.sameAs: '
-            '${referrer.name}');
-      },
-    ));
+    sink
+      ..write('id: ')
+      ..write(encodeUidType(visitor, uidType))
+      ..writeln(',');
+
     for (FieldElement element in visitor.foreignFields.keys) {
       sink.writeln('${element.name}: dependency.${element.name},');
     }
@@ -311,6 +300,63 @@ class _OrmWriter {
   }
 }
 
+class _$CustomUidValue implements CustomUidValue {
+  final ConstantReader reader;
+
+  const _$CustomUidValue(this.reader);
+
+  @override
+  T when<T>({
+    required T Function() caseSimple,
+    required T Function() caseComposite,
+    required T Function(String id) caseValue,
+  }) {
+    throw UnimplementedError();
+  }
+}
+
+UidType? decodeUidType(ConstantReader reader) {
+  if (reader.isNull) return null;
+  final String? uidTypeName =
+      reader.objectValue.type?.getDisplayString(withNullability: false);
+  if (uidTypeName == null) return null;
+
+  switch (uidTypeName) {
+    case '_SimpleUidType':
+      return const UidType.simple();
+    case '_CompositeUidType':
+      return const UidType.composite();
+    case '_SameAsUidType':
+      final Type type = $Type(reader: reader.read('type'));
+      return UidType.sameAs(type);
+    case '_CustomUidType':
+      return UidType.custom((_) => _$CustomUidValue(reader.read('builder')));
+  }
+  return null;
+}
+
+String encodeUidType(ModelVisitor visitor, UidType uidType) {
+  return uidType.when(
+    caseSimple: () => 'id',
+    caseComposite: () => 'dependency.key(id)',
+    caseSameAs: (type) {
+      type as $Type;
+      for (MapEntry<FieldElement, ForeignField> entry
+          in visitor.foreignFields.entries) {
+        final $Type currentType = entry.value.referTo as $Type;
+        if (currentType.name != type.name) continue;
+        return 'dependency.${entry.key.name}';
+      }
+      throw StateError('invalid reference on UidType.sameAs: ${type.name}');
+    },
+    caseCustom: (builder) {
+      final _$CustomUidValue value = builder(0) as _$CustomUidValue;
+      final String name = $Function.name(value.reader);
+      return '\$parseCustomUidValue(dependency, id, $name(data))';
+    },
+  );
+}
+
 class OrmGenerator extends GeneratorForAnnotation<Model> {
   final List<_Model> _visitedModels = [];
 
@@ -328,27 +374,7 @@ class OrmGenerator extends GeneratorForAnnotation<Model> {
       name: annotation.read('name').stringValue,
       displayName: element.name ?? '',
       repositoryName: annotation.read('repositoryName').literalValue as String?,
-      uidType: () {
-        final ConstantReader reader = annotation.read('uidType');
-        final String uidTypeName =
-            reader.objectValue.type!.getDisplayString(withNullability: false);
-
-        switch (uidTypeName) {
-          case '_SimpleUidType':
-            return const UidType.simple();
-          case '_CompositeUidType':
-            return const UidType.composite();
-          case '_SameAsUidType':
-            final ForeignReferrer referrer = ForeignReferrer(
-              name: reader
-                  .read('type')
-                  .typeValue
-                  .getDisplayString(withNullability: false),
-            );
-            return UidType.sameAs(referrer);
-        }
-        throw StateError('invalid uid type: $uidTypeName');
-      }(),
+      uidType: decodeUidType(annotation.read('uidType')) ?? UidType.simple(),
     );
     _visitedModels.add(_Model(
       name: name,

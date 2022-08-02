@@ -4,6 +4,8 @@ import 'package:analyzer/dart/element/visitor.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
 import 'package:source_gen/source_gen.dart';
 
+import 'utils.dart';
+
 abstract class AnnotationParser<T> {
   Type get annotation;
 
@@ -23,15 +25,6 @@ class FieldParser extends AnnotationParser<Field> {
   }
 }
 
-class ForeignReferrer implements Type {
-  final String name;
-
-  const ForeignReferrer({required this.name});
-
-  @override
-  String toString() => 'ForeignReferrer($name);';
-}
-
 class ForeignFieldParser extends AnnotationParser<ForeignField> {
   @override
   final Type annotation = ForeignField;
@@ -41,11 +34,7 @@ class ForeignFieldParser extends AnnotationParser<ForeignField> {
     return ForeignField(
       name: reader.read('name').stringValue,
       queryBy: reader.read('queryBy').enumValueFrom(QueryType.values),
-      referTo: ForeignReferrer(
-          name: reader
-              .read('referTo')
-              .typeValue
-              .getDisplayString(withNullability: false)),
+      referTo: $Type(reader: reader.read('referTo')),
     );
   }
 }
