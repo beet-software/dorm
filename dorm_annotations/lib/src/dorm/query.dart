@@ -13,6 +13,8 @@ abstract class Query {
 
   Query endAt(Object? value);
 
+  String get path;
+
   Stream<Object?> get onValue;
 
   Future<Object?> get();
