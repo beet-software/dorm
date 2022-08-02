@@ -25,7 +25,7 @@ class SchoolData {
 }
 
 @JsonSerializable(anyMap: true, explicitToJson: true)
-class School extends SchoolData {
+class School extends SchoolData implements _School {
   @JsonKey(name: '_id', required: true, disallowNullValue: true)
   final String id;
 
@@ -52,7 +52,6 @@ class SchoolDependency extends Dependency<SchoolData> {
   const SchoolDependency() : super.strong();
 }
 
-@$DormReference(_School)
 class SchoolEntity implements Entity<SchoolData, School> {
   const SchoolEntity._();
 
@@ -100,10 +99,11 @@ class StudentData {
 }
 
 @JsonSerializable(anyMap: true, explicitToJson: true)
-class Student extends StudentData {
+class Student extends StudentData implements _Student {
   @JsonKey(name: '_id', required: true, disallowNullValue: true)
   final String id;
 
+  @override
   @JsonKey(name: 'id-escola', required: true, disallowNullValue: true)
   final String schoolId;
 
@@ -135,7 +135,6 @@ class StudentDependency extends Dependency<StudentData> {
   }) : super.weak([schoolId]);
 }
 
-@$DormReference(_Student)
 class StudentEntity implements Entity<StudentData, Student> {
   const StudentEntity._();
 
@@ -184,7 +183,7 @@ class TeacherData {
 }
 
 @JsonSerializable(anyMap: true, explicitToJson: true)
-class Teacher extends TeacherData {
+class Teacher extends TeacherData implements _Teacher {
   @JsonKey(name: '_id', required: true, disallowNullValue: true)
   final String id;
 
@@ -211,7 +210,6 @@ class TeacherDependency extends Dependency<TeacherData> {
   const TeacherDependency() : super.strong();
 }
 
-@$DormReference(_Teacher)
 class TeacherEntity implements Entity<TeacherData, Teacher> {
   const TeacherEntity._();
 
@@ -254,10 +252,11 @@ class HistoryData {
 }
 
 @JsonSerializable(anyMap: true, explicitToJson: true)
-class History extends HistoryData {
+class History extends HistoryData implements _History {
   @JsonKey(name: '_id', required: true, disallowNullValue: true)
   final String id;
 
+  @override
   @JsonKey(name: 'id-aluno', required: true, disallowNullValue: true)
   final String studentId;
 
@@ -285,7 +284,6 @@ class HistoryDependency extends Dependency<HistoryData> {
   }) : super.weak([studentId]);
 }
 
-@$DormReference(_History)
 class HistoryEntity implements Entity<HistoryData, History> {
   const HistoryEntity._();
 
@@ -333,13 +331,15 @@ class TeachingData {
 }
 
 @JsonSerializable(anyMap: true, explicitToJson: true)
-class Teaching extends TeachingData {
+class Teaching extends TeachingData implements _Teaching {
   @JsonKey(name: '_id', required: true, disallowNullValue: true)
   final String id;
 
+  @override
   @JsonKey(name: 'id-professor', required: true, disallowNullValue: true)
   final String teacherId;
 
+  @override
   @JsonKey(name: 'id-escola', required: true, disallowNullValue: true)
   final String schoolId;
 
@@ -371,7 +371,6 @@ class TeachingDependency extends Dependency<TeachingData> {
   }) : super.weak([teacherId, schoolId]);
 }
 
-@$DormReference(_Teaching)
 class TeachingEntity implements Entity<TeachingData, Teaching> {
   const TeachingEntity._();
 
@@ -421,13 +420,15 @@ class ClassData {
 }
 
 @JsonSerializable(anyMap: true, explicitToJson: true)
-class Class extends ClassData {
+class Class extends ClassData implements _Class {
   @JsonKey(name: '_id', required: true, disallowNullValue: true)
   final String id;
 
+  @override
   @JsonKey(name: 'id-professor', required: true, disallowNullValue: true)
   final String teacherId;
 
+  @override
   @JsonKey(name: 'id-escola', required: true, disallowNullValue: true)
   final String studentId;
 
@@ -459,7 +460,6 @@ class ClassDependency extends Dependency<ClassData> {
   }) : super.weak([teacherId, studentId]);
 }
 
-@$DormReference(_Class)
 class ClassEntity implements Entity<ClassData, Class> {
   const ClassEntity._();
 

@@ -46,4 +46,3 @@ abstract class _Message {
   @ForeignField(name: 'receiver-id', referTo: _User)
   String get receiverId;
 }
-

@@ -94,7 +94,7 @@ class _OrmWriter {
 
   void _writeModelClass(StringSink sink) {
     sink.writeln('@JsonSerializable(anyMap: true, explicitToJson: true)');
-    sink.writeln('class $name extends ${name}Data {');
+    sink.writeln('class $name extends ${name}Data implements ${model.name} {');
 
     // Fields
     sink.writeln();
@@ -108,6 +108,7 @@ class _OrmWriter {
       final bool required =
           entry.key.type.nullabilitySuffix == NullabilitySuffix.none;
 
+      sink.writeln('@override');
       sink
         ..write('@JsonKey(')
         ..writeAll(
@@ -212,7 +213,6 @@ class _OrmWriter {
   }
 
   void _writeEntityClass(StringSink sink) {
-    sink.writeln('@\$DormReference(${model.name})');
     sink.writeln('class ${name}Entity implements ');
     sink.writeln('Entity<${name}Data, $name> {');
 

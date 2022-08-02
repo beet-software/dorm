@@ -37,7 +37,7 @@ class UserData {
 }
 
 @JsonSerializable(anyMap: true, explicitToJson: true)
-class User extends UserData {
+class User extends UserData implements _User {
   @JsonKey(name: '_id', required: true, disallowNullValue: true)
   final String id;
 
@@ -64,7 +64,6 @@ class UserDependency extends Dependency<UserData> {
   const UserDependency() : super.strong();
 }
 
-@$DormReference(_User)
 class UserEntity implements Entity<UserData, User> {
   const UserEntity._();
 
@@ -119,10 +118,11 @@ class PostData {
 }
 
 @JsonSerializable(anyMap: true, explicitToJson: true)
-class Post extends PostData {
+class Post extends PostData implements _Post {
   @JsonKey(name: '_id', required: true, disallowNullValue: true)
   final String id;
 
+  @override
   @JsonKey(name: 'user-id', required: true, disallowNullValue: true)
   final String userId;
 
@@ -152,7 +152,6 @@ class PostDependency extends Dependency<PostData> {
   }) : super.weak([userId]);
 }
 
-@$DormReference(_Post)
 class PostEntity implements Entity<PostData, Post> {
   const PostEntity._();
 
@@ -206,13 +205,15 @@ class MessageData {
 }
 
 @JsonSerializable(anyMap: true, explicitToJson: true)
-class Message extends MessageData {
+class Message extends MessageData implements _Message {
   @JsonKey(name: '_id', required: true, disallowNullValue: true)
   final String id;
 
+  @override
   @JsonKey(name: 'sender-id', required: true, disallowNullValue: true)
   final String senderId;
 
+  @override
   @JsonKey(name: 'receiver-id', required: true, disallowNullValue: true)
   final String receiverId;
 
@@ -245,7 +246,6 @@ class MessageDependency extends Dependency<MessageData> {
   }) : super.weak([senderId, receiverId]);
 }
 
-@$DormReference(_Message)
 class MessageEntity implements Entity<MessageData, Message> {
   const MessageEntity._();
 
