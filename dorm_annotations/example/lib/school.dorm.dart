@@ -65,7 +65,7 @@ class SchoolEntity implements Entity<SchoolData, School> {
     SchoolData data,
   ) {
     return School(
-      id: dependency.key(id),
+      id: id,
       name: data.name,
     );
   }
@@ -223,7 +223,7 @@ class TeacherEntity implements Entity<TeacherData, Teacher> {
     TeacherData data,
   ) {
     return Teacher(
-      id: dependency.key(id),
+      id: id,
       name: data.name,
     );
   }
@@ -297,7 +297,7 @@ class HistoryEntity implements Entity<HistoryData, History> {
     HistoryData data,
   ) {
     return History(
-      id: dependency.key(id),
+      id: dependency.studentId,
       studentId: dependency.studentId,
     );
   }
@@ -384,7 +384,7 @@ class TeachingEntity implements Entity<TeachingData, Teaching> {
     TeachingData data,
   ) {
     return Teaching(
-      id: dependency.key(id),
+      id: id,
       teacherId: dependency.teacherId,
       schoolId: dependency.schoolId,
       code: data.code,

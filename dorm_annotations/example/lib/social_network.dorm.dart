@@ -77,7 +77,7 @@ class UserEntity implements Entity<UserData, User> {
     UserData data,
   ) {
     return User(
-      id: dependency.key(id),
+      id: id,
       name: data.name,
       birthDate: data.birthDate,
       email: data.email,
@@ -165,7 +165,7 @@ class PostEntity implements Entity<PostData, Post> {
     PostData data,
   ) {
     return Post(
-      id: dependency.key(id),
+      id: id,
       userId: dependency.userId,
       contents: data.contents,
       creationDate: data.creationDate,
@@ -259,7 +259,7 @@ class MessageEntity implements Entity<MessageData, Message> {
     MessageData data,
   ) {
     return Message(
-      id: dependency.key(id),
+      id: id,
       senderId: dependency.senderId,
       receiverId: dependency.receiverId,
       contents: data.contents,
