@@ -1,6 +1,6 @@
 name: dorm_annotations
 description: Provides annotations used by DORM to generate source code.
-version: 0.1.0
+version: 0.2.0
 
 environment:
   sdk: ">=2.17.3 <3.0.0"
