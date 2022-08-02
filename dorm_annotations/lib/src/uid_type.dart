@@ -1,4 +1,4 @@
-/// Defines a unique-identification strategy.
+/// Represents a unique-identification strategy.
 abstract class UidType {
   /// Uniquely identifies a model based on the default autoincrement strategy
   /// provided by the database.
@@ -29,14 +29,14 @@ abstract class UidType {
   const factory UidType.sameAs(Type type) = _SameAsUidType;
 
   /// Identifies a model based on [builder].
-  const factory UidType.custom(Object Function(Object) builder) =
+  const factory UidType.custom(CustomUidValue Function(Object) builder) =
       _CustomUidType;
 
   T when<T>({
     required T Function() caseSimple,
     required T Function() caseComposite,
     required T Function(Type type) caseSameAs,
-    required T Function(Object Function(Object) builder) caseCustom,
+    required T Function(CustomUidValue Function(Object) builder) caseCustom,
   });
 }
 
@@ -48,7 +48,7 @@ class _SimpleUidType implements UidType {
     required T Function() caseSimple,
     required T Function() caseComposite,
     required T Function(Type type) caseSameAs,
-    required T Function(Object Function(Object) builder) caseCustom,
+    required T Function(CustomUidValue Function(Object) builder) caseCustom,
   }) {
     return caseSimple();
   }
@@ -62,7 +62,7 @@ class _CompositeUidType implements UidType {
     required T Function() caseSimple,
     required T Function() caseComposite,
     required T Function(Type type) caseSameAs,
-    required T Function(Object Function(Object) builder) caseCustom,
+    required T Function(CustomUidValue Function(Object) builder) caseCustom,
   }) {
     return caseComposite();
   }
@@ -78,14 +78,14 @@ class _SameAsUidType implements UidType {
     required T Function() caseSimple,
     required T Function() caseComposite,
     required T Function(Type type) caseSameAs,
-    required T Function(Object Function(Object) builder) caseCustom,
+    required T Function(CustomUidValue Function(Object) builder) caseCustom,
   }) {
     return caseSameAs(type);
   }
 }
 
 class _CustomUidType implements UidType {
-  final Object Function(Object) builder;
+  final CustomUidValue Function(Object) builder;
 
   const _CustomUidType(this.builder);
 
@@ -94,8 +94,64 @@ class _CustomUidType implements UidType {
     required T Function() caseSimple,
     required T Function() caseComposite,
     required T Function(Type type) caseSameAs,
-    required T Function(Object Function(Object) builder) caseCustom,
+    required T Function(CustomUidValue Function(Object) builder) caseCustom,
   }) {
     return caseCustom(builder);
+  }
+}
+
+/// Represents a value to be returned by [UidType.custom];
+abstract class CustomUidValue {
+  const factory CustomUidValue.simple() = _SimpleCustomUidValue;
+
+  const factory CustomUidValue.composite() = _CompositeCustomUidValue;
+
+  const factory CustomUidValue.value(String id) = _ValueCustomUidValue;
+
+  T when<T>({
+    required T Function() caseSimple,
+    required T Function() caseComposite,
+    required T Function(String id) caseValue,
+  });
+}
+
+class _SimpleCustomUidValue implements CustomUidValue {
+  const _SimpleCustomUidValue();
+
+  @override
+  T when<T>({
+    required T Function() caseSimple,
+    required T Function() caseComposite,
+    required T Function(String id) caseValue,
+  }) {
+    return caseSimple();
+  }
+}
+
+class _CompositeCustomUidValue implements CustomUidValue {
+  const _CompositeCustomUidValue();
+
+  @override
+  T when<T>({
+    required T Function() caseSimple,
+    required T Function() caseComposite,
+    required T Function(String id) caseValue,
+  }) {
+    return caseComposite();
+  }
+}
+
+class _ValueCustomUidValue implements CustomUidValue {
+  final String id;
+
+  const _ValueCustomUidValue(this.id);
+
+  @override
+  T when<T>({
+    required T Function() caseSimple,
+    required T Function() caseComposite,
+    required T Function(String id) caseValue,
+  }) {
+    return caseValue(id);
   }
 }
