@@ -44,7 +44,7 @@ First create a `FirebaseInstance`, a class that manages your current Firebase ap
 final FirebaseInstance instance = const FirebaseInstance();
 
 // Alternatively, if you're working with non-default apps
-final FirebaseInstance instance = FirebaseInstance(Firebase.app('app-1'));
+final FirebaseInstance instance = FirebaseInstance.custom(Firebase.app('app-1'));
 ```
 
 With this instance, create a `FirebaseReference`:
