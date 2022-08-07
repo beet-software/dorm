@@ -2,6 +2,24 @@ import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:source_gen/source_gen.dart';
 
+extension AdditionalReads on ConstantReader {
+  T? enumValueFrom<T extends Enum>(List<T> values) {
+    if (isNull) return null;
+    return values[objectValue.getField('index')!.toIntValue()!];
+  }
+
+  String get functionName {
+    final DartObject obj = objectValue;
+    final ExecutableElement element = obj.toFunctionValue()!;
+
+    final String name = element.name;
+    assert(element.isStatic);
+    final String? className = element.enclosingElement2.name;
+    final String prefix = className == null ? '' : '$className.';
+    return '$prefix$name';
+  }
+}
+
 class $Type implements Type {
   final ConstantReader reader;
 
@@ -11,26 +29,4 @@ class $Type implements Type {
 
   @override
   String toString() => '\$Type($name);';
-}
-
-class $Function<T> {
-  static String name(ConstantReader reader) {
-    final DartObject obj = reader.objectValue;
-    final ExecutableElement element = obj.toFunctionValue()!;
-
-    final String name = element.name;
-    assert(element.isStatic);
-    final String? className = element.enclosingElement2.name;
-    final String prefix = className == null ? '' : '$className.';
-    return '$prefix$name';
-  }
-
-  final ConstantReader reader;
-
-  const $Function({required this.reader});
-
-  Object call(T value) => reader;
-
-  @override
-  String toString() => '\$Function($name);';
 }

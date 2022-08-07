@@ -2,9 +2,10 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:build/build.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
-import 'package:dorm_generator/src/utils.dart';
-import 'package:dorm_generator/src/visitor.dart';
+import 'package:dorm_generator/src/utils/custom_types.dart';
 import 'package:source_gen/source_gen.dart';
+
+import 'descriptor.dart';
 
 class _SchemaNaming {
   /// _Schema
@@ -41,11 +42,11 @@ class _Model extends Model {
 
 class _OrmWriter {
   final _Model model;
-  final ModelVisitor visitor;
+  final ModelDescriptor descriptor;
 
   const _OrmWriter({
     required this.model,
-    required this.visitor,
+    required this.descriptor,
   });
 
   void _writeDummyClass(StringSink sink) {
@@ -53,7 +54,7 @@ class _OrmWriter {
     sink.writeln('class $className implements ${model.naming.schemaName} {');
 
     // Fields
-    for (MapEntry<FieldElement, Field> entry in visitor.allFields.entries) {
+    for (MapEntry<FieldElement, Field> entry in descriptor.allFields.entries) {
       sink
         ..writeln('@override')
         ..writeln('final ${entry.key.type} ${entry.key.name};')
@@ -65,7 +66,7 @@ class _OrmWriter {
         '${model.naming.dependencyName} dependency, '
         '${model.naming.dataName} data) {');
     sink.writeln('return $className(');
-    for (MapEntry<FieldElement, Field> entry in visitor.allFields.entries) {
+    for (MapEntry<FieldElement, Field> entry in descriptor.allFields.entries) {
       final String variableName =
           entry.value is ForeignField ? 'dependency' : 'data';
       sink.writeln('${entry.key.name}: $variableName.${entry.key.name},');
@@ -75,7 +76,7 @@ class _OrmWriter {
 
     // Constructors
     sink.writeln('const $className({');
-    for (MapEntry<FieldElement, Field> entry in visitor.allFields.entries) {
+    for (MapEntry<FieldElement, Field> entry in descriptor.allFields.entries) {
       sink.writeln('required this.${entry.key.name},');
     }
     sink.writeln('});');
@@ -89,7 +90,7 @@ class _OrmWriter {
 
     // Fields
     sink.writeln();
-    for (MapEntry<FieldElement, Field> entry in visitor.ownFields.entries) {
+    for (MapEntry<FieldElement, Field> entry in descriptor.ownFields.entries) {
       final String? name = entry.value.name;
       final bool required =
           entry.key.type.nullabilitySuffix == NullabilitySuffix.none;
@@ -125,14 +126,14 @@ class _OrmWriter {
     // Constructors
     sink.writeln();
     sink.write('const ${model.naming.dataName}(');
-    sink.writeln(visitor.ownFields.isEmpty ? '' : '{');
-    for (MapEntry<FieldElement, Field> entry in visitor.ownFields.entries) {
+    sink.writeln(descriptor.ownFields.isEmpty ? '' : '{');
+    for (MapEntry<FieldElement, Field> entry in descriptor.ownFields.entries) {
       sink
         ..write('required this.')
         ..write(entry.key.name)
         ..writeln(',');
     }
-    sink.write(visitor.ownFields.isEmpty ? '' : '}');
+    sink.write(descriptor.ownFields.isEmpty ? '' : '}');
     sink.writeln(');');
     sink.writeln();
 
@@ -159,7 +160,8 @@ class _OrmWriter {
         'name: \'_id\', required: true, disallowNullValue: true)');
     sink.writeln('final String id;');
 
-    for (MapEntry<FieldElement, Field> entry in visitor.foreignFields.entries) {
+    for (MapEntry<FieldElement, Field> entry
+        in descriptor.foreignFields.entries) {
       sink.writeln();
       final String? name = entry.value.name;
       final bool required =
@@ -195,7 +197,7 @@ class _OrmWriter {
     sink.writeln();
     sink.writeln('const $className({');
     sink.writeln('required this.id,');
-    for (MapEntry<FieldElement, Field> entry in visitor.allFields.entries) {
+    for (MapEntry<FieldElement, Field> entry in descriptor.allFields.entries) {
       final String prefix = entry.value is ForeignField ? 'this' : 'super';
       sink
         ..write('required $prefix.')
@@ -212,7 +214,7 @@ class _OrmWriter {
     sink.writeln('return {');
     sink.writeln('..._\$${className}ToJson(this)..remove(\'_id\'),');
     bool hasQuery = false;
-    for (MapEntry<FieldElement, Field> entry in visitor.allFields.entries) {
+    for (MapEntry<FieldElement, Field> entry in descriptor.allFields.entries) {
       final QueryType? type = entry.value.queryBy;
       if (type == null) continue;
       if (!hasQuery) {
@@ -253,20 +255,21 @@ class _OrmWriter {
 
     sink.writeln('class $className '
         'extends Dependency<${model.naming.dataName}> {');
-    for (FieldElement element in visitor.foreignFields.keys) {
+    for (FieldElement element in descriptor.foreignFields.keys) {
       sink.writeln('final ${element.type} ${element.name};');
     }
     sink.writeln();
-    if (visitor.foreignFields.isEmpty) {
+    if (descriptor.foreignFields.isEmpty) {
       sink.writeln('const $className() : super.strong();');
     } else {
       sink.writeln('$className({');
-      for (FieldElement element in visitor.foreignFields.keys) {
+      for (FieldElement element in descriptor.foreignFields.keys) {
         sink.writeln('required this.${element.name},');
       }
       sink.write('}) : super.weak([');
-      sink.write(
-          visitor.foreignFields.keys.map((element) => element.name).join(', '));
+      sink.write(descriptor.foreignFields.keys
+          .map((element) => element.name)
+          .join(', '));
       sink.writeln(']);');
     }
     sink.writeln('}');
@@ -300,13 +303,13 @@ class _OrmWriter {
     final UidType uidType = model.uidType;
     sink
       ..write('id: ')
-      ..write(_encodeUidType(model.naming, visitor, uidType))
+      ..write(_encodeUidType(model.naming, descriptor, uidType))
       ..writeln(',');
 
-    for (FieldElement element in visitor.foreignFields.keys) {
+    for (FieldElement element in descriptor.foreignFields.keys) {
       sink.writeln('${element.name}: dependency.${element.name},');
     }
-    for (FieldElement element in visitor.ownFields.keys) {
+    for (FieldElement element in descriptor.ownFields.keys) {
       sink.writeln('${element.name}: data.${element.name},');
     }
     sink.writeln(');');
@@ -388,7 +391,10 @@ UidType? _decodeUidType(ConstantReader reader) {
 }
 
 String _encodeUidType(
-    _SchemaNaming naming, ModelVisitor visitor, UidType uidType) {
+  _SchemaNaming naming,
+  ModelDescriptor visitor,
+  UidType uidType,
+) {
   return uidType.when(
     caseSimple: () => 'id',
     caseComposite: () => 'dependency.key(id)',
@@ -404,7 +410,7 @@ String _encodeUidType(
     },
     caseCustom: (builder) {
       final _$CustomUidValue value = builder(0) as _$CustomUidValue;
-      final String name = $Function.name(value.reader);
+      final String name = value.reader.functionName;
       return '\$parseCustomUidValue(dependency, id, '
           '$name(${naming.dummyName}.fromData(dependency, data)),)';
     },
@@ -420,9 +426,7 @@ class OrmGenerator extends GeneratorForAnnotation<Model> {
     ConstantReader annotation,
     BuildStep buildStep,
   ) {
-    final ModelVisitor visitor = ModelVisitor();
-    element.visitChildren(visitor);
-
+    final ModelDescriptor descriptor = ModelDescriptor.describe(element);
     final _Model model = _Model(
       name: annotation.read('name').stringValue,
       repositoryName: annotation.read('repositoryName').literalValue as String?,
@@ -430,7 +434,7 @@ class OrmGenerator extends GeneratorForAnnotation<Model> {
       naming: _SchemaNaming(element.name as String),
     );
     _visitedModels.add(model);
-    return _OrmWriter(model: model, visitor: visitor).write();
+    return _OrmWriter(model: model, descriptor: descriptor).write();
   }
 
   @override
