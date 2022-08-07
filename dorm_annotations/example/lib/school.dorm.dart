@@ -168,6 +168,25 @@ class StudentEntity implements Entity<StudentData, Student> {
 //     DORM: Teacher
 // **************************************************
 
+class _$Teacher implements _Teacher {
+  @override
+  final String name;
+
+  @override
+  final String? ssn;
+
+  factory _$Teacher.fromData(TeacherDependency dependency, TeacherData data) {
+    return _$Teacher(
+      name: data.name,
+      ssn: data.ssn,
+    );
+  }
+  const _$Teacher({
+    required this.name,
+    required this.ssn,
+  });
+}
+
 @JsonSerializable(anyMap: true, explicitToJson: true)
 class TeacherData {
   @JsonKey(name: 'nome', required: true, disallowNullValue: true)
@@ -228,7 +247,11 @@ class TeacherEntity implements Entity<TeacherData, Teacher> {
     TeacherData data,
   ) {
     return Teacher(
-      id: $parseCustomUidValue(dependency, id, _Teacher._id(data)),
+      id: $parseCustomUidValue(
+        dependency,
+        id,
+        _Teacher._id(_$Teacher.fromData(dependency, data)),
+      ),
       name: data.name,
       ssn: data.ssn,
     );

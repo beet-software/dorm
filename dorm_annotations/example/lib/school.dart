@@ -35,7 +35,7 @@ abstract class _Student {
 )
 abstract class _Teacher {
   static CustomUidValue _id(Object data) {
-    data as TeacherData;
+    data as _Teacher;
     final String? ssn = data.ssn;
     if (ssn == null) return const CustomUidValue.composite();
     return CustomUidValue.value(ssn.replaceAll('[^0-9]', ''));

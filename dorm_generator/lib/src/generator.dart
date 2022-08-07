@@ -12,6 +12,9 @@ class _SchemaNaming {
 
   const _SchemaNaming(this.schemaName);
 
+  /// _$Schema
+  String get dummyName => '_\$$modelName';
+
   /// Schema
   String get modelName => schemaName.substring(1);
 
@@ -44,6 +47,40 @@ class _OrmWriter {
     required this.model,
     required this.visitor,
   });
+
+  void _writeDummyClass(StringSink sink) {
+    final String className = model.naming.dummyName;
+    sink.writeln('class $className implements ${model.naming.schemaName} {');
+
+    // Fields
+    for (MapEntry<FieldElement, Field> entry in visitor.allFields.entries) {
+      sink
+        ..writeln('@override')
+        ..writeln('final ${entry.key.type} ${entry.key.name};')
+        ..writeln();
+    }
+
+    // Factories
+    sink.writeln('factory $className.fromData('
+        '${model.naming.dependencyName} dependency, '
+        '${model.naming.dataName} data) {');
+    sink.writeln('return $className(');
+    for (MapEntry<FieldElement, Field> entry in visitor.allFields.entries) {
+      final String variableName =
+          entry.value is ForeignField ? 'dependency' : 'data';
+      sink.writeln('${entry.key.name}: $variableName.${entry.key.name},');
+    }
+    sink.writeln(');');
+    sink.writeln('}');
+
+    // Constructors
+    sink.writeln('const $className({');
+    for (MapEntry<FieldElement, Field> entry in visitor.allFields.entries) {
+      sink.writeln('required this.${entry.key.name},');
+    }
+    sink.writeln('});');
+    sink.writeln('}');
+  }
 
   void _writeDataClass(StringSink sink) {
     final String className = model.naming.dataName;
@@ -263,7 +300,7 @@ class _OrmWriter {
     final UidType uidType = model.uidType;
     sink
       ..write('id: ')
-      ..write(encodeUidType(visitor, uidType))
+      ..write(_encodeUidType(model.naming, visitor, uidType))
       ..writeln(',');
 
     for (FieldElement element in visitor.foreignFields.keys) {
@@ -301,6 +338,12 @@ class _OrmWriter {
     buffer.writeln('//     DORM: ${model.naming.modelName}');
     buffer.writeln('// **************************************************');
     buffer.writeln();
+    model.uidType.when(
+      caseSimple: () {},
+      caseComposite: () {},
+      caseSameAs: (_) {},
+      caseCustom: (_) => _writeDummyClass(buffer),
+    );
     _writeDataClass(buffer);
     _writeModelClass(buffer);
     _writeDependencyClass(buffer);
@@ -324,7 +367,7 @@ class _$CustomUidValue implements CustomUidValue {
   }
 }
 
-UidType? decodeUidType(ConstantReader reader) {
+UidType? _decodeUidType(ConstantReader reader) {
   if (reader.isNull) return null;
   final String? uidTypeName =
       reader.objectValue.type?.getDisplayString(withNullability: false);
@@ -344,7 +387,8 @@ UidType? decodeUidType(ConstantReader reader) {
   return null;
 }
 
-String encodeUidType(ModelVisitor visitor, UidType uidType) {
+String _encodeUidType(
+    _SchemaNaming naming, ModelVisitor visitor, UidType uidType) {
   return uidType.when(
     caseSimple: () => 'id',
     caseComposite: () => 'dependency.key(id)',
@@ -361,7 +405,8 @@ String encodeUidType(ModelVisitor visitor, UidType uidType) {
     caseCustom: (builder) {
       final _$CustomUidValue value = builder(0) as _$CustomUidValue;
       final String name = $Function.name(value.reader);
-      return '\$parseCustomUidValue(dependency, id, $name(data))';
+      return '\$parseCustomUidValue(dependency, id, '
+          '$name(${naming.dummyName}.fromData(dependency, data)),)';
     },
   );
 }
@@ -381,7 +426,7 @@ class OrmGenerator extends GeneratorForAnnotation<Model> {
     final _Model model = _Model(
       name: annotation.read('name').stringValue,
       repositoryName: annotation.read('repositoryName').literalValue as String?,
-      uidType: decodeUidType(annotation.read('uidType')) ?? UidType.simple(),
+      uidType: _decodeUidType(annotation.read('uidType')) ?? UidType.simple(),
       naming: _SchemaNaming(element.name as String),
     );
     _visitedModels.add(model);
