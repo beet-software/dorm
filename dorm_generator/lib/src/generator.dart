@@ -7,50 +7,48 @@ import 'package:dorm_generator/src/visitor.dart';
 import 'package:source_gen/source_gen.dart';
 
 class _SchemaNaming {
-  // _Schema
+  /// _Schema
   final String schemaName;
 
   const _SchemaNaming(this.schemaName);
 
-  // Schema
+  /// Schema
   String get modelName => schemaName.substring(1);
 
-  // SchemaData
+  /// SchemaData
   String get dataName => '${modelName}Data';
 
-  // SchemaDependency
+  /// SchemaDependency
   String get dependencyName => '${modelName}Dependency';
 
-  // SchemaEntity
+  /// SchemaEntity
   String get entityName => '${modelName}Entity';
 }
 
 class _Model extends Model {
-  final String displayName;
+  final _SchemaNaming naming;
 
   const _Model({
-    required String name,
-    required String displayName,
+    required super.name,
     required super.uidType,
     required super.repositoryName,
-  })  : displayName = name,
-        super(name: displayName);
+    required this.naming,
+  });
 }
 
 class _OrmWriter {
   final _Model model;
   final ModelVisitor visitor;
-  final String name;
 
   const _OrmWriter({
     required this.model,
     required this.visitor,
-    required this.name,
   });
 
   void _writeDataClass(StringSink sink) {
+    final String className = model.naming.dataName;
     sink.writeln('@JsonSerializable(anyMap: true, explicitToJson: true)');
-    sink.writeln('class ${name}Data {');
+    sink.writeln('class $className {');
 
     // Fields
     sink.writeln();
@@ -83,13 +81,13 @@ class _OrmWriter {
 
     // Factories
     sink.writeln();
-    sink.writeln('factory ${name}Data.fromJson(Map json) =>');
-    sink.writeln('_\$${name}DataFromJson(json);');
+    sink.writeln('factory $className.fromJson(Map json) =>');
+    sink.writeln('_\$${className}FromJson(json);');
     sink.writeln();
 
     // Constructors
     sink.writeln();
-    sink.write('const ${name}Data(');
+    sink.write('const ${model.naming.dataName}(');
     sink.writeln(visitor.ownFields.isEmpty ? '' : '{');
     for (MapEntry<FieldElement, Field> entry in visitor.ownFields.entries) {
       sink
@@ -104,15 +102,19 @@ class _OrmWriter {
     // Methods
     sink.writeln();
     sink.writeln('Map<String, Object?> toJson() =>');
-    sink.writeln('_\$${name}DataToJson(this);');
+    sink.writeln('_\$${className}ToJson(this);');
     sink.writeln();
 
     sink.writeln('}');
   }
 
   void _writeModelClass(StringSink sink) {
+    final String className = model.naming.modelName;
+
     sink.writeln('@JsonSerializable(anyMap: true, explicitToJson: true)');
-    sink.writeln('class $name extends ${name}Data implements ${model.name} {');
+    sink.writeln('class $className '
+        'extends ${model.naming.dataName} '
+        'implements ${model.naming.schemaName} {');
 
     // Fields
     sink.writeln();
@@ -149,12 +151,12 @@ class _OrmWriter {
     sink.writeln();
 
     // Factories
-    sink.writeln('factory $name.fromJson(String id, Map json) =>');
-    sink.writeln("_\$${name}FromJson({...json, '_id': id});");
+    sink.writeln('factory $className.fromJson(String id, Map json) =>');
+    sink.writeln("_\$${className}FromJson({...json, '_id': id});");
 
     // Constructor
     sink.writeln();
-    sink.writeln('const $name({');
+    sink.writeln('const $className({');
     sink.writeln('required this.id,');
     for (MapEntry<FieldElement, Field> entry in visitor.allFields.entries) {
       final String prefix = entry.value is ForeignField ? 'this' : 'super';
@@ -171,7 +173,7 @@ class _OrmWriter {
     sink.writeln('@override');
     sink.writeln('Map<String, Object?> toJson() {');
     sink.writeln('return {');
-    sink.writeln('..._\$${name}ToJson(this)..remove(\'_id\'),');
+    sink.writeln('..._\$${className}ToJson(this)..remove(\'_id\'),');
     bool hasQuery = false;
     for (MapEntry<FieldElement, Field> entry in visitor.allFields.entries) {
       final QueryType? type = entry.value.queryBy;
@@ -210,15 +212,18 @@ class _OrmWriter {
   }
 
   void _writeDependencyClass(StringSink sink) {
-    sink.writeln('class ${name}Dependency extends Dependency<${name}Data> {');
+    final String className = model.naming.dependencyName;
+
+    sink.writeln('class $className '
+        'extends Dependency<${model.naming.dataName}> {');
     for (FieldElement element in visitor.foreignFields.keys) {
       sink.writeln('final ${element.type} ${element.name};');
     }
     sink.writeln();
     if (visitor.foreignFields.isEmpty) {
-      sink.writeln('const ${name}Dependency() : super.strong();');
+      sink.writeln('const $className() : super.strong();');
     } else {
-      sink.writeln('${name}Dependency({');
+      sink.writeln('$className({');
       for (FieldElement element in visitor.foreignFields.keys) {
         sink.writeln('required this.${element.name},');
       }
@@ -231,26 +236,29 @@ class _OrmWriter {
   }
 
   void _writeEntityClass(StringSink sink) {
-    sink.writeln('class ${name}Entity implements ');
-    sink.writeln('Entity<${name}Data, $name> {');
+    final String className = model.naming.entityName;
+
+    sink.writeln('class $className '
+        'implements Entity<${model.naming.dataName}, '
+        '${model.naming.modelName}> {');
 
     // Constructors
-    sink.writeln('const ${name}Entity._();');
+    sink.writeln('const $className._();');
     sink.writeln();
 
     // tableName
     sink.writeln('@override');
-    sink.writeln('String get tableName => \'${model.displayName}\';');
+    sink.writeln('String get tableName => \'${model.name}\';');
     sink.writeln();
 
     // fromData
     sink.writeln('@override');
-    sink.writeln('$name fromData(');
-    sink.writeln('${name}Dependency dependency,');
+    sink.writeln('${model.naming.modelName} fromData(');
+    sink.writeln('${model.naming.dependencyName} dependency,');
     sink.writeln('String id,');
-    sink.writeln('${name}Data data,');
+    sink.writeln('${model.naming.dataName} data,');
     sink.writeln(') {');
-    sink.writeln('return $name(');
+    sink.writeln('return ${model.naming.modelName}(');
 
     final UidType uidType = model.uidType;
     sink
@@ -270,18 +278,19 @@ class _OrmWriter {
 
     // fromJson
     sink.writeln('@override');
-    sink.writeln('$name fromJson(String id, Map json) =>');
-    sink.writeln('$name.fromJson(id, json);');
+    sink.writeln('${model.naming.modelName} fromJson(String id, Map json) =>');
+    sink.writeln('${model.naming.modelName}.fromJson(id, json);');
     sink.writeln();
 
     // identify
     sink.writeln('@override');
-    sink.writeln('String identify($name model) => model.id;');
+    sink.writeln('String identify(${model.naming.modelName} '
+        'model) => model.id;');
     sink.writeln();
 
     // toJson
     sink.writeln('@override');
-    sink.writeln('Map toJson(${name}Data data) => data.toJson();');
+    sink.writeln('Map toJson(${model.naming.dataName} data) => data.toJson();');
 
     sink.writeln('}');
   }
@@ -289,7 +298,7 @@ class _OrmWriter {
   String write() {
     final StringBuffer buffer = StringBuffer();
     buffer.writeln('// **************************************************');
-    buffer.writeln('//     DORM: $name');
+    buffer.writeln('//     DORM: ${model.naming.modelName}');
     buffer.writeln('// **************************************************');
     buffer.writeln();
     _writeDataClass(buffer);
@@ -369,20 +378,14 @@ class OrmGenerator extends GeneratorForAnnotation<Model> {
     final ModelVisitor visitor = ModelVisitor();
     element.visitChildren(visitor);
 
-    final String name = element.name?.substring(1) ?? '';
     final _Model model = _Model(
       name: annotation.read('name').stringValue,
-      displayName: element.name ?? '',
       repositoryName: annotation.read('repositoryName').literalValue as String?,
       uidType: decodeUidType(annotation.read('uidType')) ?? UidType.simple(),
+      naming: _SchemaNaming(element.name as String),
     );
-    _visitedModels.add(_Model(
-      name: name,
-      displayName: model.name,
-      repositoryName: model.repositoryName,
-      uidType: model.uidType,
-    ));
-    return _OrmWriter(model: model, visitor: visitor, name: name).write();
+    _visitedModels.add(model);
+    return _OrmWriter(model: model, visitor: visitor).write();
   }
 
   @override
@@ -403,10 +406,11 @@ class OrmGenerator extends GeneratorForAnnotation<Model> {
     buffer.writeln('const Dorm(this._root);');
     buffer.writeln();
     for (_Model model in _visitedModels) {
-      buffer.writeln('Repository<${model.displayName}Data, ');
-      buffer.writeln('${model.displayName}> get ${model.repositoryName} =>');
-      buffer.writeln('Repository(root: _root, entity: const ');
-      buffer.writeln('${model.displayName}Entity._());');
+      buffer.writeln('Repository<${model.naming.dataName}, ');
+      buffer.writeln('${model.naming.modelName}> get '
+          '${model.repositoryName} =>');
+      buffer.writeln('Repository(root: _root, '
+          'entity: const ${model.naming.entityName}._());');
       buffer.writeln();
     }
     buffer.writeln('}');
