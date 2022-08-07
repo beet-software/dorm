@@ -185,3 +185,41 @@ Two files will be generated on the same directory: *social_network.g.dart* and
 your models in the database.
 
 See the `example` directory to see an example of the generated code.
+
+## Features
+
+### Unique identification (uids)
+
+According to [the framework](https://github.com/enzo-santos/dorm/blob/main/README.md#what-to-use-as-primary-key),
+there are three types of unique identifiers: simple, composite and foreign. These types
+are implemented through `UidType`:
+
+```dart
+// When creating a new country, this corresponds to the 'simple' type
+@Model(name: 'country', repositoryName: 'countries', uidType: UidType.simple())
+abstract class _Country {}
+
+// When creating a new state, this corresponds to the 'composite' type
+@Model(name: 'state', repositoryName: 'states', uidType: UidType.composite())
+abstract class _State {}
+
+// When creating a new capital, this corresponds to the 'foreign' type
+@Model(name: 'capital', repositoryName: 'capitals', uidType: UidType.sameAs(_Country))
+abstract class _Capital {}
+
+CustomUidValue _identifyCitizen(Object obj) {
+  final CitizenData data = obj as CitizenData; 
+  if (data.isForeigner) {
+    return CustomUidValue.value(data.visaCode);
+  }
+  if (data.socialSecurity != null) {
+    return CustomUidValue.value(data.socialSecurity);
+  }
+  return const CustomUidValue.simple();
+  // or return const CustomUidValue.composite();
+}
+
+// When creating a new citizen, this allows you to customize your primary key
+@Model(name: 'citizen', repositoryName: 'citizens', uidType: UidType.custom(_identifyCitizen))
+abstract class _Citizen {}
+```
