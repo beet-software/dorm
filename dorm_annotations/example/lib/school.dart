@@ -5,23 +5,6 @@ part 'school.dorm.dart';
 
 part 'school.g.dart';
 
-abstract class _Shape {}
-
-@PolymorphicData(name: 'rectangle')
-abstract class _Rectangle implements _Shape {
-  @Field(name: 'width')
-  double get width;
-
-  @Field(name: 'height')
-  double get height;
-}
-
-@PolymorphicData(name: 'circle')
-abstract class _Circle implements _Shape {
-  @Field(name: 'radius')
-  double get radius;
-}
-
 @Model(
   name: 'escola',
   repositoryName: 'schools',

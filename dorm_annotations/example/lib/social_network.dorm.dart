@@ -166,9 +166,9 @@ class PostEntity implements Entity<PostData, Post> {
   ) {
     return Post(
       id: id,
-      userId: dependency.userId,
       contents: data.contents,
       creationDate: data.creationDate,
+      userId: dependency.userId,
     );
   }
 
@@ -260,10 +260,10 @@ class MessageEntity implements Entity<MessageData, Message> {
   ) {
     return Message(
       id: id,
-      senderId: dependency.senderId,
-      receiverId: dependency.receiverId,
       contents: data.contents,
       creationDate: data.creationDate,
+      senderId: dependency.senderId,
+      receiverId: dependency.receiverId,
     );
   }
 

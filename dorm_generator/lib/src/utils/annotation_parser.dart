@@ -7,7 +7,7 @@ import 'package:source_gen/source_gen.dart';
 abstract class AnnotationParser<T> {
   const AnnotationParser();
 
-  Type get annotation;
+  Type get annotation => T;
 
   T parse(ConstantReader reader);
 
@@ -23,9 +23,6 @@ abstract class AnnotationParser<T> {
 
 class ModelParser extends AnnotationParser<Model> {
   const ModelParser();
-
-  @override
-  final Type annotation = Model;
 
   UidType? _decodeUidType(ConstantReader reader) {
     if (reader.isNull) return null;
@@ -61,9 +58,6 @@ class FieldParser extends AnnotationParser<Field> {
   const FieldParser();
 
   @override
-  final Type annotation = Field;
-
-  @override
   Field parse(ConstantReader reader) {
     return Field(
       name: reader.read('name').stringValue,
@@ -76,14 +70,24 @@ class ForeignFieldParser extends AnnotationParser<ForeignField> {
   const ForeignFieldParser();
 
   @override
-  final Type annotation = ForeignField;
-
-  @override
   ForeignField parse(ConstantReader reader) {
     return ForeignField(
       name: reader.read('name').stringValue,
       queryBy: reader.read('queryBy').enumValueFrom(QueryType.values),
       referTo: $Type(reader: reader.read('referTo')),
+    );
+  }
+}
+
+class PolymorphicFieldParser extends AnnotationParser<PolymorphicField> {
+  const PolymorphicFieldParser();
+
+  @override
+  PolymorphicField parse(ConstantReader reader) {
+    return PolymorphicField(
+      name: reader.read('name').stringValue,
+      queryBy: reader.read('queryBy').enumValueFrom(QueryType.values),
+      pivotName: reader.read('pivotName').stringValue,
     );
   }
 }

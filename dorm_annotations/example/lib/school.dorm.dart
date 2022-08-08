@@ -149,8 +149,8 @@ class StudentEntity implements Entity<StudentData, Student> {
   ) {
     return Student(
       id: dependency.key(id),
-      schoolId: dependency.schoolId,
       name: data.name,
+      schoolId: dependency.schoolId,
     );
   }
 

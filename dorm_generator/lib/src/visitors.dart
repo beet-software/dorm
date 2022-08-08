@@ -54,7 +54,7 @@ class ModelVisitor extends Visitor<Model, Field> {
 
   @override
   Iterable<AnnotationParser<Object>> get parsers =>
-      const [ForeignFieldParser(), FieldParser()];
+      const [ForeignFieldParser(), PolymorphicFieldParser(), FieldParser()];
 
   @override
   void onVisit(OrmContext context, ClassElement element) {
@@ -66,7 +66,6 @@ class ModelVisitor extends Visitor<Model, Field> {
       repositoryName: annotation.repositoryName,
       uidType: annotation.uidType,
       fields: _fields,
-      naming: SchemaNaming(element.name),
     );
   }
 

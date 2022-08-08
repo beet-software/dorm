@@ -30,13 +30,26 @@ class SchemaNaming {
   String get entityName => '${modelName}Entity';
 }
 
-class _OrmWriter {
+class _PolymorphicNaming {
+  // _Schema
+  final String schemaName;
+
+  const _PolymorphicNaming(this.schemaName);
+
+  String get modelName => schemaName.substring(1);
+
+  String get enumName => '${modelName}Type';
+}
+
+class _SchemaWriter {
   final $Model model;
   final SchemaNaming naming;
+  final Map<String, Map<String, $PolymorphicData>> polymorphicTree;
 
-  const _OrmWriter({
+  const _SchemaWriter({
     required this.model,
     required this.naming,
+    required this.polymorphicTree,
   });
 
   String _encodeUidType(UidType uidType) {
@@ -99,31 +112,68 @@ class _OrmWriter {
 
   void _writeDataClass(StringSink sink) {
     final String className = naming.dataName;
-    sink.writeln('@JsonSerializable(anyMap: true, explicitToJson: true)');
+
+    final Set<String> polymorphicKeys = polymorphicTree.keys.toSet();
+    final Set<String> modelFieldTypes =
+        model.fields.values.map((field) => field.data.type).toSet();
+    final bool hasPolymorphism =
+        polymorphicKeys.intersection(modelFieldTypes).isNotEmpty;
+
+    sink
+      ..write('@JsonSerializable(')
+      ..writeAll([
+        'anyMap: true',
+        'explicitToJson: true',
+        if (hasPolymorphism) 'constructor: \'_\'',
+      ], ', ')
+      ..writeln(')');
+
     sink.writeln('class $className {');
 
     // Fields
     sink.writeln();
     for (MapEntry<String, $ModelField> entry in model.ownFields.entries) {
-      final String? name = entry.value.field.name;
+      final String fieldName = entry.key;
+      final String fieldType = entry.value.data.type;
+      final bool isPolymorphicField = polymorphicKeys.contains(fieldType);
+
+      if (isPolymorphicField) {
+        final String typeKey =
+            (entry.value.field as PolymorphicField).pivotName;
+        sink
+          ..write('@JsonKey(')
+          ..writeAll([
+            'name: \'$typeKey\'',
+            'required: true',
+            'disallowNullValue: true',
+          ], ', ')
+          ..writeln(')');
+
+        sink
+          ..write('final ')
+          ..write('${fieldType.substring(1)}Type')
+          ..write(' ')
+          ..write('type')
+          ..writeln(';')
+          ..writeln();
+      }
+
+      final String? key = entry.value.field.name;
       final bool required = !entry.value.data.type.endsWith('?');
       sink
         ..write('@JsonKey(')
-        ..writeAll(
-          [
-            if (name != null) 'name: \'$name\'',
-            if (required) 'required: true',
-            if (required) 'disallowNullValue: true',
-          ],
-          ', ',
-        )
+        ..writeAll([
+          if (key != null) 'name: \'$key\'',
+          if (required) 'required: true',
+          if (required) 'disallowNullValue: true',
+        ], ', ')
         ..writeln(')');
 
       sink
         ..write('final ')
-        ..write(entry.value.data.type)
+        ..write(isPolymorphicField ? fieldType.substring(1) : fieldType)
         ..write(' ')
-        ..write(entry.key)
+        ..write(fieldName)
         ..writeln(';');
 
       sink.writeln();
@@ -136,6 +186,54 @@ class _OrmWriter {
     sink.writeln('_\$${className}FromJson(json);');
     sink.writeln();
 
+    if (hasPolymorphism) {
+      sink.writeln('factory $className._({');
+      for (MapEntry<String, $ModelField> entry in model.ownFields.entries) {
+        final String fieldName = entry.key;
+        final String fieldType = entry.value.data.type;
+        final bool isPolymorphicField = polymorphicKeys.contains(fieldType);
+
+        if (isPolymorphicField) {
+          sink
+            ..write('required ')
+            ..write('${fieldType.substring(1)}Type')
+            ..writeln(' type,');
+        }
+        sink
+          ..write('required ')
+          ..write(isPolymorphicField ? 'Map' : fieldType)
+          ..write(' ')
+          ..write(fieldName)
+          ..writeln(',');
+      }
+      sink.writeln('}) {');
+      sink.writeln('return $className(');
+      for (MapEntry<String, $ModelField> entry in model.ownFields.entries) {
+        final String fieldName = entry.key;
+        final String fieldType = entry.value.data.type;
+        final bool isPolymorphicField = polymorphicKeys.contains(fieldType);
+
+        if (isPolymorphicField) {
+          sink.writeln('type: type,');
+          sink
+            ..write(fieldName)
+            ..write(': ')
+            ..write(fieldType.substring(1))
+            ..write('.fromType(type, ')
+            ..write(fieldName)
+            ..writeln('),');
+        } else {
+          sink
+            ..write(fieldName)
+            ..write(': ')
+            ..write(fieldName)
+            ..writeln(',');
+        }
+      }
+      sink.writeln(');');
+      sink.writeln('}');
+    }
+
     // Constructors
     sink.writeln();
     sink.write('const ${naming.dataName}(');
@@ -146,6 +244,10 @@ class _OrmWriter {
         ..write(entry.key)
         ..writeln(',');
     }
+    if (hasPolymorphism) {
+      sink.writeln('required this.type,');
+    }
+
     sink.write(model.ownFields.isEmpty ? '' : '}');
     sink.writeln(');');
     sink.writeln();
@@ -162,40 +264,58 @@ class _OrmWriter {
   void _writeModelClass(StringSink sink) {
     final String className = naming.modelName;
 
-    sink.writeln('@JsonSerializable(anyMap: true, explicitToJson: true)');
+    final Set<String> polymorphicKeys = polymorphicTree.keys.toSet();
+    final Set<String> modelFieldTypes =
+        model.fields.values.map((field) => field.data.type).toSet();
+    final bool hasPolymorphism =
+        polymorphicKeys.intersection(modelFieldTypes).isNotEmpty;
+
+    sink
+      ..write('@JsonSerializable(')
+      ..writeAll([
+        'anyMap: true',
+        'explicitToJson: true',
+        if (hasPolymorphism) 'constructor: \'_\'',
+      ], ', ')
+      ..writeln(')');
+
     sink.writeln('class $className '
         'extends ${naming.dataName} '
         'implements ${naming.schemaName} {');
 
     // Fields
-    sink.writeln();
-    sink.writeln('@JsonKey('
-        'name: \'_id\', required: true, disallowNullValue: true)');
+    sink
+      ..write('@JsonKey(')
+      ..writeAll([
+        'name: \'_id\'',
+        'required: true',
+        'disallowNullValue: true',
+      ], ', ')
+      ..writeln(')');
     sink.writeln('final String id;');
 
     for (MapEntry<String, $ModelField> entry in model.foreignFields.entries) {
       sink.writeln();
-      final String? name = entry.value.field.name;
+      final String? key = entry.value.field.name;
       final bool required = !entry.value.data.type.endsWith('?');
 
       sink.writeln('@override');
       sink
         ..write('@JsonKey(')
-        ..writeAll(
-          [
-            if (name != null) 'name: \'$name\'',
-            if (required) 'required: true',
-            if (required) 'disallowNullValue: true',
-          ],
-          ', ',
-        )
+        ..writeAll([
+          if (key != null) 'name: \'$key\'',
+          if (required) 'required: true',
+          if (required) 'disallowNullValue: true',
+        ], ', ')
         ..writeln(')');
 
+      final String fieldName = entry.key;
+      final String fieldType = entry.value.data.type;
       sink
         ..write('final ')
-        ..write(entry.value.data.type)
+        ..write(fieldType)
         ..write(' ')
-        ..write(entry.key)
+        ..write(fieldName)
         ..writeln(';');
     }
     sink.writeln();
@@ -203,17 +323,94 @@ class _OrmWriter {
     // Factories
     sink.writeln('factory $className.fromJson(String id, Map json) =>');
     sink.writeln("_\$${className}FromJson({...json, '_id': id});");
+    sink.writeln();
+
+    if (hasPolymorphism) {
+      sink.writeln('factory $className._({');
+      sink.writeln('required String id,');
+      for (MapEntry<String, $ModelField> entry in model.fields.entries) {
+        final String fieldName = entry.key;
+        final String fieldType = entry.value.data.type;
+        final bool isPolymorphicField = polymorphicKeys.contains(fieldType);
+
+        if (isPolymorphicField) {
+          sink
+            ..write('required ')
+            ..write('${fieldType.substring(1)}Type')
+            ..writeln(' type,');
+
+          sink
+            ..write('required Map ')
+            ..write(fieldName)
+            ..writeln(',');
+        } else {
+          sink
+            ..write('required ')
+            ..write(fieldType)
+            ..write(' ')
+            ..write(fieldName)
+            ..writeln(',');
+        }
+      }
+      sink.writeln('}) {');
+      sink.writeln('final ${naming.dataName} data = ${naming.dataName}._(');
+      for (MapEntry<String, $ModelField> entry in model.ownFields.entries) {
+        final String fieldName = entry.key;
+        final String fieldType = entry.value.data.type;
+        final bool isPolymorphicField = polymorphicKeys.contains(fieldType);
+
+        if (isPolymorphicField) {
+          sink.writeln('type: type,');
+        }
+        sink
+          ..write(fieldName)
+          ..write(': ')
+          ..write(fieldName)
+          ..writeln(',');
+      }
+      sink.writeln(');');
+
+      sink.writeln('return $className(');
+      sink.writeln('id: id,');
+      for (MapEntry<String, $ModelField> entry in model.fields.entries) {
+        final String prefix = entry.value.field is ForeignField ? '' : 'data.';
+        final String fieldName = entry.key;
+        final String fieldType = entry.value.data.type;
+        final bool isPolymorphicField = polymorphicKeys.contains(fieldType);
+
+        if (isPolymorphicField) {
+          sink.write('type: data.type,');
+        }
+
+        sink
+          ..write(fieldName)
+          ..write(': ')
+          ..write(prefix)
+          ..write(fieldName)
+          ..writeln(',');
+      }
+      sink.writeln(');');
+
+      sink.writeln('}');
+      sink.writeln();
+    }
 
     // Constructor
-    sink.writeln();
     sink.writeln('const $className({');
     sink.writeln('required this.id,');
     for (MapEntry<String, $ModelField> entry in model.fields.entries) {
+      final String fieldName = entry.key;
+      final String fieldType = entry.value.data.type;
+      final bool isPolymorphicField = polymorphicKeys.contains(fieldType);
       final String prefix =
           entry.value.field is ForeignField ? 'this' : 'super';
+
+      if (isPolymorphicField) {
+        sink.writeln('required super.type,');
+      }
       sink
         ..write('required $prefix.')
-        ..write(entry.key)
+        ..write(fieldName)
         ..writeln(',');
     }
     sink.writeln('});');
@@ -316,12 +513,27 @@ class _OrmWriter {
       ..write(_encodeUidType(uidType))
       ..writeln(',');
 
-    for (String name in model.foreignFields.keys) {
-      sink.writeln('$name: dependency.$name,');
+    final Set<String> polymorphicKeys = polymorphicTree.keys.toSet();
+    for (MapEntry<String, $ModelField> entry in model.fields.entries) {
+      final String fieldName = entry.key;
+      final String fieldType = entry.value.data.type;
+      final bool isPolymorphicField = polymorphicKeys.contains(fieldType);
+      final String prefix =
+          entry.value.field is ForeignField ? 'dependency' : 'data';
+
+      if (isPolymorphicField) {
+        sink.writeln('type: data.type,');
+      }
+
+      sink
+        ..write(fieldName)
+        ..write(': ')
+        ..write(prefix)
+        ..write('.')
+        ..write(fieldName)
+        ..writeln(',');
     }
-    for (String name in model.ownFields.keys) {
-      sink.writeln('$name: data.$name,');
-    }
+
     sink.writeln(');');
     sink.writeln('}');
     sink.writeln();
@@ -365,6 +577,142 @@ class _OrmWriter {
   }
 }
 
+class _PolymorphicWriter {
+  final Map<String, $PolymorphicData> datum;
+  final _PolymorphicNaming naming;
+
+  const _PolymorphicWriter({
+    required this.datum,
+    required this.naming,
+  });
+
+  void _writeEnum(StringSink sink) {
+    final String enumName = naming.enumName;
+    sink.writeln('enum $enumName {');
+    for (String name in datum.keys) {
+      final String enumTypeName = name[1].toLowerCase() + name.substring(2);
+      sink
+        ..write(enumTypeName)
+        ..writeln(',');
+    }
+    sink.writeln('}');
+  }
+
+  void _writeClass(StringSink sink) {
+    final String className = naming.modelName;
+    sink.writeln('abstract class $className implements ${naming.schemaName} {');
+
+    // Factories
+    sink.writeln('factory $className.fromType('
+        '${naming.enumName} type, '
+        'Map json) {');
+    sink.writeln('switch (type) {');
+    for (MapEntry<String, $PolymorphicData> entry in datum.entries) {
+      final String branchName =
+          entry.key[1].toLowerCase() + entry.key.substring(2);
+      sink.writeln('case ${naming.enumName}.$branchName:');
+      sink.writeln('return ${entry.key.substring(1)}.fromJson(json);');
+    }
+    sink.writeln('}');
+    sink.writeln('}');
+    sink.writeln();
+
+    // Constructor
+    sink.writeln('const $className._();');
+    sink.writeln();
+
+    // Getters
+    sink.writeln('${naming.enumName} get type;');
+    sink.writeln();
+
+    // Methods
+    sink.writeln('Map<String, Object?> toJson();');
+
+    sink.writeln();
+
+    sink.writeln('}');
+  }
+
+  void _writeModelClass(StringSink sink, String name, $PolymorphicData data) {
+    sink.writeln('@JsonSerializable(anyMap: true, explicitToJson: true)');
+    sink.writeln('class ${name.substring(1)} '
+        'extends ${naming.modelName} '
+        'implements $name {');
+
+    // Fields
+    for (MapEntry<String, $PolymorphicDataField> entry in data.fields.entries) {
+      final String? key = entry.value.name;
+      final String name = entry.key;
+      final String type = entry.value.variable.type;
+      final bool required = !type.endsWith('?');
+      sink
+        ..writeln('@override')
+        ..write('@JsonKey(')
+        ..writeAll(
+          [
+            if (key != null) 'name: \'$key\'',
+            if (required) 'required: true',
+            if (required) 'disallowNullValue: true',
+          ],
+          ', ',
+        )
+        ..writeln(')');
+
+      sink
+        ..write('final ')
+        ..write(entry.value.variable.type)
+        ..write(' ')
+        ..write(name)
+        ..writeln(';')
+        ..writeln();
+    }
+    sink.writeln();
+
+    // Factories
+    sink.writeln('factory ${name.substring(1)}.fromJson(Map json) => '
+        '_\$${name.substring(1)}FromJson(json);');
+    sink.writeln();
+
+    // Constructors
+    sink.writeln('const ${name.substring(1)}({');
+    for (MapEntry<String, $PolymorphicDataField> entry in data.fields.entries) {
+      sink
+        ..write('required this.')
+        ..write(entry.key)
+        ..writeln(',');
+    }
+    sink.writeln('}) : super._();');
+    sink.writeln();
+
+    // Getters
+    final String enumTypeName = name[1].toLowerCase() + name.substring(2);
+    sink
+      ..writeln('@override')
+      ..writeln('${naming.enumName} get type => '
+          '${naming.enumName}.$enumTypeName;')
+      ..writeln();
+
+    // Methods
+    sink
+      ..writeln('@override')
+      ..writeln('Map<String, Object?> toJson() =>'
+          '_\$${name.substring(1)}ToJson(this);')
+      ..writeln();
+
+    sink.writeln('}');
+  }
+
+  String write() {
+    final StringSink sink = StringBuffer();
+    _writeEnum(sink);
+    _writeClass(sink);
+    for (MapEntry<String, $PolymorphicData> entry in datum.entries) {
+      _writeModelClass(sink, entry.key, entry.value);
+    }
+    return '$sink';
+  }
+}
+
 class OrmContext {
   final Map<String, Map<String, $PolymorphicData>> polymorphicDatum;
   final Map<String, $Model> modelDatum;
@@ -388,10 +736,18 @@ class OrmGenerator extends Generator {
     }
 
     final StringSink sink = StringBuffer();
+    for (MapEntry<String, Map<String, $PolymorphicData>> entry
+        in context.polymorphicDatum.entries) {
+      sink.writeln(_PolymorphicWriter(
+        datum: entry.value,
+        naming: _PolymorphicNaming(entry.key),
+      ).write());
+    }
     for (MapEntry<String, $Model> entry in context.modelDatum.entries) {
-      sink.writeln(_OrmWriter(
+      sink.writeln(_SchemaWriter(
         model: entry.value,
         naming: SchemaNaming(entry.key),
+        polymorphicTree: context.polymorphicDatum,
       ).write());
     }
     sink.writeln();
