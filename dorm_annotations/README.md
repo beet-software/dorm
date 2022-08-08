@@ -223,3 +223,51 @@ CustomUidValue _identifyCitizen(Object obj) {
 @Model(name: 'citizen', repositoryName: 'citizens', uidType: UidType.custom(_identifyCitizen))
 abstract class _Citizen {}
 ```
+
+### Polymorphism
+
+If you have a model that may contain different fields for different types, you can use 
+`PolymorphicData` together with `PolymorphicField` to represent it on the database. 
+
+For example, you have a RPG database with a abstract schema named `Operation` and wants
+to derive `Attack`, `Defense` and `Healing` from it. You can use the following:
+
+```dart
+abstract class _Action {}
+
+@PolymorphicData(name: 'attack')
+abstract class _Attack implements _Action {
+  @Field(name: 'strength')
+  int get strength;
+}
+
+@PolymorphicData(name: 'defence')
+abstract class _Defense implements _Action {
+  @Field(name: 'resistence')
+  int get resistence;
+}
+
+@PolymorphicData(name: 'healing')
+abstract class _Healing implements _Action {
+  @Field(name: 'health')
+  int get health;
+}
+
+@Model(name: 'operation', repositoryName: 'operations')
+abstract class _Operation {
+  @Field(name: 'name')
+  String get name;
+
+  @PolymorphicField(name: 'action', pivotName: 'type')
+  _Action get action;
+}
+```
+
+After generated `Dorm`, you now have implemented polymorphism. Note that
+
+- `_Action` does not need to be annotated: it'll be deduced from classes annotated with `PolymorphicData`
+- Classes annotated with `PolymorphicData` must implement a single interface (otherwise an error will be raised while generating)
+- Currently, adding fields to `_Action` is not supported. However, it'll be implemented in future versions
+- Two additional classes will be added in generation: `ActionType` (an enum) and `Action` (a class)
+- The only model here is `_Operation`, which contains an `_Action`. An additional field will be added to `OperationData`: `type`,
+  which will contain the current type of the operation
