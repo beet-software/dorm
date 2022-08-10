@@ -5,10 +5,12 @@ enum QueryType { text, value, date }
 @Target({TargetKind.getter})
 class Field {
   final String? name;
+  final Object? defaultValue;
   final QueryType? queryBy;
 
   const Field({
-    required this.name,
+    this.name,
+    this.defaultValue,
     this.queryBy,
   });
 }

@@ -159,13 +159,15 @@ class _SchemaWriter {
       }
 
       final String? key = entry.value.field.name;
-      final bool required = !entry.value.data.type.endsWith('?');
+      final Object? defaultValue = entry.value.field.defaultValue;
+      final bool required = defaultValue == null && !entry.value.data.type.endsWith('?');
       sink
         ..write('@JsonKey(')
         ..writeAll([
           if (key != null) 'name: \'$key\'',
           if (required) 'required: true',
           if (required) 'disallowNullValue: true',
+          if (defaultValue != null) 'defaultValue: $defaultValue',
         ], ', ')
         ..writeln(')');
 

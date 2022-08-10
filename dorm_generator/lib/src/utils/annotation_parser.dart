@@ -62,6 +62,7 @@ class FieldParser extends AnnotationParser<Field> {
     return Field(
       name: reader.read('name').stringValue,
       queryBy: reader.read('queryBy').enumValueFrom(QueryType.values),
+      defaultValue: reader.read('defaultValue').literalValue,
     );
   }
 }

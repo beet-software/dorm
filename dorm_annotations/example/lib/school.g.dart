@@ -14,12 +14,17 @@ SchoolData _$SchoolDataFromJson(Map json) {
   );
   return SchoolData(
     name: json['nome'] as String,
+    phoneNumbers: (json['contatos'] as List<dynamic>?)
+            ?.map((e) => e as String)
+            .toList() ??
+        [],
   );
 }
 
 Map<String, dynamic> _$SchoolDataToJson(SchoolData instance) =>
     <String, dynamic>{
       'nome': instance.name,
+      'contatos': instance.phoneNumbers,
     };
 
 School _$SchoolFromJson(Map json) {
@@ -31,11 +36,16 @@ School _$SchoolFromJson(Map json) {
   return School(
     id: json['_id'] as String,
     name: json['nome'] as String,
+    phoneNumbers: (json['contatos'] as List<dynamic>?)
+            ?.map((e) => e as String)
+            .toList() ??
+        [],
   );
 }
 
 Map<String, dynamic> _$SchoolToJson(School instance) => <String, dynamic>{
       'nome': instance.name,
+      'contatos': instance.phoneNumbers,
       '_id': instance.id,
     };
 
@@ -47,12 +57,14 @@ StudentData _$StudentDataFromJson(Map json) {
   );
   return StudentData(
     name: json['nome'] as String,
+    hasDisabilities: json['possui-deficiencias'] as bool? ?? false,
   );
 }
 
 Map<String, dynamic> _$StudentDataToJson(StudentData instance) =>
     <String, dynamic>{
       'nome': instance.name,
+      'possui-deficiencias': instance.hasDisabilities,
     };
 
 Student _$StudentFromJson(Map json) {
@@ -64,12 +76,14 @@ Student _$StudentFromJson(Map json) {
   return Student(
     id: json['_id'] as String,
     name: json['nome'] as String,
+    hasDisabilities: json['possui-deficiencias'] as bool? ?? false,
     schoolId: json['id-escola'] as String,
   );
 }
 
 Map<String, dynamic> _$StudentToJson(Student instance) => <String, dynamic>{
       'nome': instance.name,
+      'possui-deficiencias': instance.hasDisabilities,
       '_id': instance.id,
       'id-escola': instance.schoolId,
     };

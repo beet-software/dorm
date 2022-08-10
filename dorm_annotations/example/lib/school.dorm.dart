@@ -15,10 +15,14 @@ class SchoolData {
   @JsonKey(name: 'nome', required: true, disallowNullValue: true)
   final String name;
 
+  @JsonKey(name: 'contatos', defaultValue: [])
+  final List<String> phoneNumbers;
+
   factory SchoolData.fromJson(Map json) => _$SchoolDataFromJson(json);
 
   const SchoolData({
     required this.name,
+    required this.phoneNumbers,
   });
 
   Map<String, Object?> toJson() => _$SchoolDataToJson(this);
@@ -35,6 +39,7 @@ class School extends SchoolData implements _School {
   const School({
     required this.id,
     required super.name,
+    required super.phoneNumbers,
   });
 
   @override
@@ -67,6 +72,7 @@ class SchoolEntity implements Entity<SchoolData, School> {
     return School(
       id: id,
       name: data.name,
+      phoneNumbers: data.phoneNumbers,
     );
   }
 
@@ -89,10 +95,14 @@ class StudentData {
   @JsonKey(name: 'nome', required: true, disallowNullValue: true)
   final String name;
 
+  @JsonKey(name: 'possui-deficiencias', defaultValue: false)
+  final bool hasDisabilities;
+
   factory StudentData.fromJson(Map json) => _$StudentDataFromJson(json);
 
   const StudentData({
     required this.name,
+    required this.hasDisabilities,
   });
 
   Map<String, Object?> toJson() => _$StudentDataToJson(this);
@@ -113,6 +123,7 @@ class Student extends StudentData implements _Student {
   const Student({
     required this.id,
     required super.name,
+    required super.hasDisabilities,
     required this.schoolId,
   });
 
@@ -150,6 +161,7 @@ class StudentEntity implements Entity<StudentData, Student> {
     return Student(
       id: dependency.key(id),
       name: data.name,
+      hasDisabilities: data.hasDisabilities,
       schoolId: dependency.schoolId,
     );
   }

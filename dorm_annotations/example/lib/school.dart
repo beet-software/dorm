@@ -13,6 +13,9 @@ part 'school.g.dart';
 abstract class _School {
   @Field(name: 'nome', queryBy: QueryType.text)
   String get name;
+
+  @Field(name: 'contatos', defaultValue: [])
+  List<String> get phoneNumbers;
 }
 
 @Model(
@@ -23,6 +26,9 @@ abstract class _School {
 abstract class _Student {
   @Field(name: 'nome', queryBy: QueryType.text)
   String get name;
+
+  @Field(name: 'possui-deficiencias', defaultValue: false)
+  bool get hasDisabilities;
 
   @ForeignField(name: 'id-escola', referTo: _School)
   String get schoolId;
