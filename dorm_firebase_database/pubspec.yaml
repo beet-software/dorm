@@ -1,6 +1,7 @@
 name: dorm_firebase_database
 description: A dORM's Reference implementation using firebase_database. 
 version: 0.2.0
+publish_to: none
 
 environment:
   sdk: '>=2.17.3 <3.0.0'

@@ -37,8 +37,24 @@ class FirebaseQuery implements Query {
   Future<Object?> get() => _query.get().then((snapshot) => snapshot.value);
 
   @override
+  Future<Map<String, Object>> getChildren() => _query.get().then((snapshot) {
+        return {
+          for (fd.DataSnapshot child in snapshot.children)
+            child.key as String: child.value as Object,
+        };
+      });
+
+  @override
   Stream<Object?> get onValue =>
       _query.onValue.map((event) => event.snapshot.value);
+
+  @override
+  Stream<Map<String, Object>> get onChildren => _query.onValue.map((event) {
+        return {
+          for (fd.DataSnapshot child in event.snapshot.children)
+            child.key as String: child.value as Object,
+        };
+      });
 }
 
 class FirebaseReference extends FirebaseQuery with Reference {
