@@ -17,5 +17,9 @@ abstract class Query {
 
   Stream<Object?> get onValue;
 
+  Stream<Map<String, Object>> get onChildren;
+
   Future<Object?> get();
+
+  Future<Map<String, Object>> getChildren();
 }

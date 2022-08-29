@@ -133,13 +133,11 @@ class Repository<Data, Model extends Data>
   Future<List<Model>> peekAll([Filter filter = const Filter.empty()]) {
     return filter //
         .filter(_ref)
-        .get()
-        .then((value) {
-      final Map? data = value as Map?;
-      if (data == null) return [];
-      if (data.isEmpty) return [];
-      return data.entries.map((entry) {
-        final String key = entry.key as String;
+        .getChildren()
+        .then((values) {
+      if (values.isEmpty) return [];
+      return values.entries.map((entry) {
+        final String key = entry.key;
         final Map value = entry.value as Map;
         return entity.fromJson(key, value);
       }).toList();
@@ -174,13 +172,11 @@ class Repository<Data, Model extends Data>
   Stream<List<Model>> pullAll([Filter filter = const Filter.empty()]) {
     return filter //
         .filter(_ref)
-        .onValue
-        .map((value) {
-      final Map? data = value as Map?;
-      if (data == null) return [];
-      if (data.isEmpty) return [];
-      return data.entries.map((entry) {
-        final String key = entry.key as String;
+        .onChildren
+        .map((values) {
+      if (values.isEmpty) return [];
+      return values.entries.map((entry) {
+        final String key = entry.key;
         final Map value = entry.value as Map;
         return entity.fromJson(key, value);
       }).toList();
