@@ -6,29 +6,33 @@ import 'package:firebase_database/firebase_database.dart' as fd;
 import 'package:http/http.dart' as http;
 
 import 'firebase_instance.dart';
+import 'offline.dart';
 
 class FirebaseQuery implements Query {
+  final FirebaseInstance instance;
   final fd.Query _query;
 
-  const FirebaseQuery(this._query);
+  const FirebaseQuery(this.instance, this._query);
+
+  FirebaseQuery _using(fd.Query query) => FirebaseQuery(instance, query);
 
   @override
-  Query startAt(Object? value) => FirebaseQuery(_query.startAt(value));
+  Query startAt(Object? value) => _using(_query.startAt(value));
 
   @override
-  Query endAt(Object? value) => FirebaseQuery(_query.endAt(value));
+  Query endAt(Object? value) => _using(_query.endAt(value));
 
   @override
-  Query equalTo(Object? value) => FirebaseQuery(_query.equalTo(value));
+  Query equalTo(Object? value) => _using(_query.equalTo(value));
 
   @override
-  Query limitToFirst(int limit) => FirebaseQuery(_query.limitToFirst(limit));
+  Query limitToFirst(int limit) => _using(_query.limitToFirst(limit));
 
   @override
-  Query limitToLast(int limit) => FirebaseQuery(_query.limitToLast(limit));
+  Query limitToLast(int limit) => _using(_query.limitToLast(limit));
 
   @override
-  Query orderByChild(String key) => FirebaseQuery(_query.orderByChild(key));
+  Query orderByChild(String key) => _using(_query.orderByChild(key));
 
   @override
   String get path => _query.path;
@@ -44,27 +48,38 @@ class FirebaseQuery implements Query {
         };
       });
 
-  @override
-  Stream<Object?> get onValue =>
-      _query.onValue.map((event) => event.snapshot.value);
+  Stream<fd.DataSnapshot> get _onValue {
+    switch (instance.offlineMode) {
+      case OfflineMode.exclude:
+        return _query.onValue.map((event) => event.snapshot);
+      case OfflineMode.include:
+        return OfflineAdapter(instance: instance.database, query: _query)
+            .stream;
+    }
+  }
 
   @override
-  Stream<Map<String, Object>> get onChildren => _query.onValue.map((event) {
+  Stream<Object?> get onValue => _onValue.map((snapshot) => snapshot.value);
+
+  @override
+  Stream<Map<String, Object>> get onChildren => _onValue.map((snapshot) {
         return {
-          for (fd.DataSnapshot child in event.snapshot.children)
+          for (fd.DataSnapshot child in snapshot.children)
             child.key as String: child.value as Object,
         };
       });
 }
 
 class FirebaseReference extends FirebaseQuery with Reference {
-  final FirebaseInstance instance;
+  FirebaseReference(
+    FirebaseInstance instance, [
+    String? path,
+  ]) : super(instance, instance.database.ref(path));
 
-  FirebaseReference(this.instance, [String? path])
-      : super(instance.database.ref(path));
-
-  const FirebaseReference._(this.instance, fd.DatabaseReference ref)
-      : super(ref);
+  const FirebaseReference._(
+    FirebaseInstance instance,
+    fd.DatabaseReference ref,
+  ) : super(instance, ref);
 
   fd.DatabaseReference get _ref => super._query as fd.DatabaseReference;
 
