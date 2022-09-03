@@ -1,4 +1,4 @@
-part of '../dorm.dart';
+import 'query.dart';
 
 abstract class Filter {
   const factory Filter.empty() = _EmptyFilter;

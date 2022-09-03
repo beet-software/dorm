@@ -1,0 +1,10 @@
+name: dorm
+description: Provides classes to implement DORM framework.
+version: 0.1.0
+
+environment:
+  sdk: ">=2.17.3 <3.0.0"
+
+dependencies:
+  meta: ^1.7.0
+  lints: ^2.0.0

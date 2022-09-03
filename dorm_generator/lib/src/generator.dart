@@ -70,8 +70,12 @@ class _SchemaWriter {
       caseCustom: (builder) {
         final $CustomUidValue value = builder(0) as $CustomUidValue;
         final String name = value.reader.functionName;
-        return '\$parseCustomUidValue(dependency, id, '
-            '$name(${naming.dummyName}.fromData(dependency, data)),)';
+        return '$name(${naming.dummyName}.fromData(dependency, data))'
+            '.when('
+            'caseSimple: () => id,'
+            'caseComposite: () => dependency.key(id),'
+            'caseValue: (id) => id,'
+            ')';
       },
     );
   }
@@ -160,7 +164,8 @@ class _SchemaWriter {
 
       final String? key = entry.value.field.name;
       final Object? defaultValue = entry.value.field.defaultValue;
-      final bool required = defaultValue == null && !entry.value.data.type.endsWith('?');
+      final bool required =
+          defaultValue == null && !entry.value.data.type.endsWith('?');
       sink
         ..write('@JsonKey(')
         ..writeAll([
@@ -554,7 +559,8 @@ class _SchemaWriter {
 
     // toJson
     sink.writeln('@override');
-    sink.writeln('Map toJson(${naming.dataName} data) => data.toJson();');
+    sink.writeln(
+        'Map<String, Object?> toJson(${naming.dataName} data) => data.toJson();');
 
     sink.writeln('}');
   }

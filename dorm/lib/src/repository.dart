@@ -1,4 +1,7 @@
-part of '../dorm.dart';
+import 'dependency.dart';
+import 'entity.dart';
+import 'filter.dart';
+import 'reference.dart';
 
 /// Represents the operations available for a [Model] in a database.
 abstract class ModelRepository<Model> {

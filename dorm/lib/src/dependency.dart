@@ -1,5 +1,3 @@
-part of '../dorm.dart';
-
 abstract class Dependency<Data> {
   const Dependency.strong() : this._(const []);
 
@@ -9,5 +7,5 @@ abstract class Dependency<Data> {
 
   const Dependency._(this.ids);
 
-  String key(String id) => [...ids, id].join('&');
+  String key([String? id]) => [...ids, if (id != null) id].join('&');
 }

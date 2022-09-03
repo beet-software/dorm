@@ -182,7 +182,7 @@ class DrawingEntity implements Entity<DrawingData, Drawing> {
   String identify(Drawing model) => model.id;
 
   @override
-  Map toJson(DrawingData data) => data.toJson();
+  Map<String, Object?> toJson(DrawingData data) => data.toJson();
 }
 
 // **************************************************

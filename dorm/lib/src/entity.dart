@@ -1,4 +1,4 @@
-part of '../dorm.dart';
+import 'dependency.dart';
 
 abstract class Entity<Data, Model extends Data> {
   String get tableName;
@@ -7,7 +7,7 @@ abstract class Entity<Data, Model extends Data> {
 
   Model fromData(covariant Dependency<Data> dependency, String id, Data data);
 
-  Map toJson(Data data);
+  Map<String, Object?> toJson(Data data);
 
   String identify(Model model);
 }
