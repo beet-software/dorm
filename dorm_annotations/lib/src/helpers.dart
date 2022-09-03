@@ -1,6 +1,3 @@
-import 'dorm.dart';
-import 'uid_type.dart';
-
 String? $normalizeText(String? value) {
   if (value == null) return null;
   if (value.isEmpty) return value;
@@ -31,16 +28,4 @@ String? $normalizeDate(DateTime? value) {
   return '$year'.padLeft(4, '0') +
       '$month'.padLeft(2, '0') +
       '$day'.padLeft(2, '0');
-}
-
-String $parseCustomUidValue(
-  Dependency<Object> dependency,
-  String id,
-  CustomUidValue value,
-) {
-  return value.when(
-    caseSimple: () => id,
-    caseComposite: () => dependency.key(id),
-    caseValue: (id) => id,
-  );
 }

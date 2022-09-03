@@ -1,5 +1,3 @@
-part of '../dorm.dart';
-
 abstract class Query {
   Query orderByChild(String key);
 

@@ -1,4 +1,4 @@
-part of '../dorm.dart';
+import 'query.dart';
 
 abstract class Reference implements Query {
   Reference child(String key);

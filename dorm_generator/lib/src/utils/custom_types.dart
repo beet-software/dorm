@@ -3,7 +3,6 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
 import 'package:source_gen/source_gen.dart';
 
-import '../generator.dart';
 import 'annotation_parser.dart';
 
 extension AdditionalReads on ConstantReader {

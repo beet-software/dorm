@@ -92,7 +92,7 @@ class UserEntity implements Entity<UserData, User> {
   String identify(User model) => model.id;
 
   @override
-  Map toJson(UserData data) => data.toJson();
+  Map<String, Object?> toJson(UserData data) => data.toJson();
 }
 
 // **************************************************
@@ -179,7 +179,7 @@ class PostEntity implements Entity<PostData, Post> {
   String identify(Post model) => model.id;
 
   @override
-  Map toJson(PostData data) => data.toJson();
+  Map<String, Object?> toJson(PostData data) => data.toJson();
 }
 
 // **************************************************
@@ -274,7 +274,7 @@ class MessageEntity implements Entity<MessageData, Message> {
   String identify(Message model) => model.id;
 
   @override
-  Map toJson(MessageData data) => data.toJson();
+  Map<String, Object?> toJson(MessageData data) => data.toJson();
 }
 
 // **************************************************

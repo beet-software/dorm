@@ -83,7 +83,7 @@ class SchoolEntity implements Entity<SchoolData, School> {
   String identify(School model) => model.id;
 
   @override
-  Map toJson(SchoolData data) => data.toJson();
+  Map<String, Object?> toJson(SchoolData data) => data.toJson();
 }
 
 // **************************************************
@@ -173,7 +173,7 @@ class StudentEntity implements Entity<StudentData, Student> {
   String identify(Student model) => model.id;
 
   @override
-  Map toJson(StudentData data) => data.toJson();
+  Map<String, Object?> toJson(StudentData data) => data.toJson();
 }
 
 // **************************************************
@@ -259,10 +259,10 @@ class TeacherEntity implements Entity<TeacherData, Teacher> {
     TeacherData data,
   ) {
     return Teacher(
-      id: $parseCustomUidValue(
-        dependency,
-        id,
-        _Teacher._id(_$Teacher.fromData(dependency, data)),
+      id: _Teacher._id(_$Teacher.fromData(dependency, data)).when(
+        caseSimple: () => id,
+        caseComposite: () => dependency.key(id),
+        caseValue: (id) => id,
       ),
       name: data.name,
       ssn: data.ssn,
@@ -276,7 +276,7 @@ class TeacherEntity implements Entity<TeacherData, Teacher> {
   String identify(Teacher model) => model.id;
 
   @override
-  Map toJson(TeacherData data) => data.toJson();
+  Map<String, Object?> toJson(TeacherData data) => data.toJson();
 }
 
 // **************************************************
@@ -350,7 +350,7 @@ class HistoryEntity implements Entity<HistoryData, History> {
   String identify(History model) => model.id;
 
   @override
-  Map toJson(HistoryData data) => data.toJson();
+  Map<String, Object?> toJson(HistoryData data) => data.toJson();
 }
 
 // **************************************************
@@ -439,7 +439,7 @@ class TeachingEntity implements Entity<TeachingData, Teaching> {
   String identify(Teaching model) => model.id;
 
   @override
-  Map toJson(TeachingData data) => data.toJson();
+  Map<String, Object?> toJson(TeachingData data) => data.toJson();
 }
 
 // **************************************************
@@ -528,7 +528,7 @@ class ClassEntity implements Entity<ClassData, Class> {
   String identify(Class model) => model.id;
 
   @override
-  Map toJson(ClassData data) => data.toJson();
+  Map<String, Object?> toJson(ClassData data) => data.toJson();
 }
 
 // **************************************************
