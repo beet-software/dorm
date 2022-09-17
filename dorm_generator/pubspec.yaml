@@ -13,7 +13,7 @@ dependencies:
   
   dorm_annotations:
     git:
-      url: http://github.com/enzo-santos/dorm.git
+      url: https://github.com/enzo-santos/dorm.git
       ref: main
       path: dorm_annotations
 
