@@ -33,7 +33,7 @@
         <entry key="dorm_annotations">
           <value>
             <list>
-              <option value="$USER_HOME$/AppData/Local/Pub/Cache/git/dorm-f4ae8080af199132c4018b53167f0c6625dd41da/dorm_annotations/lib" />
+              <option value="$PROJECT_DIR$/../dorm_annotations/lib" />
             </list>
           </value>
         </entry>
@@ -222,7 +222,6 @@
       </option>
     </properties>
     <CLASSES>
-      <root url="file://$USER_HOME$/AppData/Local/Pub/Cache/git/dorm-f4ae8080af199132c4018b53167f0c6625dd41da/dorm_annotations/lib" />
       <root url="file://$USER_HOME$/AppData/Local/Pub/Cache/hosted/pub.dartlang.org/async-2.9.0/lib" />
       <root url="file://$USER_HOME$/AppData/Local/Pub/Cache/hosted/pub.dartlang.org/characters-1.2.0/lib" />
       <root url="file://$USER_HOME$/AppData/Local/Pub/Cache/hosted/pub.dartlang.org/clock-1.1.1/lib" />
@@ -253,6 +252,7 @@
       <root url="file://$PROJECT_DIR$/../../../bin/flutter/bin/cache/pkg/sky_engine/lib" />
       <root url="file://$PROJECT_DIR$/../../../bin/flutter/packages/flutter/lib" />
       <root url="file://$PROJECT_DIR$/../../../bin/flutter/packages/flutter_web_plugins/lib" />
+      <root url="file://$PROJECT_DIR$/../dorm_annotations/lib" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

@@ -1,10 +1,12 @@
+import 'package:dorm/src/merging.dart';
+
 import 'dependency.dart';
 import 'entity.dart';
 import 'filter.dart';
 import 'reference.dart';
 
 /// Represents the operations available for a [Model] in a database.
-abstract class ModelRepository<Model> {
+abstract class ModelRepository<Model> implements Mergeable<Model> {
   /// Listens for all the models in this table and their changes.
   ///
   /// If there are no models, this method will yield an empty list.
@@ -122,6 +124,22 @@ class Repository<Data, Model extends Data>
   const Repository({required this.root, required this.entity});
 
   Reference get _ref => root.child(entity.tableName);
+
+  @override
+  Mergeable<Join<Model, RightModel?>> merge1to1<RightModel>(
+    ModelRepository<RightModel> right, {
+    required String Function(Model p1) on,
+    Filter where = const Filter.empty(),
+  }) {
+    return Join1to1(left: this, right: right, on: on, where: where);
+  }
+
+  @override
+  Mergeable<Join<Model, List<RightModel>>> merge1toN<RightModel>(
+    ModelRepository<RightModel> right, {
+    required Filter Function(Model p1) on,
+    Filter where = const Filter.empty(),
+  }) {}
 
   @override
   Future<Model?> peek(String id) {
