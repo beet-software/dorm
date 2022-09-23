@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:dorm_annotations/dorm_annotations.dart' show Query, Reference;
+import 'package:dorm/dorm.dart' show Query, Reference;
 import 'package:firebase_auth/firebase_auth.dart' as fa;
 import 'package:firebase_database/firebase_database.dart' as fd;
 import 'package:http/http.dart' as http;

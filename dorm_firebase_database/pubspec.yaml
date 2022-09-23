@@ -11,12 +11,11 @@ dependencies:
   firebase_auth: ^3.4.0
   firebase_core: ^1.19.0
   firebase_database: ^9.0.17
-
-  dorm_annotations:
+  dorm:
     git:
       url: https://github.com/enzo-santos/dorm.git
       ref: main
-      path: dorm_annotations
+      path: dorm
 
 dev_dependencies:
   lints: ^2.0.0
