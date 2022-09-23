@@ -65,7 +65,7 @@ class UserDependency extends Dependency<UserData> {
 }
 
 class UserEntity implements Entity<UserData, User> {
-  const UserEntity._();
+  const UserEntity();
 
   @override
   String get tableName => 'user';
@@ -164,7 +164,7 @@ class PostDependency extends Dependency<PostData> {
 }
 
 class PostEntity implements Entity<PostData, Post> {
-  const PostEntity._();
+  const PostEntity();
 
   @override
   String get tableName => 'post';
@@ -268,7 +268,7 @@ class MessageDependency extends Dependency<MessageData> {
 }
 
 class MessageEntity implements Entity<MessageData, Message> {
-  const MessageEntity._();
+  const MessageEntity();
 
   @override
   String get tableName => 'message';
@@ -319,11 +319,11 @@ class Dorm {
   const Dorm(this._root);
 
   Repository<UserData, User> get users =>
-      Repository(root: _root, entity: const UserEntity._());
+      Repository(root: _root, entity: const UserEntity());
 
   Repository<PostData, Post> get posts =>
-      Repository(root: _root, entity: const PostEntity._());
+      Repository(root: _root, entity: const PostEntity());
 
   Repository<MessageData, Message> get messages =>
-      Repository(root: _root, entity: const MessageEntity._());
+      Repository(root: _root, entity: const MessageEntity());
 }

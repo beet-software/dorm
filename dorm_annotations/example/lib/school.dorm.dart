@@ -58,7 +58,7 @@ class SchoolDependency extends Dependency<SchoolData> {
 }
 
 class SchoolEntity implements Entity<SchoolData, School> {
-  const SchoolEntity._();
+  const SchoolEntity();
 
   @override
   String get tableName => 'escola';
@@ -156,7 +156,7 @@ class StudentDependency extends Dependency<StudentData> {
 }
 
 class StudentEntity implements Entity<StudentData, Student> {
-  const StudentEntity._();
+  const StudentEntity();
 
   @override
   String get tableName => 'aluno';
@@ -266,7 +266,7 @@ class TeacherDependency extends Dependency<TeacherData> {
 }
 
 class TeacherEntity implements Entity<TeacherData, Teacher> {
-  const TeacherEntity._();
+  const TeacherEntity();
 
   @override
   String get tableName => 'professor';
@@ -354,7 +354,7 @@ class HistoryDependency extends Dependency<HistoryData> {
 }
 
 class HistoryEntity implements Entity<HistoryData, History> {
-  const HistoryEntity._();
+  const HistoryEntity();
 
   @override
   String get tableName => 'historico';
@@ -449,7 +449,7 @@ class TeachingDependency extends Dependency<TeachingData> {
 }
 
 class TeachingEntity implements Entity<TeachingData, Teaching> {
-  const TeachingEntity._();
+  const TeachingEntity();
 
   @override
   String get tableName => 'cadastro-professor';
@@ -548,7 +548,7 @@ class ClassDependency extends Dependency<ClassData> {
 }
 
 class ClassEntity implements Entity<ClassData, Class> {
-  const ClassEntity._();
+  const ClassEntity();
 
   @override
   String get tableName => 'aula';
@@ -597,20 +597,20 @@ class Dorm {
   const Dorm(this._root);
 
   Repository<SchoolData, School> get schools =>
-      Repository(root: _root, entity: const SchoolEntity._());
+      Repository(root: _root, entity: const SchoolEntity());
 
   Repository<StudentData, Student> get students =>
-      Repository(root: _root, entity: const StudentEntity._());
+      Repository(root: _root, entity: const StudentEntity());
 
   Repository<TeacherData, Teacher> get teachers =>
-      Repository(root: _root, entity: const TeacherEntity._());
+      Repository(root: _root, entity: const TeacherEntity());
 
   Repository<HistoryData, History> get histories =>
-      Repository(root: _root, entity: const HistoryEntity._());
+      Repository(root: _root, entity: const HistoryEntity());
 
   Repository<TeachingData, Teaching> get teachings =>
-      Repository(root: _root, entity: const TeachingEntity._());
+      Repository(root: _root, entity: const TeachingEntity());
 
   Repository<ClassData, Class> get classes =>
-      Repository(root: _root, entity: const ClassEntity._());
+      Repository(root: _root, entity: const ClassEntity());
 }

@@ -497,7 +497,7 @@ class _SchemaWriter {
         '${naming.modelName}> {');
 
     // Constructors
-    sink.writeln('const $className._();');
+    sink.writeln('const $className();');
     sink.writeln();
 
     // tableName
@@ -808,7 +808,7 @@ class OrmGenerator extends Generator {
       sink.writeln('${naming.modelName}> get '
           '${model.repositoryName} =>');
       sink.writeln('Repository(root: _root, '
-          'entity: const ${naming.entityName}._());');
+          'entity: const ${naming.entityName}());');
       sink.writeln();
     }
     sink.writeln('}');

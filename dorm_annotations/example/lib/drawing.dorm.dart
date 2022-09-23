@@ -156,7 +156,7 @@ class DrawingDependency extends Dependency<DrawingData> {
 }
 
 class DrawingEntity implements Entity<DrawingData, Drawing> {
-  const DrawingEntity._();
+  const DrawingEntity();
 
   @override
   String get tableName => 'desenho';
@@ -205,5 +205,5 @@ class Dorm {
   const Dorm(this._root);
 
   Repository<DrawingData, Drawing> get drawings =>
-      Repository(root: _root, entity: const DrawingEntity._());
+      Repository(root: _root, entity: const DrawingEntity());
 }
