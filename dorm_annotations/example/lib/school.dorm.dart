@@ -77,6 +77,15 @@ class SchoolEntity implements Entity<SchoolData, School> {
   }
 
   @override
+  School convert(School model, SchoolData data) {
+    return School(
+      id: model.id,
+      name: data.name,
+      phoneNumbers: data.phoneNumbers,
+    );
+  }
+
+  @override
   School fromJson(String id, Map json) => School.fromJson(id, json);
 
   @override
@@ -163,6 +172,16 @@ class StudentEntity implements Entity<StudentData, Student> {
       name: data.name,
       hasDisabilities: data.hasDisabilities,
       schoolId: dependency.schoolId,
+    );
+  }
+
+  @override
+  Student convert(Student model, StudentData data) {
+    return Student(
+      id: model.id,
+      name: data.name,
+      hasDisabilities: data.hasDisabilities,
+      schoolId: model.schoolId,
     );
   }
 
@@ -270,6 +289,15 @@ class TeacherEntity implements Entity<TeacherData, Teacher> {
   }
 
   @override
+  Teacher convert(Teacher model, TeacherData data) {
+    return Teacher(
+      id: model.id,
+      name: data.name,
+      ssn: data.ssn,
+    );
+  }
+
+  @override
   Teacher fromJson(String id, Map json) => Teacher.fromJson(id, json);
 
   @override
@@ -340,6 +368,14 @@ class HistoryEntity implements Entity<HistoryData, History> {
     return History(
       id: dependency.studentId,
       studentId: dependency.studentId,
+    );
+  }
+
+  @override
+  History convert(History model, HistoryData data) {
+    return History(
+      id: model.id,
+      studentId: model.studentId,
     );
   }
 
@@ -433,6 +469,16 @@ class TeachingEntity implements Entity<TeachingData, Teaching> {
   }
 
   @override
+  Teaching convert(Teaching model, TeachingData data) {
+    return Teaching(
+      id: model.id,
+      teacherId: model.teacherId,
+      schoolId: model.schoolId,
+      code: data.code,
+    );
+  }
+
+  @override
   Teaching fromJson(String id, Map json) => Teaching.fromJson(id, json);
 
   @override
@@ -517,6 +563,16 @@ class ClassEntity implements Entity<ClassData, Class> {
       id: dependency.key(id),
       teacherId: dependency.teacherId,
       studentId: dependency.studentId,
+      location: data.location,
+    );
+  }
+
+  @override
+  Class convert(Class model, ClassData data) {
+    return Class(
+      id: model.id,
+      teacherId: model.teacherId,
+      studentId: model.studentId,
       location: data.location,
     );
   }

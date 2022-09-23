@@ -86,6 +86,17 @@ class UserEntity implements Entity<UserData, User> {
   }
 
   @override
+  User convert(User model, UserData data) {
+    return User(
+      id: model.id,
+      name: data.name,
+      birthDate: data.birthDate,
+      email: data.email,
+      pictureUrl: data.pictureUrl,
+    );
+  }
+
+  @override
   User fromJson(String id, Map json) => User.fromJson(id, json);
 
   @override
@@ -169,6 +180,16 @@ class PostEntity implements Entity<PostData, Post> {
       contents: data.contents,
       creationDate: data.creationDate,
       userId: dependency.userId,
+    );
+  }
+
+  @override
+  Post convert(Post model, PostData data) {
+    return Post(
+      id: model.id,
+      contents: data.contents,
+      creationDate: data.creationDate,
+      userId: model.userId,
     );
   }
 
@@ -264,6 +285,17 @@ class MessageEntity implements Entity<MessageData, Message> {
       creationDate: data.creationDate,
       senderId: dependency.senderId,
       receiverId: dependency.receiverId,
+    );
+  }
+
+  @override
+  Message convert(Message model, MessageData data) {
+    return Message(
+      id: model.id,
+      contents: data.contents,
+      creationDate: data.creationDate,
+      senderId: model.senderId,
+      receiverId: model.receiverId,
     );
   }
 

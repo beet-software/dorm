@@ -176,6 +176,16 @@ class DrawingEntity implements Entity<DrawingData, Drawing> {
   }
 
   @override
+  Drawing convert(Drawing model, DrawingData data) {
+    return Drawing(
+      id: model.id,
+      color: data.color,
+      type: data.type,
+      shape: data.shape,
+    );
+  }
+
+  @override
   Drawing fromJson(String id, Map json) => Drawing.fromJson(id, json);
 
   @override

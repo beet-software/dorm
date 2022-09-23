@@ -545,6 +545,36 @@ class _SchemaWriter {
     sink.writeln('}');
     sink.writeln();
 
+    // convert
+    sink.writeln('@override');
+    sink.writeln('${naming.modelName} convert('
+        '${naming.modelName} model, ${naming.dataName} data) {');
+    sink.writeln('return ${naming.modelName}(');
+    sink.writeln('id: model.id,');
+
+    for (MapEntry<String, $ModelField> entry in model.fields.entries) {
+      final String fieldName = entry.key;
+      final String fieldType = entry.value.data.type;
+      final bool isPolymorphicField = polymorphicKeys.contains(fieldType);
+      final String prefix =
+          entry.value.field is ForeignField ? 'model' : 'data';
+
+      if (isPolymorphicField) {
+        sink.writeln('type: data.type,');
+      }
+
+      sink
+        ..write(fieldName)
+        ..write(': ')
+        ..write(prefix)
+        ..write('.')
+        ..write(fieldName)
+        ..writeln(',');
+    }
+
+    sink.writeln(');');
+    sink.writeln('}');
+
     // fromJson
     sink.writeln('@override');
     sink.writeln('${naming.modelName} fromJson(String id, Map json) =>');
