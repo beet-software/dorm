@@ -1,4 +1,6 @@
 import 'dependency.dart';
+import 'reference.dart';
+import 'repository.dart';
 
 abstract class Entity<Data, Model extends Data> {
   /// The name of the database table of this entity.
@@ -104,4 +106,33 @@ abstract class Entity<Data, Model extends Data> {
   /// String identify(Model model) => model.id;
   /// ```
   String identify(Model model);
+}
+
+class DatabaseEntity<Data, Model extends Data> implements Entity<Data, Model> {
+  final Entity<Data, Model> entity;
+  final Reference reference;
+
+  const DatabaseEntity(this.entity, {required this.reference});
+
+  Repository<Data, Model> get repository =>
+      Repository(root: reference, entity: this);
+
+  @override
+  Model convert(Model model, Data data) => entity.convert(model, data);
+
+  @override
+  Model fromData(covariant Dependency<Data> dependency, String id, Data data) =>
+      entity.fromData(dependency, id, data);
+
+  @override
+  Model fromJson(String id, Map data) => entity.fromJson(id, data);
+
+  @override
+  String identify(Model model) => entity.identify(model);
+
+  @override
+  String get tableName => entity.tableName;
+
+  @override
+  Map<String, Object?> toJson(Data data) => entity.toJson(data);
 }
