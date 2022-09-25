@@ -318,12 +318,12 @@ class Dorm {
 
   const Dorm(this._root);
 
-  Repository<UserData, User> get users =>
-      Repository(root: _root, entity: const UserEntity());
+  DatabaseEntity<UserData, User> get users =>
+      DatabaseEntity(const UserEntity(), reference: _root);
 
-  Repository<PostData, Post> get posts =>
-      Repository(root: _root, entity: const PostEntity());
+  DatabaseEntity<PostData, Post> get posts =>
+      DatabaseEntity(const PostEntity(), reference: _root);
 
-  Repository<MessageData, Message> get messages =>
-      Repository(root: _root, entity: const MessageEntity());
+  DatabaseEntity<MessageData, Message> get messages =>
+      DatabaseEntity(const MessageEntity(), reference: _root);
 }

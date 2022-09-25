@@ -596,21 +596,21 @@ class Dorm {
 
   const Dorm(this._root);
 
-  Repository<SchoolData, School> get schools =>
-      Repository(root: _root, entity: const SchoolEntity());
+  DatabaseEntity<SchoolData, School> get schools =>
+      DatabaseEntity(const SchoolEntity(), reference: _root);
 
-  Repository<StudentData, Student> get students =>
-      Repository(root: _root, entity: const StudentEntity());
+  DatabaseEntity<StudentData, Student> get students =>
+      DatabaseEntity(const StudentEntity(), reference: _root);
 
-  Repository<TeacherData, Teacher> get teachers =>
-      Repository(root: _root, entity: const TeacherEntity());
+  DatabaseEntity<TeacherData, Teacher> get teachers =>
+      DatabaseEntity(const TeacherEntity(), reference: _root);
 
-  Repository<HistoryData, History> get histories =>
-      Repository(root: _root, entity: const HistoryEntity());
+  DatabaseEntity<HistoryData, History> get histories =>
+      DatabaseEntity(const HistoryEntity(), reference: _root);
 
-  Repository<TeachingData, Teaching> get teachings =>
-      Repository(root: _root, entity: const TeachingEntity());
+  DatabaseEntity<TeachingData, Teaching> get teachings =>
+      DatabaseEntity(const TeachingEntity(), reference: _root);
 
-  Repository<ClassData, Class> get classes =>
-      Repository(root: _root, entity: const ClassEntity());
+  DatabaseEntity<ClassData, Class> get classes =>
+      DatabaseEntity(const ClassEntity(), reference: _root);
 }
