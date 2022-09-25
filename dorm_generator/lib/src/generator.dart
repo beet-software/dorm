@@ -804,13 +804,12 @@ class OrmGenerator extends Generator {
       final SchemaNaming naming = SchemaNaming(entry.key);
       final $Model model = entry.value;
 
+      final String fieldName =
+          (model.as as $Symbol?)?.name ?? naming.modelName.toLowerCase();
       sink.writeln('DatabaseEntity<${naming.dataName}, ');
-      sink.writeln('${naming.modelName}> get '
-          '${model.repositoryName} =>');
-      sink.writeln('DatabaseEntity('
-          'const ${naming.entityName}(), '
-          'reference: _root'
-          ');');
+      sink.writeln('${naming.modelName}> get $fieldName =>');
+      sink.writeln('DatabaseEntity(const ${naming.entityName}(), '
+          'reference: _root);');
       sink.writeln();
     }
     sink.writeln('}');

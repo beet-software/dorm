@@ -321,7 +321,7 @@ class Dorm {
   DatabaseEntity<UserData, User> get users =>
       DatabaseEntity(const UserEntity(), reference: _root);
 
-  DatabaseEntity<PostData, Post> get posts =>
+  DatabaseEntity<PostData, Post> get post =>
       DatabaseEntity(const PostEntity(), reference: _root);
 
   DatabaseEntity<MessageData, Message> get messages =>

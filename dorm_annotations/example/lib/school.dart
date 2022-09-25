@@ -6,11 +6,7 @@ part 'school.dorm.dart';
 
 part 'school.g.dart';
 
-@Model(
-  name: 'escola',
-  repositoryName: 'schools',
-  uidType: UidType.simple(),
-)
+@Model(name: 'escola', as: #schools, uidType: UidType.simple())
 abstract class _School {
   @Field(name: 'nome', queryBy: QueryType.text)
   String get name;
@@ -19,11 +15,7 @@ abstract class _School {
   List<String> get phoneNumbers;
 }
 
-@Model(
-  name: 'aluno',
-  repositoryName: 'students',
-  uidType: UidType.composite(),
-)
+@Model(name: 'aluno', as: #students, uidType: UidType.composite())
 abstract class _Student {
   @Field(name: 'nome', queryBy: QueryType.text)
   String get name;
@@ -35,11 +27,7 @@ abstract class _Student {
   String get schoolId;
 }
 
-@Model(
-  name: 'professor',
-  repositoryName: 'teachers',
-  uidType: UidType.custom(_Teacher._id),
-)
+@Model(name: 'professor', as: #teachers, uidType: UidType.custom(_Teacher._id))
 abstract class _Teacher {
   static CustomUidValue _id(Object data) {
     data as _Teacher;
@@ -55,20 +43,13 @@ abstract class _Teacher {
   String? get ssn;
 }
 
-@Model(
-  name: 'historico',
-  repositoryName: 'histories',
-  uidType: UidType.sameAs(_Student),
-)
+@Model(name: 'historico', as: #histories, uidType: UidType.sameAs(_Student))
 abstract class _History {
   @ForeignField(name: 'id-aluno', referTo: _Student)
   String get studentId;
 }
 
-@Model(
-  name: 'cadastro-professor',
-  repositoryName: 'teachings',
-)
+@Model(name: 'cadastro-professor', as: #teachings)
 abstract class _Teaching {
   @ForeignField(name: 'id-professor', referTo: _Teacher)
   String get teacherId;
@@ -80,11 +61,7 @@ abstract class _Teaching {
   String get code;
 }
 
-@Model(
-  name: 'aula',
-  repositoryName: 'classes',
-  uidType: UidType.composite(),
-)
+@Model(name: 'aula', as: #classes, uidType: UidType.composite())
 abstract class _Class {
   @ForeignField(name: 'id-professor', referTo: _Teacher)
   String get teacherId;

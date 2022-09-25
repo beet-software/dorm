@@ -23,7 +23,7 @@ abstract class _Circle implements _Shape {
   double get radius;
 }
 
-@Model(name: 'desenho', repositoryName: 'drawings')
+@Model(name: 'desenho', as: #drawings)
 abstract class _Drawing {
   @Field(name: 'cor')
   String get color;

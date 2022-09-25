@@ -1,6 +1,7 @@
 name: dorm_generator
 description: A new Flutter package project.
 version: 0.0.1
+publish_to: none
 
 environment:
   sdk: ">=2.17.3 <3.0.0"

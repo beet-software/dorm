@@ -6,7 +6,7 @@ part 'social_network.dorm.dart';
 
 part 'social_network.g.dart';
 
-@Model(name: 'user', repositoryName: 'users')
+@Model(name: 'user', as: #users)
 abstract class _User {
   @Field(name: 'name')
   String? get name;
@@ -21,7 +21,7 @@ abstract class _User {
   Uri get pictureUrl;
 }
 
-@Model(name: 'post', repositoryName: 'posts')
+@Model(name: 'post')
 abstract class _Post {
   @Field(name: 'contents')
   String get contents;
@@ -33,7 +33,7 @@ abstract class _Post {
   String get userId;
 }
 
-@Model(name: 'message', repositoryName: 'messages')
+@Model(name: 'message', as: #messages)
 abstract class _Message {
   @Field(name: 'contents')
   String get contents;
