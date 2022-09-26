@@ -63,7 +63,7 @@ class ModelVisitor extends Visitor<Model, Field> {
     if (annotation == null) return;
     context.modelDatum[element.name] = $Model(
       name: annotation.name,
-      repositoryName: annotation.repositoryName,
+      as: annotation.as,
       uidType: annotation.uidType,
       fields: _fields,
     );
@@ -81,7 +81,6 @@ class ModelVisitor extends Visitor<Model, Field> {
 }
 
 class PolymorphicDataVisitor extends Visitor<PolymorphicData, Field> {
-  @override
   final Map<String, $PolymorphicDataField> datum = {};
 
   @override

@@ -417,8 +417,8 @@ class Teaching extends TeachingData implements _Teaching {
   final String teacherId;
 
   @override
-  @JsonKey(name: 'id-escola', required: true, disallowNullValue: true)
-  final String schoolId;
+  @JsonKey(name: 'id-escola')
+  final String? schoolId;
 
   factory Teaching.fromJson(String id, Map json) =>
       _$TeachingFromJson({...json, '_id': id});
@@ -440,12 +440,12 @@ class Teaching extends TeachingData implements _Teaching {
 
 class TeachingDependency extends Dependency<TeachingData> {
   final String teacherId;
-  final String schoolId;
+  final String? schoolId;
 
   TeachingDependency({
     required this.teacherId,
     required this.schoolId,
-  }) : super.weak([teacherId, schoolId]);
+  }) : super.weak([teacherId, schoolId ?? '']);
 }
 
 class TeachingEntity implements Entity<TeachingData, Teaching> {
@@ -596,21 +596,21 @@ class Dorm {
 
   const Dorm(this._root);
 
-  Repository<SchoolData, School> get schools =>
-      Repository(root: _root, entity: const SchoolEntity());
+  DatabaseEntity<SchoolData, School> get schools =>
+      DatabaseEntity(const SchoolEntity(), reference: _root);
 
-  Repository<StudentData, Student> get students =>
-      Repository(root: _root, entity: const StudentEntity());
+  DatabaseEntity<StudentData, Student> get students =>
+      DatabaseEntity(const StudentEntity(), reference: _root);
 
-  Repository<TeacherData, Teacher> get teachers =>
-      Repository(root: _root, entity: const TeacherEntity());
+  DatabaseEntity<TeacherData, Teacher> get teachers =>
+      DatabaseEntity(const TeacherEntity(), reference: _root);
 
-  Repository<HistoryData, History> get histories =>
-      Repository(root: _root, entity: const HistoryEntity());
+  DatabaseEntity<HistoryData, History> get histories =>
+      DatabaseEntity(const HistoryEntity(), reference: _root);
 
-  Repository<TeachingData, Teaching> get teachings =>
-      Repository(root: _root, entity: const TeachingEntity());
+  DatabaseEntity<TeachingData, Teaching> get teachings =>
+      DatabaseEntity(const TeachingEntity(), reference: _root);
 
-  Repository<ClassData, Class> get classes =>
-      Repository(root: _root, entity: const ClassEntity());
+  DatabaseEntity<ClassData, Class> get classes =>
+      DatabaseEntity(const ClassEntity(), reference: _root);
 }

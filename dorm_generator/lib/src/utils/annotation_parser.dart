@@ -48,7 +48,7 @@ class ModelParser extends AnnotationParser<Model> {
   Model parse(ConstantReader reader) {
     return Model(
       name: reader.read('name').stringValue,
-      repositoryName: reader.read('repositoryName').literalValue as String?,
+      as: $Symbol(reader: reader.read('as')),
       uidType: _decodeUidType(reader.read('uidType')) ?? UidType.simple(),
     );
   }

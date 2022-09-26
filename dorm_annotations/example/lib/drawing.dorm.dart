@@ -204,6 +204,6 @@ class Dorm {
 
   const Dorm(this._root);
 
-  Repository<DrawingData, Drawing> get drawings =>
-      Repository(root: _root, entity: const DrawingEntity());
+  DatabaseEntity<DrawingData, Drawing> get drawings =>
+      DatabaseEntity(const DrawingEntity(), reference: _root);
 }

@@ -483,7 +483,11 @@ class _SchemaWriter {
         sink.writeln('required this.$name,');
       }
       sink.write('}) : super.weak([');
-      sink.write(model.foreignFields.keys.join(', '));
+      sink.write(model.foreignFields.entries.map((entry) {
+        final String suffix =
+            entry.value.data.type.endsWith('?') ? ' ?? \'\'' : '';
+        return '${entry.key}$suffix';
+      }).join(', '));
       sink.writeln(']);');
     }
     sink.writeln('}');
@@ -804,11 +808,12 @@ class OrmGenerator extends Generator {
       final SchemaNaming naming = SchemaNaming(entry.key);
       final $Model model = entry.value;
 
-      sink.writeln('Repository<${naming.dataName}, ');
-      sink.writeln('${naming.modelName}> get '
-          '${model.repositoryName} =>');
-      sink.writeln('Repository(root: _root, '
-          'entity: const ${naming.entityName}());');
+      final String fieldName =
+          (model.as as $Symbol?)?.name ?? naming.modelName.toLowerCase();
+      sink.writeln('DatabaseEntity<${naming.dataName}, ');
+      sink.writeln('${naming.modelName}> get $fieldName =>');
+      sink.writeln('DatabaseEntity(const ${naming.entityName}(), '
+          'reference: _root);');
       sink.writeln();
     }
     sink.writeln('}');

@@ -166,13 +166,13 @@ Map<String, dynamic> _$TeachingDataToJson(TeachingData instance) =>
 Teaching _$TeachingFromJson(Map json) {
   $checkKeys(
     json,
-    requiredKeys: const ['codigo', '_id', 'id-professor', 'id-escola'],
-    disallowNullValues: const ['codigo', '_id', 'id-professor', 'id-escola'],
+    requiredKeys: const ['codigo', '_id', 'id-professor'],
+    disallowNullValues: const ['codigo', '_id', 'id-professor'],
   );
   return Teaching(
     id: json['_id'] as String,
     teacherId: json['id-professor'] as String,
-    schoolId: json['id-escola'] as String,
+    schoolId: json['id-escola'] as String?,
     code: json['codigo'] as String,
   );
 }

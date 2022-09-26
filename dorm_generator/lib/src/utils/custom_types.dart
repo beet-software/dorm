@@ -28,10 +28,29 @@ class $Type implements Type {
 
   const $Type({required this.reader});
 
-  String get name => reader.typeValue.getDisplayString(withNullability: false);
+  String? get name {
+    if (reader.isNull) return null;
+    if (!reader.isType) return null;
+    return reader.typeValue.getDisplayString(withNullability: false);
+  }
 
   @override
   String toString() => '\$Type($name);';
+}
+
+class $Symbol implements Symbol {
+  final ConstantReader reader;
+
+  const $Symbol({required this.reader});
+
+  String? get name {
+    if (reader.isNull) return null;
+    if (!reader.isSymbol) return null;
+    return reader.objectValue.toSymbolValue();
+  }
+
+  @override
+  String toString() => '\$Symbol($name);';
 }
 
 class VariableData {
@@ -62,7 +81,7 @@ class $Model extends Model {
   const $Model({
     required super.name,
     required super.uidType,
-    required super.repositoryName,
+    required super.as,
     required this.fields,
   });
 }

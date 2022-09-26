@@ -30,10 +30,10 @@
             </list>
           </value>
         </entry>
-        <entry key="dorm_annotations">
+        <entry key="dorm">
           <value>
             <list>
-              <option value="$USER_HOME$/AppData/Local/Pub/Cache/git/dorm-f4ae8080af199132c4018b53167f0c6625dd41da/dorm_annotations/lib" />
+              <option value="$USER_HOME$/AppData/Local/Pub/Cache/git/dorm-cfbf8b1259fc5764900986d3bb967afa97c0cccd/dorm/lib" />
             </list>
           </value>
         </entry>
@@ -222,7 +222,7 @@
       </option>
     </properties>
     <CLASSES>
-      <root url="file://$USER_HOME$/AppData/Local/Pub/Cache/git/dorm-f4ae8080af199132c4018b53167f0c6625dd41da/dorm_annotations/lib" />
+      <root url="file://$USER_HOME$/AppData/Local/Pub/Cache/git/dorm-cfbf8b1259fc5764900986d3bb967afa97c0cccd/dorm/lib" />
       <root url="file://$USER_HOME$/AppData/Local/Pub/Cache/hosted/pub.dartlang.org/async-2.9.0/lib" />
       <root url="file://$USER_HOME$/AppData/Local/Pub/Cache/hosted/pub.dartlang.org/characters-1.2.0/lib" />
       <root url="file://$USER_HOME$/AppData/Local/Pub/Cache/hosted/pub.dartlang.org/clock-1.1.1/lib" />

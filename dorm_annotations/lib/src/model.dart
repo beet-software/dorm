@@ -6,12 +6,12 @@ import 'uid_type.dart';
 @Target({TargetKind.classType})
 class Model {
   final String name;
-  final String? repositoryName;
+  final Symbol? as;
   final UidType uidType;
 
   const Model({
     required this.name,
-    this.repositoryName,
+    this.as,
     this.uidType = const UidType.simple(),
   });
 }
