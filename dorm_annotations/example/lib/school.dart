@@ -55,7 +55,7 @@ abstract class _Teaching {
   String get teacherId;
 
   @ForeignField(name: 'id-escola', referTo: _School)
-  String get schoolId;
+  String? get schoolId;
 
   @Field(name: 'codigo')
   String get code;

@@ -483,7 +483,11 @@ class _SchemaWriter {
         sink.writeln('required this.$name,');
       }
       sink.write('}) : super.weak([');
-      sink.write(model.foreignFields.keys.join(', '));
+      sink.write(model.foreignFields.entries.map((entry) {
+        final String suffix =
+            entry.value.data.type.endsWith('?') ? ' ?? \'\'' : '';
+        return '${entry.key}$suffix';
+      }).join(', '));
       sink.writeln(']);');
     }
     sink.writeln('}');

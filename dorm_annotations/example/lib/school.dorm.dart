@@ -417,8 +417,8 @@ class Teaching extends TeachingData implements _Teaching {
   final String teacherId;
 
   @override
-  @JsonKey(name: 'id-escola', required: true, disallowNullValue: true)
-  final String schoolId;
+  @JsonKey(name: 'id-escola')
+  final String? schoolId;
 
   factory Teaching.fromJson(String id, Map json) =>
       _$TeachingFromJson({...json, '_id': id});
@@ -440,12 +440,12 @@ class Teaching extends TeachingData implements _Teaching {
 
 class TeachingDependency extends Dependency<TeachingData> {
   final String teacherId;
-  final String schoolId;
+  final String? schoolId;
 
   TeachingDependency({
     required this.teacherId,
     required this.schoolId,
-  }) : super.weak([teacherId, schoolId]);
+  }) : super.weak([teacherId, schoolId ?? '']);
 }
 
 class TeachingEntity implements Entity<TeachingData, Teaching> {
