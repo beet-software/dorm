@@ -39,7 +39,7 @@ class MemoryInstance {
     if (path == null) {
       result.addAll(_data);
     } else {
-      for (MapEntry<String, Object> entry in this._data.entries) {
+      for (MapEntry<String, Object> entry in _data.entries) {
         final String key = entry.key;
         final Object value = entry.value;
         if (key == path) return value;
@@ -173,5 +173,13 @@ class MemoryInstance {
 
   void remove(String path) => set(path, null);
 
-  List<String> shallow() => throw UnimplementedError();
+  List<String> shallow(String path) {
+    final List<String> keys = [];
+    for (MapEntry<String, Object> entry in _data.entries) {
+      final String key = entry.key;
+      if (!key.startsWith('$path/')) continue;
+      keys.add(key.substring(path.length + 1));
+    }
+    return keys;
+  }
 }

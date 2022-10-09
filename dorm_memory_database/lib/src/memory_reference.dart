@@ -106,5 +106,5 @@ class MemoryReference extends MemoryQuery with Reference {
       _instance.update(path, value);
 
   @override
-  Future<List<String>> shallow() => throw 1;
+  Future<List<String>> shallow() async => _instance.shallow(path);
 }
