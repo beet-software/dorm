@@ -67,10 +67,10 @@ class MemoryQuery implements Query {
   Future<Object?> get() async => _instance.get(params, path);
 
   @override
-  Future<Map<String, Object>> getChildren() => throw UnimplementedError();
+  Stream<Object?> get onValue => _instance.listen(params, path);
 
   @override
-  Stream<Object?> get onValue => throw UnimplementedError();
+  Future<Map<String, Object>> getChildren() async => _instance.getChildren(params, path);
 
   @override
   Stream<Map<String, Object>> get onChildren => throw UnimplementedError();
@@ -106,5 +106,5 @@ class MemoryReference extends MemoryQuery with Reference {
       _instance.update(path, value);
 
   @override
-  Future<List<String>> shallow() => throw 1;
+  Future<List<String>> shallow() async => _instance.shallow(path);
 }
