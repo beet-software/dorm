@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:collection';
+
+import 'package:collection/collection.dart';
 import 'package:dorm_memory_database/src/memory_reference.dart';
 
 import 'param_type.dart';
@@ -26,33 +30,52 @@ Map<String, Object> splat(Map<String, Object> data, [String separator = '/']) {
   return tree;
 }
 
-class MemoryInstance {
+class QueryData {
+  final String? path;
+  final Iterable<ParamType> params;
+
+  const QueryData({required this.path, required this.params});
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is QueryData &&
+          runtimeType == other.runtimeType &&
+          path == other.path &&
+          const IterableEquality().equals(params, other.params);
+
+  @override
+  int get hashCode => path.hashCode ^ params.hashCode;
+}
+
+class MemoryListener extends MapBase<String, Object> {
   final Map<String, Object> _data;
+  final Map<QueryData, StreamController<Object?>> _controllers = {};
+  final Map<QueryData, int> _subscriptionCounter = {};
 
-  MemoryInstance(this._data);
+  MemoryListener._(this._data);
 
-  MemoryReference get ref =>
-      MemoryReference(this, path: '', params: {ParamType.orderByKey()});
+  Object? once(QueryData query) {
+    final Map<String, Object> flattenedData = {};
 
-  Object? get([Iterable<ParamType> params = const [], String? path]) {
-    final Map<String, Object> result = {};
+    final String? path = query.path;
     if (path == null) {
-      result.addAll(_data);
+      flattenedData.addAll(_data);
     } else {
       for (MapEntry<String, Object> entry in _data.entries) {
         final String key = entry.key;
         final Object value = entry.value;
-        if (key == path) return value;
+        if (key == query.path) return value;
 
         if (!key.startsWith('$path/')) continue;
         final String subKey = key.substring(path.length + 1);
-        result[subKey] = value;
+        flattenedData[subKey] = value;
       }
     }
 
-    Map<String, Object> data = splat(result);
+    Map<String, Object> data = splat(flattenedData);
     Object? Function(MapEntry<String, Object> entry)? getter;
-    for (ParamType param in params) {
+    for (ParamType param in query.params) {
       data = param.when<Map<String, Object>>(
         orderBy: (key) {
           final List<String> segments = key.split('/');
@@ -144,6 +167,84 @@ class MemoryInstance {
     return data;
   }
 
+  Stream<Object?> listen(QueryData query) {
+    late final StreamController<Object?> controller;
+    controller = _controllers[query] ??
+        StreamController.broadcast(
+          onListen: () {
+            _subscriptionCounter[query] =
+                (_subscriptionCounter[query] ?? 0) + 1;
+            controller.add(once(query));
+          },
+          onCancel: () async {
+            final StreamController<Object?>? controller = _controllers[query];
+            final int? subscriptionCount = _subscriptionCounter[query];
+            if (subscriptionCount != null && subscriptionCount > 1) return;
+            await controller?.close();
+            _controllers.remove(query);
+            _subscriptionCounter.remove(query);
+          },
+        );
+    return controller.stream;
+  }
+
+  void _onDataChange() {
+    for (MapEntry<QueryData, StreamController<Object?>> entry
+        in _controllers.entries) {
+      final QueryData query = entry.key;
+      final StreamController<Object?> controller = entry.value;
+      controller.add(once(query));
+    }
+  }
+
+  @override
+  Object? operator [](Object? key) => _data[key];
+
+  @override
+  void operator []=(String key, Object value) {
+    _data[key] = value;
+    _onDataChange();
+  }
+
+  @override
+  Object? remove(Object? key) {
+    final Object? value = _data.remove(key);
+    _onDataChange();
+    return value;
+  }
+
+  @override
+  void clear() {
+    _data.clear();
+    _onDataChange();
+  }
+
+  @override
+  Iterable<String> get keys => _data.keys;
+}
+
+class MemoryInstance {
+  final MemoryListener _listener;
+
+  MemoryInstance([Map<String, Object>? data])
+      : _listener = MemoryListener._(data ?? {});
+
+  MemoryReference get ref {
+    final Set<ParamType> params = LinkedHashSet(
+      equals: (p0, p1) => p0.runtimeType == p1.runtimeType,
+      hashCode: (param) => param.runtimeType.hashCode,
+    );
+    params.add(ParamType.orderByKey());
+    return MemoryReference(this, path: '', params: params);
+  }
+
+  Object? get([Iterable<ParamType> params = const [], String? path]) =>
+      _listener.once(QueryData(path: path, params: params));
+
+  Stream<Object?> listen(
+          [Iterable<ParamType> params = const [], String? path]) =>
+      _listener.listen(QueryData(path: path, params: params));
+
   void set(String path, Object? value) {
     if (value is Map<String, Object?>) {
       for (MapEntry<String, Object?> entry in value.entries) {
@@ -156,9 +257,9 @@ class MemoryInstance {
         set(innerPath, value[i]);
       }
     } else if (value == null) {
-      _data.remove(path);
+      _listener.remove(path);
     } else {
-      _data[path] = value;
+      _listener[path] = value;
     }
   }
 
@@ -167,7 +268,7 @@ class MemoryInstance {
       final Object? value = entry.value;
       if (value == null) continue;
 
-      _data['$path/${entry.key}'] = value;
+      _listener['$path/${entry.key}'] = value;
     }
   }
 
@@ -175,7 +276,7 @@ class MemoryInstance {
 
   List<String> shallow(String path) {
     final List<String> keys = [];
-    for (MapEntry<String, Object> entry in _data.entries) {
+    for (MapEntry<String, Object> entry in _listener.entries) {
       final String key = entry.key;
       if (!key.startsWith('$path/')) continue;
       keys.add(key.substring(path.length + 1));

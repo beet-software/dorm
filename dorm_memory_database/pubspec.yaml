@@ -13,6 +13,7 @@ dependencies:
       url: https://github.com/enzo-santos/dorm.git
       ref: main
       path: dorm
+  collection: ^1.16.0
 
 dev_dependencies:
   lints: ^2.0.0

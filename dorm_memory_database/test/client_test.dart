@@ -37,19 +37,22 @@ void main() {
       'stegosaurus': {'height': 4, 'length': 9, 'weight': 2500},
     });
     expect(
-      instance.get([ParamType.orderByChild('height'), ParamType.limitToFirst(1)]),
+      instance
+          .get([ParamType.orderByChild('height'), ParamType.limitToFirst(1)]),
       equals({
         'lambeosaurus': {'height': 2.1, 'length': 12.5, 'weight': 5000},
       }),
     );
     expect(
-      instance.get([ParamType.orderByChild('length'), ParamType.limitToFirst(1)]),
+      instance
+          .get([ParamType.orderByChild('length'), ParamType.limitToFirst(1)]),
       equals({
         'stegosaurus': {'height': 4, 'length': 9, 'weight': 2500},
       }),
     );
     expect(
-      instance.get([ParamType.orderByChild('weight'), ParamType.limitToFirst(1)]),
+      instance
+          .get([ParamType.orderByChild('weight'), ParamType.limitToFirst(1)]),
       equals({
         'stegosaurus': {'height': 4, 'length': 9, 'weight': 2500},
       }),
@@ -61,19 +64,22 @@ void main() {
       'stegosaurus': {'height': 4, 'length': 9, 'weight': 2500},
     });
     expect(
-      instance.get([ParamType.orderByChild('height'), ParamType.limitToLast(1)]),
+      instance
+          .get([ParamType.orderByChild('height'), ParamType.limitToLast(1)]),
       equals({
         'stegosaurus': {'height': 4, 'length': 9, 'weight': 2500},
       }),
     );
     expect(
-      instance.get([ParamType.orderByChild('length'), ParamType.limitToLast(1)]),
+      instance
+          .get([ParamType.orderByChild('length'), ParamType.limitToLast(1)]),
       equals({
         'lambeosaurus': {'height': 2.1, 'length': 12.5, 'weight': 5000},
       }),
     );
     expect(
-      instance.get([ParamType.orderByChild('weight'), ParamType.limitToLast(1)]),
+      instance
+          .get([ParamType.orderByChild('weight'), ParamType.limitToLast(1)]),
       equals({
         'lambeosaurus': {'height': 2.1, 'length': 12.5, 'weight': 5000},
       }),
@@ -332,5 +338,26 @@ void main() {
         },
       }
     });
+  });
+  test('listening to data', () async {
+    final MemoryInstance instance = MemoryInstance({
+      'lambeosaurus': {'height': 2.1, 'length': 12.5, 'weight': 5000},
+      'stegosaurus': {'height': 4, 'length': 9, 'weight': 2500},
+    });
+    final Stream<Object?> stream = instance
+        .listen([ParamType.orderByChild('weight'), ParamType.equalTo(5000)]);
+    expect(
+        await stream.first,
+        equals({
+          'lambeosaurus': {'height': 2.1, 'length': 12.5, 'weight': 5000}
+        }));
+    instance.set('lambeosaurus/weight', 4000);
+    expect(await stream.first, equals({}));
+    instance.set('lambeosaurus/weight', 5000);
+    expect(
+        await stream.first,
+        equals({
+          'lambeosaurus': {'height': 2.1, 'length': 12.5, 'weight': 5000}
+        }));
   });
 }

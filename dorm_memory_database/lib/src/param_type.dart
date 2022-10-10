@@ -26,24 +26,25 @@ abstract class ParamType {
     required R Function(Object value) equalTo,
   });
 
-  int get code => when(
-        orderBy: (_) => 0,
-        limitToFirst: (_) => 1,
-        limitToLast: (_) => 2,
-        startAt: (_) => 3,
-        endAt: (_) => 4,
-        equalTo: (_) => 5,
+  Object get _value => when(
+        orderBy: (value) => value,
+        limitToFirst: (value) => value,
+        limitToLast: (value) => value,
+        startAt: (value) => value,
+        endAt: (value) => value,
+        equalTo: (value) => value,
       );
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is ParamType &&
-          runtimeType == other.runtimeType &&
-          code == other.code;
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is ParamType &&
+            runtimeType == other.runtimeType &&
+            _value == other._value;
+  }
 
   @override
-  int get hashCode => code.hashCode;
+  int get hashCode => _value.hashCode ^ runtimeType.hashCode;
 }
 
 class _OrderByParamType extends ParamType {
