@@ -73,7 +73,7 @@ class MemoryQuery implements Query {
   Future<Map<String, Object>> getChildren() async => _instance.getChildren(params, path);
 
   @override
-  Stream<Map<String, Object>> get onChildren => throw UnimplementedError();
+  Stream<Map<String, Object>> get onChildren => _instance.listenChildren(params, path);
 }
 
 class MemoryReference extends MemoryQuery with Reference {
