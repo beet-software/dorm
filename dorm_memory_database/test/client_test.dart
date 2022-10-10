@@ -242,6 +242,41 @@ void main() {
       }
     });
   });
+  test('reading data using children', () async {
+    final MemoryInstance instance = MemoryInstance({});
+    final Reference ref = instance.ref.child('users');
+    ref
+        .child('alanisawesome')
+        .set({'date_of_birth': 'June 23, 1912', 'full_name': 'Alan Turing'});
+    ref.child('gracehop').set(
+        {'date_of_birth': 'December 9, 1906', 'full_name': 'Grace Hopper'});
+    expect(
+      await ref.get(),
+      equals({
+        'alanisawesome': {
+          'date_of_birth': 'June 23, 1912',
+          'full_name': 'Alan Turing',
+        },
+        'gracehop': {
+          'date_of_birth': 'December 9, 1906',
+          'full_name': 'Grace Hopper',
+        },
+      }),
+    );
+    expect(
+      await ref.getChildren(),
+      equals({
+        'alanisawesome': {
+          'date_of_birth': 'June 23, 1912',
+          'full_name': 'Alan Turing',
+        },
+        'gracehop': {
+          'date_of_birth': 'December 9, 1906',
+          'full_name': 'Grace Hopper',
+        },
+      }),
+    );
+  });
   test('updating data individually', () {
     final MemoryInstance instance = MemoryInstance({
       'users': {

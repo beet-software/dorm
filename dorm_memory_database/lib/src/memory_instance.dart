@@ -50,8 +50,11 @@ class QueryData {
 
 class MemoryListener extends MapBase<String, Object> {
   final Map<String, Object> _data;
-  final Map<QueryData, StreamController<Object?>> _controllers = {};
-  final Map<QueryData, int> _subscriptionCounter = {};
+  final Map<QueryData, StreamController<Object?>> _valueControllers = {};
+  final Map<QueryData, int> _valueSubscriptionCounter = {};
+  final Map<QueryData, StreamController<Map<String, Object>>>
+      _childrenControllers = {};
+  final Map<QueryData, int> _childrenSubscriptionCounter = {};
 
   MemoryListener._(this._data);
 
@@ -167,22 +170,157 @@ class MemoryListener extends MapBase<String, Object> {
     return data;
   }
 
+  Map<String, Object> onceChildren(QueryData query) {
+    final Map<String, Object> flattenedData = {};
+
+    final String? path = query.path;
+    if (path == null) {
+      flattenedData.addAll(_data);
+    } else {
+      for (MapEntry<String, Object> entry in _data.entries) {
+        final String key = entry.key;
+        final Object value = entry.value;
+        if (key == query.path) continue;
+
+        if (!key.startsWith(RegExp('$path/.+?/'))) continue;
+        final String subKey = key.substring(path.length + 1);
+        flattenedData[subKey] = value;
+      }
+    }
+
+    Map<String, Object> data = splat(flattenedData);
+    Object? Function(MapEntry<String, Object> entry)? getter;
+    for (ParamType param in query.params) {
+      data = param.when<Map<String, Object>>(
+        orderBy: (key) {
+          final List<String> segments = key.split('/');
+          final List<MapEntry<String, Object>> entries = data.entries.toList();
+
+          Object? _getter(MapEntry<String, Object> entry) {
+            final Map<String, Object> data = entry.value as Map<String, Object>;
+            if (segments.length == 1) return data[segments.single];
+
+            final List<String> middle = List.of(segments);
+            final String head = middle.removeAt(0);
+            final String tail = middle.removeLast();
+            Map<String, Object> childData = data[head] as Map<String, Object>;
+            for (String segment in middle) {
+              childData = childData[segment] as Map<String, Object>;
+            }
+            return childData[tail];
+          }
+
+          getter = _getter;
+
+          entries.sort((e0, e1) {
+            final Object? o0 = _getter(e0);
+            final Object? o1 = _getter(e1);
+            if (o0 == null) return -1;
+            if (o1 == null) return 1;
+            if (o0 is Comparable<Object?>) return o0.compareTo(o1);
+            return 0;
+          });
+          return Map.fromEntries(entries);
+        },
+        limitToFirst: (count) => Map.fromEntries(data.entries.take(count)),
+        limitToLast: (count) =>
+            Map.fromEntries(data.entries.toList().reversed.take(count)),
+        startAt: (expectedValue) {
+          final Map<String, Object> result = {};
+          for (MapEntry<String, Object> entry in data.entries) {
+            final _getter = getter;
+            final Object? actualValue =
+                _getter == null ? entry.value : _getter(entry);
+
+            final bool include;
+            if (expectedValue is num && actualValue is num) {
+              include = actualValue >= expectedValue;
+            } else if (expectedValue is String && actualValue is String) {
+              include = actualValue.startsWith(expectedValue);
+            } else {
+              include = false;
+            }
+            if (!include) continue;
+            result[entry.key] = entry.value;
+          }
+          return result;
+        },
+        endAt: (expectedValue) {
+          final Map<String, Object> result = {};
+          for (MapEntry<String, Object> entry in data.entries) {
+            final _getter = getter;
+            final Object? actualValue =
+                _getter == null ? entry.value : _getter(entry);
+
+            final bool include;
+            if (expectedValue is num && actualValue is num) {
+              include = actualValue <= expectedValue;
+            } else if (expectedValue is String && actualValue is String) {
+              include = actualValue.endsWith(expectedValue);
+            } else {
+              include = false;
+            }
+            if (!include) continue;
+            result[entry.key] = entry.value;
+          }
+          return result;
+        },
+        equalTo: (expectedValue) {
+          final Map<String, Object> result = {};
+          for (MapEntry<String, Object> entry in data.entries) {
+            final _getter = getter;
+            final Object? actualValue =
+                _getter == null ? entry.value : _getter(entry);
+
+            if (expectedValue != actualValue) continue;
+            result[entry.key] = entry.value;
+          }
+          return result;
+        },
+      );
+    }
+    return data;
+  }
+
   Stream<Object?> listen(QueryData query) {
     late final StreamController<Object?> controller;
-    controller = _controllers[query] ??
+    controller = _valueControllers[query] ??
         StreamController.broadcast(
           onListen: () {
-            _subscriptionCounter[query] =
-                (_subscriptionCounter[query] ?? 0) + 1;
+            _valueSubscriptionCounter[query] =
+                (_valueSubscriptionCounter[query] ?? 0) + 1;
             controller.add(once(query));
           },
           onCancel: () async {
-            final StreamController<Object?>? controller = _controllers[query];
-            final int? subscriptionCount = _subscriptionCounter[query];
+            final StreamController<Object?>? controller =
+                _valueControllers[query];
+            final int? subscriptionCount = _valueSubscriptionCounter[query];
             if (subscriptionCount != null && subscriptionCount > 1) return;
             await controller?.close();
-            _controllers.remove(query);
-            _subscriptionCounter.remove(query);
+            _valueControllers.remove(query);
+            _valueSubscriptionCounter.remove(query);
+          },
+        );
+    return controller.stream;
+  }
+
+  Stream<Map<String, Object>> listenChildren(QueryData query) {
+    late final StreamController<Map<String, Object>> controller;
+    controller = _childrenControllers[query] ??
+        StreamController.broadcast(
+          onListen: () {
+            _childrenSubscriptionCounter[query] =
+                (_childrenSubscriptionCounter[query] ?? 0) + 1;
+            controller.add(onceChildren(query));
+          },
+          onCancel: () async {
+            final StreamController<Object?>? controller =
+                _valueControllers[query];
+            final int? subscriptionCount = _valueSubscriptionCounter[query];
+            if (subscriptionCount != null && subscriptionCount > 1) return;
+            await controller?.close();
+            _valueControllers.remove(query);
+            _valueSubscriptionCounter.remove(query);
           },
         );
     return controller.stream;
@@ -190,7 +328,7 @@ class MemoryListener extends MapBase<String, Object> {
 
   void _onDataChange() {
     for (MapEntry<QueryData, StreamController<Object?>> entry
-        in _controllers.entries) {
+        in _valueControllers.entries) {
       final QueryData query = entry.key;
       final StreamController<Object?> controller = entry.value;
       controller.add(once(query));
@@ -240,6 +378,10 @@ class MemoryInstance {
 
   Object? get([Iterable<ParamType> params = const [], String? path]) =>
       _listener.once(QueryData(path: path, params: params));
+
+  Map<String, Object> getChildren(
+          [Iterable<ParamType> params = const [], String? path]) =>
+      _listener.onceChildren(QueryData(path: path, params: params));
 
   Stream<Object?> listen(
           [Iterable<ParamType> params = const [], String? path]) =>
