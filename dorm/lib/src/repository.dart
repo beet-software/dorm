@@ -5,23 +5,7 @@ import 'entity.dart';
 import 'filter.dart';
 import 'reference.dart';
 
-/// Represents the operations available for a [Model] in a database.
-abstract class ModelRepository<Model> implements Mergeable<Model> {
-  /// Listens for all the models in this table and their changes.
-  ///
-  /// If there are no models, this method will yield an empty list.
-  Stream<List<Model>> pullAll([Filter filter = const Filter.empty()]);
-
-  /// Listens for a model in this table, given íts [id].
-  ///
-  /// If there is no model with the given [id], this method will yield null.
-  Stream<Model?> pull(String id);
-
-  /// Selects all the models in this table.
-  ///
-  /// If there are no models, this method will return an empty list.
-  Future<List<Model>> peekAll([Filter filter = const Filter.empty()]);
-
+abstract class SingleReadOperation<Model> {
   /// Selects a model in this table, given its [id].
   ///
   /// The difference between this method and [peekAll] is the download size:
@@ -40,6 +24,26 @@ abstract class ModelRepository<Model> implements Mergeable<Model> {
   /// If there is no model with the given [id], this method will return null.
   Future<Model?> peek(String id);
 
+  /// Listens for a model in this table, given íts [id].
+  ///
+  /// If there is no model with the given [id], this method will yield null.
+  Stream<Model?> pull(String id);
+}
+
+abstract class BatchReadOperation<Model> {
+  /// Selects all the models in this table.
+  ///
+  /// If there are no models, this method will return an empty list.
+  Future<List<Model>> peekAll([Filter filter = const Filter.empty()]);
+
+  /// Listens for all the models in this table and their changes.
+  ///
+  /// If there are no models, this method will yield an empty list.
+  Stream<List<Model>> pullAll([Filter filter = const Filter.empty()]);
+}
+
+/// Represents the operations available for a [Model] in a database.
+abstract class ModelRepository<Model> implements Mergeable<Model> {
   /// Selects all the ids from the models of this table.
   ///
   /// The difference between this method and [peekAll] is the download size:
@@ -124,22 +128,6 @@ class Repository<Data, Model extends Data>
   const Repository({required this.root, required this.entity});
 
   Reference get _ref => root.child(entity.tableName);
-
-  @override
-  Mergeable<Join<Model, RightModel?>> merge1to1<RightModel>(
-    ModelRepository<RightModel> right, {
-    required String Function(Model p1) on,
-    Filter where = const Filter.empty(),
-  }) {
-    return Join1to1(left: this, right: right, on: on, where: where);
-  }
-
-  @override
-  Mergeable<Join<Model, List<RightModel>>> merge1toN<RightModel>(
-    ModelRepository<RightModel> right, {
-    required Filter Function(Model p1) on,
-    Filter where = const Filter.empty(),
-  }) {}
 
   @override
   Future<Model?> peek(String id) {
