@@ -1,9 +1,8 @@
-import 'package:dorm/src/merging.dart';
-
 import 'dependency.dart';
 import 'entity.dart';
 import 'filter.dart';
 import 'reference.dart';
+import 'relationship.dart';
 
 abstract class SingleReadOperation<Model> {
   /// Selects a model in this table, given its [id].

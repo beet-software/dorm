@@ -1,8 +1,7 @@
 import 'dart:async';
 
-import 'package:rxdart/rxdart.dart';
-
 import 'filter.dart';
+import 'merge.dart';
 import 'repository.dart';
 
 class Join<LeftModel, RightModel> {
@@ -14,6 +13,8 @@ class Join<LeftModel, RightModel> {
 
 abstract class Mergeable<Model>
     implements SingleReadOperation<Model>, BatchReadOperation<Model> {}
+
+abstract class Relationship<L, R> implements Mergeable<Join<L, R>> {}
 
 /// Represents an one-to-one relationship.
 ///
@@ -61,7 +62,7 @@ abstract class Mergeable<Model>
 /// final Stream<List<Join<School, Principal?>>> s0 = relationship
 ///     .pullAll(Filter.value(key: 'active', value: true));
 /// ```
-class OneToOneRelationship<L, R> implements Mergeable<Join<L, R?>> {
+class OneToOneRelationship<L, R> implements Relationship<L, R?> {
   final Mergeable<L> left;
   final Mergeable<R> right;
   final String Function(L) on;
@@ -116,26 +117,21 @@ class OneToOneRelationship<L, R> implements Mergeable<Join<L, R?>> {
   }
 
   @override
-  Stream<List<Join<L, R?>>> pullAll([
-    Filter filter = const Filter.empty(),
-  ]) {
-    return left //
-        .pullAll(filter)
-        .flatMap((leftModels) => CombineLatestStream.list(leftModels //
-            .map((leftModel) => right //
-                .pull(on(leftModel))
-                .map((rightModel) =>
-                    Join(left: leftModel, right: rightModel)))));
+  Stream<Join<L, R?>?> pull(String id) {
+    return MapMerge<L, R?>(
+      left: left.pull(id),
+      map: (leftModel) => right.pull(on(leftModel)),
+    ).stream;
   }
 
   @override
-  Stream<Join<L, R?>?> pull(String id) {
-    return left.pull(id).flatMap((leftModel) {
-      if (leftModel == null) return Stream.value(null);
-      return right
-          .pull(on(leftModel))
-          .map((rightModel) => Join(left: leftModel, right: rightModel));
-    });
+  Stream<List<Join<L, R?>>> pullAll([
+    Filter filter = const Filter.empty(),
+  ]) {
+    return ExpandMerge<L, R?>(
+      left: left.pullAll(filter),
+      map: (leftModel) => right.pull(on(leftModel)),
+    ).stream;
   }
 }
 
@@ -185,7 +181,7 @@ class OneToOneRelationship<L, R> implements Mergeable<Join<L, R?>> {
 /// final Stream<List<Join<School, List<Student>>>> s0 = relationship
 ///     .pullAll(Filter.value(key: 'active', value: true));
 /// ```
-class OneToManyRelationship<L, R> implements Mergeable<Join<L, List<R>>> {
+class OneToManyRelationship<L, R> implements Relationship<L, List<R>> {
   final Mergeable<L> left;
   final Mergeable<R> right;
   final Filter Function(L) on;
@@ -219,17 +215,11 @@ class OneToManyRelationship<L, R> implements Mergeable<Join<L, List<R>>> {
   }
 
   @override
-  Stream<List<Join<L, List<R>>>> pullAll([
-    Filter filter = const Filter.empty(),
-  ]) {
-    return left.pullAll(filter).flatMap((leftModels) {
-      if (leftModels.isEmpty) return Stream.value([]);
-      return CombineLatestStream.list(leftModels.map((leftModel) {
-        return right.pullAll(on(leftModel)).map((rightModels) {
-          return Join(left: leftModel, right: rightModels);
-        });
-      }));
-    });
+  Future<Join<L, List<R>>?> peek(String id) async {
+    final L? leftModel = await left.peek(id);
+    if (leftModel == null) return null;
+    final List<R> rightModels = await right.peekAll(on(leftModel));
+    return Join(left: leftModel, right: rightModels);
   }
 
   @override
@@ -246,20 +236,20 @@ class OneToManyRelationship<L, R> implements Mergeable<Join<L, List<R>>> {
   }
 
   @override
-  Future<Join<L, List<R>>?> peek(String id) async {
-    final L? leftModel = await left.peek(id);
-    if (leftModel == null) return null;
-    final List<R> rightModels = await right.peekAll(on(leftModel));
-    return Join(left: leftModel, right: rightModels);
+  Stream<Join<L, List<R>>?> pull(String id) {
+    return MapMerge<L, List<R>>(
+      left: left.pull(id),
+      map: (leftModel) => right.pullAll(on(leftModel)),
+    ).stream;
   }
 
   @override
-  Stream<Join<L, List<R>>?> pull(String id) {
-    return left.pull(id).flatMap((leftModel) {
-      if (leftModel == null) return Stream.value(null);
-      return right.pullAll(on(leftModel)).map((rightModels) {
-        return Join(left: leftModel, right: rightModels);
-      });
-    });
+  Stream<List<Join<L, List<R>>>> pullAll([
+    Filter filter = const Filter.empty(),
+  ]) {
+    return ExpandMerge<L, List<R>>(
+      left: left.pullAll(filter),
+      map: (leftModel) => right.pullAll(on(leftModel)),
+    ).stream;
   }
 }
