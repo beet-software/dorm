@@ -2,24 +2,9 @@ import 'dependency.dart';
 import 'entity.dart';
 import 'filter.dart';
 import 'reference.dart';
+import 'relationship.dart';
 
-/// Represents the operations available for a [Model] in a database.
-abstract class ModelRepository<Model> {
-  /// Listens for all the models in this table and their changes.
-  ///
-  /// If there are no models, this method will yield an empty list.
-  Stream<List<Model>> pullAll([Filter filter = const Filter.empty()]);
-
-  /// Listens for a model in this table, given íts [id].
-  ///
-  /// If there is no model with the given [id], this method will yield null.
-  Stream<Model?> pull(String id);
-
-  /// Selects all the models in this table.
-  ///
-  /// If there are no models, this method will return an empty list.
-  Future<List<Model>> peekAll([Filter filter = const Filter.empty()]);
-
+abstract class SingleReadOperation<Model> {
   /// Selects a model in this table, given its [id].
   ///
   /// The difference between this method and [peekAll] is the download size:
@@ -38,6 +23,26 @@ abstract class ModelRepository<Model> {
   /// If there is no model with the given [id], this method will return null.
   Future<Model?> peek(String id);
 
+  /// Listens for a model in this table, given íts [id].
+  ///
+  /// If there is no model with the given [id], this method will yield null.
+  Stream<Model?> pull(String id);
+}
+
+abstract class BatchReadOperation<Model> {
+  /// Selects all the models in this table.
+  ///
+  /// If there are no models, this method will return an empty list.
+  Future<List<Model>> peekAll([Filter filter = const Filter.empty()]);
+
+  /// Listens for all the models in this table and their changes.
+  ///
+  /// If there are no models, this method will yield an empty list.
+  Stream<List<Model>> pullAll([Filter filter = const Filter.empty()]);
+}
+
+/// Represents the operations available for a [Model] in a database.
+abstract class ModelRepository<Model> implements Mergeable<Model> {
   /// Selects all the ids from the models of this table.
   ///
   /// The difference between this method and [peekAll] is the download size:

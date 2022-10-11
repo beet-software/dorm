@@ -387,6 +387,10 @@ class MemoryInstance {
           [Iterable<ParamType> params = const [], String? path]) =>
       _listener.listen(QueryData(path: path, params: params));
 
+  Stream<Map<String, Object>> listenChildren(
+          [Iterable<ParamType> params = const [], String? path]) =>
+      _listener.listenChildren(QueryData(path: path, params: params));
+
   void set(String path, Object? value) {
     if (value is Map<String, Object?>) {
       for (MapEntry<String, Object?> entry in value.entries) {
