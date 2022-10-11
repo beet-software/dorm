@@ -140,19 +140,19 @@ class OneToOneRelationship<L, R> implements Relationship<L, R?> {
 /// Let's suppose you have two tables: `School` and `Student`:
 ///
 /// ```none
-/// |                            `School`                            |
-/// |:----:|:---------------------------:|:--------------:|:--------:|
-/// | `id` |            `name`           | `principal-id` | `active` |
-/// |   0  |    School of Happy Valley   |       10       |   true   |
-/// |   1  |     Sacred Heart Academy    |       11       |   false  |
-/// |   2  | Horizon Education Institute |       12       |   true   |
+/// |                    `School`                   |
+/// |:----:|:---------------------------:|:--------:|
+/// | `id` |            `name`           | `active` |
+/// |   0  |    School of Happy Valley   |   true   |
+/// |   1  |     Sacred Heart Academy    |   false  |
+/// |   2  | Horizon Education Institute |   true   |
 ///
-/// |       `Student`       |
-/// |:----:|:--------------:|
-/// | `id` |     `name`     |
-/// |  10  | Kennedy Heaven |
-/// |  11  |    Rolf Finn   |
-/// |  12  |   Byron Phil   |
+/// |                      `Student`                     |
+/// |:----:|:--------------:|:------------:|:-----------:|
+/// | `id` |     `name`     | `birth-date` | `school-id` |
+/// |  10  | Kennedy Heaven |  2017-06-13  |      0      |
+/// |  11  |    Rolf Finn   |  2018-01-29  |      0      |
+/// |  12  |   Byron Phil   |  2019-07-17  |      1      |
 /// ```
 ///
 /// Since a `School` can have more than one `Student`, this is a 1-to-N relationship.
@@ -160,7 +160,7 @@ class OneToOneRelationship<L, R> implements Relationship<L, R?> {
 /// In SQL, you'd do:
 ///
 /// ```sql
-/// SELECT A.id, A.name, A.active, B.id, B.school-id, B.name, B.birthdate
+/// SELECT A.id, A.name, A.active, B.id, B.school-id, B.name, B.birth-date
 /// FROM School A
 /// LEFT JOIN Student B
 /// ON A.id = B.school-id
