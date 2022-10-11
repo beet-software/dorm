@@ -4,36 +4,31 @@ Provides annotations related with dORM code generation.
 
 ## Getting started
 
-Add the following entries to your *pubspec.yaml* file:
-
-```yaml
-dependencies:
-  dorm_annotations:
-    git:
-      url: git@github.com:enzo-santos/dorm.git
-      ref: main
-      path: dorm_annotations
-
-  json_annotation: ^4.6.0
-
-dev_dependencies:
-  build_runner: ^2.2.0
-  dorm_generator:
-    git:
-      url: git@github.com:enzo-santos/dorm.git
-      ref: main
-      path: dorm_generator
-```
-
-Get your package dependencies:
+Run the following commands inside your project:
 
 ```shell
+dart pub add json_annotation
+dart pub add dorm \
+    --git-url https://github.com/enzo-santos/dorm.git \
+    --git-ref main \
+    --git-path dorm
+dart pub add dorm_annotations \
+    --git-url https://github.com/enzo-santos/dorm.git \
+    --git-ref main \
+    --git-path dorm_annotations
+
+dart pub add build_runner --dev
+dart pub add dorm_generator --dev \
+    --git-url https://github.com/enzo-santos/dorm.git \
+    --git-ref main \
+    --git-path dorm_generator
+    
 dart pub get
 ```
 
 ## Usage
 
-The package `json_annotation` exports three annotations (`Model`, `Field`, `ForeignField`) for you
+This library exports three annotations (`Model`, `Field`, `ForeignField`) for you
 create an ORM for your system. As an example, let's create a social network system with the
 following models:
 
@@ -79,7 +74,7 @@ Annotate all the classes with the `Model` annotation, giving it appropriate para
 ```dart
 import 'package:dorm_annotations/dorm_annotations.dart';
 
-@Model(name: 'user', repositoryName: 'users')
+@Model(name: 'user', as: #users)
 abstract class _User {
   String? get name;
 
@@ -90,7 +85,7 @@ abstract class _User {
   Uri get pictureUrl;
 }
 
-@Model(name: 'post', repositoryName: 'posts')
+@Model(name: 'post', as: #posts)
 abstract class _Post {
   String get contents;
 
@@ -99,7 +94,7 @@ abstract class _Post {
   String get userId;
 }
 
-@Model(name: 'message', repositoryName: 'messages')
+@Model(name: 'message', as: #messages)
 abstract class _Message {
   String get contents;
 
@@ -117,7 +112,7 @@ parameters:
 ```dart
 import 'package:dorm_annotations/dorm_annotations.dart';
 
-@Model(name: 'user', repositoryName: 'users')
+@Model(name: 'user', as: #users)
 abstract class _User {
   @Field(name: 'name')
   String? get name;
@@ -132,7 +127,7 @@ abstract class _User {
   Uri get pictureUrl;
 }
 
-@Model(name: 'post', repositoryName: 'posts')
+@Model(name: 'post', as: #posts)
 abstract class _Post {
   @Field(name: 'contents')
   String get contents;
@@ -144,7 +139,7 @@ abstract class _Post {
   String get userId;
 }
 
-@Model(name: 'message', repositoryName: 'messages')
+@Model(name: 'message', as: #messages)
 abstract class _Message {
   @Field(name: 'contents')
   String get contents;
@@ -163,6 +158,7 @@ abstract class _Message {
 On the top of the file, add the `json_annotation` import and the following part-declarations:
 
 ```dart
+import 'package:dorm/dorm.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
 import 'package:json_annotation/json_annotation.dart';
 
@@ -177,7 +173,6 @@ Run the code generation using any of the commands below:
 
 ```shell
 dart run build_runner build
-flutter pub run build_runner build
 ```
 
 Two files will be generated on the same directory: *social_network.g.dart* and
@@ -190,25 +185,25 @@ See the `example` directory to see an example of the generated code.
 
 ### Unique identification (uids)
 
-According to [the framework](https://github.com/enzo-santos/dorm/blob/main/README.md#what-to-use-as-primary-key),
+According to [the framework](https://github.com/enzo-santos/dorm/blob/main/dorm/README.md#what-to-use-as-primary-key),
 there are three types of unique identifiers: simple, composite and foreign. These types
 are implemented through `UidType`:
 
 ```dart
 // When creating a new country, this corresponds to the 'simple' type
-@Model(name: 'country', repositoryName: 'countries', uidType: UidType.simple())
+@Model(name: 'country', as: #countries, uidType: UidType.simple())
 abstract class _Country {}
 
 // When creating a new state, this corresponds to the 'composite' type
-@Model(name: 'state', repositoryName: 'states', uidType: UidType.composite())
+@Model(name: 'state', as: #states, uidType: UidType.composite())
 abstract class _State {}
 
 // When creating a new capital, this corresponds to the 'foreign' type
-@Model(name: 'capital', repositoryName: 'capitals', uidType: UidType.sameAs(_Country))
+@Model(name: 'capital', as: #capitals, uidType: UidType.sameAs(_Country))
 abstract class _Capital {}
 
 CustomUidValue _identifyCitizen(Object obj) {
-  final CitizenData data = obj as CitizenData; 
+  final _Citizen data = obj as _Citizen; 
   if (data.isForeigner) {
     return CustomUidValue.value(data.visaCode);
   }
@@ -220,7 +215,7 @@ CustomUidValue _identifyCitizen(Object obj) {
 }
 
 // When creating a new citizen, this allows you to customize your primary key
-@Model(name: 'citizen', repositoryName: 'citizens', uidType: UidType.custom(_identifyCitizen))
+@Model(name: 'citizen', as: #citizens, uidType: UidType.custom(_identifyCitizen))
 abstract class _Citizen {}
 ```
 
@@ -253,7 +248,7 @@ abstract class _Healing implements _Action {
   int get health;
 }
 
-@Model(name: 'operation', repositoryName: 'operations')
+@Model(name: 'operation', as: #operations')
 abstract class _Operation {
   @Field(name: 'name')
   String get name;
