@@ -438,9 +438,9 @@ await schoolRepository.pop(school.id);
 
 With a repository ready to be used, we want to ask the database questions related to
 relationships between schemas, such as "What are the students of a given school?". These
-question can be asked through the `Relationship` subclasses: `OneToOneRelationship` and 
+questions can be asked through the `Relationship` subclasses: `OneToOneRelationship` and 
 `OneToManyRelationship`. Given we have a school repository and a student repository, that
-question can be answered in the following ways:
+question can be answered in the following way:
 
 ```dart
 final Repository<School, SchoolData> schoolRepository = ...;
