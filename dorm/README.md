@@ -276,16 +276,16 @@ Here's the implementations of each methods:
 ```dart
 final String uniqueId = 'primary-key';
 
-final StudentModel current = StudentModel(
+final Student current = Student(
   // Simple primary key
-  // id: uniqueId,
+  id: uniqueId,
   
   // Composite primary key
-  // id: dependency.key(uniqueId),
+  id: dependency.key(uniqueId),
   // If `dependency.schoolId` is 'school-key', the above call will return `school-key&primary-key` 
   
   // Foreign primary key
-  // id: dependency.schoolId,
+  id: dependency.schoolId,
 );
 ```
 
@@ -321,6 +321,7 @@ class SchoolEntity implements Entity<SchoolData, School> {
   @override
   Map<String, Object?> toJson(SchoolData data) => data.toJson();
   
+  // This represents an UPDATE transformation, see the previous section
   @override
   School convert(School model, SchoolData data) => School(
       id: model.id,
@@ -329,6 +330,7 @@ class SchoolEntity implements Entity<SchoolData, School> {
       address: data.address,
     );
     
+  // This represents a CREATE transformation, see the previous section
   @override
   School fromData(SchoolDependency dependency, String id, SchoolData data) {
     return School(
@@ -383,12 +385,14 @@ class StudentEntity implements Entity<StudentData, Student> {
 }
 ```
 
+
 ### Reference
 
 The database access is done using a `Reference`, an abstract class. This library
 provides some out-of-the-box implementations of `Reference` you can integrate into
 your code, but if you want to implement it for a database language not available 
 yet, implement this class.
+
 
 ### Repository
 
@@ -428,6 +432,73 @@ await schoolRepository.push(School(
 // Delete
 await schoolRepository.pop(school.id);
 ```
+
+
+### Relationships
+
+With a repository ready to be used, we want to ask the database questions related to
+relationships between schemas, such as "What are the students of a given school?". These
+question can be asked through the `Relationship` subclasses: `OneToOneRelationship` and 
+`OneToManyRelationship`. Given we have a school repository and a student repository, that
+question can be answered in the following ways:
+
+```dart
+final Repository<School, SchoolData> schoolRepository = ...;
+final Repository<Student, StudentData> studentRepository = ...;
+
+// Creating a new school
+final School hogwarts = await schoolRepository.put(
+  const SchoolDependency(), 
+  SchoolData(
+    name: 'Hogwarts School of Witchcraft and Wizardry',
+    phoneNumber: '605-475-6961',
+    address: 'Hogwarts Castle, Highlands, Scotland',
+  ),
+);
+
+// Creating students
+await studentRepository.put(
+  StudentDependency(schoolId: hogwarts.id),
+  StudentData(
+    name: 'Harry Potter',
+    birthDate: DateTime(1980, 7, 31),
+    grade: '1',
+    email: 'harrypotter@gmail.co.uk,
+  ),
+);
+
+await studentRepository.put(
+  StudentDependency(schoolId: hogwarts.id),
+  StudentData(
+    name: 'Rony Weasley',
+    birthDate: DateTime(1980, 3, 1),
+    grade: '1',
+    email: 'ronyweasley@gmail.co.uk,
+  ),
+);
+
+// Creating a relationship between schools and students
+final OneToManyRelationship<School, Student> relationship = OneToManyRelationship(
+  left: schoolRepository,
+  right: studentRepository,
+  on: (school) => Filter.value(key: 'school-id', value: school.id),
+);
+
+// What are the students of Hogwarts?
+final Join<School, List<Student>>? join = await relationship.peek(hogwarts.id);
+
+if (join == null) {
+  // If `hogwarts.id` does not exist or was deleted in this interval of time
+} else {
+  final School school = join.left;
+  final List<Student> students = join.right;
+  print(school.name);        // Hogwarts School of Witchcraft and Wizardry
+  print(students.length);    // 2
+}
+```
+
+This way, you can create complex relationship queries.
+
 
 ## Automatizing the setup
 
