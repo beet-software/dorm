@@ -298,7 +298,8 @@ If you're using Firebase, `uniqueId` here is commonly replaced by Firebase's pus
 >
 > *Source:* [The 2^120 Ways to Ensure Unique Identifiers](https://firebase.blog/posts/2015/02/the-2120-ways-to-ensure-unique_68https://firebase.blog/posts/2015/02/the-2120-ways-to-ensure-unique_68), The Firebase Blog
 
-If you're using pure Dart code, you can use `const Uuid().v4()` from [`uuid`](https://pub.dev/packages/uuid) library.
+If you're using pure Dart code, you can use `const Uuid().v4()` from 
+[`uuid`](https://pub.dev/packages/uuid) library.
 
 
 ### Entity
@@ -312,6 +313,8 @@ This is an abstract class, so implement it for each schema created:
 class SchoolEntity implements Entity<SchoolData, School> {
   const SchoolEntity();
 
+  // The name of this table in the database, equivalent
+  // to `CREATE TABLE schools` from SQL
   @override
   String get tableName => 'schools';
   
@@ -409,30 +412,85 @@ final Repository<School, SchoolData> schoolRepository = Repository(root: referen
 // Read all
 final List<School> schools = await schoolRepository.peekAll();
 
-// Listen all
-final Stream<School> schoolsStream = schoolRepository.pullAll();
+// Read all and listen for changes
+final Stream<List<School>> schoolsStream = schoolRepository.pullAll();
 
 // Read single
-final School hogwarts = await schoolRepository.pull('hogwarts');
+final School? hogwarts = await schoolRepository.peek('hogwarts');
+if (hogwarts == null) {
+  throw StateError('The id `hogwarts` was not found in the database');
+}
 
-// Create
-final School school = await schoolRepository.put(
+// Create with an ID defined by the framework
+final School school0 = await schoolRepository.put(
   const SchoolDependency(), 
-  SchoolData(name: 'School 1', phoneNumber: '5511111111111', address: 'Sao Paulo, BR'),
+  SchoolData(
+    name: 'School 1',
+    phoneNumber: '5511111111111',
+    address: 'Sao Paulo, BR',
+  ),
 );
+
+// Create with an ID defined by yourself
+// If the given ID already exists, the old model will be overwritten
+final School school1 = await schoolRepository.push(School(
+  id: '12345678',
+  name: 'School 2',
+  phoneNumber: '5522222222222',
+  address: 'Sao Paulo, BR',
+));
 
 // Update
 await schoolRepository.push(School(
-  id: school.id,
-  name: 'School 2',
-  phoneNumber: '5522222222222', 
-  address: 'Sao Paulo, BR'
+  id: school0.id,
+  name: 'School 3',
+  phoneNumber: '5533333333333', 
+  address: 'Sao Paulo, BR',
 ));
 
 // Delete
-await schoolRepository.pop(school.id);
+await schoolRepository.pop(school1.id);
 ```
 
+### Filtering
+
+Batch-read methods of repositories, such as `peekAll` (which returns a Future)
+and `pullAll` (which returns a Stream), receives an optional filter parameter.
+This parameter is, by default, equals to `Filter.empty()`, which downloads all 
+models from this repository. If you want to limit how many data is downloaded,
+you can pass to these methods custom filters:
+
+```dart
+// Peek all schools
+await schoolRepository.peekAll(const Filter.empty());
+
+// Peek all schools with name equal to ABC
+await schoolRepository.peekAll(const Filter.value(key: 'name', value: 'ABC'));
+
+// Peek all schools with name *prefixed* with DEF
+await schoolRepository.peekAll(const Filter.text(key: 'name', text: 'DEF'));
+```
+
+You can also combine filters, if available on their constructor:
+
+```dart
+// Peek first 10 schools with name equal to ABC
+await schoolRepository.peekAll(const Filter.limit(
+  query: Filter.value(key: 'name', value: 'ABC'), 
+  limit: 10,
+));
+
+// Peek last 20 schools with name equal to DEF
+await schoolRepository.peekAll(const Filter.limit(
+  query: Filter.value(key: 'name', value: 'DEF'), 
+  limit: -20,
+));
+```
+
+Note that filters containing `key` as parameters receive a String, which should be 
+the same as their serialization fields. In the beginning of this document, we 
+serialized the name of a school as `'name'`, so that's what we should use as `key`
+parameter in a filter when filtering by a school name.
 
 ### Relationships
 
@@ -463,7 +521,7 @@ await studentRepository.put(
     name: 'Harry Potter',
     birthDate: DateTime(1980, 7, 31),
     grade: '1',
-    email: 'harrypotter@gmail.co.uk,
+    email: 'harrypotter@gmail.co.uk',
   ),
 );
 
@@ -473,7 +531,7 @@ await studentRepository.put(
     name: 'Rony Weasley',
     birthDate: DateTime(1980, 3, 1),
     grade: '1',
-    email: 'ronyweasley@gmail.co.uk,
+    email: 'ronyweasley@gmail.co.uk',
   ),
 );
 
@@ -481,6 +539,9 @@ await studentRepository.put(
 final OneToManyRelationship<School, Student> relationship = OneToManyRelationship(
   left: schoolRepository,
   right: studentRepository,
+
+  // For a given `school` of this relationship, 
+  // filter students where `school-id` equals to `school`'s ID 
   on: (school) => Filter.value(key: 'school-id', value: school.id),
 );
 
