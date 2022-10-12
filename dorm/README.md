@@ -2,6 +2,17 @@
 
 An Object Relational Mapper framework for Dart.
 
+## Installing
+
+Run the following commands in your Dart or Flutter project:
+
+```bash
+dart pub add dorm \
+  --git-url https://github.com/enzo-santos/dorm.git \
+  --git-ref main \
+  --git-path dorm
+```
+
 ## The framework
 
 A database schema in this framework is split into two classes: its data and its model. The
@@ -74,7 +85,7 @@ class Student extends StudentData {
 }
 ```
 
-**Why don't keep all the fields in a single model class?** Because of separation of concerns. A
+> **Why don't keep all the fields in a single model class?** Because of separation of concerns. A
 form should only be concerned about real world information of a schema, not their primary or 
 foreign keys. So when using a form, use the schema data. When reading from database, use the 
 schema model.
@@ -214,10 +225,14 @@ update.
 The following represents an update transformation:
 
 ```dart
-final StudentData data = StudentData(...);
-final StudentModel existing = StudentModel(...);
+// The existing model you want to update
+final Student existing = Student(...);
 
-final StudentModel current = StudentModel(
+// The new data you want to overwrite
+final StudentData data = StudentData(...);
+
+// The updated model
+final Student updated = Student(
   id: existing.id,
   schoolId: existing.schoolId,
   name: data.name,
@@ -232,10 +247,14 @@ Note that, for an update transformation, you need an existing schema model to in
 In a create transformation, this existing schema model is replaced by a `Dependency`:
 
 ```dart
+// The data you want to transform into a model
 final StudentData data = StudentData(...);
+
+// The dependency you want to inject into the new model
 final StudentDependency dependency = StudentDependency(...);
 
-final StudentModel current = StudentModel(
+// The created model
+final Student current = Student(
   // id: ???,
   schoolId: dependency.schoolId,
   name: data.name,
@@ -245,7 +264,8 @@ final StudentModel current = StudentModel(
 );
 ```
 
-What to use as primary key here? You can either use
+Since we didn't declare a primary key while creating a dependency, what can we use as
+primary key here? You can either use
 
 - an unique ID (a simple primary key)
 - another ID together with an unique ID (a composite primary key)
