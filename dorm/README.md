@@ -152,7 +152,7 @@ class StudentData {
   Map<String, Object?> toJson() {
     return {
       'name': name,
-      'birth-date': birthDate.toISOString(),
+      'birth-date': birthDate.toIso8601String(),
       'grade': grade,
       'email': email,
     };
@@ -226,10 +226,10 @@ The following represents an update transformation:
 
 ```dart
 // The existing model you want to update
-final Student existing = Student(...);
+final Student existing = Student(/*...*/);
 
 // The new data you want to overwrite
-final StudentData data = StudentData(...);
+final StudentData data = StudentData(/*...*/);
 
 // The updated model
 final Student updated = Student(
@@ -248,10 +248,10 @@ In a create transformation, this existing schema model is replaced by a `Depende
 
 ```dart
 // The data you want to transform into a model
-final StudentData data = StudentData(...);
+final StudentData data = StudentData(/*...*/);
 
 // The dependency you want to inject into the new model
-final StudentDependency dependency = StudentDependency(...);
+final StudentDependency dependency = StudentDependency(/*...*/);
 
 // The created model
 final Student current = Student(
@@ -465,32 +465,68 @@ you can pass to these methods custom filters:
 await schoolRepository.peekAll(const Filter.empty());
 
 // Peek all schools with name equal to ABC
-await schoolRepository.peekAll(const Filter.value(key: 'name', value: 'ABC'));
+await schoolRepository.peekAll(const Filter.value('ABC', key: 'name'));
 
 // Peek all schools with name *prefixed* with DEF
-await schoolRepository.peekAll(const Filter.text(key: 'name', text: 'DEF'));
+await schoolRepository.peekAll(const Filter.text('DEF', key: 'name'));
 ```
 
-You can also combine filters, if available on their constructor:
+You can also use methods of filters, such as `limit`:
 
 ```dart
 // Peek first 10 schools with name equal to ABC
-await schoolRepository.peekAll(const Filter.limit(
-  query: Filter.value(key: 'name', value: 'ABC'), 
-  limit: 10,
-));
+await schoolRepository
+    .peekAll(Filter.value('ABC', key: 'name').limit(10));
 
-// Peek last 20 schools with name equal to DEF
-await schoolRepository.peekAll(const Filter.limit(
-  query: Filter.value(key: 'name', value: 'DEF'), 
-  limit: -20,
-));
+// Peek last 20 schools with name prefixed with DEF
+await schoolRepository
+    .peekAll(Filter.text('DEF', key: 'name').limit(-20));
 ```
 
-Note that filters containing `key` as parameters receive a String, which should be 
-the same as their serialization fields. In the beginning of this document, we 
+Note that filters containing `key` as parameters receive a String, which should be
+the same as their serialization fields. In the beginning of this document, we
 serialized the name of a school as `'name'`, so that's what we should use as `key`
 parameter in a filter when filtering by a school name.
+
+
+#### Filtering on dates
+
+To filter on dates, you must transform your date field using `DateTime`'s 
+`toIso8601String` method when serializing it inside `toJson`:
+
+```dart
+class Student {
+  final DateTime birthDate;
+  
+  // ...
+
+  Map<String, Object?> toJson() {
+    return {
+      // ...
+      'birth-date': birthDate.toIso8601String(),
+    };
+  }
+}
+```
+
+You can now use another date to belong to your filter:
+
+```dart
+final DateTime dt = DateTime(2021, 06, 13, 16, 05, 12, 111);
+late Filter filter;
+
+// Select entries occurred at 13/06/2021, 16:05:12.111
+filter = Filter.date(dt, key: 'birth-date');
+
+// Select entries occurred at 2021
+filter = Filter.date(dt, key: 'birth-date', unit: DateFilterUnit.year);
+
+// Select entries occurred at 13/06/2021
+filter = Filter.date(dt, key: 'birth-date', unit: DateFilterUnit.day);
+
+// Select entries occurred at 13/06/2021, 16:05
+filter = Filter.date(dt, key: 'birth-date', unit: DateFilterUnit.hour);
+```
 
 ### Relationships
 
@@ -542,7 +578,7 @@ final OneToManyRelationship<School, Student> relationship = OneToManyRelationshi
 
   // For a given `school` of this relationship, 
   // filter students where `school-id` equals to `school`'s ID 
-  on: (school) => Filter.value(key: 'school-id', value: school.id),
+  on: (school) => Filter.value(school.id, key: 'school-id'),
 );
 
 // What are the students of Hogwarts?
@@ -592,18 +628,16 @@ final OneToOneRelationship<State, Capital> r0 = OneToOneRelationship(
 final OneToManyRelationship<Country, Join<State, Capital?>> r1 = OneToManyRelationship(
   left: countryRepository,
   right: r0,    // You can use another relationship here!
-  on: (country) => Filter.value(key: 'country-id', value: country.id),
+  on: (country) => Filter.value(country.id, key: 'country-id'),
 );
 
 // Peek all countries whose name starts with AB and their 
 // respective states with their respective capitals
 final List<Join<Country, List<Join<State, Capital?>>>> joins = 
-    await r1.peekAll(Filter.value(key: 'name', value: 'AB'));
+    await r1.peekAll(Filter.text('AB', key: 'name'));
 ```
 
 ## Automatizing the setup
 
 Found all too much? You can run all these steps using code generation provided 
 by `dorm_generator`.
-
-

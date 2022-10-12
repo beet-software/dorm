@@ -140,7 +140,7 @@ class Repository<Data, Model extends Data>
   @override
   Future<List<Model>> peekAll([Filter filter = const Filter.empty()]) {
     return filter //
-        .filter(_ref)
+        .apply(_ref)
         .getChildren()
         .then((values) {
       if (values.isEmpty) return [];
@@ -179,7 +179,7 @@ class Repository<Data, Model extends Data>
   @override
   Stream<List<Model>> pullAll([Filter filter = const Filter.empty()]) {
     return filter //
-        .filter(_ref)
+        .apply(_ref)
         .onChildren
         .map((values) {
       if (values.isEmpty) return [];
