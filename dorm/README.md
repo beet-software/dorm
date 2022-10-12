@@ -560,6 +560,46 @@ if (join == null) {
 
 This way, you can create complex relationship queries.
 
+Another example showing how you can combine relationships:
+
+``` dart
+class Country {
+  final String id;
+}
+
+abstract class State {
+  final String id;
+
+  // A country has multiple states (Country 1-to-N State)
+  final String countryId;
+}
+
+abstract class Capital {
+  // A state has a single capital (State 1-to-1 Capital)
+  // Since a capital depends exclusively on a state, they 
+  // must have the same ID. This ID sharing is the only
+  // way to guarantee that one row in a table may be linked
+  // with ONLY one row in another table.
+  final String id;
+}
+
+final OneToOneRelationship<State, Capital> r0 = OneToOneRelationship(
+  left: stateRepository,
+  right: capitalRepository,
+  on: (state) => state.id,
+);
+
+final OneToManyRelationship<Country, Join<State, Capital?>> r1 = OneToManyRelationship(
+  left: countryRepository,
+  right: r0,    // You can use another relationship here!
+  on: (country) => Filter.value(key: 'country-id', value: country.id),
+);
+
+// Peek all countries whose name starts with AB and their 
+// respective states with their respective capitals
+final List<Join<Country, List<Join<State, Capital?>>>> joins = 
+    await r1.peekAll(Filter.value(key: 'name', value: 'AB'));
+```
 
 ## Automatizing the setup
 
