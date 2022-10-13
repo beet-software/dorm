@@ -489,6 +489,49 @@ serialized the name of a school as `'name'`, so that's what we should use as `ke
 parameter in a filter when filtering by a school name.
 
 
+#### Filtering on normalized text
+
+To filter on normalized text, you must transform a copy of your text
+field using `Filter.normalizeText` method when serializing it inside
+`toJson`:
+
+```dart
+class Student {
+  final String name;
+  
+  // ...
+
+  Map<String, Object?> toJson() {
+    return {
+      'name': name,
+      // ...
+      '.name': Filter.normalizeText(name),
+      // It can be any key, such as `_name` or `_query/name`
+    };
+  }
+}
+```
+
+This static method will
+
+- remove any diacritics from your string (so "Déjà vu 2" and "DeJa vU 2" will match)
+- neutralize the capitalization of your string (so "DEjA VU 2" and "DeJa vU 2" will match)
+- remove everything but letters from your string (so "Dejavu" and "DeJa vU 2" will match)
+
+You can now use another text to belong to your filter:
+
+```dart
+final String value = Filter.normalizeText(' jóHn');
+
+// Finds all students that starts with "John", "john", "joHn", etc.
+final Filter filter = Filter.text(value, key: '.name', normalized: true);
+```
+
+This becomes useful when a student name is "John" and the user enters 
+" jóHn" in the text field. Since text is normalized here, both texts 
+will match and the user will be able to find all Johns in the system.
+
+
 #### Filtering on dates
 
 To filter on dates, you must transform your date field using `DateTime`'s 

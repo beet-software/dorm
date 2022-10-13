@@ -1,6 +1,19 @@
 import 'query.dart';
 
 abstract class Filter {
+  static String normalizeText(String text) {
+    const t0 = 'ÀÁÂÃÄÅàáâãäåÒÓÔÕÕÖØòóôõöøÈÉÊËèéêëðÇçÐÌÍÎÏìíîïÙÚÛÜùúûüÑñŠšŸÿýŽž';
+    const t1 = 'AAAAAAaaaaaaOOOOOOOooooooEEEEeeeeeCcDIIIIiiiiUUUUuuuuNnSsYyyZz';
+
+    String result = text;
+    for (int i = 0; i < t0.length; i++) {
+      result = result.replaceAll(t0[i], t1[i]);
+    }
+    result = result.toUpperCase();
+    result = result.replaceAll(RegExp('[^A-Z]'), '');
+    return result;
+  }
+
   const factory Filter.empty() = _EmptyFilter;
 
   const factory Filter.value(
@@ -31,7 +44,7 @@ class _EmptyFilter extends Filter {
 
   @override
   Query apply(Query reference) => reference;
-}
+}1
 
 class _ValueFilter extends Filter {
   final String key;
@@ -46,28 +59,21 @@ class _ValueFilter extends Filter {
 }
 
 class _TextFilter extends Filter {
-  static String _normalizeText(String text) {
-    const t0 = 'ÀÁÂÃÄÅàáâãäåÒÓÔÕÕÖØòóôõöøÈÉÊËèéêëðÇçÐÌÍÎÏìíîïÙÚÛÜùúûüÑñŠšŸÿýŽž';
-    const t1 = 'AAAAAAaaaaaaOOOOOOOooooooEEEEeeeeeCcDIIIIiiiiUUUUuuuuNnSsYyyZz';
-
-    String result = text;
-    result = result.replaceAll(" ", "");
-    for (int i = 0; i < t0.length; i++) {
-      result = result.replaceAll(t0[i], t1[i]);
-    }
-    result = result.toUpperCase();
-    return result;
-  }
-
   final String key;
   final String text;
+  final bool normalized;
 
-  const _TextFilter(this.text, {required this.key}) : super._();
+  const _TextFilter(
+    this.text, {
+    required this.key,
+    this.normalized = false,
+  }) : super._();
 
   @override
   Query apply(Query reference) {
-    final String text = _normalizeText(this.text);
-    return reference.orderByChild(key).startAt(text).endAt('$text\uf8ff');
+    final String text = this.text;
+    final String value = normalized ? Filter.normalizeText(text) : text;
+    return reference.orderByChild(key).startAt(value).endAt('$value\uf8ff');
   }
 }
 
