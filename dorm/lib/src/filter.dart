@@ -1,4 +1,57 @@
+import 'package:dorm/dorm.dart';
+
 import 'query.dart';
+
+class FilterRange<T> {
+  final T? from;
+  final T? to;
+
+  const FilterRange({this.from, this.to});
+}
+
+class DateFilterRange implements FilterRange<String> {
+  static String? _convert(DateTime? dt, {DateFilterUnit? unit}) {
+    if (dt == null) return null;
+
+    // yyyy-MM-ddTHH:mm:ss.mmmuuuZ
+    final String value = dt.toIso8601String();
+    switch (unit) {
+      case null:
+        return value;
+      case DateFilterUnit.year:
+        return value.substring(0, 4);
+      case DateFilterUnit.month:
+        return value.substring(0, 7);
+      case DateFilterUnit.day:
+        return value.substring(0, 10);
+      case DateFilterUnit.hour:
+        return value.substring(0, 13);
+      case DateFilterUnit.minute:
+        return value.substring(0, 16);
+      case DateFilterUnit.second:
+        return value.substring(0, 19);
+      case DateFilterUnit.milliseconds:
+        return value.substring(0, 23);
+    }
+  }
+
+  final DateTime? _from;
+  final DateTime? _to;
+  final DateFilterUnit? unit;
+
+  const DateFilterRange({
+    DateTime? from,
+    DateTime? to,
+    this.unit,
+  })  : _from = from,
+        _to = to;
+
+  @override
+  String? get from => _convert(_from, unit: unit);
+
+  @override
+  String? get to => _convert(_to, unit: unit);
+}
 
 abstract class Filter {
   static String normalizeText(String text) {
@@ -26,6 +79,21 @@ abstract class Filter {
     required String key,
   }) = _TextFilter;
 
+  const factory Filter.textRange(
+    FilterRange<String> range, {
+    required String key,
+  }) = _TextRangeFilter;
+
+  const factory Filter.numericRange(
+    FilterRange<double> range, {
+    required String key,
+  }) = _NumericRangeFilter;
+
+  const factory Filter.dateRange(
+    DateFilterRange range, {
+    required String key,
+  }) = _DateRangeFilter;
+
   const factory Filter.date(
     DateTime date, {
     required String key,
@@ -44,7 +112,7 @@ class _EmptyFilter extends Filter {
 
   @override
   Query apply(Query reference) => reference;
-}1
+}
 
 class _ValueFilter extends Filter {
   final String key;
@@ -92,38 +160,48 @@ class _DateFilter extends Filter {
   final DateTime value;
   final DateFilterUnit? unit;
 
-  const _DateFilter(
-    this.value, {
-    required this.key,
-    this.unit,
-  }) : super._();
+  const _DateFilter(this.value, {required this.key, this.unit}) : super._();
 
   @override
   Query apply(Query reference) {
-    final String value = () {
-      // yyyy-MM-ddTHH:mm:ss.mmmuuuZ
-      final String value = this.value.toIso8601String();
-      switch (unit) {
-        case null:
-          return value;
-        case DateFilterUnit.year:
-          return value.substring(0, 4);
-        case DateFilterUnit.month:
-          return value.substring(0, 7);
-        case DateFilterUnit.day:
-          return value.substring(0, 10);
-        case DateFilterUnit.hour:
-          return value.substring(0, 13);
-        case DateFilterUnit.minute:
-          return value.substring(0, 16);
-        case DateFilterUnit.second:
-          return value.substring(0, 19);
-        case DateFilterUnit.milliseconds:
-          return value.substring(0, 23);
-      }
-    }();
+    final String? value = DateFilterRange._convert(this.value, unit: unit);
+    if (value == null) return reference;
     return Filter.text(value, key: key).apply(reference);
   }
+}
+
+abstract class _RangeFilter<T> extends Filter {
+  final String key;
+  final FilterRange<T> range;
+
+  const _RangeFilter(this.range, {required this.key}) : super._();
+
+  @override
+  Query apply(Query reference) {
+    final T? from = range.from;
+    final T? to = range.to;
+
+    Query ref = reference;
+    if (from == null && to == null) return ref;
+
+    ref = ref.orderByChild(key);
+    if (from != null) ref = ref.startAt(from);
+    if (to != null) ref = ref.endAt(to);
+    return ref;
+  }
+}
+
+class _TextRangeFilter extends _RangeFilter<String?> {
+  const _TextRangeFilter(super.range, {required super.key});
+}
+
+class _NumericRangeFilter extends _RangeFilter<double?> {
+  const _NumericRangeFilter(super.range, {required super.key});
+}
+
+class _DateRangeFilter extends _RangeFilter<String?> {
+  const _DateRangeFilter(DateFilterRange range, {required super.key})
+      : super(range);
 }
 
 class _LimitFilter extends Filter {

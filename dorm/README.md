@@ -567,8 +567,35 @@ filter = Filter.date(dt, key: 'birth-date', unit: DateFilterUnit.year);
 // Select entries occurred at 13/06/2021
 filter = Filter.date(dt, key: 'birth-date', unit: DateFilterUnit.day);
 
-// Select entries occurred at 13/06/2021, 16:05
+// Select entries occurred at 13/06/2021, from 16:00 to 16:59
 filter = Filter.date(dt, key: 'birth-date', unit: DateFilterUnit.hour);
+```
+
+#### Filtering on ranges
+
+To filter on ranges, you can use the `Range` class:
+
+```
+late Filter filter;
+
+// name: ABC, ABD, ABE, ABF
+filter = Filter.textRange(FilterRange(from: 'ABC', 'ABF'), key: 'name');
+
+// age: 0 to 18
+filter = Filter.numericRange(FilterRange(from: 0, to: 18), key: 'age');
+
+// age: 18+
+filter = Filter.numericRange(FilterRange(from: 18), key: 'age');
+
+// birth-date: 2020, spanning 10 years (see previous section on how to setup `toJson` for this case)
+filter = Filter.dateRange(
+  DateFilterRange(
+    from: DateTime(2020),
+    to: DateTime(2030),
+    unit: DateFilterUnit.year,
+  ),
+  key: 'birth-date',
+);
 ```
 
 ### Relationships
