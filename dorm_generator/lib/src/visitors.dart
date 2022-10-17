@@ -53,8 +53,12 @@ class ModelVisitor extends Visitor<Model, Field> {
   final Map<String, $ModelField> _fields = {};
 
   @override
-  Iterable<AnnotationParser<Object>> get parsers =>
-      const [ForeignFieldParser(), PolymorphicFieldParser(), FieldParser()];
+  Iterable<AnnotationParser<Object>> get parsers => const [
+        ForeignFieldParser(),
+        PolymorphicFieldParser(),
+        QueryFieldParser(),
+        FieldParser(),
+      ];
 
   @override
   void onVisit(OrmContext context, ClassElement element) {
@@ -128,7 +132,6 @@ class PolymorphicDataVisitor extends Visitor<PolymorphicData, Field> {
   void onVisitField(FieldElement element, Field value) {
     datum[element.name] = $PolymorphicDataField(
       name: value.name,
-      queryBy: value.queryBy,
       variable: VariableData(
         type: element.type.getDisplayString(withNullability: false),
       ),

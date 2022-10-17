@@ -61,7 +61,6 @@ class FieldParser extends AnnotationParser<Field> {
   Field parse(ConstantReader reader) {
     return Field(
       name: reader.read('name').stringValue,
-      queryBy: reader.read('queryBy').enumValueFrom(QueryType.values),
       defaultValue: reader.read('defaultValue').literalValue,
     );
   }
@@ -74,7 +73,6 @@ class ForeignFieldParser extends AnnotationParser<ForeignField> {
   ForeignField parse(ConstantReader reader) {
     return ForeignField(
       name: reader.read('name').stringValue,
-      queryBy: reader.read('queryBy').enumValueFrom(QueryType.values),
       referTo: $Type(reader: reader.read('referTo')),
     );
   }
@@ -87,8 +85,28 @@ class PolymorphicFieldParser extends AnnotationParser<PolymorphicField> {
   PolymorphicField parse(ConstantReader reader) {
     return PolymorphicField(
       name: reader.read('name').stringValue,
-      queryBy: reader.read('queryBy').enumValueFrom(QueryType.values),
       pivotName: reader.read('pivotName').stringValue,
+    );
+  }
+}
+
+class QueryFieldParser extends AnnotationParser<QueryField> {
+  const QueryFieldParser();
+
+  @override
+  QueryField parse(ConstantReader reader) {
+    return QueryField(
+      name: reader.read('name').stringValue,
+      referTo: reader.read('referTo').listValue.map((obj) {
+        final ConstantReader reader = ConstantReader(obj);
+        return QueryToken(
+          $Symbol(reader: reader.read('field')),
+          reader.read('type').isNull
+              ? null
+              : reader.read('type').enumValueFrom(QueryType.values),
+        );
+      }).toList(),
+      joinBy: reader.read('joinBy').stringValue,
     );
   }
 }

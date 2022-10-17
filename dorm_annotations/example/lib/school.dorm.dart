@@ -43,12 +43,13 @@ class School extends SchoolData implements _School {
   });
 
   @override
+  String get _q0 => [$normalizeText(name)].join('_');
+
+  @override
   Map<String, Object?> toJson() {
     return {
       ..._$SchoolToJson(this)..remove('_id'),
-      '_query': {
-        'nome': $normalizeText(name),
-      },
+      '_query/nome': _q0,
     };
   }
 }
@@ -137,12 +138,17 @@ class Student extends StudentData implements _Student {
   });
 
   @override
+  String get _q0 => [$normalizeText(name)].join('_');
+
+  @override
+  String get _q1 => [schoolId, $normalizeText(name)].join('_');
+
+  @override
   Map<String, Object?> toJson() {
     return {
       ..._$StudentToJson(this)..remove('_id'),
-      '_query': {
-        'nome': $normalizeText(name),
-      },
+      '_query/nome': _q0,
+      '_query/id-escola_nome': _q1,
     };
   }
 }
@@ -216,6 +222,9 @@ class _$Teacher implements _Teacher {
     required this.name,
     required this.ssn,
   });
+
+  @override
+  String get _q0 => [ssn ?? ''].join('_');
 }
 
 @JsonSerializable(anyMap: true, explicitToJson: true)
@@ -251,12 +260,13 @@ class Teacher extends TeacherData implements _Teacher {
   });
 
   @override
+  String get _q0 => [ssn ?? ''].join('_');
+
+  @override
   Map<String, Object?> toJson() {
     return {
       ..._$TeacherToJson(this)..remove('_id'),
-      '_query': {
-        'nome': $normalizeText(name),
-      },
+      '_query/cpf': _q0,
     };
   }
 }

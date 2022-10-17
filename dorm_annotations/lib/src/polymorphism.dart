@@ -15,7 +15,6 @@ class PolymorphicField extends Field {
 
   const PolymorphicField({
     required super.name,
-    super.queryBy,
     required this.pivotName,
   });
 }

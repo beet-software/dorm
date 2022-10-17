@@ -13,10 +13,11 @@ dependencies:
   json_serializable: ^6.3.1
   
   dorm_annotations:
-    git:
-      url: https://github.com/enzo-santos/dorm.git
-      ref: main
-      path: dorm_annotations
+#    git:
+#      url: https://github.com/enzo-santos/dorm.git
+#      ref: main
+#      path: dorm_annotations
+    path: ../dorm_annotations
 
 dev_dependencies:
   lints: ^2.0.0

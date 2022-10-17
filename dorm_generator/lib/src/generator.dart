@@ -85,7 +85,7 @@ class _SchemaWriter {
     sink.writeln('class $className implements ${naming.schemaName} {');
 
     // Fields
-    for (MapEntry<String, $ModelField> entry in model.fields.entries) {
+    for (MapEntry<String, $ModelField> entry in model.ownFields.entries) {
       sink
         ..writeln('@override')
         ..writeln('final ${entry.value.data.type} ${entry.key};')
@@ -97,7 +97,7 @@ class _SchemaWriter {
         '${naming.dependencyName} dependency, '
         '${naming.dataName} data) {');
     sink.writeln('return $className(');
-    for (MapEntry<String, $ModelField> entry in model.fields.entries) {
+    for (MapEntry<String, $ModelField> entry in model.ownFields.entries) {
       final String variableName =
           entry.value.field is ForeignField ? 'dependency' : 'data';
       sink.writeln('${entry.key}: $variableName.${entry.key},');
@@ -107,10 +107,14 @@ class _SchemaWriter {
 
     // Constructors
     sink.writeln('const $className({');
-    for (MapEntry<String, $ModelField> entry in model.fields.entries) {
+    for (MapEntry<String, $ModelField> entry in model.ownFields.entries) {
       sink.writeln('required this.${entry.key},');
     }
     sink.writeln('});');
+
+    // Getters
+    _writeQueryGetters(sink);
+
     sink.writeln('}');
   }
 
@@ -136,7 +140,7 @@ class _SchemaWriter {
 
     // Fields
     sink.writeln();
-    for (MapEntry<String, $ModelField> entry in model.ownFields.entries) {
+    for (MapEntry<String, $ModelField> entry in model.dataFields.entries) {
       final String fieldName = entry.key;
       final String fieldType = entry.value.data.type;
       final bool isPolymorphicField = polymorphicKeys.contains(fieldType);
@@ -195,7 +199,7 @@ class _SchemaWriter {
 
     if (hasPolymorphism) {
       sink.writeln('factory $className._({');
-      for (MapEntry<String, $ModelField> entry in model.ownFields.entries) {
+      for (MapEntry<String, $ModelField> entry in model.dataFields.entries) {
         final String fieldName = entry.key;
         final String fieldType = entry.value.data.type;
         final bool isPolymorphicField = polymorphicKeys.contains(fieldType);
@@ -215,7 +219,7 @@ class _SchemaWriter {
       }
       sink.writeln('}) {');
       sink.writeln('return $className(');
-      for (MapEntry<String, $ModelField> entry in model.ownFields.entries) {
+      for (MapEntry<String, $ModelField> entry in model.dataFields.entries) {
         final String fieldName = entry.key;
         final String fieldType = entry.value.data.type;
         final bool isPolymorphicField = polymorphicKeys.contains(fieldType);
@@ -244,8 +248,8 @@ class _SchemaWriter {
     // Constructors
     sink.writeln();
     sink.write('const ${naming.dataName}(');
-    sink.writeln(model.ownFields.isEmpty ? '' : '{');
-    for (MapEntry<String, $ModelField> entry in model.ownFields.entries) {
+    sink.writeln(model.dataFields.isEmpty ? '' : '{');
+    for (MapEntry<String, $ModelField> entry in model.dataFields.entries) {
       sink
         ..write('required this.')
         ..write(entry.key)
@@ -255,7 +259,7 @@ class _SchemaWriter {
       sink.writeln('required this.type,');
     }
 
-    sink.write(model.ownFields.isEmpty ? '' : '}');
+    sink.write(model.dataFields.isEmpty ? '' : '}');
     sink.writeln(');');
     sink.writeln();
 
@@ -361,7 +365,7 @@ class _SchemaWriter {
       }
       sink.writeln('}) {');
       sink.writeln('final ${naming.dataName} data = ${naming.dataName}._(');
-      for (MapEntry<String, $ModelField> entry in model.ownFields.entries) {
+      for (MapEntry<String, $ModelField> entry in model.dataFields.entries) {
         final String fieldName = entry.key;
         final String fieldType = entry.value.data.type;
         final bool isPolymorphicField = polymorphicKeys.contains(fieldType);
@@ -405,7 +409,7 @@ class _SchemaWriter {
     // Constructor
     sink.writeln('const $className({');
     sink.writeln('required this.id,');
-    for (MapEntry<String, $ModelField> entry in model.fields.entries) {
+    for (MapEntry<String, $ModelField> entry in model.ownFields.entries) {
       final String fieldName = entry.key;
       final String fieldType = entry.value.data.type;
       final bool isPolymorphicField = polymorphicKeys.contains(fieldType);
@@ -423,47 +427,86 @@ class _SchemaWriter {
     sink.writeln('});');
     sink.writeln();
 
+    // Getters
+    _writeQueryGetters(sink);
+
     // Methods
     sink.writeln();
     sink.writeln('@override');
     sink.writeln('Map<String, Object?> toJson() {');
     sink.writeln('return {');
     sink.writeln('..._\$${className}ToJson(this)..remove(\'_id\'),');
-    bool hasQuery = false;
-    for (MapEntry<String, $ModelField> entry in model.fields.entries) {
-      final QueryType? type = entry.value.field.queryBy;
-      if (type == null) continue;
-      if (!hasQuery) {
-        sink.writeln("'_query': {");
-        hasQuery = true;
-      }
-      sink.write("'${entry.value.field.name}': ");
-      switch (type) {
-        case QueryType.text:
-          sink
-            ..write('\$normalizeText(')
-            ..write(entry.key)
-            ..write(')');
-          break;
-        case QueryType.value:
-          sink.write(entry.key);
-          break;
-        case QueryType.date:
-          sink
-            ..write('\$normalizeDate(')
-            ..write(entry.key)
-            ..write(')');
-          break;
-      }
-      sink.writeln(',');
+    for (MapEntry<String, $ModelField> entry in model.queryFields.entries) {
+      final QueryField field = entry.value.field as QueryField;
+      sink
+        ..write('\'')
+        ..write(field.name)
+        ..write('\': ')
+        ..write(entry.key)
+        ..writeln(',');
     }
-    if (hasQuery) sink.writeln('},');
-
     sink.writeln('};');
     sink.writeln('}');
     sink.writeln();
 
     sink.writeln('}');
+  }
+
+  void _writeQueryGetters(StringSink sink) {
+    sink.writeln();
+    for (MapEntry<String, $ModelField> entry in model.queryFields.entries) {
+      final QueryField field = entry.value.field as QueryField;
+      if (field.referTo.isEmpty) continue;
+
+      sink.writeln('@override');
+      sink
+        ..write(entry.value.data.type)
+        ..write(' get ')
+        ..write(entry.key)
+        ..write(' => ');
+
+      final String args = field.referTo.map((token) {
+        final QueryType? type = token.type;
+
+        final String? symbolName = (token.field as $Symbol).name;
+        if (symbolName == null) {
+          throw StateError(
+            'field ${field.name} must have a symbol for all its tokens',
+          );
+        }
+
+        final $ModelField? referredField = model.ownFields[symbolName];
+        if (referredField == null) {
+          throw StateError(
+            'field ${field.name}/$symbolName must have a '
+            'symbol referring to a valid field',
+          );
+        }
+
+        String name = symbolName;
+        if (type != null) {
+          switch (type) {
+            case QueryType.text:
+              {
+                name = '\$normalizeText($name)';
+                break;
+              }
+          }
+        }
+
+        if (referredField.data.type.endsWith('?')) name = '$name ?? \'\'';
+        return name;
+      }).join(', ');
+
+      sink
+        ..write('[')
+        ..write(args)
+        ..write('].join(\'')
+        ..write(field.joinBy)
+        ..writeln('\');');
+
+      sink.writeln();
+    }
   }
 
   void _writeDependencyClass(StringSink sink) {
@@ -525,7 +568,7 @@ class _SchemaWriter {
       ..writeln(',');
 
     final Set<String> polymorphicKeys = polymorphicTree.keys.toSet();
-    for (MapEntry<String, $ModelField> entry in model.fields.entries) {
+    for (MapEntry<String, $ModelField> entry in model.ownFields.entries) {
       final String fieldName = entry.key;
       final String fieldType = entry.value.data.type;
       final bool isPolymorphicField = polymorphicKeys.contains(fieldType);
@@ -556,7 +599,7 @@ class _SchemaWriter {
     sink.writeln('return ${naming.modelName}(');
     sink.writeln('id: model.id,');
 
-    for (MapEntry<String, $ModelField> entry in model.fields.entries) {
+    for (MapEntry<String, $ModelField> entry in model.ownFields.entries) {
       final String fieldName = entry.key;
       final String fieldType = entry.value.data.type;
       final bool isPolymorphicField = polymorphicKeys.contains(fieldType);

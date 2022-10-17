@@ -68,14 +68,25 @@ class VariableData {
 class $Model extends Model {
   final Map<String, $ModelField> fields;
 
-  Map<String, $ModelField> get foreignFields => Map.unmodifiable({
+  Map<String, $ModelField> _filter<T extends Field>() => Map.unmodifiable({
         for (MapEntry<String, $ModelField> entry in fields.entries)
-          if (entry.value.field is ForeignField) entry.key: entry.value,
+          if (entry.value.field is T) entry.key: entry.value,
       });
+
+  Map<String, $ModelField> get foreignFields => _filter<ForeignField>();
+
+  Map<String, $ModelField> get queryFields => _filter<QueryField>();
 
   Map<String, $ModelField> get ownFields => Map.unmodifiable({
         for (MapEntry<String, $ModelField> entry in fields.entries)
-          if (entry.value.field is! ForeignField) entry.key: entry.value,
+          if (entry.value.field is! QueryField) entry.key: entry.value,
+      });
+
+  Map<String, $ModelField> get dataFields => Map.unmodifiable({
+        for (MapEntry<String, $ModelField> entry in fields.entries)
+          if (entry.value.field is! ForeignField &&
+              entry.value.field is! QueryField)
+            entry.key: entry.value,
       });
 
   const $Model({
@@ -154,7 +165,6 @@ class $PolymorphicDataField extends Field {
 
     return $PolymorphicDataField(
       name: field.name,
-      queryBy: field.queryBy,
       variable: VariableData(
         type: element.returnType.getDisplayString(withNullability: false),
       ),
@@ -163,7 +173,6 @@ class $PolymorphicDataField extends Field {
 
   const $PolymorphicDataField({
     required super.name,
-    required super.queryBy,
     required this.variable,
   });
 
