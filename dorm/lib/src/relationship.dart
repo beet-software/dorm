@@ -227,9 +227,13 @@ class OneToManyRelationship<L, R> implements Relationship<L, List<R>> {
     Filter filter = const Filter.empty(),
   ]) async {
     final List<L> leftModels = await left.peekAll(filter);
+    final List<List<R>> associatedModels = await Future.wait(
+        leftModels.map((leftModel) => right.peekAll(on(leftModel))).toList());
+
     final List<Join<L, List<R>>> joins = [];
-    for (L leftModel in leftModels) {
-      final List<R> rightModels = await right.peekAll(on(leftModel));
+    for (int i = 0; i < leftModels.length; i++) {
+      final L leftModel = leftModels[i];
+      final List<R> rightModels = associatedModels[i];
       joins.add(Join(left: leftModel, right: rightModels));
     }
     return joins;
