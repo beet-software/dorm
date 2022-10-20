@@ -491,6 +491,11 @@ class _SchemaWriter {
                 name = '\$normalizeText($name)';
                 break;
               }
+            case QueryType.enumeration:
+              {
+                name = '\$normalizeEnum($name)';
+                break;
+              }
           }
         }
 

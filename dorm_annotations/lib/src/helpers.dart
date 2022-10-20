@@ -29,3 +29,11 @@ String? $normalizeDate(DateTime? value) {
       '$month'.padLeft(2, '0') +
       '$day'.padLeft(2, '0');
 }
+
+String? $normalizeEnum(Object? value) {
+  if (value == null) return null;
+  if (value is Enum) return value.name;
+  final List<String> tokens = '$value'.split('.');
+  if (tokens.length == 2) return tokens.last;
+  return tokens.join('.');
+}

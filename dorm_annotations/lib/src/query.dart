@@ -2,7 +2,7 @@ import 'package:meta/meta_meta.dart';
 
 import 'field.dart';
 
-enum QueryType { text }
+enum QueryType { text, enumeration }
 
 @Target({TargetKind.getter})
 class QueryField extends Field {
