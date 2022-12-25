@@ -1,6 +1,6 @@
 name: dorm_firebase_database
 description: A dORM's Reference implementation using firebase_database. 
-version: 0.2.0
+version: 0.3.0
 publish_to: none
 
 environment:
@@ -8,9 +8,9 @@ environment:
 
 dependencies:
   http: ^0.13.4
-  firebase_auth: ^3.4.0
-  firebase_core: ^1.19.0
-  firebase_database: ^9.0.17
+  firebase_auth: ^4.2.3
+  firebase_core: ^2.4.0
+  firebase_database: ^10.0.8
   dorm:
     git:
       url: https://github.com/enzo-santos/dorm.git

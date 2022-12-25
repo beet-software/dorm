@@ -1,6 +1,6 @@
 name: dorm
 description: Provides classes to implement the dORM framework.
-version: 0.2.0
+version: 0.3.0
 
 environment:
   sdk: ">=2.17.3 <3.0.0"

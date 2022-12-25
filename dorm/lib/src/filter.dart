@@ -77,6 +77,7 @@ abstract class Filter {
   const factory Filter.text(
     String text, {
     required String key,
+    bool normalized,
   }) = _TextFilter;
 
   const factory Filter.textRange(

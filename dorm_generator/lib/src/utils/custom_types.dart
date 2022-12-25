@@ -17,7 +17,7 @@ extension AdditionalReads on ConstantReader {
 
     final String name = element.name;
     assert(element.isStatic);
-    final String? className = element.enclosingElement2.name;
+    final String? className = element.enclosingElement.name;
     final String prefix = className == null ? '' : '$className.';
     return '$prefix$name';
   }
