@@ -7,10 +7,10 @@ environment:
   sdk: '>=2.17.3 <3.0.0'
 
 dependencies:
-  http: ^0.13.4
-  firebase_auth: ^4.2.3
-  firebase_core: ^2.4.0
-  firebase_database: ^10.0.8
+  http: ^0.13.5
+  firebase_auth: ^4.4.0
+  firebase_core: ^2.9.0
+  firebase_database: ^10.1.0
   dorm:
     git:
       url: https://github.com/enzo-santos/dorm.git
@@ -18,4 +18,4 @@ dependencies:
       path: dorm
 
 dev_dependencies:
-  lints: ^2.0.0
+  lints: ^2.0.1
