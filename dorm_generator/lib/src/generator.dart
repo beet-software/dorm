@@ -143,6 +143,7 @@ class _SchemaWriter {
     for (MapEntry<String, $ModelField> entry in model.dataFields.entries) {
       final String fieldName = entry.key;
       final String fieldType = entry.value.data.type;
+      final bool isModelField = entry.value.field is ModelField;
       final bool isPolymorphicField = polymorphicKeys.contains(fieldType);
 
       if (isPolymorphicField) {
@@ -182,7 +183,11 @@ class _SchemaWriter {
 
       sink
         ..write('final ')
-        ..write(isPolymorphicField ? fieldType.substring(1) : fieldType)
+        ..write(isPolymorphicField
+            ? fieldType.substring(1)
+            : isModelField
+                ? '${fieldType.substring(1)}Data'
+                : fieldType)
         ..write(' ')
         ..write(fieldName)
         ..writeln(';');

@@ -54,6 +54,7 @@ class ModelVisitor extends Visitor<Model, Field> {
 
   @override
   Iterable<AnnotationParser<Object>> get parsers => const [
+        ModelFieldParser(),
         ForeignFieldParser(),
         PolymorphicFieldParser(),
         QueryFieldParser(),

@@ -78,6 +78,18 @@ class ForeignFieldParser extends AnnotationParser<ForeignField> {
   }
 }
 
+class ModelFieldParser extends AnnotationParser<ModelField> {
+  const ModelFieldParser();
+
+  @override
+  ModelField parse(ConstantReader reader) {
+    return ModelField(
+      name: reader.read('name').stringValue,
+      referTo: $Type(reader: reader.read('referTo')),
+    );
+  }
+}
+
 class PolymorphicFieldParser extends AnnotationParser<PolymorphicField> {
   const PolymorphicFieldParser();
 

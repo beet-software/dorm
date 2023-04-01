@@ -20,3 +20,13 @@ class ForeignField extends Field {
     required this.referTo,
   });
 }
+
+@Target({TargetKind.getter})
+class ModelField extends Field {
+  final Type referTo;
+
+  const ModelField({
+    required super.name,
+    required this.referTo,
+  });
+}
