@@ -186,7 +186,7 @@ class _SchemaWriter {
         ..write(isPolymorphicField
             ? fieldType.substring(1)
             : isModelField
-                ? '${fieldType.substring(1)}Data'
+                ? '${((entry.value.field as ModelField).referTo as $Type).name!.substring(1)}Data'
                 : fieldType)
         ..write(' ')
         ..write(fieldName)

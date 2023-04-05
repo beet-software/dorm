@@ -187,26 +187,41 @@ Map<String, dynamic> _$TeachingToJson(Teaching instance) => <String, dynamic>{
 ClassData _$ClassDataFromJson(Map json) {
   $checkKeys(
     json,
-    requiredKeys: const ['nome-sala'],
-    disallowNullValues: const ['nome-sala'],
+    requiredKeys: const ['paraninfo', 'nome-sala'],
+    disallowNullValues: const ['paraninfo', 'nome-sala'],
   );
   return ClassData(
+    patron: TeacherData.fromJson(json['paraninfo'] as Map),
     location: json['nome-sala'] as String,
   );
 }
 
 Map<String, dynamic> _$ClassDataToJson(ClassData instance) => <String, dynamic>{
+      'paraninfo': instance.patron.toJson(),
       'nome-sala': instance.location,
     };
 
 Class _$ClassFromJson(Map json) {
   $checkKeys(
     json,
-    requiredKeys: const ['nome-sala', '_id', 'id-professor', 'id-escola'],
-    disallowNullValues: const ['nome-sala', '_id', 'id-professor', 'id-escola'],
+    requiredKeys: const [
+      'paraninfo',
+      'nome-sala',
+      '_id',
+      'id-professor',
+      'id-escola'
+    ],
+    disallowNullValues: const [
+      'paraninfo',
+      'nome-sala',
+      '_id',
+      'id-professor',
+      'id-escola'
+    ],
   );
   return Class(
     id: json['_id'] as String,
+    patron: TeacherData.fromJson(json['paraninfo'] as Map),
     teacherId: json['id-professor'] as String,
     studentId: json['id-escola'] as String,
     location: json['nome-sala'] as String,
@@ -214,6 +229,7 @@ Class _$ClassFromJson(Map json) {
 }
 
 Map<String, dynamic> _$ClassToJson(Class instance) => <String, dynamic>{
+      'paraninfo': instance.patron.toJson(),
       'nome-sala': instance.location,
       '_id': instance.id,
       'id-professor': instance.teacherId,

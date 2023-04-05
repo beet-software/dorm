@@ -86,6 +86,9 @@ abstract class _Teaching {
 
 @Model(name: 'aula', as: #classes, uidType: UidType.composite())
 abstract class _Class {
+  @ModelField(name: 'paraninfo', referTo: _Teacher)
+  get patron;
+
   @ForeignField(name: 'id-professor', referTo: _Teacher)
   String get teacherId;
 
