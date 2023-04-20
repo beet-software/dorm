@@ -187,35 +187,75 @@ Map<String, dynamic> _$TeachingToJson(Teaching instance) => <String, dynamic>{
 ClassData _$ClassDataFromJson(Map json) {
   $checkKeys(
     json,
-    requiredKeys: const ['nome-sala'],
-    disallowNullValues: const ['nome-sala'],
+    requiredKeys: const ['man', 'mans', 'nome-sala'],
+    disallowNullValues: const ['man', 'mans', 'nome-sala'],
   );
   return ClassData(
+    data: json['man'],
+    datum: json['mans'] as List<dynamic>,
     location: json['nome-sala'] as String,
   );
 }
 
-Map<String, dynamic> _$ClassDataToJson(ClassData instance) => <String, dynamic>{
-      'nome-sala': instance.location,
-    };
+Map<String, dynamic> _$ClassDataToJson(ClassData instance) {
+  final val = <String, dynamic>{};
+
+  void writeNotNull(String key, dynamic value) {
+    if (value != null) {
+      val[key] = value;
+    }
+  }
+
+  writeNotNull('man', instance.data);
+  val['mans'] = instance.datum;
+  val['nome-sala'] = instance.location;
+  return val;
+}
 
 Class _$ClassFromJson(Map json) {
   $checkKeys(
     json,
-    requiredKeys: const ['nome-sala', '_id', 'id-professor', 'id-escola'],
-    disallowNullValues: const ['nome-sala', '_id', 'id-professor', 'id-escola'],
+    requiredKeys: const [
+      'man',
+      'mans',
+      'nome-sala',
+      '_id',
+      'id-professor',
+      'id-escola'
+    ],
+    disallowNullValues: const [
+      'man',
+      'mans',
+      'nome-sala',
+      '_id',
+      'id-professor',
+      'id-escola'
+    ],
   );
   return Class(
     id: json['_id'] as String,
+    data: json['man'],
+    datum: json['mans'] as List<dynamic>,
     teacherId: json['id-professor'] as String,
     studentId: json['id-escola'] as String,
     location: json['nome-sala'] as String,
   );
 }
 
-Map<String, dynamic> _$ClassToJson(Class instance) => <String, dynamic>{
-      'nome-sala': instance.location,
-      '_id': instance.id,
-      'id-professor': instance.teacherId,
-      'id-escola': instance.studentId,
-    };
+Map<String, dynamic> _$ClassToJson(Class instance) {
+  final val = <String, dynamic>{};
+
+  void writeNotNull(String key, dynamic value) {
+    if (value != null) {
+      val[key] = value;
+    }
+  }
+
+  writeNotNull('man', instance.data);
+  val['mans'] = instance.datum;
+  val['nome-sala'] = instance.location;
+  val['_id'] = instance.id;
+  val['id-professor'] = instance.teacherId;
+  val['id-escola'] = instance.studentId;
+  return val;
+}

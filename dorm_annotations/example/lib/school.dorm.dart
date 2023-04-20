@@ -504,12 +504,20 @@ class TeachingEntity implements Entity<TeachingData, Teaching> {
 
 @JsonSerializable(anyMap: true, explicitToJson: true)
 class ClassData {
+  @JsonKey(name: 'man', required: true, disallowNullValue: true)
+  final dynamice data;
+
+  @JsonKey(name: 'mans', required: true, disallowNullValue: true)
+  final List<dynamic> datum;
+
   @JsonKey(name: 'nome-sala', required: true, disallowNullValue: true)
   final String location;
 
   factory ClassData.fromJson(Map json) => _$ClassDataFromJson(json);
 
   const ClassData({
+    required this.data,
+    required this.datum,
     required this.location,
   });
 
@@ -534,6 +542,8 @@ class Class extends ClassData implements _Class {
 
   const Class({
     required this.id,
+    required super.data,
+    required super.datum,
     required this.teacherId,
     required this.studentId,
     required super.location,
@@ -571,6 +581,8 @@ class ClassEntity implements Entity<ClassData, Class> {
   ) {
     return Class(
       id: dependency.key(id),
+      data: data.data,
+      datum: data.datum,
       teacherId: dependency.teacherId,
       studentId: dependency.studentId,
       location: data.location,
@@ -581,6 +593,8 @@ class ClassEntity implements Entity<ClassData, Class> {
   Class convert(Class model, ClassData data) {
     return Class(
       id: model.id,
+      data: data.data,
+      datum: data.datum,
       teacherId: model.teacherId,
       studentId: model.studentId,
       location: data.location,

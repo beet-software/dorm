@@ -134,7 +134,7 @@ class PolymorphicDataVisitor extends Visitor<PolymorphicData, Field> {
     datum[element.name] = $PolymorphicDataField(
       name: value.name,
       variable: VariableData(
-        type: element.type.getDisplayString(withNullability: false),
+        type: element.type.getDisplayString(withNullability: true),
       ),
     );
   }
