@@ -187,45 +187,32 @@ Map<String, dynamic> _$TeachingToJson(Teaching instance) => <String, dynamic>{
 ClassData _$ClassDataFromJson(Map json) {
   $checkKeys(
     json,
-    requiredKeys: const ['man', 'mans', 'nome-sala'],
-    disallowNullValues: const ['man', 'mans', 'nome-sala'],
+    requiredKeys: const ['paraninfo', 'nome-sala'],
+    disallowNullValues: const ['paraninfo', 'nome-sala'],
   );
   return ClassData(
-    data: json['man'],
-    datum: json['mans'] as List<dynamic>,
+    patron: TeacherData.fromJson(json['paraninfo'] as Map),
     location: json['nome-sala'] as String,
   );
 }
 
-Map<String, dynamic> _$ClassDataToJson(ClassData instance) {
-  final val = <String, dynamic>{};
-
-  void writeNotNull(String key, dynamic value) {
-    if (value != null) {
-      val[key] = value;
-    }
-  }
-
-  writeNotNull('man', instance.data);
-  val['mans'] = instance.datum;
-  val['nome-sala'] = instance.location;
-  return val;
-}
+Map<String, dynamic> _$ClassDataToJson(ClassData instance) => <String, dynamic>{
+      'paraninfo': instance.patron.toJson(),
+      'nome-sala': instance.location,
+    };
 
 Class _$ClassFromJson(Map json) {
   $checkKeys(
     json,
     requiredKeys: const [
-      'man',
-      'mans',
+      'paraninfo',
       'nome-sala',
       '_id',
       'id-professor',
       'id-escola'
     ],
     disallowNullValues: const [
-      'man',
-      'mans',
+      'paraninfo',
       'nome-sala',
       '_id',
       'id-professor',
@@ -234,28 +221,17 @@ Class _$ClassFromJson(Map json) {
   );
   return Class(
     id: json['_id'] as String,
-    data: json['man'],
-    datum: json['mans'] as List<dynamic>,
+    patron: TeacherData.fromJson(json['paraninfo'] as Map),
     teacherId: json['id-professor'] as String,
     studentId: json['id-escola'] as String,
     location: json['nome-sala'] as String,
   );
 }
 
-Map<String, dynamic> _$ClassToJson(Class instance) {
-  final val = <String, dynamic>{};
-
-  void writeNotNull(String key, dynamic value) {
-    if (value != null) {
-      val[key] = value;
-    }
-  }
-
-  writeNotNull('man', instance.data);
-  val['mans'] = instance.datum;
-  val['nome-sala'] = instance.location;
-  val['_id'] = instance.id;
-  val['id-professor'] = instance.teacherId;
-  val['id-escola'] = instance.studentId;
-  return val;
-}
+Map<String, dynamic> _$ClassToJson(Class instance) => <String, dynamic>{
+      'paraninfo': instance.patron.toJson(),
+      'nome-sala': instance.location,
+      '_id': instance.id,
+      'id-professor': instance.teacherId,
+      'id-escola': instance.studentId,
+    };

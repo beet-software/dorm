@@ -1,8 +1,9 @@
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
-import 'package:dorm_generator/src/utils/custom_types.dart';
 import 'package:source_gen/source_gen.dart';
+
+import 'custom_types.dart';
 
 abstract class AnnotationParser<T> {
   const AnnotationParser();
