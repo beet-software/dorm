@@ -441,14 +441,40 @@ class _SchemaWriter {
     sink.writeln('Map<String, Object?> toJson() {');
     sink.writeln('return {');
     sink.writeln('..._\$${className}ToJson(this)..remove(\'_id\'),');
+
+    final Map<String, Map<String, Object>> queries = {};
     for (MapEntry<String, $ModelField> entry in model.queryFields.entries) {
       final QueryField field = entry.value.field as QueryField;
-      sink
-        ..write('\'')
-        ..write(field.name)
-        ..write('\': ')
-        ..write(entry.key)
-        ..writeln(',');
+      final List<String> segments = field.name!.split('/');
+      if (segments.length == 1) {
+        sink
+          ..write('\'')
+          ..write(field.name)
+          ..write('\': ')
+          ..write(entry.key)
+          ..writeln(',');
+      } else {
+        queries.putIfAbsent(segments[0], () => {})[segments[1]] = entry.key;
+      }
+    }
+    if (queries.isNotEmpty) {
+      for (MapEntry<String, Map<String, Object>> entry in queries.entries) {
+        sink
+          ..write('\'')
+          ..write(entry.key)
+          ..writeln('\': {');
+
+        for (MapEntry<String, Object> childEntry in entry.value.entries) {
+          sink
+            ..write('\'')
+            ..write(childEntry.key)
+            ..write('\': ')
+            ..write(childEntry.value)
+            ..writeln(',');
+        }
+
+        sink.writeln('},');
+      }
     }
     sink.writeln('};');
     sink.writeln('}');

@@ -49,7 +49,9 @@ class School extends SchoolData implements _School {
   Map<String, Object?> toJson() {
     return {
       ..._$SchoolToJson(this)..remove('_id'),
-      '_query/nome': _q0,
+      '_query': {
+        'nome': _q0,
+      },
     };
   }
 }
@@ -147,8 +149,10 @@ class Student extends StudentData implements _Student {
   Map<String, Object?> toJson() {
     return {
       ..._$StudentToJson(this)..remove('_id'),
-      '_query/nome': _q0,
-      '_query/id-escola_nome': _q1,
+      '_query': {
+        'nome': _q0,
+        'id-escola_nome': _q1,
+      },
     };
   }
 }
@@ -266,7 +270,9 @@ class Teacher extends TeacherData implements _Teacher {
   Map<String, Object?> toJson() {
     return {
       ..._$TeacherToJson(this)..remove('_id'),
-      '_query/cpf': _q0,
+      '_query': {
+        'cpf': _q0,
+      },
     };
   }
 }
