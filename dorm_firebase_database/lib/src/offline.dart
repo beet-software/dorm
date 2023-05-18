@@ -33,7 +33,7 @@ class OfflineAdapter {
         _connectivitySubscription =
             instance.ref('.info/connected').onValue.listen(
           (event) {
-            final bool isConnected = (event.snapshot.value as bool?) ?? false;
+            final bool isConnected = (event.snapshot.value as bool?) ?? true;
             final Stream<fd.DatabaseEvent> stream =
                 isConnected ? query.onValue : query.onChildAdded;
 
