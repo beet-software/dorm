@@ -4,6 +4,11 @@ targets:
       generators|annotations:
         enabled: true
 
+global_options:
+  json_serializable:
+    runs_before:
+      - generators
+
 builders:
   generators:
     target: :lib
@@ -17,7 +22,7 @@ builders:
       - generateOrm
     build_extensions:
       .dart:
-        - .g.dart
+        - .g.part
 
   json_serializable:json_serializable:
     import: package:json_serializable/builder.dart
