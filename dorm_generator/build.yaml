@@ -7,7 +7,7 @@ targets:
 global_options:
   json_serializable:
     runs_before:
-      - generators
+      - dorm_generator:generators
 
 builders:
   generators:
