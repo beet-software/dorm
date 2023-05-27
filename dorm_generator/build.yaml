@@ -17,7 +17,7 @@ builders:
       - generateOrm
     build_extensions:
       .dart:
-        - .g.dart
+        - .g.part
 
   json_serializable:json_serializable:
     import: package:json_serializable/builder.dart
