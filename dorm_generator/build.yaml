@@ -22,11 +22,11 @@ builders:
   json_serializable:json_serializable:
     import: package:json_serializable/builder.dart
     auto_apply: dependents
-    build_to: cache
+    build_to: source
     applies_builders:
       - source_gen|combining_builder
     builder_factories:
       - jsonSerializable
     build_extensions:
       .dart:
-        - json_serializable.g.dart
+        - json_serializable.g.part
