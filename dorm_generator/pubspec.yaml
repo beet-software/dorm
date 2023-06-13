@@ -10,13 +10,15 @@ dependencies:
   build: ^2.3.0
   analyzer: ^5.3.1
   source_gen: ^1.2.2
+  code_builder: ^4.5.0
   json_serializable: ^6.3.1
-  
+
   dorm_annotations:
     git:
       url: https://github.com/enzo-santos/dorm.git
       ref: main
       path: dorm_annotations
+  dart_style: ^2.3.1
 
 dev_dependencies:
   lints: ^2.0.0

@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:analyzer/dart/element/element.dart';
 import 'package:build/build.dart';
+import 'package:code_builder/code_builder.dart' as cb;
+import 'package:dart_style/dart_style.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
 import 'package:source_gen/source_gen.dart';
 
@@ -52,10 +54,12 @@ class _SchemaWriter {
     required this.polymorphicTree,
   });
 
-  String _encodeUidType(UidType uidType) {
-    return uidType.when(
-      caseSimple: () => 'id',
-      caseComposite: () => 'dependency.key(id)',
+  cb.Expression _uidTypeExpressionOf(UidType value) {
+    return value.when(
+      caseSimple: () => cb.CodeExpression(cb.Code('id')),
+      caseComposite: () => cb.CodeExpression(cb.Code('dependency'))
+          .property('key')
+          .call([cb.CodeExpression(cb.Code('id'))]),
       caseSameAs: (type) {
         type as $Type;
         for (MapEntry<String, $ModelField> entry
@@ -63,638 +67,781 @@ class _SchemaWriter {
           final $Type currentType =
               (entry.value.field as ForeignField).referTo as $Type;
           if (currentType.name != type.name) continue;
-          return 'dependency.${entry.key}';
+          return cb.CodeExpression(cb.Code('dependency')).property(entry.key);
         }
         throw StateError('invalid reference on UidType.sameAs: ${type.name}');
       },
       caseCustom: (builder) {
         final $CustomUidValue value = builder(0) as $CustomUidValue;
         final String name = value.reader.functionName;
-        return '$name(${naming.dummyName}.fromData(dependency, data))'
-            '.when('
-            'caseSimple: () => id,'
-            'caseComposite: () => dependency.key(id),'
-            'caseValue: (id) => id,'
-            ')';
+        return cb.InvokeExpression.newOf(cb.Reference(name), [
+          cb.InvokeExpression.newOf(
+            cb.Reference(naming.dummyName),
+            [
+              cb.CodeExpression(cb.Code('dependency')),
+              cb.CodeExpression(cb.Code('data')),
+            ],
+            {},
+            [],
+            'fromData',
+          ),
+        ]).property('when').call([], {
+          'caseSimple': cb.CodeExpression(cb.Code('() => id')),
+          'caseComposite':
+              cb.CodeExpression(cb.Code('() => dependency.key(id)')),
+          'caseValue': cb.CodeExpression(cb.Code('(id) => id')),
+        });
       },
     );
   }
 
-  void _writeDummyClass(StringSink sink) {
+  cb.Spec get _dummyClass {
     final String className = naming.dummyName;
-    sink.writeln('class $className implements ${naming.schemaName} {');
-
-    // Fields
-    for (MapEntry<String, $ModelField> entry in model.ownFields.entries) {
-      sink
-        ..writeln('@override')
-        ..writeln('final ${entry.value.data.type} ${entry.key};')
-        ..writeln();
-    }
-
-    // Factories
-    sink.writeln('factory $className.fromData('
-        '${naming.dependencyName} dependency, '
-        '${naming.dataName} data) {');
-    sink.writeln('return $className(');
-    for (MapEntry<String, $ModelField> entry in model.ownFields.entries) {
-      final String variableName =
-          entry.value.field is ForeignField ? 'dependency' : 'data';
-      sink.writeln('${entry.key}: $variableName.${entry.key},');
-    }
-    sink.writeln(');');
-    sink.writeln('}');
-
-    // Constructors
-    sink.writeln('const $className({');
-    for (MapEntry<String, $ModelField> entry in model.ownFields.entries) {
-      sink.writeln('required this.${entry.key},');
-    }
-    sink.writeln('});');
-
-    // Getters
-    _writeQueryGetters(sink);
-
-    sink.writeln('}');
+    return cb.Class((b) {
+      b.name = className;
+      b.implements.add(cb.Reference(naming.schemaName));
+      b.fields.addAll(model.ownFields.entries.map((entry) {
+        return cb.Field((b) {
+          b.annotations.add(cb.CodeExpression(cb.Code('override')));
+          b.modifier = cb.FieldModifier.final$;
+          b.type = cb.Reference(entry.value.data.type);
+          b.name = entry.key;
+        });
+      }));
+      b.constructors.add(cb.Constructor((b) {
+        b.factory = true;
+        b.name = 'fromData';
+        b.requiredParameters.add(cb.Parameter((b) {
+          b.type = cb.Reference(naming.dependencyName);
+          b.name = 'dependency';
+        }));
+        b.requiredParameters.add(cb.Parameter((b) {
+          b.type = cb.Reference(naming.dataName);
+          b.name = 'data';
+        }));
+        b.body = cb.ToCodeExpression(cb.InvokeExpression.newOf(
+          cb.CodeExpression(cb.Code(className)),
+          [],
+          model.ownFields.map((name, field) {
+            final cb.Expression expression = cb.CodeExpression(
+              cb.Code(field.field is ForeignField ? 'dependency' : 'data'),
+            );
+            return MapEntry(name, expression.property(name));
+          }),
+        ));
+      }));
+      b.constructors.add(cb.Constructor((b) {
+        b.constant = true;
+        b.optionalParameters.addAll(model.ownFields.keys.map((name) {
+          return cb.Parameter((b) {
+            b.required = true;
+            b.named = true;
+            b.toThis = true;
+            b.name = name;
+          });
+        }));
+      }));
+      b.methods.addAll(_queryGetters);
+    });
   }
 
-  void _writeDataClass(StringSink sink) {
-    final String className = naming.dataName;
-
+  cb.Spec get _dataClass {
     final Set<String> polymorphicKeys = polymorphicTree.keys.toSet();
     final Set<String> modelFieldTypes =
         model.fields.values.map((field) => field.data.type).toSet();
     final bool hasPolymorphism =
         polymorphicKeys.intersection(modelFieldTypes).isNotEmpty;
 
-    sink
-      ..write('@JsonSerializable(')
-      ..writeAll([
-        'anyMap: true',
-        'explicitToJson: true',
-        if (hasPolymorphism) 'constructor: \'_\'',
-      ], ', ')
-      ..writeln(')');
-
-    sink.writeln('class $className {');
-
-    // Fields
-    sink.writeln();
-    for (MapEntry<String, $ModelField> entry in model.dataFields.entries) {
-      final String fieldName = entry.key;
-      final String fieldType = entry.value.data.type;
-      final bool isModelField = entry.value.field is ModelField;
-      final bool isPolymorphicField = polymorphicKeys.contains(fieldType);
-
-      if (isPolymorphicField) {
-        final String typeKey =
-            (entry.value.field as PolymorphicField).pivotName;
-        sink
-          ..write('@JsonKey(')
-          ..writeAll([
-            'name: \'$typeKey\'',
-            'required: true',
-            'disallowNullValue: true',
-          ], ', ')
-          ..writeln(')');
-
-        sink
-          ..write('final ')
-          ..write('${fieldType.substring(1)}Type')
-          ..write(' ')
-          ..write('type')
-          ..writeln(';')
-          ..writeln();
-      }
-
-      final String? key = entry.value.field.name;
-      final Object? defaultValue = entry.value.field.defaultValue;
-      final bool required =
-          defaultValue == null && !entry.value.data.type.endsWith('?');
-      sink
-        ..write('@JsonKey(')
-        ..writeAll([
-          if (key != null) 'name: \'$key\'',
-          if (required) 'required: true',
-          if (required) 'disallowNullValue: true',
-          if (defaultValue != null) 'defaultValue: $defaultValue',
-        ], ', ')
-        ..writeln(')');
-
-      sink
-        ..write('final ')
-        ..write(isPolymorphicField
-            ? fieldType.substring(1)
-            : isModelField
-                ? '${((entry.value.field as ModelField).referTo as $Type).name!.substring(1)}Data'
-                : fieldType)
-        ..write(' ')
-        ..write(fieldName)
-        ..writeln(';');
-
-      sink.writeln();
-    }
-    sink.writeln();
-
-    // Factories
-    sink.writeln();
-    sink.writeln('factory $className.fromJson(Map json) =>');
-    sink.writeln('_\$${className}FromJson(json);');
-    sink.writeln();
-
-    if (hasPolymorphism) {
-      sink.writeln('factory $className._({');
-      for (MapEntry<String, $ModelField> entry in model.dataFields.entries) {
+    return cb.Class((b) {
+      b.annotations.add(cb.InvokeExpression.newOf(
+        cb.Reference('JsonSerializable'),
+        [],
+        {
+          'anyMap': cb.literalTrue,
+          'explicitToJson': cb.literalTrue,
+          if (hasPolymorphism) 'constructor': cb.literalString('_'),
+        },
+      ));
+      b.name = naming.dataName;
+      b.fields.addAll(model.dataFields.entries.expand((entry) sync* {
         final String fieldName = entry.key;
         final String fieldType = entry.value.data.type;
-        final bool isPolymorphicField = polymorphicKeys.contains(fieldType);
-
-        if (isPolymorphicField) {
-          sink
-            ..write('required ')
-            ..write('${fieldType.substring(1)}Type')
-            ..writeln(' type,');
+        if (polymorphicKeys.contains(fieldType)) {
+          final String typeKey =
+              (entry.value.field as PolymorphicField).pivotName;
+          yield cb.Field((b) {
+            b.annotations.add(cb.InvokeExpression.newOf(
+              cb.Reference('JsonKey'),
+              [],
+              {
+                'name': cb.literalString(typeKey),
+                'required': cb.literalTrue,
+                'disallowNullValue': cb.literalTrue,
+              },
+            ));
+            b.modifier = cb.FieldModifier.final$;
+            b.type = cb.Reference('${fieldType.substring(1)}Type');
+            b.name = 'type';
+          });
         }
-        sink
-          ..write('required ')
-          ..write(isPolymorphicField ? 'Map' : fieldType)
-          ..write(' ')
-          ..write(fieldName)
-          ..writeln(',');
-      }
-      sink.writeln('}) {');
-      sink.writeln('return $className(');
-      for (MapEntry<String, $ModelField> entry in model.dataFields.entries) {
-        final String fieldName = entry.key;
-        final String fieldType = entry.value.data.type;
-        final bool isPolymorphicField = polymorphicKeys.contains(fieldType);
+        final bool isModelField = entry.value.field is ModelField;
+        final String? key = entry.value.field.name;
+        final Object? defaultValue = entry.value.field.defaultValue;
+        final bool required =
+            defaultValue == null && !entry.value.data.type.endsWith('?');
 
-        if (isPolymorphicField) {
-          sink.writeln('type: type,');
-          sink
-            ..write(fieldName)
-            ..write(': ')
-            ..write(fieldType.substring(1))
-            ..write('.fromType(type, ')
-            ..write(fieldName)
-            ..writeln('),');
-        } else {
-          sink
-            ..write(fieldName)
-            ..write(': ')
-            ..write(fieldName)
-            ..writeln(',');
+        yield cb.Field((b) {
+          b.annotations.add(cb.InvokeExpression.newOf(
+            cb.Reference('JsonKey'),
+            [],
+            {
+              if (key != null) 'name': cb.literalString(key),
+              if (required) 'required': cb.literalTrue,
+              if (required) 'disallowNullValue': cb.literalTrue,
+              if (defaultValue != null)
+                'defaultValue': cb.literal(defaultValue),
+            },
+          ));
+          b.modifier = cb.FieldModifier.final$;
+
+          final cb.Reference type;
+          if (polymorphicKeys.contains(fieldType)) {
+            type = cb.Reference(fieldType.substring(1));
+          } else if (isModelField) {
+            final $Type value =
+                ((entry.value.field as ModelField).referTo as $Type);
+            type = cb.Reference('${value.name!.substring(1)}Data');
+          } else {
+            type = cb.Reference(fieldType);
+          }
+          b.type = type;
+
+          b.name = fieldName;
+        });
+      }));
+      b.constructors.add(cb.Constructor((b) {
+        b.factory = true;
+        b.name = 'fromJson';
+        b.requiredParameters.add(cb.Parameter((b) {
+          b.type = cb.Reference('Map');
+          b.name = 'json';
+        }));
+        b.lambda = true;
+        b.body = cb.ToCodeExpression(cb.InvokeExpression.newOf(
+          cb.Reference('_\$${naming.dataName}FromJson(json)'),
+          [cb.CodeExpression(cb.Code('json'))],
+        ));
+      }));
+      if (hasPolymorphism) {
+        b.constructors.add(cb.Constructor((b) {
+          b.factory = true;
+          b.name = '_';
+          b.optionalParameters
+              .addAll(model.dataFields.entries.expand((entry) sync* {
+            final String fieldName = entry.key;
+            final String fieldType = entry.value.data.type;
+            final bool isPolymorphicField = polymorphicKeys.contains(fieldType);
+
+            if (isPolymorphicField) {
+              yield cb.Parameter((b) {
+                b.required = true;
+                b.named = true;
+                b.type = cb.Reference('${fieldType.substring(1)}Type');
+                b.name = 'type';
+              });
+            }
+            yield cb.Parameter((b) {
+              b.required = true;
+              b.named = true;
+              b.type = cb.Reference(isPolymorphicField ? 'Map' : fieldType);
+              b.name = fieldName;
+            });
+          }));
+          b.lambda = false;
+          b.body = cb.InvokeExpression.newOf(
+            cb.Reference(naming.dataName),
+            [],
+            Map.fromEntries(model.dataFields.entries.expand((entry) sync* {
+              final String fieldName = entry.key;
+              final String fieldType = entry.value.data.type;
+
+              if (polymorphicKeys.contains(fieldType)) {
+                yield MapEntry(
+                  'type',
+                  cb.CodeExpression(cb.Code('type')),
+                );
+                yield MapEntry(
+                  fieldName,
+                  cb.InvokeExpression.newOf(
+                    cb.Reference(fieldType.substring(1)),
+                    ['type', fieldName]
+                        .map((code) => cb.CodeExpression(cb.Code(code)))
+                        .toList(),
+                    {},
+                    [],
+                    'fromType',
+                  ),
+                );
+              } else {
+                yield MapEntry(
+                  fieldName,
+                  cb.CodeExpression(cb.Code(fieldName)),
+                );
+              }
+            })),
+          ).returned.statement;
+        }));
+      }
+      b.constructors.add(cb.Constructor((b) {
+        b.constant = true;
+        b.optionalParameters.addAll(model.dataFields.keys.map((name) {
+          return cb.Parameter((b) {
+            b.required = true;
+            b.named = true;
+            b.toThis = true;
+            b.name = name;
+          });
+        }));
+        if (hasPolymorphism) {
+          b.optionalParameters.add(cb.Parameter((b) {
+            b.required = true;
+            b.named = true;
+            b.toThis = true;
+            b.name = 'type';
+          }));
         }
-      }
-      sink.writeln(');');
-      sink.writeln('}');
-    }
-
-    // Constructors
-    sink.writeln();
-    sink.write('const ${naming.dataName}(');
-    sink.writeln(model.dataFields.isEmpty ? '' : '{');
-    for (MapEntry<String, $ModelField> entry in model.dataFields.entries) {
-      sink
-        ..write('required this.')
-        ..write(entry.key)
-        ..writeln(',');
-    }
-    if (hasPolymorphism) {
-      sink.writeln('required this.type,');
-    }
-
-    sink.write(model.dataFields.isEmpty ? '' : '}');
-    sink.writeln(');');
-    sink.writeln();
-
-    // Methods
-    sink.writeln();
-    sink.writeln('Map<String, Object?> toJson() =>');
-    sink.writeln('_\$${className}ToJson(this);');
-    sink.writeln();
-
-    sink.writeln('}');
+      }));
+      b.methods.add(cb.Method((b) {
+        b.returns = cb.TypeReference((b) {
+          b.symbol = 'Map';
+          b.types.add(cb.Reference('String'));
+          b.types.add(cb.Reference('Object?'));
+        });
+        b.name = 'toJson';
+        b.lambda = true;
+        b.body = cb.ToCodeExpression(cb.InvokeExpression.newOf(
+          cb.Reference('_\$${naming.dataName}ToJson'),
+          [cb.CodeExpression(cb.Code('this'))],
+        ));
+      }));
+    });
   }
 
-  void _writeModelClass(StringSink sink) {
-    final String className = naming.modelName;
-
+  cb.Spec get _modelClass {
     final Set<String> polymorphicKeys = polymorphicTree.keys.toSet();
     final Set<String> modelFieldTypes =
         model.fields.values.map((field) => field.data.type).toSet();
     final bool hasPolymorphism =
         polymorphicKeys.intersection(modelFieldTypes).isNotEmpty;
 
-    sink
-      ..write('@JsonSerializable(')
-      ..writeAll([
-        'anyMap: true',
-        'explicitToJson: true',
-        if (hasPolymorphism) 'constructor: \'_\'',
-      ], ', ')
-      ..writeln(')');
-
-    sink.writeln('class $className '
-        'extends ${naming.dataName} '
-        'implements ${naming.schemaName} {');
-
-    // Fields
-    sink
-      ..write('@JsonKey(')
-      ..writeAll([
-        'name: \'_id\'',
-        'required: true',
-        'disallowNullValue: true',
-      ], ', ')
-      ..writeln(')');
-    sink.writeln('final String id;');
-
-    for (MapEntry<String, $ModelField> entry in model.foreignFields.entries) {
-      sink.writeln();
-      final String? key = entry.value.field.name;
-      final bool required = !entry.value.data.type.endsWith('?');
-
-      sink.writeln('@override');
-      sink
-        ..write('@JsonKey(')
-        ..writeAll([
-          if (key != null) 'name: \'$key\'',
-          if (required) 'required: true',
-          if (required) 'disallowNullValue: true',
-        ], ', ')
-        ..writeln(')');
-
-      final String fieldName = entry.key;
-      final String fieldType = entry.value.data.type;
-      sink
-        ..write('final ')
-        ..write(fieldType)
-        ..write(' ')
-        ..write(fieldName)
-        ..writeln(';');
-    }
-    sink.writeln();
-
-    // Factories
-    sink.writeln('factory $className.fromJson(String id, Map json) =>');
-    sink.writeln("_\$${className}FromJson({...json, '_id': id});");
-    sink.writeln();
-
-    if (hasPolymorphism) {
-      sink.writeln('factory $className._({');
-      sink.writeln('required String id,');
-      for (MapEntry<String, $ModelField> entry in model.fields.entries) {
+    return cb.Class((b) {
+      b.annotations.add(cb.InvokeExpression.newOf(
+        cb.Reference('JsonSerializable'),
+        [],
+        {
+          'anyMap': cb.literalTrue,
+          'explicitToJson': cb.literalTrue,
+          if (hasPolymorphism) 'constructor': cb.literalString('_'),
+        },
+      ));
+      b.name = naming.modelName;
+      b.extend = cb.Reference(naming.dataName);
+      b.implements.add(cb.Reference(naming.schemaName));
+      b.fields.add(cb.Field((b) {
+        b.annotations.add(cb.InvokeExpression.newOf(
+          cb.Reference('JsonKey'),
+          [],
+          {
+            'name': cb.literalString('_id'),
+            'required': cb.literalTrue,
+            'disallowNullValue': cb.literalTrue,
+          },
+        ));
+        b.modifier = cb.FieldModifier.final$;
+        b.type = cb.Reference('String');
+        b.name = 'id';
+      }));
+      b.fields.addAll(model.foreignFields.entries.map((entry) {
+        final String? key = entry.value.field.name;
         final String fieldName = entry.key;
         final String fieldType = entry.value.data.type;
-        final bool isPolymorphicField = polymorphicKeys.contains(fieldType);
+        final bool required = !fieldType.endsWith('?');
 
-        if (isPolymorphicField) {
-          sink
-            ..write('required ')
-            ..write('${fieldType.substring(1)}Type')
-            ..writeln(' type,');
+        return cb.Field((b) {
+          b.annotations.add(cb.CodeExpression(cb.Code('override')));
+          b.annotations.add(cb.InvokeExpression.newOf(
+            cb.Reference('JsonKey'),
+            [],
+            {
+              if (key != null) 'name': cb.literalString(key),
+              if (required) 'required': cb.literalTrue,
+              if (required) 'disallowNullValue': cb.literalTrue,
+            },
+          ));
+          b.modifier = cb.FieldModifier.final$;
+          b.type = cb.Reference(fieldType);
+          b.name = fieldName;
+        });
+      }));
+      b.constructors.add(cb.Constructor((b) {
+        b.factory = true;
+        b.name = 'fromJson';
+        b.requiredParameters.add(cb.Parameter((b) {
+          b.type = cb.Reference('String');
+          b.name = 'id';
+        }));
+        b.requiredParameters.add(cb.Parameter((b) {
+          b.type = cb.Reference('Map');
+          b.name = 'json';
+        }));
+        b.lambda = true;
+        b.body = cb.ToCodeExpression(cb.InvokeExpression.newOf(
+          cb.Reference('_\$${naming.modelName}FromJson'),
+          [
+            cb.literalMap({
+              cb.literalSpread(): 'json',
+              cb.literalString('_id'): 'id',
+            }),
+          ],
+        ));
+      }));
+      if (hasPolymorphism) {
+        b.constructors.add(cb.Constructor((b) {
+          b.factory = true;
+          b.name = '_';
+          b.optionalParameters.add(cb.Parameter((b) {
+            b.required = true;
+            b.named = true;
+            b.type = cb.Reference('String');
+            b.name = 'id';
+          }));
+          b.optionalParameters
+              .addAll(model.fields.entries.expand((entry) sync* {
+            final String fieldName = entry.key;
+            final String fieldType = entry.value.data.type;
+            if (polymorphicKeys.contains(fieldType)) {
+              yield cb.Parameter((b) {
+                b.required = true;
+                b.named = true;
+                b.type = cb.Reference('${fieldType.substring(1)}Type');
+                b.name = 'type';
+              });
+              yield cb.Parameter((b) {
+                b.required = true;
+                b.named = true;
+                b.type = cb.Reference('Map');
+                b.name = fieldName;
+              });
+            } else {
+              yield cb.Parameter((b) {
+                b.required = true;
+                b.named = true;
+                b.type = cb.Reference(fieldType);
+                b.name = fieldName;
+              });
+            }
+          }));
+          b.body = cb.Block((b) {
+            b.statements.add(cb.ToCodeExpression(
+              cb
+                  .declareFinal('data', type: cb.Reference(naming.dataName))
+                  .assign(
+                    cb.InvokeExpression.newOf(
+                      cb.Reference(naming.dataName),
+                      [],
+                      Map.fromEntries(
+                          model.dataFields.entries.expand((entry) sync* {
+                        final String fieldName = entry.key;
+                        final String fieldType = entry.value.data.type;
+                        if (polymorphicKeys.contains(fieldType)) {
+                          yield MapEntry(
+                              'type', cb.CodeExpression(cb.Code('type')));
+                        }
+                        yield MapEntry(
+                            fieldName, cb.CodeExpression(cb.Code(fieldName)));
+                      })),
+                      [],
+                      '_',
+                    ),
+                  ),
+            ));
+            b.statements.add(cb.ToCodeExpression(
+              cb.InvokeExpression.newOf(
+                cb.Reference(naming.modelName),
+                [],
+                {
+                  'id': cb.CodeExpression(cb.Code('id')),
+                  ...Map.fromEntries(model.fields.entries.expand((entry) sync* {
+                    final String fieldName = entry.key;
+                    final String fieldType = entry.value.data.type;
 
-          sink
-            ..write('required Map ')
-            ..write(fieldName)
-            ..writeln(',');
-        } else {
-          sink
-            ..write('required ')
-            ..write(fieldType)
-            ..write(' ')
-            ..write(fieldName)
-            ..writeln(',');
+                    final cb.Expression rootExpression =
+                        cb.CodeExpression(cb.Code('data'));
+                    final cb.Expression expression;
+                    if (entry.value.field is ForeignField) {
+                      expression = cb.CodeExpression(cb.Code(fieldName));
+                    } else {
+                      expression = rootExpression.property(fieldName);
+                    }
+                    if (polymorphicKeys.contains(fieldType)) {
+                      yield MapEntry('type', rootExpression.property('type'));
+                    }
+                    yield MapEntry(fieldName, expression);
+                  }))
+                },
+              ).returned,
+            ));
+          });
+        }));
+      }
+      b.constructors.add(cb.Constructor((b) {
+        b.constant = true;
+        b.optionalParameters.add(cb.Parameter((b) {
+          b.required = true;
+          b.named = true;
+          b.toThis = true;
+          b.name = 'id';
+        }));
+        b.optionalParameters
+            .addAll(model.ownFields.entries.expand((entry) sync* {
+          final String fieldName = entry.key;
+          final String fieldType = entry.value.data.type;
+          final bool isForeignField = entry.value.field is ForeignField;
+          if (polymorphicKeys.contains(fieldType)) {
+            yield cb.Parameter((b) {
+              b.required = true;
+              b.named = true;
+              b.toSuper = true;
+              b.name = 'type';
+            });
+          }
+          yield cb.Parameter((b) {
+            b.required = true;
+            b.named = true;
+            b.toThis = isForeignField;
+            b.toSuper = !isForeignField;
+            b.name = fieldName;
+          });
+        }));
+      }));
+      b.methods.addAll(_queryGetters);
+      b.methods.add(cb.Method((b) {
+        b.annotations.add(cb.CodeExpression(cb.Code('override')));
+        b.returns = cb.Reference('Map<String, Object?>');
+        b.name = 'toJson';
+        b.lambda = false;
+
+        final Map<String, cb.Expression> queryObject = {};
+        final Map<String, Map<String, Object>> queries = {};
+        for (MapEntry<String, $ModelField> entry in model.queryFields.entries) {
+          final String? name = (entry.value.field as QueryField).name;
+          if (name == null) continue;
+
+          final List<String> segments = name.split('/');
+          if (segments.length == 1) {
+            queryObject[name] = cb.literalString(entry.key);
+          } else {
+            queries.putIfAbsent(segments[0], () => {})[segments[1]] = entry.key;
+          }
         }
-      }
-      sink.writeln('}) {');
-      sink.writeln('final ${naming.dataName} data = ${naming.dataName}._(');
-      for (MapEntry<String, $ModelField> entry in model.dataFields.entries) {
-        final String fieldName = entry.key;
-        final String fieldType = entry.value.data.type;
-        final bool isPolymorphicField = polymorphicKeys.contains(fieldType);
-
-        if (isPolymorphicField) {
-          sink.writeln('type: type,');
-        }
-        sink
-          ..write(fieldName)
-          ..write(': ')
-          ..write(fieldName)
-          ..writeln(',');
-      }
-      sink.writeln(');');
-
-      sink.writeln('return $className(');
-      sink.writeln('id: id,');
-      for (MapEntry<String, $ModelField> entry in model.fields.entries) {
-        final String prefix = entry.value.field is ForeignField ? '' : 'data.';
-        final String fieldName = entry.key;
-        final String fieldType = entry.value.data.type;
-        final bool isPolymorphicField = polymorphicKeys.contains(fieldType);
-
-        if (isPolymorphicField) {
-          sink.write('type: data.type,');
+        if (queries.isNotEmpty) {
+          for (MapEntry<String, Map<String, Object>> entry in queries.entries) {
+            queryObject[entry.key] = cb.literalMap(entry.value);
+          }
         }
 
-        sink
-          ..write(fieldName)
-          ..write(': ')
-          ..write(prefix)
-          ..write(fieldName)
-          ..writeln(',');
-      }
-      sink.writeln(');');
-
-      sink.writeln('}');
-      sink.writeln();
-    }
-
-    // Constructor
-    sink.writeln('const $className({');
-    sink.writeln('required this.id,');
-    for (MapEntry<String, $ModelField> entry in model.ownFields.entries) {
-      final String fieldName = entry.key;
-      final String fieldType = entry.value.data.type;
-      final bool isPolymorphicField = polymorphicKeys.contains(fieldType);
-      final String prefix =
-          entry.value.field is ForeignField ? 'this' : 'super';
-
-      if (isPolymorphicField) {
-        sink.writeln('required super.type,');
-      }
-      sink
-        ..write('required $prefix.')
-        ..write(fieldName)
-        ..writeln(',');
-    }
-    sink.writeln('});');
-    sink.writeln();
-
-    // Getters
-    _writeQueryGetters(sink);
-
-    // Methods
-    sink.writeln();
-    sink.writeln('@override');
-    sink.writeln('Map<String, Object?> toJson() {');
-    sink.writeln('return {');
-    sink.writeln('..._\$${className}ToJson(this)..remove(\'_id\'),');
-
-    final Map<String, Map<String, Object>> queries = {};
-    for (MapEntry<String, $ModelField> entry in model.queryFields.entries) {
-      final QueryField field = entry.value.field as QueryField;
-      final List<String> segments = field.name!.split('/');
-      if (segments.length == 1) {
-        sink
-          ..write('\'')
-          ..write(field.name)
-          ..write('\': ')
-          ..write(entry.key)
-          ..writeln(',');
-      } else {
-        queries.putIfAbsent(segments[0], () => {})[segments[1]] = entry.key;
-      }
-    }
-    if (queries.isNotEmpty) {
-      for (MapEntry<String, Map<String, Object>> entry in queries.entries) {
-        sink
-          ..write('\'')
-          ..write(entry.key)
-          ..writeln('\': {');
-
-        for (MapEntry<String, Object> childEntry in entry.value.entries) {
-          sink
-            ..write('\'')
-            ..write(childEntry.key)
-            ..write('\': ')
-            ..write(childEntry.value)
-            ..writeln(',');
-        }
-
-        sink.writeln('},');
-      }
-    }
-    sink.writeln('};');
-    sink.writeln('}');
-    sink.writeln();
-
-    sink.writeln('}');
+        b.body = cb
+            .literalMap({
+              cb.literalSpread(): cb.InvokeExpression.newOf(
+                cb.Reference('_\$${naming.modelName}ToJson'),
+                [cb.CodeExpression(cb.Code('this'))],
+              ).cascade('remove').call([cb.literalString('_id')]),
+              ...queryObject,
+            })
+            .returned
+            .statement;
+      }));
+    });
   }
 
-  void _writeQueryGetters(StringSink sink) {
-    sink.writeln();
+  Iterable<cb.Method> get _queryGetters sync* {
     for (MapEntry<String, $ModelField> entry in model.queryFields.entries) {
       final QueryField field = entry.value.field as QueryField;
       if (field.referTo.isEmpty) continue;
 
-      sink.writeln('@override');
-      sink
-        ..write(entry.value.data.type)
-        ..write(' get ')
-        ..write(entry.key)
-        ..write(' => ');
+      yield cb.Method((b) {
+        b.returns = cb.Reference(entry.value.data.type);
+        b.type = cb.MethodType.getter;
+        b.name = entry.key;
+        b.lambda = true;
+        b.body = cb.ToCodeExpression(cb
+            .literalList(field.referTo.map((token) {
+              final QueryType? type = token.type;
 
-      final String args = field.referTo.map((token) {
-        final QueryType? type = token.type;
-
-        final String? symbolName = (token.field as $Symbol).name;
-        if (symbolName == null) {
-          throw StateError(
-            'field ${field.name} must have a symbol for all its tokens',
-          );
-        }
-
-        final $ModelField? referredField = model.ownFields[symbolName];
-        if (referredField == null) {
-          throw StateError(
-            'field ${field.name}/$symbolName must have a '
-            'symbol referring to a valid field',
-          );
-        }
-
-        String name = symbolName;
-        if (type != null) {
-          switch (type) {
-            case QueryType.text:
-              {
-                name = '\$normalizeText($name)';
-                break;
+              final String? symbolName = (token.field as $Symbol).name;
+              if (symbolName == null) {
+                throw StateError(
+                  'field ${field.name} must have a symbol for all its tokens',
+                );
               }
-            case QueryType.enumeration:
-              {
-                name = '\$normalizeEnum($name)';
-                break;
+
+              final $ModelField? referredField = model.ownFields[symbolName];
+              if (referredField == null) {
+                throw StateError(
+                  'field ${field.name}/$symbolName must have a '
+                  'symbol referring to a valid field',
+                );
               }
-          }
-        }
 
-        if (referredField.data.type.endsWith('?')) name = '$name ?? \'\'';
-        return name;
-      }).join(', ');
-
-      sink
-        ..write('[')
-        ..write(args)
-        ..write('].join(\'')
-        ..write(field.joinBy)
-        ..writeln('\');');
-
-      sink.writeln();
+              cb.Expression expression = cb.CodeExpression(cb.Code(symbolName));
+              final cb.Expression? callExpression;
+              switch (type) {
+                case QueryType.text:
+                  callExpression =
+                      cb.CodeExpression(cb.Code('\$normalizeText'));
+                  break;
+                case QueryType.enumeration:
+                  callExpression =
+                      cb.CodeExpression(cb.Code('\$normalizeEnum'));
+                  break;
+                case null:
+                  callExpression = null;
+                  break;
+              }
+              if (callExpression != null) {
+                expression = callExpression.call([expression]);
+              }
+              if (referredField.data.type.endsWith('?')) {
+                expression = expression.ifNullThen(cb.literalString(''));
+              }
+              return expression;
+            }))
+            .property('join')
+            .call([cb.literalString(field.joinBy)]));
+      });
     }
   }
 
-  void _writeDependencyClass(StringSink sink) {
-    final String className = naming.dependencyName;
-
-    sink.writeln('class $className '
-        'extends Dependency<${naming.dataName}> {');
-    for (MapEntry<String, $ModelField> entry in model.foreignFields.entries) {
-      sink.writeln('final ${entry.value.data.type} ${entry.key};');
-    }
-    sink.writeln();
-    if (model.foreignFields.isEmpty) {
-      sink.writeln('const $className() : super.strong();');
-    } else {
-      sink.writeln('$className({');
-      for (String name in model.foreignFields.keys) {
-        sink.writeln('required this.$name,');
+  cb.Spec get _dependencyClass {
+    return cb.Class((b) {
+      b.name = naming.dependencyName;
+      b.extend = cb.TypeReference((b) {
+        b.symbol = 'Dependency';
+        b.types.add(cb.Reference(naming.dataName));
+      });
+      b.fields.addAll(model.foreignFields.entries.map((entry) {
+        return cb.Field((b) {
+          b.modifier = cb.FieldModifier.final$;
+          b.type = cb.Reference(entry.value.data.type);
+          b.name = entry.key;
+        });
+      }));
+      if (model.foreignFields.isEmpty) {
+        b.constructors.add(cb.Constructor((b) {
+          b.constant = true;
+          b.initializers.add(cb.ToCodeExpression(
+            cb.CodeExpression(cb.Code('super')).property('strong').call([]),
+          ));
+        }));
+      } else {
+        b.constructors.add(cb.Constructor((b) {
+          b.constant = false;
+          b.optionalParameters.addAll(model.foreignFields.keys.map((name) {
+            return cb.Parameter((b) {
+              b.required = true;
+              b.named = true;
+              b.toThis = true;
+              b.name = name;
+            });
+          }));
+          b.initializers.add(cb.ToCodeExpression(
+            cb.CodeExpression(cb.Code('super')).property('weak').call([
+              cb.literalList(model.foreignFields.entries.map((entry) {
+                cb.Expression expression =
+                    cb.CodeExpression(cb.Code(entry.key));
+                if (entry.value.data.type.endsWith('?')) {
+                  expression = expression.ifNullThen(cb.literalString(''));
+                }
+                return expression;
+              })),
+            ]),
+          ));
+        }));
       }
-      sink.write('}) : super.weak([');
-      sink.write(model.foreignFields.entries.map((entry) {
-        final String suffix =
-            entry.value.data.type.endsWith('?') ? ' ?? \'\'' : '';
-        return '${entry.key}$suffix';
-      }).join(', '));
-      sink.writeln(']);');
-    }
-    sink.writeln('}');
+    });
   }
 
-  void _writeEntityClass(StringSink sink) {
-    final String className = naming.entityName;
-
-    sink.writeln('class $className '
-        'implements Entity<${naming.dataName}, '
-        '${naming.modelName}> {');
-
-    // Constructors
-    sink.writeln('const $className();');
-    sink.writeln();
-
-    // tableName
-    sink.writeln('@override');
-    sink.writeln('String get tableName => \'${model.name}\';');
-    sink.writeln();
-
-    // fromData
-    sink.writeln('@override');
-    sink.writeln('${naming.modelName} fromData(');
-    sink.writeln('${naming.dependencyName} dependency,');
-    sink.writeln('String id,');
-    sink.writeln('${naming.dataName} data,');
-    sink.writeln(') {');
-    sink.writeln('return ${naming.modelName}(');
-
-    final UidType uidType = model.uidType;
-    sink
-      ..write('id: ')
-      ..write(_encodeUidType(uidType))
-      ..writeln(',');
-
+  cb.Spec get _entityClass {
     final Set<String> polymorphicKeys = polymorphicTree.keys.toSet();
-    for (MapEntry<String, $ModelField> entry in model.ownFields.entries) {
-      final String fieldName = entry.key;
-      final String fieldType = entry.value.data.type;
-      final bool isPolymorphicField = polymorphicKeys.contains(fieldType);
-      final String prefix =
-          entry.value.field is ForeignField ? 'dependency' : 'data';
+    return cb.Class((b) {
+      b.name = naming.entityName;
+      b.implements.add(cb.TypeReference((b) {
+        b.symbol = 'Entity';
+        b.types.add(cb.Reference(naming.dataName));
+        b.types.add(cb.Reference(naming.modelName));
+      }));
+      b.constructors.add(cb.Constructor((b) {
+        b.constant = true;
+      }));
+      b.methods.add(cb.Method((b) {
+        b.annotations.add(cb.CodeExpression(cb.Code('override')));
+        b.returns = cb.Reference('String');
+        b.type = cb.MethodType.getter;
+        b.name = 'tableName';
+        b.lambda = true;
+        b.body = cb.ToCodeExpression(cb.literalString(model.name));
+      }));
+      b.methods.add(cb.Method((b) {
+        b.annotations.add(cb.CodeExpression(cb.Code('override')));
+        b.returns = cb.Reference(naming.modelName);
+        b.name = 'fromData';
+        b.requiredParameters.add(cb.Parameter((b) {
+          b.type = cb.Reference(naming.dependencyName);
+          b.name = 'dependency';
+        }));
+        b.requiredParameters.add(cb.Parameter((b) {
+          b.type = cb.Reference('String');
+          b.name = 'id';
+        }));
+        b.requiredParameters.add(cb.Parameter((b) {
+          b.type = cb.Reference(naming.dataName);
+          b.name = 'data';
+        }));
+        b.lambda = false;
+        b.body = cb.InvokeExpression.newOf(
+          cb.Reference(naming.modelName),
+          [],
+          {
+            'id': _uidTypeExpressionOf(model.uidType),
+            ...Map.fromEntries(model.ownFields.entries.expand((entry) sync* {
+              final String fieldName = entry.key;
+              final String fieldType = entry.value.data.type;
+              if (polymorphicKeys.contains(fieldType)) {
+                yield MapEntry(
+                  'type',
+                  cb.CodeExpression(cb.Code('data')).property('type'),
+                );
+              }
+              final cb.Expression prefixExpression;
+              if (entry.value.field is ForeignField) {
+                prefixExpression = cb.CodeExpression(cb.Code('dependency'));
+              } else {
+                prefixExpression = cb.CodeExpression(cb.Code('data'));
+              }
+              yield MapEntry(fieldName, prefixExpression.property(fieldName));
+            })),
+          },
+        ).returned.statement;
+      }));
+      b.methods.add(cb.Method((b) {
+        b.annotations.add(cb.CodeExpression(cb.Code('override')));
+        b.returns = cb.Reference(naming.modelName);
+        b.name = 'convert';
+        b.requiredParameters.add(cb.Parameter((b) {
+          b.type = cb.Reference(naming.modelName);
+          b.name = 'model';
+        }));
+        b.requiredParameters.add(cb.Parameter((b) {
+          b.type = cb.Reference(naming.dataName);
+          b.name = 'data';
+        }));
+        b.lambda = false;
+        b.body = cb.InvokeExpression.newOf(
+          cb.Reference(naming.modelName),
+          [],
+          {
+            'id': cb.CodeExpression(cb.Code('model')).property('id'),
+            ...Map.fromEntries(model.ownFields.entries.expand((entry) sync* {
+              final String fieldName = entry.key;
+              final String fieldType = entry.value.data.type;
 
-      if (isPolymorphicField) {
-        sink.writeln('type: data.type,');
-      }
-
-      sink
-        ..write(fieldName)
-        ..write(': ')
-        ..write(prefix)
-        ..write('.')
-        ..write(fieldName)
-        ..writeln(',');
-    }
-
-    sink.writeln(');');
-    sink.writeln('}');
-    sink.writeln();
-
-    // convert
-    sink.writeln('@override');
-    sink.writeln('${naming.modelName} convert('
-        '${naming.modelName} model, ${naming.dataName} data) {');
-    sink.writeln('return ${naming.modelName}(');
-    sink.writeln('id: model.id,');
-
-    for (MapEntry<String, $ModelField> entry in model.ownFields.entries) {
-      final String fieldName = entry.key;
-      final String fieldType = entry.value.data.type;
-      final bool isPolymorphicField = polymorphicKeys.contains(fieldType);
-      final String prefix =
-          entry.value.field is ForeignField ? 'model' : 'data';
-
-      if (isPolymorphicField) {
-        sink.writeln('type: data.type,');
-      }
-
-      sink
-        ..write(fieldName)
-        ..write(': ')
-        ..write(prefix)
-        ..write('.')
-        ..write(fieldName)
-        ..writeln(',');
-    }
-
-    sink.writeln(');');
-    sink.writeln('}');
-
-    // fromJson
-    sink.writeln('@override');
-    sink.writeln('${naming.modelName} fromJson(String id, Map json) =>');
-    sink.writeln('${naming.modelName}.fromJson(id, json);');
-    sink.writeln();
-
-    // identify
-    sink.writeln('@override');
-    sink.writeln('String identify(${naming.modelName} '
-        'model) => model.id;');
-    sink.writeln();
-
-    // toJson
-    sink.writeln('@override');
-    sink.writeln(
-        'Map<String, Object?> toJson(${naming.dataName} data) => data.toJson();');
-
-    sink.writeln('}');
+              if (polymorphicKeys.contains(fieldType)) {
+                yield MapEntry(
+                  'type',
+                  cb.CodeExpression(cb.Code('data')).property('type'),
+                );
+              }
+              final cb.Expression prefixExpression;
+              if (entry.value.field is ForeignField) {
+                prefixExpression = cb.CodeExpression(cb.Code('model'));
+              } else {
+                prefixExpression = cb.CodeExpression(cb.Code('data'));
+              }
+              yield MapEntry(fieldName, prefixExpression.property(fieldName));
+            })),
+          },
+        ).returned.statement;
+      }));
+      b.methods.add(cb.Method((b) {
+        b.annotations.add(cb.CodeExpression(cb.Code('override')));
+        b.returns = cb.Reference(naming.modelName);
+        b.name = 'fromJson';
+        b.requiredParameters.add(cb.Parameter((b) {
+          b.type = cb.Reference('String');
+          b.name = 'id';
+        }));
+        b.requiredParameters.add(cb.Parameter((b) {
+          b.type = cb.Reference('Map');
+          b.name = 'json';
+        }));
+        b.lambda = true;
+        b.body = cb.ToCodeExpression(cb.InvokeExpression.newOf(
+          cb.Reference(naming.modelName),
+          ['id', 'json']
+              .map((code) => cb.CodeExpression(cb.Code(code)))
+              .toList(),
+          {},
+          [],
+          'fromJson',
+        ));
+      }));
+      b.methods.add(cb.Method((b) {
+        b.annotations.add(cb.CodeExpression(cb.Code('override')));
+        b.returns = cb.Reference('String');
+        b.name = 'identify';
+        b.requiredParameters.add(cb.Parameter((b) {
+          b.type = cb.Reference(naming.modelName);
+          b.name = 'model';
+        }));
+        b.lambda = true;
+        b.body = cb.CodeExpression(cb.Code('model')).property('id').code;
+      }));
+      b.methods.add(cb.Method((b) {
+        b.annotations.add(cb.CodeExpression(cb.Code('override')));
+        b.returns = cb.TypeReference((b) {
+          b.symbol = 'Map';
+          b.types.add(cb.Reference('String'));
+          b.types.add(cb.Reference('Object?'));
+        });
+        b.name = 'toJson';
+        b.requiredParameters.add(cb.Parameter((b) {
+          b.type = cb.Reference(naming.dataName);
+          b.name = 'data';
+        }));
+        b.lambda = true;
+        b.body = cb.ToCodeExpression(
+          cb.CodeExpression(cb.Code('data')).property('toJson').call([]),
+        );
+      }));
+    });
   }
 
-  String write() {
-    final StringBuffer buffer = StringBuffer();
-    buffer.writeln('// **************************************************');
-    buffer.writeln('//     DORM: ${naming.modelName}');
-    buffer.writeln('// **************************************************');
-    buffer.writeln();
-    model.uidType.when(
-      caseSimple: () {},
-      caseComposite: () {},
-      caseSameAs: (_) {},
-      caseCustom: (_) => _writeDummyClass(buffer),
-    );
-    _writeDataClass(buffer);
-    _writeModelClass(buffer);
-    _writeDependencyClass(buffer);
-    _writeEntityClass(buffer);
-    return buffer.toString();
+  cb.Spec get code {
+    return cb.Library((b) {
+      b.body.add(cb.Code('// ***********************************************'));
+      b.body.add(cb.Code('//            DORM: ${naming.modelName}           '));
+      b.body.add(cb.Code('// ***********************************************'));
+      model.uidType.when(
+        caseSimple: () {},
+        caseComposite: () {},
+        caseSameAs: (_) {},
+        caseCustom: (_) => b.body.add(_dummyClass),
+      );
+      b.body.add(_dataClass);
+      b.body.add(_modelClass);
+      b.body.add(_dependencyClass);
+      b.body.add(_entityClass);
+    });
   }
 }
 
@@ -856,47 +1003,75 @@ class OrmGenerator extends Generator {
       }
     }
 
-    final StringSink sink = StringBuffer();
-    for (MapEntry<String, Map<String, $PolymorphicData>> entry
-        in context.polymorphicDatum.entries) {
-      sink.writeln(_PolymorphicWriter(
-        datum: entry.value,
-        naming: _PolymorphicNaming(entry.key),
-      ).write());
-    }
-    for (MapEntry<String, $Model> entry in context.modelDatum.entries) {
-      sink.writeln(_SchemaWriter(
-        model: entry.value,
-        naming: SchemaNaming(entry.key),
-        polymorphicTree: context.polymorphicDatum,
-      ).write());
-    }
-    sink.writeln();
-    sink.writeln();
-    sink.writeln('// **************************************************');
-    sink.writeln('//     DORM');
-    sink.writeln('// **************************************************');
-    sink.writeln();
+    final cb.Spec spec = cb.Library((b) {
+      b.body.add(cb.CodeExpression(cb.Code('// ****************************')));
+      b.body.add(cb.CodeExpression(cb.Code('//             DORM            ')));
+      b.body.add(cb.CodeExpression(cb.Code('// ****************************')));
 
-    sink.writeln('class Dorm {');
-    sink.writeln('final Reference _root;');
-    sink.writeln();
-    sink.writeln('const Dorm(this._root);');
-    sink.writeln();
-    for (MapEntry<String, $Model> entry in context.modelDatum.entries) {
-      final SchemaNaming naming = SchemaNaming(entry.key);
-      final $Model model = entry.value;
+      for (MapEntry<String, $Model> entry in context.modelDatum.entries) {
+        b.body.add(_SchemaWriter(
+          model: entry.value,
+          naming: SchemaNaming(entry.key),
+          polymorphicTree: context.polymorphicDatum,
+        ).code);
+      }
+      // TODO
+      // for (MapEntry<String, Map<String, $PolymorphicData>> entry
+      //     in context.polymorphicDatum.entries) {
+      //   b.body.add(_PolymorphicWriter(
+      //     datum: entry.value,
+      //     naming: _PolymorphicNaming(entry.key),
+      //   ).code);
+      // }
 
-      final String fieldName =
-          (model.as as $Symbol?)?.name ?? naming.modelName.toLowerCase();
-      sink.writeln('DatabaseEntity<${naming.dataName}, ');
-      sink.writeln('${naming.modelName}> get $fieldName =>');
-      sink.writeln('DatabaseEntity(const ${naming.entityName}(), '
-          'reference: _root);');
-      sink.writeln();
-    }
-    sink.writeln('}');
+      b.body.add(cb.Class((b) {
+        b.name = 'Dorm';
+        b.fields.add(cb.Field((b) {
+          b.modifier = cb.FieldModifier.final$;
+          b.type = cb.Reference('Reference');
+          b.name = '_root';
+        }));
+        b.constructors.add(cb.Constructor((b) {
+          b.constant = true;
+          b.requiredParameters.add(cb.Parameter((b) {
+            b.toThis = true;
+            b.name = '_root';
+          }));
+        }));
+        b.methods.addAll(context.modelDatum.entries.map((entry) {
+          final SchemaNaming naming = SchemaNaming(entry.key);
+          final $Model model = entry.value;
+          return cb.Method((b) {
+            b.returns = cb.TypeReference((b) {
+              b.symbol = 'DatabaseEntity';
+              b.types.add(cb.Reference(naming.dataName));
+              b.types.add(cb.Reference(naming.modelName));
+            });
+            b.type = cb.MethodType.getter;
+            b.lambda = true;
+            b.name = (model.as as $Symbol?)?.name ??
+                (naming.modelName[0].toLowerCase() +
+                    naming.modelName.substring(1));
+            b.body = cb.ToCodeExpression(
+              cb.InvokeExpression.newOf(
+                cb.Reference('DatabaseEntity'),
+                [
+                  cb.InvokeExpression.constOf(
+                    cb.Reference(naming.entityName),
+                    [],
+                  ),
+                ],
+                {
+                  'reference': cb.CodeExpression(cb.Code('_root')),
+                },
+              ),
+            );
+          });
+        }));
+      }));
+    });
 
-    return '$sink';
+    final cb.DartEmitter emitter = cb.DartEmitter(allocator: cb.Allocator());
+    return DartFormatter().format(spec.accept(emitter).toString());
   }
 }
