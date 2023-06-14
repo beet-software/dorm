@@ -43,7 +43,11 @@ class _PolymorphicNaming {
   String get enumName => '${modelName}Type';
 }
 
-class _SchemaWriter {
+abstract class _CodeWriter {
+  void build(cb.LibraryBuilder b);
+}
+
+class _SchemaWriter implements _CodeWriter {
   final $Model model;
   final SchemaNaming naming;
   final Map<String, Map<String, $PolymorphicData>> polymorphicTree;
@@ -824,26 +828,25 @@ class _SchemaWriter {
     });
   }
 
-  cb.Spec get code {
-    return cb.Library((b) {
-      // b.body.add(cb.Code('// ***********************************************'));
-      // b.body.add(cb.Code('//            DORM: ${naming.modelName}           '));
-      // b.body.add(cb.Code('// ***********************************************'));
-      model.uidType.when(
-        caseSimple: () {},
-        caseComposite: () {},
-        caseSameAs: (_) {},
-        caseCustom: (_) => b.body.add(_dummyClass),
-      );
-      b.body.add(_dataClass);
-      b.body.add(_modelClass);
-      b.body.add(_dependencyClass);
-      b.body.add(_entityClass);
-    });
+  @override
+  void build(cb.LibraryBuilder b) {
+    // b.body.add(cb.Code('// ***********************************************'));
+    // b.body.add(cb.Code('//            DORM: ${naming.modelName}           '));
+    // b.body.add(cb.Code('// ***********************************************'));
+    model.uidType.when(
+      caseSimple: () {},
+      caseComposite: () {},
+      caseSameAs: (_) {},
+      caseCustom: (_) => b.body.add(_dummyClass),
+    );
+    b.body.add(_dataClass);
+    b.body.add(_modelClass);
+    b.body.add(_dependencyClass);
+    b.body.add(_entityClass);
   }
 }
 
-class _PolymorphicWriter {
+class _PolymorphicWriter implements _CodeWriter {
   final Map<String, $PolymorphicData> datum;
   final _PolymorphicNaming naming;
 
@@ -852,130 +855,159 @@ class _PolymorphicWriter {
     required this.naming,
   });
 
-  void _writeEnum(StringSink sink) {
-    final String enumName = naming.enumName;
-    sink.writeln('enum $enumName {');
-    for (String name in datum.keys) {
-      final String enumTypeName = name[1].toLowerCase() + name.substring(2);
-      sink
-        ..write(enumTypeName)
-        ..writeln(',');
-    }
-    sink.writeln('}');
+  cb.Spec get _enumClass {
+    return cb.Enum((b) {
+      b.name = naming.enumName;
+      b.values.addAll(datum.keys.map((name) {
+        return cb.EnumValue((b) {
+          b.name = name[1].toLowerCase() + name.substring(2);
+        });
+      }));
+    });
   }
 
-  void _writeClass(StringSink sink) {
-    final String className = naming.modelName;
-    sink.writeln('abstract class $className implements ${naming.schemaName} {');
-
-    // Factories
-    sink.writeln('factory $className.fromType('
-        '${naming.enumName} type, '
-        'Map json) {');
-    sink.writeln('switch (type) {');
-    for (MapEntry<String, $PolymorphicData> entry in datum.entries) {
-      final String branchName =
-          entry.key[1].toLowerCase() + entry.key.substring(2);
-      sink.writeln('case ${naming.enumName}.$branchName:');
-      sink.writeln('return ${entry.key.substring(1)}.fromJson(json);');
-    }
-    sink.writeln('}');
-    sink.writeln('}');
-    sink.writeln();
-
-    // Constructor
-    sink.writeln('const $className._();');
-    sink.writeln();
-
-    // Getters
-    sink.writeln('${naming.enumName} get type;');
-    sink.writeln();
-
-    // Methods
-    sink.writeln('Map<String, Object?> toJson();');
-
-    sink.writeln();
-
-    sink.writeln('}');
+  cb.Spec get _baseClass {
+    return cb.Class((b) {
+      b.abstract = true;
+      b.name = naming.modelName;
+      b.implements.add(cb.Reference(naming.schemaName));
+      b.constructors.add(cb.Constructor((b) {
+        b.factory = true;
+        b.name = 'fromType';
+        b.requiredParameters.add(cb.Parameter((b) {
+          b.type = cb.Reference(naming.enumName);
+          b.name = 'type';
+        }));
+        b.requiredParameters.add(cb.Parameter((b) {
+          b.type = cb.Reference('Map');
+          b.name = 'json';
+        }));
+        b.lambda = false;
+        b.body = cb.Block((b) {
+          b.statements.add(cb.Code('switch (type) {'));
+          for (MapEntry<String, $PolymorphicData> entry in datum.entries) {
+            final String branchName =
+                entry.key[1].toLowerCase() + entry.key.substring(2);
+            b.statements.add(cb.Code('case ${naming.enumName}.$branchName:'));
+            b.statements.add(cb.InvokeExpression.newOf(
+              cb.Reference(entry.key.substring(1)),
+              [cb.CodeExpression(cb.Code('json'))],
+              {},
+              [],
+              'fromJson',
+            ).returned.statement);
+          }
+          b.statements.add(cb.Code('}'));
+        });
+      }));
+      b.constructors.add(cb.Constructor((b) {
+        b.constant = true;
+        b.name = '_';
+      }));
+      b.methods.add(cb.Method((b) {
+        b.returns = cb.Reference(naming.enumName);
+        b.type = cb.MethodType.getter;
+        b.name = 'type';
+      }));
+      b.methods.add(cb.Method((b) {
+        b.returns = cb.TypeReference((b) {
+          b.symbol = 'Map';
+          b.types.add(cb.Reference('String'));
+          b.types.add(cb.Reference('Object?'));
+        });
+        b.name = 'toJson';
+      }));
+    });
   }
 
-  void _writeModelClass(StringSink sink, String name, $PolymorphicData data) {
-    sink.writeln('@JsonSerializable(anyMap: true, explicitToJson: true)');
-    sink.writeln('class ${name.substring(1)} '
-        'extends ${naming.modelName} '
-        'implements $name {');
-
-    // Fields
-    for (MapEntry<String, $PolymorphicDataField> entry in data.fields.entries) {
-      final String? key = entry.value.name;
-      final String name = entry.key;
-      final String type = entry.value.variable.type;
-      final bool required = !type.endsWith('?');
-      sink
-        ..writeln('@override')
-        ..write('@JsonKey(')
-        ..writeAll(
-          [
-            if (key != null) 'name: \'$key\'',
-            if (required) 'required: true',
-            if (required) 'disallowNullValue: true',
-          ],
-          ', ',
-        )
-        ..writeln(')');
-
-      sink
-        ..write('final ')
-        ..write(entry.value.variable.type)
-        ..write(' ')
-        ..write(name)
-        ..writeln(';')
-        ..writeln();
-    }
-    sink.writeln();
-
-    // Factories
-    sink.writeln('factory ${name.substring(1)}.fromJson(Map json) => '
-        '_\$${name.substring(1)}FromJson(json);');
-    sink.writeln();
-
-    // Constructors
-    sink.writeln('const ${name.substring(1)}({');
-    for (MapEntry<String, $PolymorphicDataField> entry in data.fields.entries) {
-      sink
-        ..write('required this.')
-        ..write(entry.key)
-        ..writeln(',');
-    }
-    sink.writeln('}) : super._();');
-    sink.writeln();
-
-    // Getters
-    final String enumTypeName = name[1].toLowerCase() + name.substring(2);
-    sink
-      ..writeln('@override')
-      ..writeln('${naming.enumName} get type => '
-          '${naming.enumName}.$enumTypeName;')
-      ..writeln();
-
-    // Methods
-    sink
-      ..writeln('@override')
-      ..writeln('Map<String, Object?> toJson() =>'
-          '_\$${name.substring(1)}ToJson(this);')
-      ..writeln();
-
-    sink.writeln('}');
+  cb.Spec _modelClassOf(String name, $PolymorphicData data) {
+    return cb.Class((b) {
+      b.annotations.add(cb.InvokeExpression.newOf(
+        cb.Reference('JsonSerializable'),
+        [],
+        {'anyMap': cb.literalTrue, 'explicitToJson': cb.literalTrue},
+      ));
+      b.name = name.substring(1);
+      b.extend = cb.Reference(naming.modelName);
+      b.implements.add(cb.Reference(name));
+      b.fields.addAll(data.fields.entries.map((entry) {
+        final String? key = entry.value.name;
+        final String name = entry.key;
+        final String type = entry.value.variable.type;
+        final bool required = !type.endsWith('?');
+        return cb.Field((b) {
+          b.annotations.add(cb.CodeExpression(cb.Code('override')));
+          b.annotations.add(cb.InvokeExpression.newOf(
+            cb.Reference('JsonKey'),
+            [],
+            {
+              if (key != null) 'name': cb.literalString(key),
+              if (required) 'required': cb.literalTrue,
+              if (required) 'disallowNullValue': cb.literalTrue,
+            },
+          ));
+          b.modifier = cb.FieldModifier.final$;
+          b.type = cb.Reference(type);
+          b.name = name;
+        });
+      }));
+      b.constructors.add(cb.Constructor((b) {
+        b.factory = true;
+        b.name = 'fromJson';
+        b.requiredParameters.add(cb.Parameter((b) {
+          b.type = cb.Reference('Map');
+          b.name = 'json';
+        }));
+        b.lambda = true;
+        b.body = cb.InvokeExpression.newOf(
+          cb.Reference('_\$${name.substring(1)}FromJson'),
+          [cb.CodeExpression(cb.Code('json'))],
+        ).code;
+      }));
+      b.constructors.add(cb.Constructor((b) {
+        b.constant = true;
+        b.optionalParameters.addAll(data.fields.keys.map((name) {
+          return cb.Parameter((b) {
+            b.required = true;
+            b.named = true;
+            b.toThis = true;
+            b.name = name;
+          });
+        }));
+        b.initializers.add(cb.ToCodeExpression(
+          cb.CodeExpression(cb.Code('super')).property('_').call([]),
+        ));
+      }));
+      b.fields.add(cb.Field((b) {
+        b.annotations.add(cb.CodeExpression(cb.Code('override')));
+        b.modifier = cb.FieldModifier.final$;
+        b.type = cb.Reference(naming.enumName);
+        b.name = 'type';
+        b.assignment = cb.CodeExpression(cb.Code(naming.enumName))
+            .property(name[1].toLowerCase() + name.substring(2))
+            .code;
+      }));
+      b.methods.add(cb.Method((b) {
+        b.annotations.add(cb.CodeExpression(cb.Code('override')));
+        b.returns = cb.TypeReference((b) {
+          b.symbol = 'Map';
+          b.types.add(cb.Reference('String'));
+          b.types.add(cb.Reference('Object?'));
+        });
+        b.name = 'toJson';
+        b.lambda = true;
+        b.body = cb.CodeExpression(cb.Code('_\$${name.substring(1)}ToJson'))
+            .call([cb.CodeExpression(cb.Code('this'))]).code;
+      }));
+    });
   }
 
-  String write() {
-    final StringSink sink = StringBuffer();
-    _writeEnum(sink);
-    _writeClass(sink);
-    for (MapEntry<String, $PolymorphicData> entry in datum.entries) {
-      _writeModelClass(sink, entry.key, entry.value);
-    }
-    return '$sink';
+  @override
+  void build(cb.LibraryBuilder b) {
+    b.body.add(_enumClass);
+    b.body.add(_baseClass);
+    b.body.addAll(
+        datum.entries.map((entry) => _modelClassOf(entry.key, entry.value)));
   }
 }
 
@@ -1007,20 +1039,19 @@ class OrmGenerator extends Generator {
       // b.body.add(cb.CodeExpression(cb.Code('// **************************** */')));
 
       for (MapEntry<String, $Model> entry in context.modelDatum.entries) {
-        b.body.add(_SchemaWriter(
+        _SchemaWriter(
           model: entry.value,
           naming: SchemaNaming(entry.key),
           polymorphicTree: context.polymorphicDatum,
-        ).code);
+        ).build(b);
       }
-      // TODO
-      // for (MapEntry<String, Map<String, $PolymorphicData>> entry
-      //     in context.polymorphicDatum.entries) {
-      //   b.body.add(_PolymorphicWriter(
-      //     datum: entry.value,
-      //     naming: _PolymorphicNaming(entry.key),
-      //   ).code);
-      // }
+      for (MapEntry<String, Map<String, $PolymorphicData>> entry
+          in context.polymorphicDatum.entries) {
+        _PolymorphicWriter(
+          datum: entry.value,
+          naming: _PolymorphicNaming(entry.key),
+        ).build(b);
+      }
 
       b.body.add(cb.Class((b) {
         b.name = 'Dorm';
