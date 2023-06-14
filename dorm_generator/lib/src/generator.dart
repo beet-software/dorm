@@ -50,21 +50,14 @@ abstract class _CodeWriter {
 class _SchemaWriter implements _CodeWriter {
   final $Model model;
   final SchemaNaming naming;
-  final Map<String, Map<String, $PolymorphicData>> polymorphicTree;
 
-  const _SchemaWriter({
-    required this.model,
-    required this.naming,
-    required this.polymorphicTree,
-  });
+  const _SchemaWriter({required this.model, required this.naming});
 
   cb.Spec _dataClassOf({required String name, String? baseName}) {
-    final Set<String> polymorphicKeys = polymorphicTree.keys.toSet();
-    final Set<String> modelFieldTypes =
-        model.fields.values.map((field) => field.data.type).toSet();
-    // TODO can `hasPolymorphism` be calculated by `models.fields.values.any((field) => field.field is PolymorphicField)`?
-    final bool hasPolymorphism =
-        polymorphicKeys.intersection(modelFieldTypes).isNotEmpty;
+    final bool hasPolymorphism = model.fields.values
+        .map((field) => field.field)
+        .whereType<PolymorphicField>()
+        .isNotEmpty;
 
     return cb.Class((b) {
       b.annotations.add(cb.InvokeExpression.newOf(
@@ -112,8 +105,7 @@ class _SchemaWriter implements _CodeWriter {
         final Object? defaultValue = baseField.defaultValue;
         final bool required = defaultValue == null && !fieldType.endsWith('?');
 
-        if (baseName == null && polymorphicKeys.contains(fieldType)) {
-          baseField as PolymorphicField;
+        if (baseName == null && baseField is PolymorphicField) {
           final String typeKey = baseField.pivotName;
           yield cb.Field((b) {
             b.annotations.add(cb.InvokeExpression.newOf(
@@ -151,7 +143,7 @@ class _SchemaWriter implements _CodeWriter {
           final cb.Reference type;
           if (baseName != null) {
             type = cb.Reference(fieldType);
-          } else if (polymorphicKeys.contains(fieldType)) {
+          } else if (baseField is PolymorphicField) {
             type = cb.Reference(fieldType.substring(1));
           } else if (baseField is ModelField) {
             final $Type value = baseField.referTo as $Type;
@@ -208,7 +200,8 @@ class _SchemaWriter implements _CodeWriter {
             final String fieldName = entry.key;
             final String fieldType = entry.value.data.type;
 
-            if (polymorphicKeys.contains(fieldType)) {
+            final Field baseField = entry.value.field;
+            if (baseField is PolymorphicField) {
               yield cb.Parameter((b) {
                 b.required = true;
                 b.named = true;
@@ -243,8 +236,8 @@ class _SchemaWriter implements _CodeWriter {
                         Map.fromEntries(
                             model.dataFields.entries.expand((entry) sync* {
                           final String fieldName = entry.key;
-                          final String fieldType = entry.value.data.type;
-                          if (polymorphicKeys.contains(fieldType)) {
+                          final Field baseField = entry.value.field;
+                          if (baseField is PolymorphicField) {
                             yield MapEntry(
                               'type',
                               cb.CodeExpression(cb.Code('type')),
@@ -290,7 +283,7 @@ class _SchemaWriter implements _CodeWriter {
                       fieldExpression = rootExpression.property(fieldName);
                     }
 
-                    if (polymorphicKeys.contains(fieldType)) {
+                    if (baseField is PolymorphicField) {
                       yield MapEntry(
                         'type',
                         rootExpression == null
@@ -337,15 +330,11 @@ class _SchemaWriter implements _CodeWriter {
         }
         b.optionalParameters.addAll(model.fields.entries.expand((entry) sync* {
           final String fieldName = entry.key;
-          final String fieldType = entry.value.data.type;
-
           final Field baseField = entry.value.field;
           if (baseField is QueryField) return;
           if (baseName == null && baseField is ForeignField) return;
 
-          final bool isForeignField = entry.value.field is ForeignField;
-          // TODO can `polymorphicKeys.contains(fieldType)` be written as `entry.value.field is PolymorphicField`
-          if (baseName != null && polymorphicKeys.contains(fieldType)) {
+          if (baseName != null && baseField is PolymorphicField) {
             yield cb.Parameter((b) {
               b.required = true;
               b.named = true;
@@ -356,8 +345,9 @@ class _SchemaWriter implements _CodeWriter {
           yield cb.Parameter((b) {
             b.required = true;
             b.named = true;
-            b.toThis = baseName == null || isForeignField;
-            b.toSuper = baseName != null && !isForeignField;
+            final bool toThis = baseName == null || baseField is ForeignField;
+            b.toThis = toThis;
+            b.toSuper = !toThis;
             b.name = fieldName;
           });
         }));
@@ -637,7 +627,6 @@ class _SchemaWriter implements _CodeWriter {
   }
 
   cb.Spec get _entityClass {
-    final Set<String> polymorphicKeys = polymorphicTree.keys.toSet();
     return cb.Class((b) {
       b.name = naming.entityName;
       b.implements.add(cb.TypeReference((b) {
@@ -679,8 +668,8 @@ class _SchemaWriter implements _CodeWriter {
             'id': _uidTypeExpressionOf(model.uidType),
             ...Map.fromEntries(model.ownFields.entries.expand((entry) sync* {
               final String fieldName = entry.key;
-              final String fieldType = entry.value.data.type;
-              if (polymorphicKeys.contains(fieldType)) {
+              final Field baseField = entry.value.field;
+              if (baseField is PolymorphicField) {
                 yield MapEntry(
                   'type',
                   cb.CodeExpression(cb.Code('data')).property('type'),
@@ -717,9 +706,8 @@ class _SchemaWriter implements _CodeWriter {
             'id': cb.CodeExpression(cb.Code('model')).property('id'),
             ...Map.fromEntries(model.ownFields.entries.expand((entry) sync* {
               final String fieldName = entry.key;
-              final String fieldType = entry.value.data.type;
-
-              if (polymorphicKeys.contains(fieldType)) {
+              final Field baseField = entry.value.field;
+              if (baseField is PolymorphicField) {
                 yield MapEntry(
                   'type',
                   cb.CodeExpression(cb.Code('data')).property('type'),
@@ -1004,7 +992,6 @@ class OrmGenerator extends Generator {
         _SchemaWriter(
           model: entry.value,
           naming: SchemaNaming(entry.key),
-          polymorphicTree: context.polymorphicDatum,
         ).build(b);
       }
       for (MapEntry<String, Map<String, $PolymorphicData>> entry
