@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:analyzer/dart/element/element.dart';
 import 'package:build/build.dart';
 import 'package:code_builder/code_builder.dart' as cb;
@@ -9,6 +7,11 @@ import 'package:source_gen/source_gen.dart';
 
 import 'utils/custom_types.dart';
 import 'visitors.dart';
+
+final Uri _jsonAnnotationUrl = Uri(
+  scheme: 'package',
+  pathSegments: ['json_annotation', 'json_annotation.dart'],
+);
 
 class SchemaNaming {
   /// _Schema
@@ -73,7 +76,7 @@ class _SchemaWriter implements _CodeWriter {
 
     return cb.Class((b) {
       b.annotations.add(cb.InvokeExpression.newOf(
-        cb.Reference('JsonSerializable'),
+        cb.Reference('JsonSerializable', '$_jsonAnnotationUrl'),
         [],
         {
           'anyMap': cb.literalTrue,
@@ -87,7 +90,7 @@ class _SchemaWriter implements _CodeWriter {
         b.implements.add(cb.Reference(naming.schemaName));
         b.fields.add(cb.Field((b) {
           b.annotations.add(cb.InvokeExpression.newOf(
-            cb.Reference('JsonKey'),
+            cb.Reference('JsonKey', '$_jsonAnnotationUrl'),
             [],
             {
               'name': cb.literalString('_id'),
@@ -121,7 +124,7 @@ class _SchemaWriter implements _CodeWriter {
           final String typeKey = baseField.pivotName;
           yield cb.Field((b) {
             b.annotations.add(cb.InvokeExpression.newOf(
-              cb.Reference('JsonKey'),
+              cb.Reference('JsonKey', '$_jsonAnnotationUrl'),
               [],
               {
                 'name': cb.literalString(typeKey),
@@ -140,7 +143,7 @@ class _SchemaWriter implements _CodeWriter {
             b.annotations.add(expressionOf('override'));
           }
           b.annotations.add(cb.InvokeExpression.newOf(
-            cb.Reference('JsonKey'),
+            cb.Reference('JsonKey', '$_jsonAnnotationUrl'),
             [],
             {
               if (key != null) 'name': cb.literalString(key),
@@ -873,7 +876,7 @@ class _PolymorphicWriter implements _CodeWriter {
   cb.Spec _modelClassOf(String name, $PolymorphicData data) {
     return cb.Class((b) {
       b.annotations.add(cb.InvokeExpression.newOf(
-        cb.Reference('JsonSerializable'),
+        cb.Reference('JsonSerializable', '$_jsonAnnotationUrl'),
         [],
         {'anyMap': cb.literalTrue, 'explicitToJson': cb.literalTrue},
       ));
@@ -888,7 +891,7 @@ class _PolymorphicWriter implements _CodeWriter {
         return cb.Field((b) {
           b.annotations.add(expressionOf('override'));
           b.annotations.add(cb.InvokeExpression.newOf(
-            cb.Reference('JsonKey'),
+            cb.Reference('JsonKey', '$_jsonAnnotationUrl'),
             [],
             {
               if (key != null) 'name': cb.literalString(key),
@@ -973,7 +976,16 @@ class OrmContext {
 
 class OrmGenerator extends Generator {
   @override
-  FutureOr<String> generate(LibraryReader library, BuildStep buildStep) {
+  String? generate(LibraryReader library, BuildStep buildStep) {
+    final Set<Uri> partUris = library.element.parts
+        .map((element) => element.uri)
+        .whereType<DirectiveUriWithSource>()
+        .map((directive) => directive.relativeUri)
+        .toSet();
+    final bool hasDormDirective =
+        partUris.any((uri) => uri.path.endsWith('.dorm.dart'));
+    if (!hasDormDirective) return null;
+
     final OrmContext context = OrmContext(modelDatum: {}, polymorphicDatum: {});
     for (ClassElement element in library.classes) {
       final List<Visitor> visitors = [PolymorphicDataVisitor(), ModelVisitor()];
@@ -1049,7 +1061,7 @@ class OrmGenerator extends Generator {
       }));
     });
 
-    final cb.DartEmitter emitter = cb.DartEmitter(allocator: cb.Allocator());
+    final cb.DartEmitter emitter = cb.DartEmitter(useNullSafetySyntax: true);
     return DartFormatter().format(spec.accept(emitter).toString());
   }
 }
