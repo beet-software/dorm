@@ -54,30 +54,33 @@ class $Symbol implements Symbol {
   String toString() => '\$Symbol($name);';
 }
 
+abstract class FieldFilter {
+  static bool isA<F extends Field>(Field field) => field is F;
+
+  /// If a field belongs to a schema.
+  static bool belongsToSchema(Field field) => field is! QueryField;
+
+  // If a field belongs exclusively to a dORM model class.
+  static bool belongsToModel(Field field) => field is ForeignField;
+
+  /// If a field belongs exclusively to a dORM data class.
+  static bool belongsToData(Field field) {
+    return belongsToSchema(field) && !belongsToModel(field);
+  }
+}
+
+extension FieldFiltering on Map<String, $ModelField> {
+  Map<String, $ModelField> where(bool Function(Field field) filter) {
+    return {
+      for (MapEntry<String, $ModelField> entry in entries)
+        if (filter(entry.value.field)) entry.key: entry.value,
+    };
+  }
+}
+
 /// Holds the static analysis data inside [Model].
 class $Model extends Model {
   final Map<String, $ModelField> fields;
-
-  Map<String, $ModelField> _filter<T extends Field>() => Map.unmodifiable({
-        for (MapEntry<String, $ModelField> entry in fields.entries)
-          if (entry.value.field is T) entry.key: entry.value,
-      });
-
-  Map<String, $ModelField> get foreignFields => _filter<ForeignField>();
-
-  Map<String, $ModelField> get queryFields => _filter<QueryField>();
-
-  Map<String, $ModelField> get ownFields => Map.unmodifiable({
-        for (MapEntry<String, $ModelField> entry in fields.entries)
-          if (entry.value.field is! QueryField) entry.key: entry.value,
-      });
-
-  Map<String, $ModelField> get dataFields => Map.unmodifiable({
-        for (MapEntry<String, $ModelField> entry in fields.entries)
-          if (entry.value.field is! ForeignField &&
-              entry.value.field is! QueryField)
-            entry.key: entry.value,
-      });
 
   const $Model({
     required super.name,
