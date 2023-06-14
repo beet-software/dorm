@@ -5,8 +5,9 @@ import 'field.dart';
 @Target({TargetKind.classType})
 class PolymorphicData {
   final String name;
+  final Symbol? as;
 
-  const PolymorphicData({required this.name});
+  const PolymorphicData({required this.name, this.as});
 }
 
 @Target({TargetKind.getter})

@@ -811,9 +811,12 @@ class _PolymorphicWriter implements _CodeWriter {
   cb.Spec get _enumClass {
     return cb.Enum((b) {
       b.name = naming.enumName;
-      b.values.addAll(datum.keys.map((name) {
+      b.values.addAll(datum.entries.map((entry) {
+        final String name = entry.key;
+        final String fieldName = (entry.value.as as $Symbol?)?.name ??
+            (name[1].toLowerCase() + name.substring(2));
         return cb.EnumValue((b) {
-          b.name = name[1].toLowerCase() + name.substring(2);
+          b.name = fieldName;
         });
       }));
     });

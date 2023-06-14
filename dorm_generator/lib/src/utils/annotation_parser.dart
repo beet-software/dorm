@@ -134,6 +134,7 @@ class PolymorphicDataParser extends AnnotationParser<PolymorphicData> {
   PolymorphicData parse(ConstantReader reader) {
     return PolymorphicData(
       name: reader.read('name').stringValue,
+      as: $Symbol(reader: reader.read('as')),
     );
   }
 }

@@ -126,6 +126,7 @@ class $PolymorphicData extends PolymorphicData {
     if (annotation == null) return null;
     return $PolymorphicData(
       name: annotation.name,
+      as: annotation.as,
       fields: Map.fromEntries(
         element.accessors
             .where((accessor) => accessor.isGetter)
@@ -141,6 +142,7 @@ class $PolymorphicData extends PolymorphicData {
 
   const $PolymorphicData({
     required super.name,
+    required super.as,
     required this.fields,
   });
 

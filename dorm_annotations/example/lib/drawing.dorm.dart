@@ -165,7 +165,7 @@ class DrawingEntity implements Entity<DrawingData, Drawing> {
   Map<String, Object?> toJson(DrawingData data) => data.toJson();
 }
 
-enum ShapeType { rectangle, circle }
+enum ShapeType { rectangle, circular }
 
 abstract class Shape implements _Shape {
   factory Shape.fromType(

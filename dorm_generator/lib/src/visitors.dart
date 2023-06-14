@@ -118,8 +118,11 @@ class PolymorphicDataVisitor extends Visitor<PolymorphicData, Field> {
 
     element.visitChildren(this);
 
-    final $PolymorphicData data =
-        $PolymorphicData(name: annotation.name, fields: datum);
+    final $PolymorphicData data = $PolymorphicData(
+      name: annotation.name,
+      as: annotation.as,
+      fields: datum,
+    );
 
     final String supertypeName = element.allSupertypes
         .singleWhere((type) => !type.isDartCoreObject)

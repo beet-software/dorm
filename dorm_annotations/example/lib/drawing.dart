@@ -17,7 +17,7 @@ abstract class _Rectangle implements _Shape {
   double get height;
 }
 
-@PolymorphicData(name: 'circulo')
+@PolymorphicData(name: 'circulo', as: #circular)
 abstract class _Circle implements _Shape {
   @Field(name: 'raio')
   double get radius;

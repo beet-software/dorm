@@ -28,7 +28,7 @@ Map<String, dynamic> _$DrawingDataToJson(DrawingData instance) =>
 
 const _$ShapeTypeEnumMap = {
   ShapeType.rectangle: 'rectangle',
-  ShapeType.circle: 'circle',
+  ShapeType.circular: 'circular',
 };
 
 Drawing _$DrawingFromJson(Map json) {
