@@ -90,6 +90,18 @@ class $Model extends Model {
   });
 }
 
+class FieldData {
+  final Field field;
+  final String type;
+  final bool required;
+
+  const FieldData({
+    required this.field,
+    required this.type,
+    required this.required,
+  });
+}
+
 /// Holds the static analysis data from a field inside [Field].
 class $ModelField {
   final Field field;

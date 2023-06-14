@@ -10,10 +10,14 @@ import 'package:source_gen/source_gen.dart';
 import 'utils/annotation_parser.dart';
 import 'utils/custom_types.dart';
 
-abstract class Visitor<C, F> extends SimpleElementVisitor<void> {
-  const Visitor();
+class FieldVisitor extends SimpleElementVisitor<FieldData?> {
+  final AnnotationParser parser;
+  final List<AnnotationParser<Field>> children;
 
-  Object? _checkFor(AnnotationParser<Object> parser, FieldElement element) {
+  const FieldVisitor(this.parser, {required this.children});
+
+  static Field? _checkFor(
+      AnnotationParser<Field> parser, FieldElement element) {
     final TypeChecker checker = TypeChecker.fromRuntime(parser.annotation);
     final DartObject? object = () {
       final DartObject? fieldAnnotation = checker.firstAnnotationOf(element);
@@ -27,62 +31,56 @@ abstract class Visitor<C, F> extends SimpleElementVisitor<void> {
     return parser.parse(reader);
   }
 
-  Iterable<AnnotationParser<Object>> get parsers;
-
   bool canVisit(ClassElement element) {
-    final DartObject? obj =
-        TypeChecker.fromRuntime(C).firstAnnotationOfExact(element);
+    final DartObject? obj = TypeChecker.fromRuntime(parser.annotation)
+        .firstAnnotationOfExact(element);
     return obj != null;
   }
 
-  void onVisit(OrmContext context, ClassElement element);
-
-  void onVisitField(FieldElement element, F value);
-
   @override
-  void visitFieldElement(FieldElement element) {
-    for (AnnotationParser<Object> parser in parsers) {
-      final Object? parsed = _checkFor(parser, element);
-      if (parsed == null) continue;
-      onVisitField(element, parsed as F);
-      break;
+  FieldData? visitFieldElement(FieldElement element) {
+    for (AnnotationParser<Field> parser in children) {
+      final Field? field = _checkFor(parser, element);
+      if (field == null) continue;
+      return FieldData(
+        field: field,
+        type: element.type.getDisplayString(withNullability: true),
+        required: element.type.nullabilitySuffix == NullabilitySuffix.none,
+      );
     }
+    return null;
   }
 }
 
-class ModelVisitor extends Visitor<Model, Field> {
-  final Map<String, $ModelField> _fields = {};
+const Map<AnnotationParser, List<AnnotationParser<Field>>> visiting = {
+  ModelParser(): [
+    ModelFieldParser(),
+    ForeignFieldParser(),
+    PolymorphicFieldParser(),
+    QueryFieldParser(),
+    FieldParser(),
+  ],
+  PolymorphicDataParser(): [FieldParser()],
+};
 
-  @override
-  Iterable<AnnotationParser<Object>> get parsers => const [
-        ModelFieldParser(),
-        ForeignFieldParser(),
-        PolymorphicFieldParser(),
-        QueryFieldParser(),
-        FieldParser(),
-      ];
+void f(ClassElement element) {
+  final Map<AnnotationParser, Map<String, FieldData>> parsers = {};
+  for (MapEntry<AnnotationParser, List<AnnotationParser<Field>>> entry
+      in visiting.entries) {
+    final AnnotationParser parser = entry.key;
+    final Map<String, FieldData> fields = {};
+    for (Element child in element.children) {
+      if (child is! FieldElement) continue;
 
-  @override
-  void onVisit(OrmContext context, ClassElement element) {
-    element.visitChildren(this);
-    final Model? annotation = const ModelParser().parseElement(element);
-    if (annotation == null) return;
-    context.modelDatum[element.name] = $Model(
-      name: annotation.name,
-      as: annotation.as,
-      uidType: annotation.uidType,
-      fields: _fields,
-    );
+      final FieldData? data = child.accept<FieldData?>(
+        FieldVisitor(parser, children: entry.value),
+      );
+      if (data == null) continue;
+      fields[child.name] = data;
+    }
+    parsers[parser] = fields;
   }
-
-  @override
-  void onVisitField(FieldElement element, Field value) {
-    _fields[element.name] = $ModelField(
-      field: value,
-      type: element.type.getDisplayString(withNullability: true),
-      required: element.type.nullabilitySuffix == NullabilitySuffix.none,
-    );
-  }
+  return parsers;
 }
 
 class PolymorphicDataVisitor extends Visitor<PolymorphicData, Field> {
