@@ -47,6 +47,8 @@ abstract class _CodeWriter {
   void build(cb.LibraryBuilder b);
 }
 
+cb.Expression expressionOf(String code) => cb.CodeExpression(cb.Code(code));
+
 class _SchemaWriter implements _CodeWriter {
   final $Model model;
   final SchemaNaming naming;
@@ -135,7 +137,7 @@ class _SchemaWriter implements _CodeWriter {
 
         yield cb.Field((b) {
           if (baseName != null) {
-            b.annotations.add(cb.CodeExpression(cb.Code('override')));
+            b.annotations.add(expressionOf('override'));
           }
           b.annotations.add(cb.InvokeExpression.newOf(
             cb.Reference('JsonKey'),
@@ -184,10 +186,10 @@ class _SchemaWriter implements _CodeWriter {
           cb.Reference('_\$${name}FromJson'),
           [
             baseName == null
-                ? cb.CodeExpression(cb.Code('json'))
+                ? expressionOf('json')
                 : cb.literalMap({
-                    cb.literalSpread(): cb.CodeExpression(cb.Code('json')),
-                    cb.literalString('_id'): cb.CodeExpression(cb.Code('id')),
+                    cb.literalSpread(): expressionOf('json'),
+                    cb.literalString('_id'): expressionOf('id'),
                   }),
           ],
         ));
@@ -248,10 +250,7 @@ class _SchemaWriter implements _CodeWriter {
                           final String fieldName = entry.key;
                           final Field baseField = entry.value.field;
                           if (baseField is PolymorphicField) {
-                            yield MapEntry(
-                              'type',
-                              cb.CodeExpression(cb.Code('type')),
-                            );
+                            yield MapEntry('type', expressionOf('type'));
                           }
                           yield MapEntry(
                             fieldName,
@@ -270,7 +269,7 @@ class _SchemaWriter implements _CodeWriter {
                 cb.Reference(name),
                 [],
                 {
-                  if (baseName != null) 'id': cb.CodeExpression(cb.Code('id')),
+                  if (baseName != null) 'id': expressionOf('id'),
                   ...Map.fromEntries(model.fields.entries.expand((entry) sync* {
                     final String fieldName = entry.key;
                     final String fieldType = entry.value.data.type;
@@ -281,9 +280,8 @@ class _SchemaWriter implements _CodeWriter {
                       if (baseField is QueryField) return;
                     }
 
-                    final cb.Expression? rootExpression = baseName == null
-                        ? null
-                        : cb.CodeExpression(cb.Code('data'));
+                    final cb.Expression? rootExpression =
+                        baseName == null ? null : expressionOf('data');
 
                     final cb.Expression fieldExpression;
                     if (rootExpression == null ||
@@ -297,7 +295,7 @@ class _SchemaWriter implements _CodeWriter {
                       yield MapEntry(
                         'type',
                         rootExpression == null
-                            ? cb.CodeExpression(cb.Code('type'))
+                            ? expressionOf('type')
                             : rootExpression.property('type'),
                       );
                       if (baseName == null) {
@@ -306,7 +304,7 @@ class _SchemaWriter implements _CodeWriter {
                           cb.InvokeExpression.newOf(
                             cb.Reference(fieldType.substring(1)),
                             [
-                              cb.CodeExpression(cb.Code('type')),
+                              expressionOf('type'),
                               cb.CodeExpression(cb.Code(fieldName)),
                             ],
                             {},
@@ -373,7 +371,7 @@ class _SchemaWriter implements _CodeWriter {
       if (baseName != null) b.methods.addAll(_queryGetters);
       b.methods.add(cb.Method((b) {
         if (baseName != null) {
-          b.annotations.add(cb.CodeExpression(cb.Code('override')));
+          b.annotations.add(expressionOf('override'));
         }
         b.returns = cb.TypeReference((b) {
           b.symbol = 'Map';
@@ -411,7 +409,7 @@ class _SchemaWriter implements _CodeWriter {
         b.lambda = baseName == null;
         final cb.Expression baseExpression = cb.InvokeExpression.newOf(
           cb.Reference('_\$${name}ToJson'),
-          [cb.CodeExpression(cb.Code('this'))],
+          [expressionOf('this')],
         );
         if (queryObject == null) {
           b.body = cb.ToCodeExpression(baseExpression);
@@ -432,10 +430,9 @@ class _SchemaWriter implements _CodeWriter {
 
   cb.Expression _uidTypeExpressionOf(UidType value) {
     return value.when(
-      caseSimple: () => cb.CodeExpression(cb.Code('id')),
-      caseComposite: () => cb.CodeExpression(cb.Code('dependency'))
-          .property('key')
-          .call([cb.CodeExpression(cb.Code('id'))]),
+      caseSimple: () => expressionOf('id'),
+      caseComposite: () =>
+          expressionOf('dependency').property('key').call([expressionOf('id')]),
       caseSameAs: (type) {
         type as $Type;
         for (MapEntry<String, $ModelField> entry
@@ -443,7 +440,7 @@ class _SchemaWriter implements _CodeWriter {
           final $Type currentType =
               (entry.value.field as ForeignField).referTo as $Type;
           if (currentType.name != type.name) continue;
-          return cb.CodeExpression(cb.Code('dependency')).property(entry.key);
+          return expressionOf('dependency').property(entry.key);
         }
         throw StateError('invalid reference on UidType.sameAs: ${type.name}');
       },
@@ -454,18 +451,17 @@ class _SchemaWriter implements _CodeWriter {
           cb.InvokeExpression.newOf(
             cb.Reference(naming.dummyName),
             [
-              cb.CodeExpression(cb.Code('dependency')),
-              cb.CodeExpression(cb.Code('data')),
+              expressionOf('dependency'),
+              expressionOf('data'),
             ],
             {},
             [],
             'fromData',
           ),
         ]).property('when').call([], {
-          'caseSimple': cb.CodeExpression(cb.Code('() => id')),
-          'caseComposite':
-              cb.CodeExpression(cb.Code('() => dependency.key(id)')),
-          'caseValue': cb.CodeExpression(cb.Code('(id) => id')),
+          'caseSimple': expressionOf('() => id'),
+          'caseComposite': expressionOf('() => dependency.key(id)'),
+          'caseValue': expressionOf('(id) => id'),
         });
       },
     );
@@ -478,7 +474,7 @@ class _SchemaWriter implements _CodeWriter {
       b.implements.add(cb.Reference(naming.schemaName));
       b.fields.addAll(model.ownFields.entries.map((entry) {
         return cb.Field((b) {
-          b.annotations.add(cb.CodeExpression(cb.Code('override')));
+          b.annotations.add(expressionOf('override'));
           b.modifier = cb.FieldModifier.final$;
           b.type = cb.Reference(entry.value.data.type);
           b.name = entry.key;
@@ -558,12 +554,10 @@ class _SchemaWriter implements _CodeWriter {
               final cb.Expression? callExpression;
               switch (type) {
                 case QueryType.text:
-                  callExpression =
-                      cb.CodeExpression(cb.Code('\$normalizeText'));
+                  callExpression = expressionOf('\$normalizeText');
                   break;
                 case QueryType.enumeration:
-                  callExpression =
-                      cb.CodeExpression(cb.Code('\$normalizeEnum'));
+                  callExpression = expressionOf('\$normalizeEnum');
                   break;
                 case null:
                   callExpression = null;
@@ -601,7 +595,7 @@ class _SchemaWriter implements _CodeWriter {
         b.constructors.add(cb.Constructor((b) {
           b.constant = true;
           b.initializers.add(cb.ToCodeExpression(
-            cb.CodeExpression(cb.Code('super')).property('strong').call([]),
+            expressionOf('super').property('strong').call([]),
           ));
         }));
       } else {
@@ -616,7 +610,7 @@ class _SchemaWriter implements _CodeWriter {
             });
           }));
           b.initializers.add(cb.ToCodeExpression(
-            cb.CodeExpression(cb.Code('super')).property('weak').call([
+            expressionOf('super').property('weak').call([
               cb.literalList(model.foreignFields.entries.map((entry) {
                 cb.Expression expression =
                     cb.CodeExpression(cb.Code(entry.key));
@@ -644,14 +638,14 @@ class _SchemaWriter implements _CodeWriter {
         b.constant = true;
       }));
       b.fields.add(cb.Field((b) {
-        b.annotations.add(cb.CodeExpression(cb.Code('override')));
+        b.annotations.add(expressionOf('override'));
         b.modifier = cb.FieldModifier.final$;
         b.type = cb.Reference('String');
         b.name = 'tableName';
         b.assignment = cb.ToCodeExpression(cb.literalString(model.name));
       }));
       b.methods.add(cb.Method((b) {
-        b.annotations.add(cb.CodeExpression(cb.Code('override')));
+        b.annotations.add(expressionOf('override'));
         b.returns = cb.Reference(naming.modelName);
         b.name = 'fromData';
         b.requiredParameters.add(cb.Parameter((b) {
@@ -678,14 +672,14 @@ class _SchemaWriter implements _CodeWriter {
               if (baseField is PolymorphicField) {
                 yield MapEntry(
                   'type',
-                  cb.CodeExpression(cb.Code('data')).property('type'),
+                  expressionOf('data').property('type'),
                 );
               }
               final cb.Expression prefixExpression;
               if (entry.value.field is ForeignField) {
-                prefixExpression = cb.CodeExpression(cb.Code('dependency'));
+                prefixExpression = expressionOf('dependency');
               } else {
-                prefixExpression = cb.CodeExpression(cb.Code('data'));
+                prefixExpression = expressionOf('data');
               }
               yield MapEntry(fieldName, prefixExpression.property(fieldName));
             })),
@@ -693,7 +687,7 @@ class _SchemaWriter implements _CodeWriter {
         ).returned.statement;
       }));
       b.methods.add(cb.Method((b) {
-        b.annotations.add(cb.CodeExpression(cb.Code('override')));
+        b.annotations.add(expressionOf('override'));
         b.returns = cb.Reference(naming.modelName);
         b.name = 'convert';
         b.requiredParameters.add(cb.Parameter((b) {
@@ -709,21 +703,21 @@ class _SchemaWriter implements _CodeWriter {
           cb.Reference(naming.modelName),
           [],
           {
-            'id': cb.CodeExpression(cb.Code('model')).property('id'),
+            'id': expressionOf('model').property('id'),
             ...Map.fromEntries(model.ownFields.entries.expand((entry) sync* {
               final String fieldName = entry.key;
               final Field baseField = entry.value.field;
               if (baseField is PolymorphicField) {
                 yield MapEntry(
                   'type',
-                  cb.CodeExpression(cb.Code('data')).property('type'),
+                  expressionOf('data').property('type'),
                 );
               }
               final cb.Expression prefixExpression;
               if (entry.value.field is ForeignField) {
-                prefixExpression = cb.CodeExpression(cb.Code('model'));
+                prefixExpression = expressionOf('model');
               } else {
-                prefixExpression = cb.CodeExpression(cb.Code('data'));
+                prefixExpression = expressionOf('data');
               }
               yield MapEntry(fieldName, prefixExpression.property(fieldName));
             })),
@@ -731,7 +725,7 @@ class _SchemaWriter implements _CodeWriter {
         ).returned.statement;
       }));
       b.methods.add(cb.Method((b) {
-        b.annotations.add(cb.CodeExpression(cb.Code('override')));
+        b.annotations.add(expressionOf('override'));
         b.returns = cb.Reference(naming.modelName);
         b.name = 'fromJson';
         b.requiredParameters.add(cb.Parameter((b) {
@@ -754,7 +748,7 @@ class _SchemaWriter implements _CodeWriter {
         ));
       }));
       b.methods.add(cb.Method((b) {
-        b.annotations.add(cb.CodeExpression(cb.Code('override')));
+        b.annotations.add(expressionOf('override'));
         b.returns = cb.Reference('String');
         b.name = 'identify';
         b.requiredParameters.add(cb.Parameter((b) {
@@ -762,10 +756,10 @@ class _SchemaWriter implements _CodeWriter {
           b.name = 'model';
         }));
         b.lambda = true;
-        b.body = cb.CodeExpression(cb.Code('model')).property('id').code;
+        b.body = expressionOf('model').property('id').code;
       }));
       b.methods.add(cb.Method((b) {
-        b.annotations.add(cb.CodeExpression(cb.Code('override')));
+        b.annotations.add(expressionOf('override'));
         b.returns = cb.TypeReference((b) {
           b.symbol = 'Map';
           b.types.add(cb.Reference('String'));
@@ -778,7 +772,7 @@ class _SchemaWriter implements _CodeWriter {
         }));
         b.lambda = true;
         b.body = cb.ToCodeExpression(
-          cb.CodeExpression(cb.Code('data')).property('toJson').call([]),
+          expressionOf('data').property('toJson').call([]),
         );
       }));
     });
@@ -847,7 +841,7 @@ class _PolymorphicWriter implements _CodeWriter {
             b.statements.add(cb.Code('case ${naming.enumName}.$branchName:'));
             b.statements.add(cb.InvokeExpression.newOf(
               cb.Reference(entry.key.substring(1)),
-              [cb.CodeExpression(cb.Code('json'))],
+              [expressionOf('json')],
               {},
               [],
               'fromJson',
@@ -892,7 +886,7 @@ class _PolymorphicWriter implements _CodeWriter {
         final String type = entry.value.variable.type;
         final bool required = !type.endsWith('?');
         return cb.Field((b) {
-          b.annotations.add(cb.CodeExpression(cb.Code('override')));
+          b.annotations.add(expressionOf('override'));
           b.annotations.add(cb.InvokeExpression.newOf(
             cb.Reference('JsonKey'),
             [],
@@ -917,7 +911,7 @@ class _PolymorphicWriter implements _CodeWriter {
         b.lambda = true;
         b.body = cb.InvokeExpression.newOf(
           cb.Reference('_\$${name.substring(1)}FromJson'),
-          [cb.CodeExpression(cb.Code('json'))],
+          [expressionOf('json')],
         ).code;
       }));
       b.constructors.add(cb.Constructor((b) {
@@ -931,11 +925,11 @@ class _PolymorphicWriter implements _CodeWriter {
           });
         }));
         b.initializers.add(cb.ToCodeExpression(
-          cb.CodeExpression(cb.Code('super')).property('_').call([]),
+          expressionOf('super').property('_').call([]),
         ));
       }));
       b.fields.add(cb.Field((b) {
-        b.annotations.add(cb.CodeExpression(cb.Code('override')));
+        b.annotations.add(expressionOf('override'));
         b.modifier = cb.FieldModifier.final$;
         b.type = cb.Reference(naming.enumName);
         b.name = 'type';
@@ -944,7 +938,7 @@ class _PolymorphicWriter implements _CodeWriter {
             .code;
       }));
       b.methods.add(cb.Method((b) {
-        b.annotations.add(cb.CodeExpression(cb.Code('override')));
+        b.annotations.add(expressionOf('override'));
         b.returns = cb.TypeReference((b) {
           b.symbol = 'Map';
           b.types.add(cb.Reference('String'));
@@ -952,8 +946,8 @@ class _PolymorphicWriter implements _CodeWriter {
         });
         b.name = 'toJson';
         b.lambda = true;
-        b.body = cb.CodeExpression(cb.Code('_\$${name.substring(1)}ToJson'))
-            .call([cb.CodeExpression(cb.Code('this'))]).code;
+        b.body = expressionOf('_\$${name.substring(1)}ToJson')
+            .call([expressionOf('this')]).code;
       }));
     });
   }
@@ -990,9 +984,9 @@ class OrmGenerator extends Generator {
     }
 
     final cb.Spec spec = cb.Library((b) {
-      // b.body.add(cb.CodeExpression(cb.Code('/*****************************')));
-      // b.body.add(cb.CodeExpression(cb.Code('//             DORM            ')));
-      // b.body.add(cb.CodeExpression(cb.Code('// **************************** */')));
+      // b.body.add(expressionOf('/*****************************'));
+      // b.body.add(expressionOf('//             DORM            '));
+      // b.body.add(expressionOf('// **************************** */'));
 
       for (MapEntry<String, $Model> entry in context.modelDatum.entries) {
         _SchemaWriter(
@@ -1046,7 +1040,7 @@ class OrmGenerator extends Generator {
                   ),
                 ],
                 {
-                  'reference': cb.CodeExpression(cb.Code('_root')),
+                  'reference': expressionOf('_root'),
                 },
               ),
             );
@@ -1056,7 +1050,6 @@ class OrmGenerator extends Generator {
     });
 
     final cb.DartEmitter emitter = cb.DartEmitter(allocator: cb.Allocator());
-    // print(spec.accept(emitter).toString());
     return DartFormatter().format(spec.accept(emitter).toString());
   }
 }
