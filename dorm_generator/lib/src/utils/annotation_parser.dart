@@ -99,6 +99,7 @@ class PolymorphicFieldParser extends AnnotationParser<PolymorphicField> {
     return PolymorphicField(
       name: reader.read('name').stringValue,
       pivotName: reader.read('pivotName').stringValue,
+      pivotAs: $Symbol(reader: reader.read('pivotAs')),
     );
   }
 }

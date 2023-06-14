@@ -121,20 +121,21 @@ class _SchemaWriter implements _CodeWriter {
         final bool required = defaultValue == null && field.required;
 
         if (baseName == null && baseField is PolymorphicField) {
-          final String typeKey = baseField.pivotName;
+          final String pivotKey = baseField.pivotName;
+          final String? pivotName = (baseField.pivotAs as $Symbol?)?.name;
           yield cb.Field((b) {
             b.annotations.add(cb.InvokeExpression.newOf(
               cb.Reference('JsonKey', '$_jsonAnnotationUrl'),
               [],
               {
-                'name': cb.literalString(typeKey),
+                'name': cb.literalString(pivotKey),
                 'required': cb.literalTrue,
                 'disallowNullValue': cb.literalTrue,
               },
             ));
             b.modifier = cb.FieldModifier.final$;
             b.type = cb.Reference('${fieldType.substring(1)}Type');
-            b.name = 'type';
+            b.name = pivotName ?? 'type';
           });
         }
 

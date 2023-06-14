@@ -13,11 +13,11 @@ class PolymorphicData {
 @Target({TargetKind.getter})
 class PolymorphicField extends Field {
   final String pivotName;
+  final Symbol? pivotAs;
 
   const PolymorphicField({
     required super.name,
     required this.pivotName,
+    this.pivotAs,
   });
 }
-
-
