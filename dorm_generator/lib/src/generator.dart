@@ -53,7 +53,17 @@ class _SchemaWriter implements _CodeWriter {
 
   const _SchemaWriter({required this.model, required this.naming});
 
-  cb.Spec _dataClassOf({required String name, String? baseName}) {
+  cb.Spec _dataClassOf({required bool base}) {
+    final String name;
+    final String? baseName;
+    if (base) {
+      name = naming.dataName;
+      baseName = null;
+    } else {
+      name = naming.modelName;
+      baseName = naming.dataName;
+    }
+
     final bool hasPolymorphism = model.fields.values
         .map((field) => field.field)
         .whereType<PolymorphicField>()
@@ -72,7 +82,7 @@ class _SchemaWriter implements _CodeWriter {
       b.name = name;
       if (baseName != null) {
         b.extend = cb.Reference(baseName);
-        b.implements.add(cb.Reference('_$name'));
+        b.implements.add(cb.Reference(naming.schemaName));
         b.fields.add(cb.Field((b) {
           b.annotations.add(cb.InvokeExpression.newOf(
             cb.Reference('JsonKey'),
@@ -511,13 +521,9 @@ class _SchemaWriter implements _CodeWriter {
     });
   }
 
-  cb.Spec get _dataClass {
-    return _dataClassOf(name: naming.dataName);
-  }
+  cb.Spec get _dataClass => _dataClassOf(base: true);
 
-  cb.Spec get _modelClass {
-    return _dataClassOf(name: naming.modelName, baseName: naming.dataName);
-  }
+  cb.Spec get _modelClass => _dataClassOf(base: false);
 
   Iterable<cb.Method> get _queryGetters sync* {
     for (MapEntry<String, $ModelField> entry in model.queryFields.entries) {
