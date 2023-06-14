@@ -6,86 +6,12 @@ part of 'drawing.dart';
 // OrmGenerator
 // **************************************************************************
 
-enum ShapeType {
-  rectangle,
-  circle,
-}
-
-abstract class Shape implements _Shape {
-  factory Shape.fromType(ShapeType type, Map json) {
-    switch (type) {
-      case ShapeType.rectangle:
-        return Rectangle.fromJson(json);
-      case ShapeType.circle:
-        return Circle.fromJson(json);
-    }
-  }
-
-  const Shape._();
-
-  ShapeType get type;
-
-  Map<String, Object?> toJson();
-}
-
-@JsonSerializable(anyMap: true, explicitToJson: true)
-class Rectangle extends Shape implements _Rectangle {
-  @override
-  @JsonKey(name: 'largura', required: true, disallowNullValue: true)
-  final double width;
-
-  @override
-  @JsonKey(name: 'altura', required: true, disallowNullValue: true)
-  final double height;
-
-  factory Rectangle.fromJson(Map json) => _$RectangleFromJson(json);
-
-  const Rectangle({
-    required this.width,
-    required this.height,
-  }) : super._();
-
-  @override
-  ShapeType get type => ShapeType.rectangle;
-
-  @override
-  Map<String, Object?> toJson() => _$RectangleToJson(this);
-}
-
-@JsonSerializable(anyMap: true, explicitToJson: true)
-class Circle extends Shape implements _Circle {
-  @override
-  @JsonKey(name: 'raio', required: true, disallowNullValue: true)
-  final double radius;
-
-  factory Circle.fromJson(Map json) => _$CircleFromJson(json);
-
-  const Circle({
-    required this.radius,
-  }) : super._();
-
-  @override
-  ShapeType get type => ShapeType.circle;
-
-  @override
-  Map<String, Object?> toJson() => _$CircleToJson(this);
-}
-
-// **************************************************
-//     DORM: Drawing
-// **************************************************
-
-@JsonSerializable(anyMap: true, explicitToJson: true, constructor: '_')
+@JsonSerializable(
+  anyMap: true,
+  explicitToJson: true,
+  constructor: '_',
+)
 class DrawingData {
-  @JsonKey(name: 'cor', required: true, disallowNullValue: true)
-  final String color;
-
-  @JsonKey(name: 'tipo', required: true, disallowNullValue: true)
-  final ShapeType type;
-
-  @JsonKey(name: 'formato', required: true, disallowNullValue: true)
-  final Shape shape;
-
   factory DrawingData.fromJson(Map json) => _$DrawingDataFromJson(json);
 
   factory DrawingData._({
@@ -96,7 +22,10 @@ class DrawingData {
     return DrawingData(
       color: color,
       type: type,
-      shape: Shape.fromType(type, shape),
+      shape: Shape.fromType(
+        type,
+        shape,
+      ),
     );
   }
 
@@ -106,16 +35,44 @@ class DrawingData {
     required this.type,
   });
 
+  @JsonKey(
+    name: 'cor',
+    required: true,
+    disallowNullValue: true,
+  )
+  final String color;
+
+  @JsonKey(
+    name: 'tipo',
+    required: true,
+    disallowNullValue: true,
+  )
+  final ShapeType type;
+
+  @JsonKey(
+    name: 'formato',
+    required: true,
+    disallowNullValue: true,
+  )
+  final Shape shape;
+
   Map<String, Object?> toJson() => _$DrawingDataToJson(this);
 }
 
-@JsonSerializable(anyMap: true, explicitToJson: true, constructor: '_')
+@JsonSerializable(
+  anyMap: true,
+  explicitToJson: true,
+  constructor: '_',
+)
 class Drawing extends DrawingData implements _Drawing {
-  @JsonKey(name: '_id', required: true, disallowNullValue: true)
-  final String id;
-
-  factory Drawing.fromJson(String id, Map json) =>
-      _$DrawingFromJson({...json, '_id': id});
+  factory Drawing.fromJson(
+    String id,
+    Map json,
+  ) =>
+      _$DrawingFromJson({
+        ...json,
+        '_id': id,
+      });
 
   factory Drawing._({
     required String id,
@@ -143,11 +100,16 @@ class Drawing extends DrawingData implements _Drawing {
     required super.shape,
   });
 
+  @JsonKey(
+    name: '_id',
+    required: true,
+    disallowNullValue: true,
+  )
+  final String id;
+
   @override
   Map<String, Object?> toJson() {
-    return {
-      ..._$DrawingToJson(this)..remove('_id'),
-    };
+    return {..._$DrawingToJson(this)..remove('_id')};
   }
 }
 
@@ -159,7 +121,7 @@ class DrawingEntity implements Entity<DrawingData, Drawing> {
   const DrawingEntity();
 
   @override
-  String get tableName => 'desenho';
+  final String tableName = 'desenho';
 
   @override
   Drawing fromData(
@@ -176,7 +138,10 @@ class DrawingEntity implements Entity<DrawingData, Drawing> {
   }
 
   @override
-  Drawing convert(Drawing model, DrawingData data) {
+  Drawing convert(
+    Drawing model,
+    DrawingData data,
+  ) {
     return Drawing(
       id: model.id,
       color: data.color,
@@ -186,24 +151,107 @@ class DrawingEntity implements Entity<DrawingData, Drawing> {
   }
 
   @override
-  Drawing fromJson(String id, Map json) => Drawing.fromJson(id, json);
-
+  Drawing fromJson(
+    String id,
+    Map json,
+  ) =>
+      Drawing.fromJson(
+        id,
+        json,
+      );
   @override
   String identify(Drawing model) => model.id;
-
   @override
   Map<String, Object?> toJson(DrawingData data) => data.toJson();
 }
 
-// **************************************************
-//     DORM
-// **************************************************
+enum ShapeType { rectangle, circle }
+
+abstract class Shape implements _Shape {
+  factory Shape.fromType(
+    ShapeType type,
+    Map json,
+  ) {
+    switch (type) {
+      case ShapeType.rectangle:
+        return Rectangle.fromJson(json);
+      case ShapeType.circle:
+        return Circle.fromJson(json);
+    }
+  }
+
+  const Shape._();
+
+  ShapeType get type;
+  Map<String, Object?> toJson();
+}
+
+@JsonSerializable(
+  anyMap: true,
+  explicitToJson: true,
+)
+class Rectangle extends Shape implements _Rectangle {
+  factory Rectangle.fromJson(Map json) => _$RectangleFromJson(json);
+
+  const Rectangle({
+    required this.width,
+    required this.height,
+  }) : super._();
+
+  @override
+  @JsonKey(
+    name: 'largura',
+    required: true,
+    disallowNullValue: true,
+  )
+  final double width;
+
+  @override
+  @JsonKey(
+    name: 'altura',
+    required: true,
+    disallowNullValue: true,
+  )
+  final double height;
+
+  @override
+  final ShapeType type = ShapeType.rectangle;
+
+  @override
+  Map<String, Object?> toJson() => _$RectangleToJson(this);
+}
+
+@JsonSerializable(
+  anyMap: true,
+  explicitToJson: true,
+)
+class Circle extends Shape implements _Circle {
+  factory Circle.fromJson(Map json) => _$CircleFromJson(json);
+
+  const Circle({required this.radius}) : super._();
+
+  @override
+  @JsonKey(
+    name: 'raio',
+    required: true,
+    disallowNullValue: true,
+  )
+  final double radius;
+
+  @override
+  final ShapeType type = ShapeType.circle;
+
+  @override
+  Map<String, Object?> toJson() => _$CircleToJson(this);
+}
 
 class Dorm {
-  final Reference _root;
-
   const Dorm(this._root);
 
-  DatabaseEntity<DrawingData, Drawing> get drawings =>
-      DatabaseEntity(const DrawingEntity(), reference: _root);
+  final Reference _root;
+
+  DatabaseEntity<DrawingData, Drawing> get drawings => DatabaseEntity(
+        const DrawingEntity(),
+        reference: _root,
+      );
 }

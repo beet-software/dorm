@@ -6,18 +6,11 @@ part of 'school.dart';
 // OrmGenerator
 // **************************************************************************
 
-// **************************************************
-//     DORM: School
-// **************************************************
-
-@JsonSerializable(anyMap: true, explicitToJson: true)
+@JsonSerializable(
+  anyMap: true,
+  explicitToJson: true,
+)
 class SchoolData {
-  @JsonKey(name: 'nome', required: true, disallowNullValue: true)
-  final String name;
-
-  @JsonKey(name: 'contatos', defaultValue: [])
-  final List<String> phoneNumbers;
-
   factory SchoolData.fromJson(Map json) => _$SchoolDataFromJson(json);
 
   const SchoolData({
@@ -25,16 +18,35 @@ class SchoolData {
     required this.phoneNumbers,
   });
 
+  @JsonKey(
+    name: 'nome',
+    required: true,
+    disallowNullValue: true,
+  )
+  final String name;
+
+  @JsonKey(
+    name: 'contatos',
+    defaultValue: [],
+  )
+  final List<String> phoneNumbers;
+
   Map<String, Object?> toJson() => _$SchoolDataToJson(this);
 }
 
-@JsonSerializable(anyMap: true, explicitToJson: true)
+@JsonSerializable(
+  anyMap: true,
+  explicitToJson: true,
+)
 class School extends SchoolData implements _School {
-  @JsonKey(name: '_id', required: true, disallowNullValue: true)
-  final String id;
-
-  factory School.fromJson(String id, Map json) =>
-      _$SchoolFromJson({...json, '_id': id});
+  factory School.fromJson(
+    String id,
+    Map json,
+  ) =>
+      _$SchoolFromJson({
+        ...json,
+        '_id': id,
+      });
 
   const School({
     required this.id,
@@ -42,16 +54,19 @@ class School extends SchoolData implements _School {
     required super.phoneNumbers,
   });
 
-  @override
-  String get _q0 => [$normalizeText(name)].join('_');
+  @JsonKey(
+    name: '_id',
+    required: true,
+    disallowNullValue: true,
+  )
+  final String id;
 
+  String get _q0 => [$normalizeText(name)].join('_');
   @override
   Map<String, Object?> toJson() {
     return {
       ..._$SchoolToJson(this)..remove('_id'),
-      '_query': {
-        'nome': _q0,
-      },
+      '_query': {'nome': '_q0'},
     };
   }
 }
@@ -64,7 +79,7 @@ class SchoolEntity implements Entity<SchoolData, School> {
   const SchoolEntity();
 
   @override
-  String get tableName => 'escola';
+  final String tableName = 'escola';
 
   @override
   School fromData(
@@ -80,7 +95,10 @@ class SchoolEntity implements Entity<SchoolData, School> {
   }
 
   @override
-  School convert(School model, SchoolData data) {
+  School convert(
+    School model,
+    SchoolData data,
+  ) {
     return School(
       id: model.id,
       name: data.name,
@@ -89,27 +107,25 @@ class SchoolEntity implements Entity<SchoolData, School> {
   }
 
   @override
-  School fromJson(String id, Map json) => School.fromJson(id, json);
-
+  School fromJson(
+    String id,
+    Map json,
+  ) =>
+      School.fromJson(
+        id,
+        json,
+      );
   @override
   String identify(School model) => model.id;
-
   @override
   Map<String, Object?> toJson(SchoolData data) => data.toJson();
 }
 
-// **************************************************
-//     DORM: Student
-// **************************************************
-
-@JsonSerializable(anyMap: true, explicitToJson: true)
+@JsonSerializable(
+  anyMap: true,
+  explicitToJson: true,
+)
 class StudentData {
-  @JsonKey(name: 'nome', required: true, disallowNullValue: true)
-  final String name;
-
-  @JsonKey(name: 'possui-deficiencias', defaultValue: false)
-  final bool hasDisabilities;
-
   factory StudentData.fromJson(Map json) => _$StudentDataFromJson(json);
 
   const StudentData({
@@ -117,20 +133,35 @@ class StudentData {
     required this.hasDisabilities,
   });
 
+  @JsonKey(
+    name: 'nome',
+    required: true,
+    disallowNullValue: true,
+  )
+  final String name;
+
+  @JsonKey(
+    name: 'possui-deficiencias',
+    defaultValue: false,
+  )
+  final bool hasDisabilities;
+
   Map<String, Object?> toJson() => _$StudentDataToJson(this);
 }
 
-@JsonSerializable(anyMap: true, explicitToJson: true)
+@JsonSerializable(
+  anyMap: true,
+  explicitToJson: true,
+)
 class Student extends StudentData implements _Student {
-  @JsonKey(name: '_id', required: true, disallowNullValue: true)
-  final String id;
-
-  @override
-  @JsonKey(name: 'id-escola', required: true, disallowNullValue: true)
-  final String schoolId;
-
-  factory Student.fromJson(String id, Map json) =>
-      _$StudentFromJson({...json, '_id': id});
+  factory Student.fromJson(
+    String id,
+    Map json,
+  ) =>
+      _$StudentFromJson({
+        ...json,
+        '_id': id,
+      });
 
   const Student({
     required this.id,
@@ -139,37 +170,49 @@ class Student extends StudentData implements _Student {
     required this.schoolId,
   });
 
+  @JsonKey(
+    name: '_id',
+    required: true,
+    disallowNullValue: true,
+  )
+  final String id;
+
   @override
+  @JsonKey(
+    name: 'id-escola',
+    required: true,
+    disallowNullValue: true,
+  )
+  final String schoolId;
+
   String get _q0 => [$normalizeText(name)].join('_');
-
-  @override
-  String get _q1 => [schoolId, $normalizeText(name)].join('_');
-
+  String get _q1 => [
+        schoolId,
+        $normalizeText(name),
+      ].join('_');
   @override
   Map<String, Object?> toJson() {
     return {
       ..._$StudentToJson(this)..remove('_id'),
       '_query': {
-        'nome': _q0,
-        'id-escola_nome': _q1,
+        'nome': '_q0',
+        'id-escola_nome': '_q1',
       },
     };
   }
 }
 
 class StudentDependency extends Dependency<StudentData> {
-  final String schoolId;
+  StudentDependency({required this.schoolId}) : super.weak([schoolId]);
 
-  StudentDependency({
-    required this.schoolId,
-  }) : super.weak([schoolId]);
+  final String schoolId;
 }
 
 class StudentEntity implements Entity<StudentData, Student> {
   const StudentEntity();
 
   @override
-  String get tableName => 'aluno';
+  final String tableName = 'aluno';
 
   @override
   Student fromData(
@@ -186,7 +229,10 @@ class StudentEntity implements Entity<StudentData, Student> {
   }
 
   @override
-  Student convert(Student model, StudentData data) {
+  Student convert(
+    Student model,
+    StudentData data,
+  ) {
     return Student(
       id: model.id,
       name: data.name,
@@ -196,49 +242,49 @@ class StudentEntity implements Entity<StudentData, Student> {
   }
 
   @override
-  Student fromJson(String id, Map json) => Student.fromJson(id, json);
-
+  Student fromJson(
+    String id,
+    Map json,
+  ) =>
+      Student.fromJson(
+        id,
+        json,
+      );
   @override
   String identify(Student model) => model.id;
-
   @override
   Map<String, Object?> toJson(StudentData data) => data.toJson();
 }
 
-// **************************************************
-//     DORM: Teacher
-// **************************************************
-
 class _$Teacher implements _Teacher {
-  @override
-  final String name;
+  factory _$Teacher.fromData(
+    TeacherDependency dependency,
+    TeacherData data,
+  ) =>
+      _$Teacher(
+        name: data.name,
+        ssn: data.ssn,
+      );
 
-  @override
-  final String? ssn;
-
-  factory _$Teacher.fromData(TeacherDependency dependency, TeacherData data) {
-    return _$Teacher(
-      name: data.name,
-      ssn: data.ssn,
-    );
-  }
   const _$Teacher({
     required this.name,
     required this.ssn,
   });
 
   @override
+  final String name;
+
+  @override
+  final String? ssn;
+
   String get _q0 => [ssn ?? ''].join('_');
 }
 
-@JsonSerializable(anyMap: true, explicitToJson: true)
+@JsonSerializable(
+  anyMap: true,
+  explicitToJson: true,
+)
 class TeacherData {
-  @JsonKey(name: 'nome', required: true, disallowNullValue: true)
-  final String name;
-
-  @JsonKey(name: 'cpf')
-  final String? ssn;
-
   factory TeacherData.fromJson(Map json) => _$TeacherDataFromJson(json);
 
   const TeacherData({
@@ -246,16 +292,32 @@ class TeacherData {
     required this.ssn,
   });
 
+  @JsonKey(
+    name: 'nome',
+    required: true,
+    disallowNullValue: true,
+  )
+  final String name;
+
+  @JsonKey(name: 'cpf')
+  final String? ssn;
+
   Map<String, Object?> toJson() => _$TeacherDataToJson(this);
 }
 
-@JsonSerializable(anyMap: true, explicitToJson: true)
+@JsonSerializable(
+  anyMap: true,
+  explicitToJson: true,
+)
 class Teacher extends TeacherData implements _Teacher {
-  @JsonKey(name: '_id', required: true, disallowNullValue: true)
-  final String id;
-
-  factory Teacher.fromJson(String id, Map json) =>
-      _$TeacherFromJson({...json, '_id': id});
+  factory Teacher.fromJson(
+    String id,
+    Map json,
+  ) =>
+      _$TeacherFromJson({
+        ...json,
+        '_id': id,
+      });
 
   const Teacher({
     required this.id,
@@ -263,16 +325,19 @@ class Teacher extends TeacherData implements _Teacher {
     required super.ssn,
   });
 
-  @override
-  String get _q0 => [ssn ?? ''].join('_');
+  @JsonKey(
+    name: '_id',
+    required: true,
+    disallowNullValue: true,
+  )
+  final String id;
 
+  String get _q0 => [ssn ?? ''].join('_');
   @override
   Map<String, Object?> toJson() {
     return {
       ..._$TeacherToJson(this)..remove('_id'),
-      '_query': {
-        'cpf': _q0,
-      },
+      '_query': {'cpf': '_q0'},
     };
   }
 }
@@ -285,7 +350,7 @@ class TeacherEntity implements Entity<TeacherData, Teacher> {
   const TeacherEntity();
 
   @override
-  String get tableName => 'professor';
+  final String tableName = 'professor';
 
   @override
   Teacher fromData(
@@ -294,7 +359,10 @@ class TeacherEntity implements Entity<TeacherData, Teacher> {
     TeacherData data,
   ) {
     return Teacher(
-      id: _Teacher._id(_$Teacher.fromData(dependency, data)).when(
+      id: _Teacher._id(_$Teacher.fromData(
+        dependency,
+        data,
+      )).when(
         caseSimple: () => id,
         caseComposite: () => dependency.key(id),
         caseValue: (id) => id,
@@ -305,7 +373,10 @@ class TeacherEntity implements Entity<TeacherData, Teacher> {
   }
 
   @override
-  Teacher convert(Teacher model, TeacherData data) {
+  Teacher convert(
+    Teacher model,
+    TeacherData data,
+  ) {
     return Teacher(
       id: model.id,
       name: data.name,
@@ -314,20 +385,24 @@ class TeacherEntity implements Entity<TeacherData, Teacher> {
   }
 
   @override
-  Teacher fromJson(String id, Map json) => Teacher.fromJson(id, json);
-
+  Teacher fromJson(
+    String id,
+    Map json,
+  ) =>
+      Teacher.fromJson(
+        id,
+        json,
+      );
   @override
   String identify(Teacher model) => model.id;
-
   @override
   Map<String, Object?> toJson(TeacherData data) => data.toJson();
 }
 
-// **************************************************
-//     DORM: History
-// **************************************************
-
-@JsonSerializable(anyMap: true, explicitToJson: true)
+@JsonSerializable(
+  anyMap: true,
+  explicitToJson: true,
+)
 class HistoryData {
   factory HistoryData.fromJson(Map json) => _$HistoryDataFromJson(json);
 
@@ -336,44 +411,57 @@ class HistoryData {
   Map<String, Object?> toJson() => _$HistoryDataToJson(this);
 }
 
-@JsonSerializable(anyMap: true, explicitToJson: true)
+@JsonSerializable(
+  anyMap: true,
+  explicitToJson: true,
+)
 class History extends HistoryData implements _History {
-  @JsonKey(name: '_id', required: true, disallowNullValue: true)
-  final String id;
-
-  @override
-  @JsonKey(name: 'id-aluno', required: true, disallowNullValue: true)
-  final String studentId;
-
-  factory History.fromJson(String id, Map json) =>
-      _$HistoryFromJson({...json, '_id': id});
+  factory History.fromJson(
+    String id,
+    Map json,
+  ) =>
+      _$HistoryFromJson({
+        ...json,
+        '_id': id,
+      });
 
   const History({
     required this.id,
     required this.studentId,
   });
 
+  @JsonKey(
+    name: '_id',
+    required: true,
+    disallowNullValue: true,
+  )
+  final String id;
+
+  @override
+  @JsonKey(
+    name: 'id-aluno',
+    required: true,
+    disallowNullValue: true,
+  )
+  final String studentId;
+
   @override
   Map<String, Object?> toJson() {
-    return {
-      ..._$HistoryToJson(this)..remove('_id'),
-    };
+    return {..._$HistoryToJson(this)..remove('_id')};
   }
 }
 
 class HistoryDependency extends Dependency<HistoryData> {
-  final String studentId;
+  HistoryDependency({required this.studentId}) : super.weak([studentId]);
 
-  HistoryDependency({
-    required this.studentId,
-  }) : super.weak([studentId]);
+  final String studentId;
 }
 
 class HistoryEntity implements Entity<HistoryData, History> {
   const HistoryEntity();
 
   @override
-  String get tableName => 'historico';
+  final String tableName = 'historico';
 
   @override
   History fromData(
@@ -388,7 +476,10 @@ class HistoryEntity implements Entity<HistoryData, History> {
   }
 
   @override
-  History convert(History model, HistoryData data) {
+  History convert(
+    History model,
+    HistoryData data,
+  ) {
     return History(
       id: model.id,
       studentId: model.studentId,
@@ -396,48 +487,52 @@ class HistoryEntity implements Entity<HistoryData, History> {
   }
 
   @override
-  History fromJson(String id, Map json) => History.fromJson(id, json);
-
+  History fromJson(
+    String id,
+    Map json,
+  ) =>
+      History.fromJson(
+        id,
+        json,
+      );
   @override
   String identify(History model) => model.id;
-
   @override
   Map<String, Object?> toJson(HistoryData data) => data.toJson();
 }
 
-// **************************************************
-//     DORM: Teaching
-// **************************************************
-
-@JsonSerializable(anyMap: true, explicitToJson: true)
+@JsonSerializable(
+  anyMap: true,
+  explicitToJson: true,
+)
 class TeachingData {
-  @JsonKey(name: 'codigo', required: true, disallowNullValue: true)
-  final String code;
-
   factory TeachingData.fromJson(Map json) => _$TeachingDataFromJson(json);
 
-  const TeachingData({
-    required this.code,
-  });
+  const TeachingData({required this.code});
+
+  @JsonKey(
+    name: 'codigo',
+    required: true,
+    disallowNullValue: true,
+  )
+  final String code;
 
   Map<String, Object?> toJson() => _$TeachingDataToJson(this);
 }
 
-@JsonSerializable(anyMap: true, explicitToJson: true)
+@JsonSerializable(
+  anyMap: true,
+  explicitToJson: true,
+)
 class Teaching extends TeachingData implements _Teaching {
-  @JsonKey(name: '_id', required: true, disallowNullValue: true)
-  final String id;
-
-  @override
-  @JsonKey(name: 'id-professor', required: true, disallowNullValue: true)
-  final String teacherId;
-
-  @override
-  @JsonKey(name: 'id-escola')
-  final String? schoolId;
-
-  factory Teaching.fromJson(String id, Map json) =>
-      _$TeachingFromJson({...json, '_id': id});
+  factory Teaching.fromJson(
+    String id,
+    Map json,
+  ) =>
+      _$TeachingFromJson({
+        ...json,
+        '_id': id,
+      });
 
   const Teaching({
     required this.id,
@@ -446,29 +541,50 @@ class Teaching extends TeachingData implements _Teaching {
     required super.code,
   });
 
+  @JsonKey(
+    name: '_id',
+    required: true,
+    disallowNullValue: true,
+  )
+  final String id;
+
+  @override
+  @JsonKey(
+    name: 'id-professor',
+    required: true,
+    disallowNullValue: true,
+  )
+  final String teacherId;
+
+  @override
+  @JsonKey(name: 'id-escola')
+  final String? schoolId;
+
   @override
   Map<String, Object?> toJson() {
-    return {
-      ..._$TeachingToJson(this)..remove('_id'),
-    };
+    return {..._$TeachingToJson(this)..remove('_id')};
   }
 }
 
 class TeachingDependency extends Dependency<TeachingData> {
-  final String teacherId;
-  final String? schoolId;
-
   TeachingDependency({
     required this.teacherId,
     required this.schoolId,
-  }) : super.weak([teacherId, schoolId ?? '']);
+  }) : super.weak([
+          teacherId,
+          schoolId ?? '',
+        ]);
+
+  final String teacherId;
+
+  final String? schoolId;
 }
 
 class TeachingEntity implements Entity<TeachingData, Teaching> {
   const TeachingEntity();
 
   @override
-  String get tableName => 'cadastro-professor';
+  final String tableName = 'cadastro-professor';
 
   @override
   Teaching fromData(
@@ -485,7 +601,10 @@ class TeachingEntity implements Entity<TeachingData, Teaching> {
   }
 
   @override
-  Teaching convert(Teaching model, TeachingData data) {
+  Teaching convert(
+    Teaching model,
+    TeachingData data,
+  ) {
     return Teaching(
       id: model.id,
       teacherId: model.teacherId,
@@ -495,27 +614,25 @@ class TeachingEntity implements Entity<TeachingData, Teaching> {
   }
 
   @override
-  Teaching fromJson(String id, Map json) => Teaching.fromJson(id, json);
-
+  Teaching fromJson(
+    String id,
+    Map json,
+  ) =>
+      Teaching.fromJson(
+        id,
+        json,
+      );
   @override
   String identify(Teaching model) => model.id;
-
   @override
   Map<String, Object?> toJson(TeachingData data) => data.toJson();
 }
 
-// **************************************************
-//     DORM: Class
-// **************************************************
-
-@JsonSerializable(anyMap: true, explicitToJson: true)
+@JsonSerializable(
+  anyMap: true,
+  explicitToJson: true,
+)
 class ClassData {
-  @JsonKey(name: 'paraninfo', required: true, disallowNullValue: true)
-  final TeacherData patron;
-
-  @JsonKey(name: 'nome-sala', required: true, disallowNullValue: true)
-  final String location;
-
   factory ClassData.fromJson(Map json) => _$ClassDataFromJson(json);
 
   const ClassData({
@@ -523,24 +640,36 @@ class ClassData {
     required this.location,
   });
 
+  @JsonKey(
+    name: 'paraninfo',
+    required: true,
+    disallowNullValue: true,
+  )
+  final TeacherData patron;
+
+  @JsonKey(
+    name: 'nome-sala',
+    required: true,
+    disallowNullValue: true,
+  )
+  final String location;
+
   Map<String, Object?> toJson() => _$ClassDataToJson(this);
 }
 
-@JsonSerializable(anyMap: true, explicitToJson: true)
+@JsonSerializable(
+  anyMap: true,
+  explicitToJson: true,
+)
 class Class extends ClassData implements _Class {
-  @JsonKey(name: '_id', required: true, disallowNullValue: true)
-  final String id;
-
-  @override
-  @JsonKey(name: 'id-professor', required: true, disallowNullValue: true)
-  final String teacherId;
-
-  @override
-  @JsonKey(name: 'id-escola', required: true, disallowNullValue: true)
-  final String studentId;
-
-  factory Class.fromJson(String id, Map json) =>
-      _$ClassFromJson({...json, '_id': id});
+  factory Class.fromJson(
+    String id,
+    Map json,
+  ) =>
+      _$ClassFromJson({
+        ...json,
+        '_id': id,
+      });
 
   const Class({
     required this.id,
@@ -550,29 +679,54 @@ class Class extends ClassData implements _Class {
     required super.location,
   });
 
+  @JsonKey(
+    name: '_id',
+    required: true,
+    disallowNullValue: true,
+  )
+  final String id;
+
+  @override
+  @JsonKey(
+    name: 'id-professor',
+    required: true,
+    disallowNullValue: true,
+  )
+  final String teacherId;
+
+  @override
+  @JsonKey(
+    name: 'id-escola',
+    required: true,
+    disallowNullValue: true,
+  )
+  final String studentId;
+
   @override
   Map<String, Object?> toJson() {
-    return {
-      ..._$ClassToJson(this)..remove('_id'),
-    };
+    return {..._$ClassToJson(this)..remove('_id')};
   }
 }
 
 class ClassDependency extends Dependency<ClassData> {
-  final String teacherId;
-  final String studentId;
-
   ClassDependency({
     required this.teacherId,
     required this.studentId,
-  }) : super.weak([teacherId, studentId]);
+  }) : super.weak([
+          teacherId,
+          studentId,
+        ]);
+
+  final String teacherId;
+
+  final String studentId;
 }
 
 class ClassEntity implements Entity<ClassData, Class> {
   const ClassEntity();
 
   @override
-  String get tableName => 'aula';
+  final String tableName = 'aula';
 
   @override
   Class fromData(
@@ -590,7 +744,10 @@ class ClassEntity implements Entity<ClassData, Class> {
   }
 
   @override
-  Class convert(Class model, ClassData data) {
+  Class convert(
+    Class model,
+    ClassData data,
+  ) {
     return Class(
       id: model.id,
       patron: data.patron,
@@ -601,39 +758,47 @@ class ClassEntity implements Entity<ClassData, Class> {
   }
 
   @override
-  Class fromJson(String id, Map json) => Class.fromJson(id, json);
-
+  Class fromJson(
+    String id,
+    Map json,
+  ) =>
+      Class.fromJson(
+        id,
+        json,
+      );
   @override
   String identify(Class model) => model.id;
-
   @override
   Map<String, Object?> toJson(ClassData data) => data.toJson();
 }
 
-// **************************************************
-//     DORM
-// **************************************************
-
 class Dorm {
-  final Reference _root;
-
   const Dorm(this._root);
 
-  DatabaseEntity<SchoolData, School> get schools =>
-      DatabaseEntity(const SchoolEntity(), reference: _root);
+  final Reference _root;
 
-  DatabaseEntity<StudentData, Student> get students =>
-      DatabaseEntity(const StudentEntity(), reference: _root);
-
-  DatabaseEntity<TeacherData, Teacher> get teachers =>
-      DatabaseEntity(const TeacherEntity(), reference: _root);
-
-  DatabaseEntity<HistoryData, History> get histories =>
-      DatabaseEntity(const HistoryEntity(), reference: _root);
-
-  DatabaseEntity<TeachingData, Teaching> get teachings =>
-      DatabaseEntity(const TeachingEntity(), reference: _root);
-
-  DatabaseEntity<ClassData, Class> get classes =>
-      DatabaseEntity(const ClassEntity(), reference: _root);
+  DatabaseEntity<SchoolData, School> get schools => DatabaseEntity(
+        const SchoolEntity(),
+        reference: _root,
+      );
+  DatabaseEntity<StudentData, Student> get students => DatabaseEntity(
+        const StudentEntity(),
+        reference: _root,
+      );
+  DatabaseEntity<TeacherData, Teacher> get teachers => DatabaseEntity(
+        const TeacherEntity(),
+        reference: _root,
+      );
+  DatabaseEntity<HistoryData, History> get histories => DatabaseEntity(
+        const HistoryEntity(),
+        reference: _root,
+      );
+  DatabaseEntity<TeachingData, Teaching> get teachings => DatabaseEntity(
+        const TeachingEntity(),
+        reference: _root,
+      );
+  DatabaseEntity<ClassData, Class> get classes => DatabaseEntity(
+        const ClassEntity(),
+        reference: _root,
+      );
 }

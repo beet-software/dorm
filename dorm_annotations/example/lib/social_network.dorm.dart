@@ -6,24 +6,11 @@ part of 'social_network.dart';
 // OrmGenerator
 // **************************************************************************
 
-// **************************************************
-//     DORM: User
-// **************************************************
-
-@JsonSerializable(anyMap: true, explicitToJson: true)
+@JsonSerializable(
+  anyMap: true,
+  explicitToJson: true,
+)
 class UserData {
-  @JsonKey(name: 'name')
-  final String? name;
-
-  @JsonKey(name: 'birth-date', required: true, disallowNullValue: true)
-  final DateTime birthDate;
-
-  @JsonKey(name: 'email', required: true, disallowNullValue: true)
-  final String email;
-
-  @JsonKey(name: 'picture-url', required: true, disallowNullValue: true)
-  final Uri pictureUrl;
-
   factory UserData.fromJson(Map json) => _$UserDataFromJson(json);
 
   const UserData({
@@ -33,16 +20,46 @@ class UserData {
     required this.pictureUrl,
   });
 
+  @JsonKey(name: 'name')
+  final String? name;
+
+  @JsonKey(
+    name: 'birth-date',
+    required: true,
+    disallowNullValue: true,
+  )
+  final DateTime birthDate;
+
+  @JsonKey(
+    name: 'email',
+    required: true,
+    disallowNullValue: true,
+  )
+  final String email;
+
+  @JsonKey(
+    name: 'picture-url',
+    required: true,
+    disallowNullValue: true,
+  )
+  final Uri pictureUrl;
+
   Map<String, Object?> toJson() => _$UserDataToJson(this);
 }
 
-@JsonSerializable(anyMap: true, explicitToJson: true)
+@JsonSerializable(
+  anyMap: true,
+  explicitToJson: true,
+)
 class User extends UserData implements _User {
-  @JsonKey(name: '_id', required: true, disallowNullValue: true)
-  final String id;
-
-  factory User.fromJson(String id, Map json) =>
-      _$UserFromJson({...json, '_id': id});
+  factory User.fromJson(
+    String id,
+    Map json,
+  ) =>
+      _$UserFromJson({
+        ...json,
+        '_id': id,
+      });
 
   const User({
     required this.id,
@@ -52,11 +69,16 @@ class User extends UserData implements _User {
     required super.pictureUrl,
   });
 
+  @JsonKey(
+    name: '_id',
+    required: true,
+    disallowNullValue: true,
+  )
+  final String id;
+
   @override
   Map<String, Object?> toJson() {
-    return {
-      ..._$UserToJson(this)..remove('_id'),
-    };
+    return {..._$UserToJson(this)..remove('_id')};
   }
 }
 
@@ -68,7 +90,7 @@ class UserEntity implements Entity<UserData, User> {
   const UserEntity();
 
   @override
-  String get tableName => 'user';
+  final String tableName = 'user';
 
   @override
   User fromData(
@@ -86,7 +108,10 @@ class UserEntity implements Entity<UserData, User> {
   }
 
   @override
-  User convert(User model, UserData data) {
+  User convert(
+    User model,
+    UserData data,
+  ) {
     return User(
       id: model.id,
       name: data.name,
@@ -97,27 +122,25 @@ class UserEntity implements Entity<UserData, User> {
   }
 
   @override
-  User fromJson(String id, Map json) => User.fromJson(id, json);
-
+  User fromJson(
+    String id,
+    Map json,
+  ) =>
+      User.fromJson(
+        id,
+        json,
+      );
   @override
   String identify(User model) => model.id;
-
   @override
   Map<String, Object?> toJson(UserData data) => data.toJson();
 }
 
-// **************************************************
-//     DORM: Post
-// **************************************************
-
-@JsonSerializable(anyMap: true, explicitToJson: true)
+@JsonSerializable(
+  anyMap: true,
+  explicitToJson: true,
+)
 class PostData {
-  @JsonKey(name: 'contents', required: true, disallowNullValue: true)
-  final String contents;
-
-  @JsonKey(name: 'creation-date', required: true, disallowNullValue: true)
-  final DateTime creationDate;
-
   factory PostData.fromJson(Map json) => _$PostDataFromJson(json);
 
   const PostData({
@@ -125,20 +148,36 @@ class PostData {
     required this.creationDate,
   });
 
+  @JsonKey(
+    name: 'contents',
+    required: true,
+    disallowNullValue: true,
+  )
+  final String contents;
+
+  @JsonKey(
+    name: 'creation-date',
+    required: true,
+    disallowNullValue: true,
+  )
+  final DateTime creationDate;
+
   Map<String, Object?> toJson() => _$PostDataToJson(this);
 }
 
-@JsonSerializable(anyMap: true, explicitToJson: true)
+@JsonSerializable(
+  anyMap: true,
+  explicitToJson: true,
+)
 class Post extends PostData implements _Post {
-  @JsonKey(name: '_id', required: true, disallowNullValue: true)
-  final String id;
-
-  @override
-  @JsonKey(name: 'user-id', required: true, disallowNullValue: true)
-  final String userId;
-
-  factory Post.fromJson(String id, Map json) =>
-      _$PostFromJson({...json, '_id': id});
+  factory Post.fromJson(
+    String id,
+    Map json,
+  ) =>
+      _$PostFromJson({
+        ...json,
+        '_id': id,
+      });
 
   const Post({
     required this.id,
@@ -147,27 +186,38 @@ class Post extends PostData implements _Post {
     required this.userId,
   });
 
+  @JsonKey(
+    name: '_id',
+    required: true,
+    disallowNullValue: true,
+  )
+  final String id;
+
+  @override
+  @JsonKey(
+    name: 'user-id',
+    required: true,
+    disallowNullValue: true,
+  )
+  final String userId;
+
   @override
   Map<String, Object?> toJson() {
-    return {
-      ..._$PostToJson(this)..remove('_id'),
-    };
+    return {..._$PostToJson(this)..remove('_id')};
   }
 }
 
 class PostDependency extends Dependency<PostData> {
-  final String userId;
+  PostDependency({required this.userId}) : super.weak([userId]);
 
-  PostDependency({
-    required this.userId,
-  }) : super.weak([userId]);
+  final String userId;
 }
 
 class PostEntity implements Entity<PostData, Post> {
   const PostEntity();
 
   @override
-  String get tableName => 'post';
+  final String tableName = 'post';
 
   @override
   Post fromData(
@@ -184,7 +234,10 @@ class PostEntity implements Entity<PostData, Post> {
   }
 
   @override
-  Post convert(Post model, PostData data) {
+  Post convert(
+    Post model,
+    PostData data,
+  ) {
     return Post(
       id: model.id,
       contents: data.contents,
@@ -194,27 +247,25 @@ class PostEntity implements Entity<PostData, Post> {
   }
 
   @override
-  Post fromJson(String id, Map json) => Post.fromJson(id, json);
-
+  Post fromJson(
+    String id,
+    Map json,
+  ) =>
+      Post.fromJson(
+        id,
+        json,
+      );
   @override
   String identify(Post model) => model.id;
-
   @override
   Map<String, Object?> toJson(PostData data) => data.toJson();
 }
 
-// **************************************************
-//     DORM: Message
-// **************************************************
-
-@JsonSerializable(anyMap: true, explicitToJson: true)
+@JsonSerializable(
+  anyMap: true,
+  explicitToJson: true,
+)
 class MessageData {
-  @JsonKey(name: 'contents', required: true, disallowNullValue: true)
-  final String contents;
-
-  @JsonKey(name: 'creation-date', required: true, disallowNullValue: true)
-  final DateTime creationDate;
-
   factory MessageData.fromJson(Map json) => _$MessageDataFromJson(json);
 
   const MessageData({
@@ -222,24 +273,36 @@ class MessageData {
     required this.creationDate,
   });
 
+  @JsonKey(
+    name: 'contents',
+    required: true,
+    disallowNullValue: true,
+  )
+  final String contents;
+
+  @JsonKey(
+    name: 'creation-date',
+    required: true,
+    disallowNullValue: true,
+  )
+  final DateTime creationDate;
+
   Map<String, Object?> toJson() => _$MessageDataToJson(this);
 }
 
-@JsonSerializable(anyMap: true, explicitToJson: true)
+@JsonSerializable(
+  anyMap: true,
+  explicitToJson: true,
+)
 class Message extends MessageData implements _Message {
-  @JsonKey(name: '_id', required: true, disallowNullValue: true)
-  final String id;
-
-  @override
-  @JsonKey(name: 'sender-id', required: true, disallowNullValue: true)
-  final String senderId;
-
-  @override
-  @JsonKey(name: 'receiver-id', required: true, disallowNullValue: true)
-  final String receiverId;
-
-  factory Message.fromJson(String id, Map json) =>
-      _$MessageFromJson({...json, '_id': id});
+  factory Message.fromJson(
+    String id,
+    Map json,
+  ) =>
+      _$MessageFromJson({
+        ...json,
+        '_id': id,
+      });
 
   const Message({
     required this.id,
@@ -249,29 +312,54 @@ class Message extends MessageData implements _Message {
     required this.receiverId,
   });
 
+  @JsonKey(
+    name: '_id',
+    required: true,
+    disallowNullValue: true,
+  )
+  final String id;
+
+  @override
+  @JsonKey(
+    name: 'sender-id',
+    required: true,
+    disallowNullValue: true,
+  )
+  final String senderId;
+
+  @override
+  @JsonKey(
+    name: 'receiver-id',
+    required: true,
+    disallowNullValue: true,
+  )
+  final String receiverId;
+
   @override
   Map<String, Object?> toJson() {
-    return {
-      ..._$MessageToJson(this)..remove('_id'),
-    };
+    return {..._$MessageToJson(this)..remove('_id')};
   }
 }
 
 class MessageDependency extends Dependency<MessageData> {
-  final String senderId;
-  final String receiverId;
-
   MessageDependency({
     required this.senderId,
     required this.receiverId,
-  }) : super.weak([senderId, receiverId]);
+  }) : super.weak([
+          senderId,
+          receiverId,
+        ]);
+
+  final String senderId;
+
+  final String receiverId;
 }
 
 class MessageEntity implements Entity<MessageData, Message> {
   const MessageEntity();
 
   @override
-  String get tableName => 'message';
+  final String tableName = 'message';
 
   @override
   Message fromData(
@@ -289,7 +377,10 @@ class MessageEntity implements Entity<MessageData, Message> {
   }
 
   @override
-  Message convert(Message model, MessageData data) {
+  Message convert(
+    Message model,
+    MessageData data,
+  ) {
     return Message(
       id: model.id,
       contents: data.contents,
@@ -300,30 +391,35 @@ class MessageEntity implements Entity<MessageData, Message> {
   }
 
   @override
-  Message fromJson(String id, Map json) => Message.fromJson(id, json);
-
+  Message fromJson(
+    String id,
+    Map json,
+  ) =>
+      Message.fromJson(
+        id,
+        json,
+      );
   @override
   String identify(Message model) => model.id;
-
   @override
   Map<String, Object?> toJson(MessageData data) => data.toJson();
 }
 
-// **************************************************
-//     DORM
-// **************************************************
-
 class Dorm {
-  final Reference _root;
-
   const Dorm(this._root);
 
-  DatabaseEntity<UserData, User> get users =>
-      DatabaseEntity(const UserEntity(), reference: _root);
+  final Reference _root;
 
-  DatabaseEntity<PostData, Post> get post =>
-      DatabaseEntity(const PostEntity(), reference: _root);
-
-  DatabaseEntity<MessageData, Message> get messages =>
-      DatabaseEntity(const MessageEntity(), reference: _root);
+  DatabaseEntity<UserData, User> get users => DatabaseEntity(
+        const UserEntity(),
+        reference: _root,
+      );
+  DatabaseEntity<PostData, Post> get post => DatabaseEntity(
+        const PostEntity(),
+        reference: _root,
+      );
+  DatabaseEntity<MessageData, Message> get messages => DatabaseEntity(
+        const MessageEntity(),
+        reference: _root,
+      );
 }

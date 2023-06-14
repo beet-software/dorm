@@ -6,38 +6,6 @@ part of 'drawing.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-Rectangle _$RectangleFromJson(Map json) {
-  $checkKeys(
-    json,
-    requiredKeys: const ['largura', 'altura'],
-    disallowNullValues: const ['largura', 'altura'],
-  );
-  return Rectangle(
-    width: (json['largura'] as num).toDouble(),
-    height: (json['altura'] as num).toDouble(),
-  );
-}
-
-Map<String, dynamic> _$RectangleToJson(Rectangle instance) => <String, dynamic>{
-      'largura': instance.width,
-      'altura': instance.height,
-    };
-
-Circle _$CircleFromJson(Map json) {
-  $checkKeys(
-    json,
-    requiredKeys: const ['raio'],
-    disallowNullValues: const ['raio'],
-  );
-  return Circle(
-    radius: (json['raio'] as num).toDouble(),
-  );
-}
-
-Map<String, dynamic> _$CircleToJson(Circle instance) => <String, dynamic>{
-      'raio': instance.radius,
-    };
-
 DrawingData _$DrawingDataFromJson(Map json) {
   $checkKeys(
     json,
@@ -82,4 +50,36 @@ Map<String, dynamic> _$DrawingToJson(Drawing instance) => <String, dynamic>{
       'tipo': _$ShapeTypeEnumMap[instance.type]!,
       'formato': instance.shape.toJson(),
       '_id': instance.id,
+    };
+
+Rectangle _$RectangleFromJson(Map json) {
+  $checkKeys(
+    json,
+    requiredKeys: const ['largura', 'altura'],
+    disallowNullValues: const ['largura', 'altura'],
+  );
+  return Rectangle(
+    width: (json['largura'] as num).toDouble(),
+    height: (json['altura'] as num).toDouble(),
+  );
+}
+
+Map<String, dynamic> _$RectangleToJson(Rectangle instance) => <String, dynamic>{
+      'largura': instance.width,
+      'altura': instance.height,
+    };
+
+Circle _$CircleFromJson(Map json) {
+  $checkKeys(
+    json,
+    requiredKeys: const ['raio'],
+    disallowNullValues: const ['raio'],
+  );
+  return Circle(
+    radius: (json['raio'] as num).toDouble(),
+  );
+}
+
+Map<String, dynamic> _$CircleToJson(Circle instance) => <String, dynamic>{
+      'raio': instance.radius,
     };
