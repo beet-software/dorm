@@ -1,5 +1,6 @@
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
 import 'package:source_gen/source_gen.dart';
 
@@ -53,17 +54,6 @@ class $Symbol implements Symbol {
   String toString() => '\$Symbol($name);';
 }
 
-class VariableData {
-  final String type;
-
-  const VariableData({required this.type});
-
-  @override
-  String toString() {
-    return 'VariableData{type: $type}';
-  }
-}
-
 /// Holds the static analysis data inside [Model].
 class $Model extends Model {
   final Map<String, $ModelField> fields;
@@ -100,9 +90,14 @@ class $Model extends Model {
 /// Holds the static analysis data from a field inside [Field].
 class $ModelField {
   final Field field;
-  final VariableData data;
+  final String type;
+  final bool required;
 
-  const $ModelField({required this.field, required this.data});
+  const $ModelField({
+    required this.field,
+    required this.type,
+    required this.required,
+  });
 }
 
 /// Holds the static analysis data inside [CustomUidValue].
@@ -157,7 +152,8 @@ class $PolymorphicData extends PolymorphicData {
 
 /// Holds the static analysis data from a field inside [PolymorphicData].
 class $PolymorphicDataField extends Field {
-  final VariableData variable;
+  final String type;
+  final bool required;
 
   static $PolymorphicDataField? parse(PropertyAccessorElement element) {
     final Field? field = const FieldParser().parseElement(element);
@@ -165,19 +161,19 @@ class $PolymorphicDataField extends Field {
 
     return $PolymorphicDataField(
       name: field.name,
-      variable: VariableData(
-        type: element.returnType.getDisplayString(withNullability: false),
-      ),
+      type: element.returnType.getDisplayString(withNullability: true),
+      required: element.returnType.nullabilitySuffix == NullabilitySuffix.none,
     );
   }
 
   const $PolymorphicDataField({
     required super.name,
-    required this.variable,
+    required this.type,
+    required this.required,
   });
 
   @override
   String toString() {
-    return '\$PolymorphicDataField{name: $name, variable: $variable}';
+    return '\$PolymorphicDataField<$type>($name)';
   }
 }

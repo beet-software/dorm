@@ -103,7 +103,7 @@ class _SchemaWriter implements _CodeWriter {
       b.fields.addAll(model.fields.entries.expand((entry) sync* {
         final String fieldName = entry.key;
         final $ModelField field = entry.value;
-        final String fieldType = field.data.type;
+        final String fieldType = field.type;
 
         final Field baseField = field.field;
         if (baseName == null) {
@@ -115,7 +115,7 @@ class _SchemaWriter implements _CodeWriter {
 
         final String? key = baseField.name;
         final Object? defaultValue = baseField.defaultValue;
-        final bool required = defaultValue == null && !fieldType.endsWith('?');
+        final bool required = defaultValue == null && field.required;
 
         if (baseName == null && baseField is PolymorphicField) {
           final String typeKey = baseField.pivotName;
@@ -210,7 +210,7 @@ class _SchemaWriter implements _CodeWriter {
           b.optionalParameters
               .addAll(model.fields.entries.expand((entry) sync* {
             final String fieldName = entry.key;
-            final String fieldType = entry.value.data.type;
+            final String fieldType = entry.value.type;
 
             final Field baseField = entry.value.field;
             if (baseField is PolymorphicField) {
@@ -272,7 +272,7 @@ class _SchemaWriter implements _CodeWriter {
                   if (baseName != null) 'id': expressionOf('id'),
                   ...Map.fromEntries(model.fields.entries.expand((entry) sync* {
                     final String fieldName = entry.key;
-                    final String fieldType = entry.value.data.type;
+                    final String fieldType = entry.value.type;
 
                     final Field baseField = entry.value.field;
                     if (baseName == null) {
@@ -476,7 +476,7 @@ class _SchemaWriter implements _CodeWriter {
         return cb.Field((b) {
           b.annotations.add(expressionOf('override'));
           b.modifier = cb.FieldModifier.final$;
-          b.type = cb.Reference(entry.value.data.type);
+          b.type = cb.Reference(entry.value.type);
           b.name = entry.key;
         });
       }));
@@ -527,7 +527,7 @@ class _SchemaWriter implements _CodeWriter {
       if (field.referTo.isEmpty) continue;
 
       yield cb.Method((b) {
-        b.returns = cb.Reference(entry.value.data.type);
+        b.returns = cb.Reference(entry.value.type);
         b.type = cb.MethodType.getter;
         b.name = entry.key;
         b.lambda = true;
@@ -566,7 +566,7 @@ class _SchemaWriter implements _CodeWriter {
               if (callExpression != null) {
                 expression = callExpression.call([expression]);
               }
-              if (referredField.data.type.endsWith('?')) {
+              if (!referredField.required) {
                 expression = expression.ifNullThen(cb.literalString(''));
               }
               return expression;
@@ -587,7 +587,7 @@ class _SchemaWriter implements _CodeWriter {
       b.fields.addAll(model.foreignFields.entries.map((entry) {
         return cb.Field((b) {
           b.modifier = cb.FieldModifier.final$;
-          b.type = cb.Reference(entry.value.data.type);
+          b.type = cb.Reference(entry.value.type);
           b.name = entry.key;
         });
       }));
@@ -614,7 +614,7 @@ class _SchemaWriter implements _CodeWriter {
               cb.literalList(model.foreignFields.entries.map((entry) {
                 cb.Expression expression =
                     cb.CodeExpression(cb.Code(entry.key));
-                if (entry.value.data.type.endsWith('?')) {
+                if (!entry.value.required) {
                   expression = expression.ifNullThen(cb.literalString(''));
                 }
                 return expression;
@@ -883,8 +883,8 @@ class _PolymorphicWriter implements _CodeWriter {
       b.fields.addAll(data.fields.entries.map((entry) {
         final String? key = entry.value.name;
         final String name = entry.key;
-        final String type = entry.value.variable.type;
-        final bool required = !type.endsWith('?');
+        final String type = entry.value.type;
+        final bool required = entry.value.required;
         return cb.Field((b) {
           b.annotations.add(expressionOf('override'));
           b.annotations.add(cb.InvokeExpression.newOf(

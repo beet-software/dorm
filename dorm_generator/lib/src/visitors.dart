@@ -1,5 +1,6 @@
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/dart/element/visitor.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
@@ -78,9 +79,8 @@ class ModelVisitor extends Visitor<Model, Field> {
   void onVisitField(FieldElement element, Field value) {
     _fields[element.name] = $ModelField(
       field: value,
-      data: VariableData(
-        type: element.type.getDisplayString(withNullability: true),
-      ),
+      type: element.type.getDisplayString(withNullability: true),
+      required: element.type.nullabilitySuffix == NullabilitySuffix.none,
     );
   }
 }
@@ -133,9 +133,8 @@ class PolymorphicDataVisitor extends Visitor<PolymorphicData, Field> {
   void onVisitField(FieldElement element, Field value) {
     datum[element.name] = $PolymorphicDataField(
       name: value.name,
-      variable: VariableData(
-        type: element.type.getDisplayString(withNullability: true),
-      ),
+      type: element.type.getDisplayString(withNullability: false),
+      required: element.type.nullabilitySuffix == NullabilitySuffix.none,
     );
   }
 }
