@@ -1,28 +1,68 @@
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/nullability_suffix.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
 import 'package:source_gen/source_gen.dart';
 
 import 'custom_types.dart';
 
-abstract class AnnotationParser<T> {
+abstract class AnnotationParser<A, T, E extends Element> {
   const AnnotationParser();
 
-  Type get annotation => T;
-
-  T parse(ConstantReader reader);
+  Type get annotation => A;
 
   T? parseElement(Element element) {
-    final DartObject? obj =
-        TypeChecker.fromRuntime(annotation).firstAnnotationOfExact(element);
-    if (obj == null) return null;
+    if (element is! E) return null;
+    if (!_validate(element)) return null;
+    final TypeChecker checker = TypeChecker.fromRuntime(annotation);
+    final DartObject? object = () {
+      final DartObject? fieldAnnotation = checker.firstAnnotationOf(element);
+      if (fieldAnnotation != null) return fieldAnnotation;
+      final Element? child = childOf(element);
+      if (child == null) return null;
+      return checker.firstAnnotationOf(child);
+    }();
+    if (object == null) return null;
+    final ConstantReader reader = ConstantReader(object);
+    return convert(parse(reader), element);
+  }
 
-    final ConstantReader reader = ConstantReader(obj);
-    return parse(reader);
+  bool _validate(E element) => true;
+
+  A parse(ConstantReader reader);
+
+  T convert(A annotation, E element);
+
+  Element? childOf(E element);
+}
+
+abstract class ClassAnnotationParser<A>
+    extends AnnotationParser<A, ClassData, ClassElement> {
+  const ClassAnnotationParser();
+
+  @override
+  Element? childOf(ClassElement element) => element;
+}
+
+abstract class FieldAnnotationParser<A extends Field>
+    extends AnnotationParser<A, FieldAnnotationData, FieldElement> {
+  const FieldAnnotationParser();
+
+  @override
+  Element? childOf(FieldElement element) => element.getter;
+
+  @override
+  FieldAnnotationData convert(Field annotation, FieldElement element) {
+    return FieldAnnotationData(
+      annotation: annotation,
+      type: element.type.getDisplayString(withNullability: true),
+      required: element.type.nullabilitySuffix == NullabilitySuffix.none,
+    );
   }
 }
 
-class ModelParser extends AnnotationParser<Model> {
+class ModelParser extends ClassAnnotationParser<Model> {
   const ModelParser();
 
   UidType? _decodeUidType(ConstantReader reader) {
@@ -53,9 +93,62 @@ class ModelParser extends AnnotationParser<Model> {
       uidType: _decodeUidType(reader.read('uidType')) ?? UidType.simple(),
     );
   }
+
+  @override
+  ModelClassAnnotationData convert(Model annotation, ClassElement element) {
+    return ModelClassAnnotationData(
+      annotation: annotation,
+      name: annotation.name,
+      as: annotation.as as $Symbol?,
+    );
+  }
 }
 
-class FieldParser extends AnnotationParser<Field> {
+class PolymorphicDataParser extends ClassAnnotationParser<PolymorphicData> {
+  const PolymorphicDataParser();
+
+  @override
+  final Type annotation = PolymorphicData;
+
+  @override
+  bool _validate(ClassElement element) {
+    final List<InterfaceType> supertypes = element.allSupertypes;
+    if (supertypes.length != 2) {
+      final String suffix;
+      if (supertypes.length < 2) {
+        suffix = 'none';
+      } else {
+        suffix = supertypes
+            .map((type) => type.getDisplayString(withNullability: false))
+            .join(', ');
+      }
+      throw StateError(
+        'the ${element.name} class annotated with PolymorphicData should '
+        'contain a single supertype, found $suffix',
+      );
+    }
+    return true;
+  }
+
+  @override
+  PolymorphicData parse(ConstantReader reader) {
+    return PolymorphicData(
+      name: reader.read('name').stringValue,
+      as: $Symbol(reader: reader.read('as')),
+    );
+  }
+
+  @override
+  ClassData convert(PolymorphicData annotation, ClassElement element) {
+    return ClassData(
+      annotation: annotation,
+      name: annotation.name,
+      as: annotation.as as $Symbol?,
+    );
+  }
+}
+
+class FieldParser extends FieldAnnotationParser<Field> {
   const FieldParser();
 
   @override
@@ -67,7 +160,7 @@ class FieldParser extends AnnotationParser<Field> {
   }
 }
 
-class ForeignFieldParser extends AnnotationParser<ForeignField> {
+class ForeignFieldParser extends FieldAnnotationParser<ForeignField> {
   const ForeignFieldParser();
 
   @override
@@ -79,7 +172,7 @@ class ForeignFieldParser extends AnnotationParser<ForeignField> {
   }
 }
 
-class ModelFieldParser extends AnnotationParser<ModelField> {
+class ModelFieldParser extends FieldAnnotationParser<ModelField> {
   const ModelFieldParser();
 
   @override
@@ -91,20 +184,7 @@ class ModelFieldParser extends AnnotationParser<ModelField> {
   }
 }
 
-class PolymorphicFieldParser extends AnnotationParser<PolymorphicField> {
-  const PolymorphicFieldParser();
-
-  @override
-  PolymorphicField parse(ConstantReader reader) {
-    return PolymorphicField(
-      name: reader.read('name').stringValue,
-      pivotName: reader.read('pivotName').stringValue,
-      pivotAs: $Symbol(reader: reader.read('pivotAs')),
-    );
-  }
-}
-
-class QueryFieldParser extends AnnotationParser<QueryField> {
+class QueryFieldParser extends FieldAnnotationParser<QueryField> {
   const QueryFieldParser();
 
   @override
@@ -125,17 +205,15 @@ class QueryFieldParser extends AnnotationParser<QueryField> {
   }
 }
 
-class PolymorphicDataParser extends AnnotationParser<PolymorphicData> {
-  const PolymorphicDataParser();
+class PolymorphicFieldParser extends FieldAnnotationParser<PolymorphicField> {
+  const PolymorphicFieldParser();
 
   @override
-  final Type annotation = PolymorphicData;
-
-  @override
-  PolymorphicData parse(ConstantReader reader) {
-    return PolymorphicData(
+  PolymorphicField parse(ConstantReader reader) {
+    return PolymorphicField(
       name: reader.read('name').stringValue,
-      as: $Symbol(reader: reader.read('as')),
+      pivotName: reader.read('pivotName').stringValue,
+      pivotAs: $Symbol(reader: reader.read('pivotAs')),
     );
   }
 }

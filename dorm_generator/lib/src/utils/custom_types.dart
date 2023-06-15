@@ -1,10 +1,7 @@
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
-import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
 import 'package:source_gen/source_gen.dart';
-
-import 'annotation_parser.dart';
 
 extension AdditionalReads on ConstantReader {
   T? enumValueFrom<T extends Enum>(List<T> values) {
@@ -69,47 +66,50 @@ abstract class FieldFilter {
   }
 }
 
-extension FieldFiltering on Map<String, $ModelField> {
-  Map<String, $ModelField> where(bool Function(Field field) filter) {
+extension FieldFiltering on Map<String, FieldAnnotationData> {
+  Map<String, FieldAnnotationData> where(bool Function(Field field) filter) {
     return {
-      for (MapEntry<String, $ModelField> entry in entries)
-        if (filter(entry.value.field)) entry.key: entry.value,
+      for (MapEntry<String, FieldAnnotationData> entry in entries)
+        if (filter(entry.value.annotation)) entry.key: entry.value,
     };
   }
 }
 
-/// Holds the static analysis data inside [Model].
-class $Model extends Model {
-  final Map<String, $ModelField> fields;
+class AnnotationData<T> {
+  final T annotation;
 
-  const $Model({
-    required super.name,
-    required super.uidType,
-    required super.as,
-    required this.fields,
+  const AnnotationData({required this.annotation});
+}
+
+abstract class ClassAnnotationData<T> extends AnnotationData<T> {
+  final Map<String, FieldAnnotationData> fields;
+
+  const ClassAnnotationData({required super.annotation, required this.fields});
+}
+
+class ModelClassAnnotationData extends ClassAnnotationData<Model> {
+  const ModelClassAnnotationData({
+    required super.annotation,
+    required super.fields,
   });
 }
 
-class FieldData {
-  final Field field;
-  final String type;
-  final bool required;
+class PolymorphicClassAnnotationData extends ClassAnnotationData<PolymorphicData> {
+  final String tag;
 
-  const FieldData({
-    required this.field,
-    required this.type,
-    required this.required,
+  const PolymorphicClassAnnotationData({
+    required super.annotation,
+    required super.fields,
+    required this.tag,
   });
 }
 
-/// Holds the static analysis data from a field inside [Field].
-class $ModelField {
-  final Field field;
+class FieldAnnotationData extends AnnotationData<Field> {
   final String type;
   final bool required;
 
-  const $ModelField({
-    required this.field,
+  const FieldAnnotationData({
+    required super.annotation,
     required this.type,
     required this.required,
   });
@@ -128,69 +128,5 @@ class $CustomUidValue implements CustomUidValue {
     required T Function(String id) caseValue,
   }) {
     throw UnimplementedError();
-  }
-}
-
-/// Holds the static analysis data inside [PolymorphicData].
-class $PolymorphicData extends PolymorphicData {
-  final Map<String, $PolymorphicDataField> fields;
-
-  static $PolymorphicData? parse(ClassElement element) {
-    const PolymorphicDataParser parser = PolymorphicDataParser();
-    final PolymorphicData? annotation = parser.parseElement(element);
-    if (annotation == null) return null;
-    return $PolymorphicData(
-      name: annotation.name,
-      as: annotation.as,
-      fields: Map.fromEntries(
-        element.accessors
-            .where((accessor) => accessor.isGetter)
-            .map<MapEntry<String, $PolymorphicDataField>?>((accessor) {
-          final $PolymorphicDataField? field =
-              $PolymorphicDataField.parse(accessor);
-          if (field == null) return null;
-          return MapEntry(accessor.name, field);
-        }).whereType<MapEntry<String, $PolymorphicDataField>>(),
-      ),
-    );
-  }
-
-  const $PolymorphicData({
-    required super.name,
-    required super.as,
-    required this.fields,
-  });
-
-  @override
-  String toString() {
-    return '\$PolymorphicData{fields: $fields}';
-  }
-}
-
-/// Holds the static analysis data from a field inside [PolymorphicData].
-class $PolymorphicDataField extends Field {
-  final String type;
-  final bool required;
-
-  static $PolymorphicDataField? parse(PropertyAccessorElement element) {
-    final Field? field = const FieldParser().parseElement(element);
-    if (field == null) return null;
-
-    return $PolymorphicDataField(
-      name: field.name,
-      type: element.returnType.getDisplayString(withNullability: true),
-      required: element.returnType.nullabilitySuffix == NullabilitySuffix.none,
-    );
-  }
-
-  const $PolymorphicDataField({
-    required super.name,
-    required this.type,
-    required this.required,
-  });
-
-  @override
-  String toString() {
-    return '\$PolymorphicDataField<$type>($name)';
   }
 }
