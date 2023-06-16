@@ -19,30 +19,30 @@ abstract class AnnotationParser<A, T, E extends Element> {
     final DartObject? object = () {
       final DartObject? fieldAnnotation = checker.firstAnnotationOf(element);
       if (fieldAnnotation != null) return fieldAnnotation;
-      final Element? child = childOf(element);
+      final Element? child = _childOf(element);
       if (child == null) return null;
       return checker.firstAnnotationOf(child);
     }();
     if (object == null) return null;
     final ConstantReader reader = ConstantReader(object);
-    return convert(parse(reader), element);
+    return _convert(_parse(reader), element);
   }
 
   bool _validate(E element) => true;
 
-  A parse(ConstantReader reader);
+  A _parse(ConstantReader reader);
 
-  T convert(A annotation, E element);
+  T _convert(A annotation, E element);
 
-  Element? childOf(E element);
+  Element? _childOf(E element);
 }
 
 abstract class ClassAnnotationParser<A>
-    extends AnnotationParser<A, ClassData, ClassElement> {
+    extends AnnotationParser<A, ClassAnnotationData<A>, ClassElement> {
   const ClassAnnotationParser();
 
   @override
-  Element? childOf(ClassElement element) => element;
+  Element? _childOf(ClassElement element) => element;
 }
 
 abstract class FieldAnnotationParser<A extends Field>
@@ -50,10 +50,10 @@ abstract class FieldAnnotationParser<A extends Field>
   const FieldAnnotationParser();
 
   @override
-  Element? childOf(FieldElement element) => element.getter;
+  Element? _childOf(FieldElement element) => element.getter;
 
   @override
-  FieldAnnotationData convert(Field annotation, FieldElement element) {
+  FieldAnnotationData _convert(Field annotation, FieldElement element) {
     return FieldAnnotationData(
       annotation: annotation,
       type: element.type.getDisplayString(withNullability: true),
@@ -86,7 +86,7 @@ class ModelParser extends ClassAnnotationParser<Model> {
   }
 
   @override
-  Model parse(ConstantReader reader) {
+  Model _parse(ConstantReader reader) {
     return Model(
       name: reader.read('name').stringValue,
       as: $Symbol(reader: reader.read('as')),
@@ -95,11 +95,10 @@ class ModelParser extends ClassAnnotationParser<Model> {
   }
 
   @override
-  ModelClassAnnotationData convert(Model annotation, ClassElement element) {
+  ModelClassAnnotationData _convert(Model annotation, ClassElement element) {
     return ModelClassAnnotationData(
       annotation: annotation,
-      name: annotation.name,
-      as: annotation.as as $Symbol?,
+      fields: fields,
     );
   }
 }
@@ -113,25 +112,25 @@ class PolymorphicDataParser extends ClassAnnotationParser<PolymorphicData> {
   @override
   bool _validate(ClassElement element) {
     final List<InterfaceType> supertypes = element.allSupertypes;
-    if (supertypes.length != 2) {
-      final String suffix;
-      if (supertypes.length < 2) {
-        suffix = 'none';
-      } else {
-        suffix = supertypes
-            .map((type) => type.getDisplayString(withNullability: false))
-            .join(', ');
-      }
-      throw StateError(
-        'the ${element.name} class annotated with PolymorphicData should '
-        'contain a single supertype, found $suffix',
-      );
+    if (supertypes.length == 2) return true;
+
+    final String suffix;
+    if (supertypes.length < 2) {
+      suffix = 'none';
+    } else {
+      suffix = supertypes
+          .where((type) => !type.isDartCoreObject)
+          .map((type) => type.getDisplayString(withNullability: false))
+          .join(', ');
     }
-    return true;
+    throw StateError(
+      'the ${element.name} class annotated with PolymorphicData should '
+      'contain a single supertype, found $suffix',
+    );
   }
 
   @override
-  PolymorphicData parse(ConstantReader reader) {
+  PolymorphicData _parse(ConstantReader reader) {
     return PolymorphicData(
       name: reader.read('name').stringValue,
       as: $Symbol(reader: reader.read('as')),
@@ -139,11 +138,18 @@ class PolymorphicDataParser extends ClassAnnotationParser<PolymorphicData> {
   }
 
   @override
-  ClassData convert(PolymorphicData annotation, ClassElement element) {
-    return ClassData(
+  PolymorphicClassAnnotationData _convert(
+    PolymorphicData annotation,
+    ClassElement element,
+  ) {
+    final String supertypeName = element.allSupertypes
+        .singleWhere((type) => !type.isDartCoreObject)
+        .getDisplayString(withNullability: false);
+
+    return PolymorphicClassAnnotationData(
       annotation: annotation,
-      name: annotation.name,
-      as: annotation.as as $Symbol?,
+      fields: fields,
+      tag: supertypeName,
     );
   }
 }
@@ -152,7 +158,7 @@ class FieldParser extends FieldAnnotationParser<Field> {
   const FieldParser();
 
   @override
-  Field parse(ConstantReader reader) {
+  Field _parse(ConstantReader reader) {
     return Field(
       name: reader.read('name').stringValue,
       defaultValue: reader.read('defaultValue').literalValue,
@@ -164,7 +170,7 @@ class ForeignFieldParser extends FieldAnnotationParser<ForeignField> {
   const ForeignFieldParser();
 
   @override
-  ForeignField parse(ConstantReader reader) {
+  ForeignField _parse(ConstantReader reader) {
     return ForeignField(
       name: reader.read('name').stringValue,
       referTo: $Type(reader: reader.read('referTo')),
@@ -176,7 +182,7 @@ class ModelFieldParser extends FieldAnnotationParser<ModelField> {
   const ModelFieldParser();
 
   @override
-  ModelField parse(ConstantReader reader) {
+  ModelField _parse(ConstantReader reader) {
     return ModelField(
       name: reader.read('name').stringValue,
       referTo: $Type(reader: reader.read('referTo')),
@@ -188,7 +194,7 @@ class QueryFieldParser extends FieldAnnotationParser<QueryField> {
   const QueryFieldParser();
 
   @override
-  QueryField parse(ConstantReader reader) {
+  QueryField _parse(ConstantReader reader) {
     return QueryField(
       name: reader.read('name').stringValue,
       referTo: reader.read('referTo').listValue.map((obj) {
@@ -209,7 +215,7 @@ class PolymorphicFieldParser extends FieldAnnotationParser<PolymorphicField> {
   const PolymorphicFieldParser();
 
   @override
-  PolymorphicField parse(ConstantReader reader) {
+  PolymorphicField _parse(ConstantReader reader) {
     return PolymorphicField(
       name: reader.read('name').stringValue,
       pivotName: reader.read('pivotName').stringValue,

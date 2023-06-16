@@ -2,6 +2,7 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:build/build.dart';
 import 'package:code_builder/code_builder.dart' as cb;
 import 'package:dart_style/dart_style.dart';
+import 'package:dartx/dartx.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
 import 'package:source_gen/source_gen.dart';
 
@@ -399,7 +400,8 @@ class ModelArgs extends Args<Model, FieldAnnotationData, SchemaNaming> {
   }
 }
 
-class PolymorphicArgs extends Args<void, PolymorphicClassAnnotationData, PolymorphicNaming> {
+class PolymorphicArgs
+    extends Args<void, PolymorphicClassAnnotationData, PolymorphicNaming> {
   const PolymorphicArgs({
     required super.fields,
     required super.naming,
@@ -1060,7 +1062,8 @@ class OrmGenerator extends Generator {
     };
 
     final cb.Spec spec = cb.Library((b) {
-      for (MapEntry<String, ClassAnnotationData<Object>> entry in annotations.entries) {
+      for (MapEntry<String, ClassAnnotationData<Object>> entry
+          in annotations.entries) {
         final Object annotation = entry.value.annotation;
         final Args args;
         if (annotation is Model) {
@@ -1081,10 +1084,18 @@ class OrmGenerator extends Generator {
         args.accept(b);
       }
 
-      for (MapEntry<String, ClassAnnotationData<Object>> entry in annotations.entries) {
+      final Map<String, Map<String, PolymorphicClassAnnotationData>> groups =
+          annotations
+              .filterValues((data) => data is PolymorphicClassAnnotationData)
+              .mapValues((entry) => entry.value as PolymorphicClassAnnotationData)
+              .entries
+              .groupBy((entry) => entry.value.tag)
+              .mapValues((entry) => Map.fromEntries(entry.value));
+
+      for (MapEntry<String, Map<String, PolymorphicClassAnnotationData>> entry in groups.entries) {
         final PolymorphicArgs args = PolymorphicArgs(
           naming: PolymorphicNaming(entry.key),
-          fields: entry.value.fields,
+          fields: entry.value,
         );
         args.accept(b);
       }
@@ -1103,9 +1114,11 @@ class OrmGenerator extends Generator {
             b.name = '_root';
           }));
         }));
-        b.methods.addAll(context.modelDatum.entries.map((entry) {
+        b.methods.addAll(annotations.entries.mapNotNull((entry) {
+          final Object annotation = entry.value.annotation;
+          if (annotation is! Model) return null;
+
           final SchemaNaming naming = SchemaNaming(entry.key);
-          final $Model model = entry.value;
           return cb.Method((b) {
             b.returns = cb.TypeReference((b) {
               b.symbol = 'DatabaseEntity';
@@ -1114,7 +1127,7 @@ class OrmGenerator extends Generator {
             });
             b.type = cb.MethodType.getter;
             b.lambda = true;
-            b.name = (model.as as $Symbol?)?.name ??
+            b.name = (annotation.as as $Symbol?)?.name ??
                 (naming.modelName[0].toLowerCase() +
                     naming.modelName.substring(1));
             b.body = cb.ToCodeExpression(

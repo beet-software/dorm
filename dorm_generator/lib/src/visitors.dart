@@ -6,30 +6,27 @@ import 'package:dorm_annotations/dorm_annotations.dart';
 import 'utils/annotation_parser.dart';
 import 'utils/custom_types.dart';
 
-class ClassVisitor extends SimpleElementVisitor<ClassData?> {
-  final ClassAnnotationParser<ClassData> parser;
+class ClassVisitor extends SimpleElementVisitor<ClassAnnotationData?> {
+  final ClassAnnotationParser<ClassAnnotationData> parser;
 
   const ClassVisitor(this.parser);
 
   @override
-  ClassData? visitClassElement(ClassElement element) {
+  ClassAnnotationData? visitClassElement(ClassElement element) {
     return parser.parseElement(element);
   }
 }
 
-class FieldVisitor extends SimpleElementVisitor<FieldData?> {
+class FieldVisitor extends SimpleElementVisitor<FieldAnnotationData?> {
   final List<FieldAnnotationParser<Field>> children;
 
   const FieldVisitor(this.children);
 
   @override
-  FieldData? visitFieldElement(FieldElement element) {
-    for (FieldAnnotationParser<Field> parser in children) {
-      final FieldData? field = parser.parseElement(element);
-      if (field == null) continue;
-      return field;
-    }
-    return null;
+  FieldAnnotationData? visitFieldElement(FieldElement element) {
+    return children
+        .mapNotNull((parser) => parser.parseElement(element))
+        .firstOrNull;
   }
 }
 
@@ -44,22 +41,17 @@ const Map<ClassAnnotationParser<Object>, List<FieldAnnotationParser<Field>>> vis
   PolymorphicDataParser(): [FieldParser()],
 };
 
-Map<ClassAnnotationParser<Object>, Map<String, FieldData>> f(
-  Map<ClassAnnotationParser<Object>, List<FieldAnnotationParser<Field>>> visiting,
+Map<String, ClassAnnotationData<Object>> f(
+  Map<ClassAnnotationParser<Object>, List<FieldAnnotationParser<Field>>>
+      visiting,
   ClassElement element,
 ) {
   return visiting.mapValues((entry) => FieldVisitor(entry.value)).mapValues(
       (entry) => element.children
           .whereType<FieldElement>()
-          .associateWith((element) => element.accept<FieldData?>(entry.value))
+          .associateWith(
+              (element) => element.accept<FieldAnnotationData?>(entry.value))
           .mapKeys((entry) => entry.key.name)
           .filterValues((data) => data != null)
           .mapValues((entry) => entry.value!));
 }
-
-// TODO
-// final String supertypeName = element.allSupertypes
-//     .singleWhere((type) => !type.isDartCoreObject)
-//     .getDisplayString(withNullability: false);
-//
-// context.polymorphicDatum.putIfAbsent(supertypeName, () => {})[element.name] = data;
