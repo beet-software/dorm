@@ -7,107 +7,37 @@ Provides annotations related with dORM code generation.
 Run the following commands inside your project:
 
 ```shell
-dart pub add json_annotation
-dart pub add dorm \
-    --git-url https://github.com/enzo-santos/dorm.git \
-    --git-ref main \
-    --git-path dorm
-dart pub add dorm_annotations \
-    --git-url https://github.com/enzo-santos/dorm.git \
-    --git-ref main \
-    --git-path dorm_annotations
-
-dart pub add build_runner --dev
-dart pub add dorm_generator --dev \
-    --git-url https://github.com/enzo-santos/dorm.git \
-    --git-ref main \
-    --git-path dorm_generator
-    
+dart pub add dorm_annotations
 dart pub get
 ```
 
 ## Usage
 
-This library exports three annotations (`Model`, `Field`, `ForeignField`) for you
-create an ORM for your system. As an example, let's create a social network system with the
-following models:
+> This document only explains the annotations exported by this package. 
+> Refer to the `dorm_generator` package to read more about how to generate code for these annotations.
 
-- *user*, with a name, birth date, email and profile picture URL;
-- *post*, with its contents, creation date and the user which posted it; and
-- *message*, with its contents, creation date, the sender user and the receiver user.
+### Models
 
-On a file named *social_network.dart*, declare private abstract classes that describe the models
-above:
+The `Model` annotation is used to define a model class. It accepts two parameters:
 
-```dart
-abstract class _User {
-  String? get name;
-
-  DateTime get birthDate;
-
-  String get email;
-
-  Uri get pictureUrl;
-}
-
-abstract class _Post {
-  String get contents;
-
-  DateTime get creationDate;
-
-  String get userId;
-}
-
-abstract class _Message {
-  String get contents;
-
-  DateTime get creationDate;
-
-  String get senderId;
-
-  String get receiverId;
-}
-```
-
-Annotate all the classes with the `Model` annotation, giving it appropriate parameters:
+- `name`: Specifies the name of the table in the underlying database.
+- `as`: Provides a name for the repository accessor of the model. 
 
 ```dart
 import 'package:dorm_annotations/dorm_annotations.dart';
 
 @Model(name: 'user', as: #users)
-abstract class _User {
-  String? get name;
-
-  DateTime get birthDate;
-
-  String get email;
-
-  Uri get pictureUrl;
-}
-
-@Model(name: 'post', as: #posts)
-abstract class _Post {
-  String get contents;
-
-  DateTime get creationDate;
-
-  String get userId;
-}
-
-@Model(name: 'message', as: #messages)
-abstract class _Message {
-  String get contents;
-
-  DateTime get creationDate;
-
-  String get senderId;
-
-  String get receiverId;
-}
+abstract class _User {}
 ```
 
-Annotate all the fields with the `Field`/`ForeignField` annotation, giving it appropriate
-parameters:
+### Fields
+
+The `Field` annotation is used to define a field within a model class.
+It accepts the following parameters:
+
+- `name`: Specifies the name of the column in the underlying database.
+- `defaultValue`: Provides an optional default value for the field. If not explicitly set and
+  the return type of the getter is nullable, the field will default to null.
 
 ```dart
 import 'package:dorm_annotations/dorm_annotations.dart';
@@ -120,12 +50,34 @@ abstract class _User {
   @Field(name: 'birth-date')
   DateTime get birthDate;
 
-  @Field(name: 'email')
-  String get email;
+  @Field(name: 'emails', defaultValue: [])
+  List<String> get emails;
 
   @Field(name: 'picture-url')
   Uri get pictureUrl;
 }
+```
+
+The return type of the getters can be [any of the specified](https://pub.dev/packages/json_serializable#supported-types) on the `json_serializable` package:
+
+> `BigInt`, `bool`, `DateTime`, `double`, `Duration`, `Enum`, `int`, `Iterable`, `List`, `Map`, `num`, `Object`, `Record`, `Set`, `String`, `Uri`.
+>
+> The collection types - `Iterable`, `List`, `Map`, `Record`, `Set` - can contain values of all the above types.
+>
+> For `Map`, the key value must be one of `BigInt`, `DateTime`, `Enum`, `int`, `Object`, `String`, `Uri`.
+>
+> If you own/control the desired type, add a `fromJson` constructor and a `toJson` function to the type.
+
+### Foreign fields
+
+The `ForeignField` annotation is used to define a foreign key relationship between two models. 
+It accepts the following parameters:
+
+- `name`: Specifies the name of the foreign key field in the underlying database.
+- `referTo`: Specifies the model class that the foreign key references.
+
+```dart
+import 'package:dorm_annotations/dorm_annotations.dart';
 
 @Model(name: 'post', as: #posts)
 abstract class _Post {
@@ -138,67 +90,60 @@ abstract class _Post {
   @ForeignField(name: 'user-id', referTo: _User)
   String get userId;
 }
+```
 
-@Model(name: 'message', as: #messages)
-abstract class _Message {
-  @Field(name: 'contents')
-  String get contents;
+### Query fields
 
-  @Field(name: 'creation-date')
-  DateTime get creationDate;
+The `QueryField` annotation is used to define a field that can optimize queries and filters on the database.
+It accepts the following parameters:
 
-  @ForeignField(name: 'sender-id', referTo: _User)
-  String get senderId;
+- `name`: Specifies the name of the column in the underlying database.
+- `referTo`: Specifies the query tokens that the field refers to
 
-  @ForeignField(name: 'receiver-id', referTo: _User)
-  String get receiverId;
+```dart
+@Model(name: 'school', as: #schools)
+abstract class _School {
+  @Field(name: 'name')
+  String get name;
+
+  @Field(name: 'active', defaultValue: true)
+  bool get active;
+
+  @QueryField(name: '_query_active', referTo: [QueryToken(#active)])
+  String get _qActive;
 }
 ```
 
-On the top of the file, add the `json_annotation` import and the following part-declarations:
+Applying `Filter.value(true, key: '_query_active')`, described in the `dorm` package should optimize the reading of all active schools.
+
+### Unique identification
+
+In the context of unique identification types for models, there are four types: simple, composite, same-as, and custom.
+These types determine how the unique identifier (id) of a model is defined and generated:
+
+- Simple *(default)*: generates a universally unique identifier as the id for the model. They are highly likely to be unique across
+  different systems. This type of UID is suitable when a globally unique identifier is required for each instance of the model.
+- Composite: creates a string by joining all foreign keys of the model with a given separator and appending a universally unique
+  identifier to it. This type is particularly useful when users frequently query models by their ids and want to include related
+  foreign keys in the id for easier referencing. The resulting id can be used to identify a specific instance of the model and
+  maintain a relationship with its associated foreign keys.
+- Same-as: receives a model class type and creates the same id as the referenced model. This type is ideal for establishing
+  one-to-one relationships between models where both models share the same unique identifier. When two models have a same-as,
+  it means they are linked by the same id, allowing for efficient retrieval and synchronization of related data.
+- Custom: is a function that receives a model class and returns a string as the id. This type allows users to customize the
+  generation of the model's id based on their specific requirements. The function can incorporate any logic or algorithm to
+  generate a unique identifier based on the model's attributes or external factors. This type is useful when users need fine-grained
+  control over how the id is generated, allowing for unique identification according to their own criteria.
+
+You can specify the unique identification of a model through `UidType`:
 
 ```dart
-import 'package:dorm/dorm.dart';
-import 'package:dorm_annotations/dorm_annotations.dart';
-import 'package:json_annotation/json_annotation.dart';
-
-part 'social_network.dorm.dart';
-
-part 'social_network.g.dart';
-
-// ...
-```
-
-Run the code generation using any of the commands below:
-
-```shell
-dart run build_runner build
-```
-
-Two files will be generated on the same directory: *social_network.g.dart* and
-*social_network.dorm.dart*. The most important component is `Dorm`, which you can use to operate 
-your models in the database.
-
-See the `example` directory to see an example of the generated code.
-
-## Features
-
-### Unique identification (uids)
-
-According to [the framework](https://github.com/enzo-santos/dorm/blob/main/dorm/README.md#what-to-use-as-primary-key),
-there are three types of unique identifiers: simple, composite and foreign. These types
-are implemented through `UidType`:
-
-```dart
-// When creating a new country, this corresponds to the 'simple' type
 @Model(name: 'country', as: #countries, uidType: UidType.simple())
 abstract class _Country {}
 
-// When creating a new state, this corresponds to the 'composite' type
 @Model(name: 'state', as: #states, uidType: UidType.composite())
 abstract class _State {}
 
-// When creating a new capital, this corresponds to the 'foreign' type
 @Model(name: 'capital', as: #capitals, uidType: UidType.sameAs(_Country))
 abstract class _Capital {}
 
@@ -210,11 +155,8 @@ CustomUidValue _identifyCitizen(Object obj) {
   if (data.socialSecurity != null) {
     return CustomUidValue.value(data.socialSecurity);
   }
-  return const CustomUidValue.simple();
-  // or return const CustomUidValue.composite();
+  return const CustomUidValue.simple(); // or const CustomUidValue.composite();
 }
-
-// When creating a new citizen, this allows you to customize your primary key
 @Model(name: 'citizen', as: #citizens, uidType: UidType.custom(_identifyCitizen))
 abstract class _Citizen {}
 ```
@@ -248,7 +190,7 @@ abstract class _Healing implements _Action {
   int get health;
 }
 
-@Model(name: 'operation', as: #operations')
+@Model(name: 'operation', as: #operations)
 abstract class _Operation {
   @Field(name: 'name')
   String get name;
@@ -257,12 +199,3 @@ abstract class _Operation {
   _Action get action;
 }
 ```
-
-After generated `Dorm`, you now have implemented polymorphism. Note that
-
-- `_Action` does not need to be annotated: it'll be deduced from classes annotated with `PolymorphicData`
-- Classes annotated with `PolymorphicData` must implement a single interface (otherwise an error will be raised while generating)
-- Currently, adding fields to `_Action` is not supported. However, it'll be implemented in future versions
-- Two additional classes will be added in generation: `ActionType` (an enum) and `Action` (a class)
-- The only model here is `_Operation`, which contains an `_Action`. An additional field will be added to `OperationData`: `type`,
-  which will contain the current type of the operation
