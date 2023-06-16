@@ -175,7 +175,7 @@ abstract class Shape implements _Shape {
     switch (type) {
       case ShapeType.rectangle:
         return Rectangle.fromJson(json);
-      case ShapeType.circle:
+      case ShapeType.circular:
         return Circle.fromJson(json);
     }
   }
@@ -239,7 +239,7 @@ class Circle extends Shape implements _Circle {
   final double radius;
 
   @override
-  final ShapeType type = ShapeType.circle;
+  final ShapeType type = ShapeType.circular;
 
   @override
   Map<String, Object?> toJson() => _$CircleToJson(this);

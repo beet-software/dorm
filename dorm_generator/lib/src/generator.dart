@@ -17,52 +17,72 @@ final Uri _jsonAnnotationUrl = Uri(
 
 cb.Expression expressionOf(String code) => cb.CodeExpression(cb.Code(code));
 
+class Naming<N extends ClassOrmNode> {
+  final String name;
+  final N node;
+
+  const Naming({required this.name, required this.node});
+}
+
 /// Naming of code generation.
-class SchemaNaming {
-  /// _Schema
-  final String schemaName;
+class ModelNaming extends Naming<ModelOrmNode> {
+  const ModelNaming({required super.name, required super.node});
 
-  const SchemaNaming(this.schemaName);
+  /// _User
+  String get schemaName => name;
 
-  /// _$Schema
+  /// _$User
   String get dummyName => '_\$$modelName';
 
-  /// Schema
-  String get modelName => schemaName.substring(1);
+  /// User
+  String get modelName => schemaName.removePrefix('_');
 
-  /// SchemaData
+  /// UserData
   String get dataName => '${modelName}Data';
 
-  /// SchemaDependency
+  /// UserDependency
   String get dependencyName => '${modelName}Dependency';
 
-  /// SchemaEntity
+  /// UserEntity
   String get entityName => '${modelName}Entity';
+
+  /// user
+  String get _defaultRepositoryName => modelName.decapitalize();
+
+  /// users
+  String get repositoryName =>
+      (node.annotation.as as $Symbol?)?.name ?? _defaultRepositoryName;
 }
 
-class PolymorphicNaming {
-  // _Schema
-  final String schemaName;
+class PolymorphicDataNaming extends Naming<PolymorphicDataOrmNode> {
+  const PolymorphicDataNaming({required super.name, required super.node});
 
-  const PolymorphicNaming(this.schemaName);
+  /// _Circle
+  String get schemaName => name;
 
-  // Schema
-  String get modelName => schemaName.substring(1);
+  /// Circle
+  String get modelName => schemaName.removePrefix('_');
 
-  // SchemaType
-  String get enumName => '${modelName}Type';
+  /// circle
+  String get _defaultEnumFieldName => modelName.decapitalize();
+
+  /// circular
+  String get enumFieldName =>
+      (node.annotation.as as $Symbol?)?.name ?? _defaultEnumFieldName;
+
+  TagNaming get tag => TagNaming(node.tag);
 }
 
-class PolymorphicModelNaming {
-  // _Schema
+class TagNaming {
+  /// _Shape
   final String schemaName;
 
-  const PolymorphicModelNaming(this.schemaName);
+  const TagNaming(this.schemaName);
 
-  // Schema
-  String get modelName => schemaName.substring(1);
+  /// Shape
+  String get modelName => schemaName.removePrefix('_');
 
-  // SchemaType
+  /// ShapeType
   String get enumName => '${modelName}Type';
 }
 
@@ -81,7 +101,7 @@ abstract class Args<Annotation, Field, Naming> {
   void accept(cb.LibraryBuilder b);
 }
 
-class ModelArgs extends Args<Model, FieldOrmNode, SchemaNaming> {
+class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
   const ModelArgs({
     required super.annotation,
     required super.fields,
@@ -410,8 +430,7 @@ class ModelArgs extends Args<Model, FieldOrmNode, SchemaNaming> {
   }
 }
 
-class PolymorphicArgs
-    extends Args<void, PolymorphicDataOrmNode, PolymorphicNaming> {
+class PolymorphicArgs extends Args<void, PolymorphicDataOrmNode, TagNaming> {
   const PolymorphicArgs({
     required super.fields,
     required super.naming,
@@ -421,12 +440,12 @@ class PolymorphicArgs
     return cb.Enum((b) {
       b.name = naming.enumName;
       b.values.addAll(fields.entries.map((entry) {
-        final String name = entry.key;
-        final String fieldName =
-            (entry.value.annotation.as as $Symbol?)?.name ??
-                (name[1].toLowerCase() + name.substring(2));
+        final PolymorphicDataNaming naming = PolymorphicDataNaming(
+          name: entry.key,
+          node: entry.value,
+        );
         return cb.EnumValue((b) {
-          b.name = fieldName;
+          b.name = naming.enumFieldName;
         });
       }));
     });
@@ -451,11 +470,14 @@ class PolymorphicArgs
         b.lambda = false;
         b.body = cb.Block((b) {
           b.statements.add(cb.Code('switch (type) {'));
-          for (String name in fields.keys) {
-            final String branchName = name[1].toLowerCase() + name.substring(2);
-            b.statements.add(cb.Code('case ${naming.enumName}.$branchName:'));
+          for (MapEntry<String, PolymorphicDataOrmNode> entry
+              in fields.entries) {
+            final PolymorphicDataNaming naming =
+                PolymorphicDataNaming(name: entry.key, node: entry.value);
+            b.statements.add(cb.Code(
+                'case ${this.naming.enumName}.${naming.enumFieldName}:'));
             b.statements.add(cb.InvokeExpression.newOf(
-              cb.Reference(name.substring(1)),
+              cb.Reference(naming.modelName),
               [expressionOf('json')],
               {},
               [],
@@ -493,12 +515,11 @@ class PolymorphicArgs
 }
 
 class PolymorphicModelArgs
-    extends Args<String, FieldOrmNode, PolymorphicModelNaming> {
+    extends Args<void, FieldOrmNode, PolymorphicDataNaming> {
   const PolymorphicModelArgs({
-    required super.annotation,
     required super.fields,
     required super.naming,
-  });
+  }) : super(annotation: null);
 
   cb.Spec get _class {
     final String name = naming.modelName;
@@ -508,8 +529,8 @@ class PolymorphicModelArgs
         [],
         {'anyMap': cb.literalTrue, 'explicitToJson': cb.literalTrue},
       ));
-      b.name = naming.modelName;
-      b.extend = cb.Reference(annotation.substring(1));
+      b.name = name;
+      b.extend = cb.Reference(naming.tag.modelName);
       b.implements.add(cb.Reference(naming.schemaName));
       b.fields.addAll(fields.entries.map((entry) {
         final String? key = entry.value.annotation.name;
@@ -562,10 +583,10 @@ class PolymorphicModelArgs
       b.fields.add(cb.Field((b) {
         b.annotations.add(expressionOf('override'));
         b.modifier = cb.FieldModifier.final$;
-        b.type = cb.Reference('${annotation.substring(1)}Type');
+        b.type = cb.Reference(naming.tag.enumName);
         b.name = 'type';
-        b.assignment = expressionOf('${annotation.substring(1)}Type')
-            .property(name.decapitalize())
+        b.assignment = expressionOf(naming.tag.enumName)
+            .property(naming.enumFieldName)
             .code;
       }));
       b.methods.add(cb.Method((b) {
@@ -1025,11 +1046,11 @@ class OrmGenerator extends Generator {
       nodes.entries.mapNotNull((entry) {
         final String name = entry.key;
         final FieldedOrmNode<Object> node = entry.value;
-        final Object annotation = node.annotation.annotation;
-        if (annotation is! Model) return null;
+        final ClassOrmNode<Object> classNode = node.annotation;
+        if (classNode is! ModelOrmNode) return null;
         return ModelArgs(
-          naming: SchemaNaming(name),
-          annotation: annotation,
+          naming: ModelNaming(name: name, node: classNode),
+          annotation: classNode.annotation,
           fields: node.fields,
         );
       }).forEach((arg) => arg.accept(b));
@@ -1045,7 +1066,7 @@ class OrmGenerator extends Generator {
       for (MapEntry<String, Map<String, PolymorphicDataOrmNode>> entry
           in groups.entries) {
         final PolymorphicArgs args = PolymorphicArgs(
-          naming: PolymorphicNaming(entry.key),
+          naming: TagNaming(entry.key),
           fields: entry.value,
         );
         args.accept(b);
@@ -1057,8 +1078,7 @@ class OrmGenerator extends Generator {
         final ClassOrmNode<Object> classNode = node.annotation;
         if (classNode is! PolymorphicDataOrmNode) return null;
         return PolymorphicModelArgs(
-          naming: PolymorphicModelNaming(name),
-          annotation: classNode.tag,
+          naming: PolymorphicDataNaming(name: name, node: classNode),
           fields: node.fields,
         );
       }).forEach((arg) => arg.accept(b));
@@ -1078,10 +1098,10 @@ class OrmGenerator extends Generator {
           }));
         }));
         b.methods.addAll(nodes.entries.mapNotNull((entry) {
-          final Object annotation = entry.value.annotation.annotation;
-          if (annotation is! Model) return null;
+          final ClassOrmNode<Object> node = entry.value.annotation;
+          if (node is! ModelOrmNode) return null;
 
-          final SchemaNaming naming = SchemaNaming(entry.key);
+          final ModelNaming naming = ModelNaming(name: entry.key, node: node);
           return cb.Method((b) {
             b.returns = cb.TypeReference((b) {
               b.symbol = 'DatabaseEntity';
@@ -1090,9 +1110,7 @@ class OrmGenerator extends Generator {
             });
             b.type = cb.MethodType.getter;
             b.lambda = true;
-            b.name = (annotation.as as $Symbol?)?.name ??
-                (naming.modelName[0].toLowerCase() +
-                    naming.modelName.substring(1));
+            b.name = naming.repositoryName;
             b.body = cb.ToCodeExpression(
               cb.InvokeExpression.newOf(
                 cb.Reference('DatabaseEntity'),
