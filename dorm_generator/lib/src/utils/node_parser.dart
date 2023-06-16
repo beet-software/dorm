@@ -72,6 +72,18 @@ abstract class FieldNodeParser<A extends Field> extends NodeParser<A, FieldOrmNo
   }
 }
 
+class DataParser extends ClassNodeParser<Data> {
+  const DataParser();
+
+  @override
+  DataOrmNode _convert(Data annotation, ClassElement element) {
+    return DataOrmNode(annotation: annotation);
+  }
+
+  @override
+  Data _parse(ConstantReader reader) => const Data();
+}
+
 class ModelParser extends ClassNodeParser<Model> {
   const ModelParser();
 

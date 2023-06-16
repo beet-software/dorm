@@ -6,14 +6,37 @@ part of 'school.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+SchoolAddress _$SchoolAddressFromJson(Map json) {
+  $checkKeys(
+    json,
+    requiredKeys: const ['ativo', 'bairro', 'numero'],
+    disallowNullValues: const ['ativo', 'bairro', 'numero'],
+  );
+  return SchoolAddress(
+    active: json['ativo'] as bool,
+    district: json['bairro'] as String,
+    zipCode: json['cep'] as String?,
+    number: json['numero'] as int,
+  );
+}
+
+Map<String, dynamic> _$SchoolAddressToJson(SchoolAddress instance) =>
+    <String, dynamic>{
+      'ativo': instance.active,
+      'bairro': instance.district,
+      'cep': instance.zipCode,
+      'numero': instance.number,
+    };
+
 SchoolData _$SchoolDataFromJson(Map json) {
   $checkKeys(
     json,
-    requiredKeys: const ['nome'],
-    disallowNullValues: const ['nome'],
+    requiredKeys: const ['nome', 'endereco'],
+    disallowNullValues: const ['nome', 'endereco'],
   );
   return SchoolData(
     name: json['nome'] as String,
+    address: SchoolAddress.fromJson(json['endereco'] as Map),
     phoneNumbers: (json['contatos'] as List<dynamic>?)
             ?.map((e) => e as String)
             .toList() ??
@@ -24,18 +47,20 @@ SchoolData _$SchoolDataFromJson(Map json) {
 Map<String, dynamic> _$SchoolDataToJson(SchoolData instance) =>
     <String, dynamic>{
       'nome': instance.name,
+      'endereco': instance.address.toJson(),
       'contatos': instance.phoneNumbers,
     };
 
 School _$SchoolFromJson(Map json) {
   $checkKeys(
     json,
-    requiredKeys: const ['nome', '_id'],
-    disallowNullValues: const ['nome', '_id'],
+    requiredKeys: const ['nome', 'endereco', '_id'],
+    disallowNullValues: const ['nome', 'endereco', '_id'],
   );
   return School(
     id: json['_id'] as String,
     name: json['nome'] as String,
+    address: SchoolAddress.fromJson(json['endereco'] as Map),
     phoneNumbers: (json['contatos'] as List<dynamic>?)
             ?.map((e) => e as String)
             .toList() ??
@@ -45,6 +70,7 @@ School _$SchoolFromJson(Map json) {
 
 Map<String, dynamic> _$SchoolToJson(School instance) => <String, dynamic>{
       'nome': instance.name,
+      'endereco': instance.address.toJson(),
       'contatos': instance.phoneNumbers,
       '_id': instance.id,
     };

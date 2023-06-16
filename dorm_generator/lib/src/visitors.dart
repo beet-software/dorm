@@ -14,6 +14,7 @@ const Map<ClassNodeParser<Object>, List<FieldNodeParser<Field>>> _visiting = {
     FieldParser(),
   ],
   PolymorphicDataParser(): [FieldParser()],
+  DataParser(): [ModelFieldParser(), FieldParser()],
 };
 
 Map<String, FieldedOrmNode<Object>> parseLibrary(LibraryReader reader) {

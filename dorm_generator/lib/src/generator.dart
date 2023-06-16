@@ -25,6 +25,16 @@ class Naming<N extends ClassOrmNode> {
 }
 
 /// Naming of code generation.
+class DataNaming extends Naming<DataOrmNode> {
+  const DataNaming({required super.name, required super.node});
+
+  /// _User
+  String get schemaName => name;
+
+  /// User
+  String get modelName => name.removePrefix('_');
+}
+
 class ModelNaming extends Naming<ModelOrmNode> {
   const ModelNaming({required super.name, required super.node});
 
@@ -88,11 +98,13 @@ class TagNaming {
 
 /// Arguments of code generation.
 abstract class Args<Annotation, Field, Naming> {
+  final Map<String, FieldedOrmNode<Object>> nodes;
   final Annotation annotation;
   final Map<String, Field> fields;
   final Naming naming;
 
   const Args({
+    required this.nodes,
     required this.annotation,
     required this.fields,
     required this.naming,
@@ -101,8 +113,27 @@ abstract class Args<Annotation, Field, Naming> {
   void accept(cb.LibraryBuilder b);
 }
 
+class DataArgs extends Args<Data, FieldOrmNode, DataNaming> {
+  const DataArgs({
+    required super.nodes,
+    required super.annotation,
+    required super.fields,
+    required super.naming,
+  });
+
+  cb.Spec get _class {
+    return fields.baseClassOf(nodes, name: naming.modelName);
+  }
+
+  @override
+  void accept(cb.LibraryBuilder b) {
+    b.body.add(_class);
+  }
+}
+
 class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
   const ModelArgs({
+    required super.nodes,
     required super.annotation,
     required super.fields,
     required super.naming,
@@ -201,11 +232,18 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
   }
 
   cb.Spec get _dataClass {
-    return fields.baseClassOf(naming.dataName);
+    return fields.baseClassOf(
+      nodes,
+      name: naming.dataName,
+    );
   }
 
   cb.Spec get _modelClass {
-    return fields.baseClassOf(naming.modelName, baseName: naming.dataName);
+    return fields.baseClassOf(
+      nodes,
+      name: naming.modelName,
+      baseName: naming.dataName,
+    );
   }
 
   cb.Spec get _dependencyClass {
@@ -432,6 +470,7 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
 
 class PolymorphicArgs extends Args<void, PolymorphicDataOrmNode, TagNaming> {
   const PolymorphicArgs({
+    required super.nodes,
     required super.fields,
     required super.naming,
   }) : super(annotation: null);
@@ -517,6 +556,7 @@ class PolymorphicArgs extends Args<void, PolymorphicDataOrmNode, TagNaming> {
 class PolymorphicModelArgs
     extends Args<void, FieldOrmNode, PolymorphicDataNaming> {
   const PolymorphicModelArgs({
+    required super.nodes,
     required super.fields,
     required super.naming,
   }) : super(annotation: null);
@@ -612,7 +652,11 @@ class PolymorphicModelArgs
 
 /// Base of code generation.
 extension _BaseWriting on Map<String, FieldOrmNode> {
-  cb.Spec baseClassOf(String name, {String? baseName}) {
+  cb.Spec baseClassOf(
+    Map<String, FieldedOrmNode<Object>> nodes, {
+    required String name,
+    String? baseName,
+  }) {
     final bool hasPolymorphism = values
         .map((field) => field.annotation)
         .whereType<PolymorphicField>()
@@ -706,7 +750,14 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
             type = cb.Reference(fieldType.substring(1));
           } else if (baseField is ModelField) {
             final $Type value = baseField.referTo as $Type;
-            type = cb.Reference('${value.name!.substring(1)}Data');
+            final ClassOrmNode<Object>? node = nodes[value.name]?.annotation;
+            final String name;
+            if (node is DataOrmNode) {
+              name = value.name!.substring(1);
+            } else {
+              name = '${value.name!.substring(1)}Data';
+            }
+            type = cb.Reference(name);
           } else {
             type = cb.Reference(fieldType);
           }
@@ -1043,16 +1094,27 @@ class OrmGenerator extends Generator {
 
     final Map<String, FieldedOrmNode<Object>> nodes = parseLibrary(library);
     final cb.Spec spec = cb.Library((b) {
-      nodes.entries.mapNotNull((entry) {
+      nodes.entries.mapNotNull<Args>((entry) {
         final String name = entry.key;
         final FieldedOrmNode<Object> node = entry.value;
         final ClassOrmNode<Object> classNode = node.annotation;
-        if (classNode is! ModelOrmNode) return null;
-        return ModelArgs(
-          naming: ModelNaming(name: name, node: classNode),
-          annotation: classNode.annotation,
-          fields: node.fields,
-        );
+        if (classNode is ModelOrmNode) {
+          return ModelArgs(
+            nodes: nodes,
+            naming: ModelNaming(name: name, node: classNode),
+            annotation: classNode.annotation,
+            fields: node.fields,
+          );
+        }
+        if (classNode is DataOrmNode) {
+          return DataArgs(
+            nodes: nodes,
+            naming: DataNaming(name: name, node: classNode),
+            annotation: classNode.annotation,
+            fields: node.fields,
+          );
+        }
+        return null;
       }).forEach((arg) => arg.accept(b));
 
       final Map<String, Map<String, PolymorphicDataOrmNode>> groups = nodes
@@ -1066,6 +1128,7 @@ class OrmGenerator extends Generator {
       for (MapEntry<String, Map<String, PolymorphicDataOrmNode>> entry
           in groups.entries) {
         final PolymorphicArgs args = PolymorphicArgs(
+          nodes: nodes,
           naming: TagNaming(entry.key),
           fields: entry.value,
         );
@@ -1078,6 +1141,7 @@ class OrmGenerator extends Generator {
         final ClassOrmNode<Object> classNode = node.annotation;
         if (classNode is! PolymorphicDataOrmNode) return null;
         return PolymorphicModelArgs(
+          nodes: nodes,
           naming: PolymorphicDataNaming(name: name, node: classNode),
           fields: node.fields,
         );

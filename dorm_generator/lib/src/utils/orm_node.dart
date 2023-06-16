@@ -19,6 +19,10 @@ class FieldedOrmNode<T> extends ClassOrmNode<ClassOrmNode<T>> {
   });
 }
 
+class DataOrmNode extends ClassOrmNode<Data> {
+  const DataOrmNode({required super.annotation});
+}
+
 class ModelOrmNode extends ClassOrmNode<Model> {
   const ModelOrmNode({
     required super.annotation,

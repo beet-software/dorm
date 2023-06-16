@@ -8,10 +8,28 @@ part 'school.dorm.dart';
 
 part 'school.g.dart';
 
+@Data()
+abstract class _SchoolAddress {
+  @Field(name: 'ativo')
+  bool get active;
+
+  @Field(name: 'bairro')
+  String get district;
+
+  @Field(name: 'cep')
+  String? get zipCode;
+
+  @Field(name: 'numero')
+  int get number;
+}
+
 @Model(name: 'escola', as: #schools, uidType: UidType.simple())
 abstract class _School {
   @Field(name: 'nome')
   String get name;
+
+  @ModelField(name: 'endereco', referTo: _SchoolAddress)
+  get address;
 
   @Field(name: 'contatos', defaultValue: [])
   List<String> get phoneNumbers;

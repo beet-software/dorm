@@ -10,11 +10,53 @@ part of 'school.dart';
   anyMap: true,
   explicitToJson: true,
 )
+class SchoolAddress {
+  factory SchoolAddress.fromJson(Map json) => _$SchoolAddressFromJson(json);
+
+  const SchoolAddress({
+    required this.active,
+    required this.district,
+    required this.zipCode,
+    required this.number,
+  });
+
+  @JsonKey(
+    name: 'ativo',
+    required: true,
+    disallowNullValue: true,
+  )
+  final bool active;
+
+  @JsonKey(
+    name: 'bairro',
+    required: true,
+    disallowNullValue: true,
+  )
+  final String district;
+
+  @JsonKey(name: 'cep')
+  final String? zipCode;
+
+  @JsonKey(
+    name: 'numero',
+    required: true,
+    disallowNullValue: true,
+  )
+  final int number;
+
+  Map<String, Object?> toJson() => _$SchoolAddressToJson(this);
+}
+
+@JsonSerializable(
+  anyMap: true,
+  explicitToJson: true,
+)
 class SchoolData {
   factory SchoolData.fromJson(Map json) => _$SchoolDataFromJson(json);
 
   const SchoolData({
     required this.name,
+    required this.address,
     required this.phoneNumbers,
   });
 
@@ -24,6 +66,13 @@ class SchoolData {
     disallowNullValue: true,
   )
   final String name;
+
+  @JsonKey(
+    name: 'endereco',
+    required: true,
+    disallowNullValue: true,
+  )
+  final SchoolAddress address;
 
   @JsonKey(
     name: 'contatos',
@@ -51,6 +100,7 @@ class School extends SchoolData implements _School {
   const School({
     required this.id,
     required super.name,
+    required super.address,
     required super.phoneNumbers,
   });
 
@@ -90,6 +140,7 @@ class SchoolEntity implements Entity<SchoolData, School> {
     return School(
       id: id,
       name: data.name,
+      address: data.address,
       phoneNumbers: data.phoneNumbers,
     );
   }
@@ -102,6 +153,7 @@ class SchoolEntity implements Entity<SchoolData, School> {
     return School(
       id: model.id,
       name: data.name,
+      address: data.address,
       phoneNumbers: data.phoneNumbers,
     );
   }
