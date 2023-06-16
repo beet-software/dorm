@@ -154,13 +154,11 @@ class ModelArgs extends Args<Model, FieldOrmNode, SchemaNaming> {
         }));
         b.body = cb.ToCodeExpression(
           cb.InvokeExpression.newOf(
-            cb.CodeExpression(cb.Code(className)),
+            expressionOf(className),
             [],
             fields.where(FieldFilter.belongsToSchema).map((name, field) {
-              final cb.Expression expression = cb.CodeExpression(
-                cb.Code(
-                    field.annotation is ForeignField ? 'dependency' : 'data'),
-              );
+              final cb.Expression expression = expressionOf(
+                  field.annotation is ForeignField ? 'dependency' : 'data');
               return MapEntry(name, expression.property(name));
             }),
           ),
@@ -228,8 +226,7 @@ class ModelArgs extends Args<Model, FieldOrmNode, SchemaNaming> {
             expressionOf('super').property('weak').call([
               cb.literalList(
                   fields.where(FieldFilter.belongsToModel).entries.map((entry) {
-                cb.Expression expression =
-                    cb.CodeExpression(cb.Code(entry.key));
+                cb.Expression expression = expressionOf(entry.key);
                 if (!entry.value.required) {
                   expression = expression.ifNullThen(cb.literalString(''));
                 }
@@ -361,9 +358,7 @@ class ModelArgs extends Args<Model, FieldOrmNode, SchemaNaming> {
         b.lambda = true;
         b.body = cb.ToCodeExpression(cb.InvokeExpression.newOf(
           cb.Reference(naming.modelName),
-          ['id', 'json']
-              .map((code) => cb.CodeExpression(cb.Code(code)))
-              .toList(),
+          ['id', 'json'].map(expressionOf).toList(),
           {},
           [],
           'fromJson',
@@ -498,7 +493,7 @@ class PolymorphicArgs
 }
 
 class PolymorphicModelArgs
-    extends Args<PolymorphicData, FieldOrmNode, PolymorphicModelNaming> {
+    extends Args<String, FieldOrmNode, PolymorphicModelNaming> {
   const PolymorphicModelArgs({
     required super.annotation,
     required super.fields,
@@ -513,9 +508,9 @@ class PolymorphicModelArgs
         [],
         {'anyMap': cb.literalTrue, 'explicitToJson': cb.literalTrue},
       ));
-      b.name = name;
-      b.extend = cb.Reference(naming.modelName);
-      b.implements.add(cb.Reference(name));
+      b.name = naming.modelName;
+      b.extend = cb.Reference(annotation.substring(1));
+      b.implements.add(cb.Reference(naming.schemaName));
       b.fields.addAll(fields.entries.map((entry) {
         final String? key = entry.value.annotation.name;
         final String name = entry.key;
@@ -546,7 +541,7 @@ class PolymorphicModelArgs
         }));
         b.lambda = true;
         b.body = cb.InvokeExpression.newOf(
-          cb.Reference('_\$${name.substring(1)}FromJson'),
+          cb.Reference('_\$${name}FromJson'),
           [expressionOf('json')],
         ).code;
       }));
@@ -567,10 +562,10 @@ class PolymorphicModelArgs
       b.fields.add(cb.Field((b) {
         b.annotations.add(expressionOf('override'));
         b.modifier = cb.FieldModifier.final$;
-        b.type = cb.Reference(naming.enumName);
+        b.type = cb.Reference('${annotation.substring(1)}Type');
         b.name = 'type';
-        b.assignment = cb.CodeExpression(cb.Code(naming.enumName))
-            .property(name[1].toLowerCase() + name.substring(2))
+        b.assignment = expressionOf('${annotation.substring(1)}Type')
+            .property(name.decapitalize())
             .code;
       }));
       b.methods.add(cb.Method((b) {
@@ -582,8 +577,8 @@ class PolymorphicModelArgs
         });
         b.name = 'toJson';
         b.lambda = true;
-        b.body = expressionOf('_\$${name.substring(1)}ToJson')
-            .call([expressionOf('this')]).code;
+        b.body =
+            expressionOf('_\$${name}ToJson').call([expressionOf('this')]).code;
       }));
     });
   }
@@ -783,10 +778,7 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
                           if (baseField is PolymorphicField) {
                             yield MapEntry('type', expressionOf('type'));
                           }
-                          yield MapEntry(
-                            fieldName,
-                            cb.CodeExpression(cb.Code(fieldName)),
-                          );
+                          yield MapEntry(fieldName, expressionOf(fieldName));
                         })),
                         [],
                         '_',
@@ -817,7 +809,7 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
                     final cb.Expression fieldExpression;
                     if (rootExpression == null ||
                         entry.value.annotation is ForeignField) {
-                      fieldExpression = cb.CodeExpression(cb.Code(fieldName));
+                      fieldExpression = expressionOf(fieldName);
                     } else {
                       fieldExpression = rootExpression.property(fieldName);
                     }
@@ -834,10 +826,7 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
                           fieldName,
                           cb.InvokeExpression.newOf(
                             cb.Reference(fieldType.substring(1)),
-                            [
-                              expressionOf('type'),
-                              cb.CodeExpression(cb.Code(fieldName)),
-                            ],
+                            [expressionOf('type'), expressionOf(fieldName)],
                             {},
                             [],
                             'fromType',
@@ -990,7 +979,7 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
                 );
               }
 
-              cb.Expression expression = cb.CodeExpression(cb.Code(symbolName));
+              cb.Expression expression = expressionOf(symbolName);
               final cb.Expression? callExpression;
               switch (type) {
                 case QueryType.text:
@@ -1033,28 +1022,17 @@ class OrmGenerator extends Generator {
 
     final Map<String, FieldedOrmNode<Object>> nodes = parseLibrary(library);
     final cb.Spec spec = cb.Library((b) {
-      for (MapEntry<String, FieldedOrmNode<Object>> entry in nodes.entries) {
+      nodes.entries.mapNotNull((entry) {
+        final String name = entry.key;
         final FieldedOrmNode<Object> node = entry.value;
         final Object annotation = node.annotation.annotation;
-
-        final Args args;
-        if (annotation is Model) {
-          args = ModelArgs(
-            naming: SchemaNaming(entry.key),
-            annotation: annotation,
-            fields: entry.value.fields,
-          );
-        } else if (annotation is PolymorphicData) {
-          args = PolymorphicModelArgs(
-            naming: PolymorphicModelNaming(entry.key),
-            annotation: annotation,
-            fields: entry.value.fields,
-          );
-        } else {
-          continue;
-        }
-        args.accept(b);
-      }
+        if (annotation is! Model) return null;
+        return ModelArgs(
+          naming: SchemaNaming(name),
+          annotation: annotation,
+          fields: node.fields,
+        );
+      }).forEach((arg) => arg.accept(b));
 
       final Map<String, Map<String, PolymorphicDataOrmNode>> groups = nodes
           .filterValues((data) => data.annotation is PolymorphicDataOrmNode)
@@ -1073,6 +1051,18 @@ class OrmGenerator extends Generator {
         args.accept(b);
       }
 
+      nodes.entries.mapNotNull((entry) {
+        final String name = entry.key;
+        final FieldedOrmNode<Object> node = entry.value;
+        final ClassOrmNode<Object> classNode = node.annotation;
+        if (classNode is! PolymorphicDataOrmNode) return null;
+        return PolymorphicModelArgs(
+          naming: PolymorphicModelNaming(name),
+          annotation: classNode.tag,
+          fields: node.fields,
+        );
+      }).forEach((arg) => arg.accept(b));
+
       b.body.add(cb.Class((b) {
         b.name = 'Dorm';
         b.fields.add(cb.Field((b) {
@@ -1088,7 +1078,7 @@ class OrmGenerator extends Generator {
           }));
         }));
         b.methods.addAll(nodes.entries.mapNotNull((entry) {
-          final Object annotation = entry.value.annotation;
+          final Object annotation = entry.value.annotation.annotation;
           if (annotation is! Model) return null;
 
           final SchemaNaming naming = SchemaNaming(entry.key);

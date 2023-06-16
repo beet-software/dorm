@@ -33,6 +33,7 @@ Map<String, FieldedOrmNode<Object>> parseLibrary(LibraryReader reader) {
               fieldParser.parseElement(fieldElement);
           if (fieldNode == null) continue;
           fields[fieldElement.name] = fieldNode;
+          break;
         }
       }
       nodes[classElement.name] = FieldedOrmNode(
