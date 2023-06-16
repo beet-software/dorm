@@ -607,10 +607,8 @@ class PolymorphicModelArgs
           b.name = 'json';
         }));
         b.lambda = true;
-        b.body = cb.InvokeExpression.newOf(
-          cb.Reference('_\$${name}FromJson'),
-          [expressionOf('json')],
-        ).code;
+        b.body = expressionOf('_\$${name}FromJson')
+            .call([expressionOf('json')]).code;
       }));
       b.constructors.add(cb.Constructor((b) {
         b.constant = true;
@@ -786,17 +784,14 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
           b.name = 'json';
         }));
         b.lambda = true;
-        b.body = cb.ToCodeExpression(cb.InvokeExpression.newOf(
-          cb.Reference('_\$${name}FromJson'),
-          [
-            baseName == null
-                ? expressionOf('json')
-                : cb.literalMap({
-                    cb.literalSpread(): expressionOf('json'),
-                    cb.literalString('_id'): expressionOf('id'),
-                  }),
-          ],
-        ));
+        b.body = cb.ToCodeExpression(expressionOf('_\$${name}FromJson').call([
+          baseName == null
+              ? expressionOf('json')
+              : cb.literalMap({
+                  cb.literalSpread(): expressionOf('json'),
+                  cb.literalString('_id'): expressionOf('id'),
+                }),
+        ]));
       }));
       // Polymorphic constructor
       if (hasPolymorphism) {
