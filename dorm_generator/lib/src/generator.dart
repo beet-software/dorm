@@ -14,6 +14,10 @@ final Uri _jsonAnnotationUrl = Uri(
   scheme: 'package',
   pathSegments: ['json_annotation', 'json_annotation.dart'],
 );
+final Uri _dormUrl = Uri(
+  scheme: 'package',
+  pathSegments: ['dorm', 'dorm.dart'],
+);
 
 cb.Expression expressionOf(String code) => cb.CodeExpression(cb.Code(code));
 
@@ -251,6 +255,7 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
       b.name = naming.dependencyName;
       b.extend = cb.TypeReference((b) {
         b.symbol = 'Dependency';
+        b.url = '$_dormUrl';
         b.types.add(cb.Reference(naming.dataName));
       });
       b.fields
@@ -302,6 +307,7 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
       b.name = naming.entityName;
       b.implements.add(cb.TypeReference((b) {
         b.symbol = 'Entity';
+        b.url = '$_dormUrl';
         b.types.add(cb.Reference(naming.dataName));
         b.types.add(cb.Reference(naming.modelName));
       }));
@@ -1151,7 +1157,7 @@ class OrmGenerator extends Generator {
         b.name = 'Dorm';
         b.fields.add(cb.Field((b) {
           b.modifier = cb.FieldModifier.final$;
-          b.type = cb.Reference('Reference');
+          b.type = cb.Reference('Reference', '$_dormUrl');
           b.name = '_root';
         }));
         b.constructors.add(cb.Constructor((b) {
@@ -1169,6 +1175,7 @@ class OrmGenerator extends Generator {
           return cb.Method((b) {
             b.returns = cb.TypeReference((b) {
               b.symbol = 'DatabaseEntity';
+              b.url = '$_dormUrl';
               b.types.add(cb.Reference(naming.dataName));
               b.types.add(cb.Reference(naming.modelName));
             });
@@ -1177,7 +1184,7 @@ class OrmGenerator extends Generator {
             b.name = naming.repositoryName;
             b.body = cb.ToCodeExpression(
               cb.InvokeExpression.newOf(
-                cb.Reference('DatabaseEntity'),
+                cb.Reference('DatabaseEntity', '$_dormUrl'),
                 [
                   cb.InvokeExpression.constOf(
                     cb.Reference(naming.entityName),
