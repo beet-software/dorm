@@ -1,36 +1,11 @@
 import 'package:analyzer/dart/element/element.dart';
-import 'package:analyzer/dart/element/visitor.dart';
-import 'package:dartx/dartx.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
+import 'package:source_gen/source_gen.dart';
 
-import 'utils/annotation_parser.dart';
-import 'utils/custom_types.dart';
+import 'utils/node_parser.dart';
+import 'utils/orm_node.dart';
 
-class ClassVisitor extends SimpleElementVisitor<ClassAnnotationData?> {
-  final ClassAnnotationParser<ClassAnnotationData> parser;
-
-  const ClassVisitor(this.parser);
-
-  @override
-  ClassAnnotationData? visitClassElement(ClassElement element) {
-    return parser.parseElement(element);
-  }
-}
-
-class FieldVisitor extends SimpleElementVisitor<FieldAnnotationData?> {
-  final List<FieldAnnotationParser<Field>> children;
-
-  const FieldVisitor(this.children);
-
-  @override
-  FieldAnnotationData? visitFieldElement(FieldElement element) {
-    return children
-        .mapNotNull((parser) => parser.parseElement(element))
-        .firstOrNull;
-  }
-}
-
-const Map<ClassAnnotationParser<Object>, List<FieldAnnotationParser<Field>>> visiting = {
+const Map<ClassNodeParser<Object>, List<FieldNodeParser<Field>>> _visiting = {
   ModelParser(): [
     ModelFieldParser(),
     ForeignFieldParser(),
@@ -41,17 +16,30 @@ const Map<ClassAnnotationParser<Object>, List<FieldAnnotationParser<Field>>> vis
   PolymorphicDataParser(): [FieldParser()],
 };
 
-Map<String, ClassAnnotationData<Object>> f(
-  Map<ClassAnnotationParser<Object>, List<FieldAnnotationParser<Field>>>
-      visiting,
-  ClassElement element,
-) {
-  return visiting.mapValues((entry) => FieldVisitor(entry.value)).mapValues(
-      (entry) => element.children
-          .whereType<FieldElement>()
-          .associateWith(
-              (element) => element.accept<FieldAnnotationData?>(entry.value))
-          .mapKeys((entry) => entry.key.name)
-          .filterValues((data) => data != null)
-          .mapValues((entry) => entry.value!));
+Map<String, FieldedOrmNode<Object>> parseLibrary(LibraryReader reader) {
+  final Map<String, FieldedOrmNode<Object>> nodes = {};
+  for (ClassElement classElement in reader.classes) {
+    for (MapEntry<ClassNodeParser<Object>, List<FieldNodeParser<Field>>> entry
+        in _visiting.entries) {
+      final ClassNodeParser<Object> classParser = entry.key;
+      final ClassOrmNode<Object>? classNode =
+          classParser.parseElement(classElement);
+      if (classNode == null) continue;
+
+      final Map<String, FieldOrmNode> fields = {};
+      for (FieldElement fieldElement in classElement.fields) {
+        for (FieldNodeParser<Field> fieldParser in entry.value) {
+          final FieldOrmNode? fieldNode =
+              fieldParser.parseElement(fieldElement);
+          if (fieldNode == null) continue;
+          fields[fieldElement.name] = fieldNode;
+        }
+      }
+      nodes[classElement.name] = FieldedOrmNode(
+        annotation: classNode,
+        fields: fields,
+      );
+    }
+  }
+  return nodes;
 }

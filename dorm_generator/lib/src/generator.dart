@@ -4,9 +4,11 @@ import 'package:code_builder/code_builder.dart' as cb;
 import 'package:dart_style/dart_style.dart';
 import 'package:dartx/dartx.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
+import 'package:dorm_generator/src/visitors.dart';
 import 'package:source_gen/source_gen.dart';
 
 import 'utils/custom_types.dart';
+import 'utils/orm_node.dart';
 
 final Uri _jsonAnnotationUrl = Uri(
   scheme: 'package',
@@ -51,6 +53,19 @@ class PolymorphicNaming {
   String get enumName => '${modelName}Type';
 }
 
+class PolymorphicModelNaming {
+  // _Schema
+  final String schemaName;
+
+  const PolymorphicModelNaming(this.schemaName);
+
+  // Schema
+  String get modelName => schemaName.substring(1);
+
+  // SchemaType
+  String get enumName => '${modelName}Type';
+}
+
 /// Arguments of code generation.
 abstract class Args<Annotation, Field, Naming> {
   final Annotation annotation;
@@ -66,7 +81,7 @@ abstract class Args<Annotation, Field, Naming> {
   void accept(cb.LibraryBuilder b);
 }
 
-class ModelArgs extends Args<Model, FieldAnnotationData, SchemaNaming> {
+class ModelArgs extends Args<Model, FieldOrmNode, SchemaNaming> {
   const ModelArgs({
     required super.annotation,
     required super.fields,
@@ -80,7 +95,7 @@ class ModelArgs extends Args<Model, FieldAnnotationData, SchemaNaming> {
           expressionOf('dependency').property('key').call([expressionOf('id')]),
       caseSameAs: (type) {
         type as $Type;
-        for (MapEntry<String, FieldAnnotationData> entry
+        for (MapEntry<String, FieldOrmNode> entry
             in fields.where(FieldFilter.belongsToModel).entries) {
           final $Type currentType =
               (entry.value.annotation as ForeignField).referTo as $Type;
@@ -401,7 +416,7 @@ class ModelArgs extends Args<Model, FieldAnnotationData, SchemaNaming> {
 }
 
 class PolymorphicArgs
-    extends Args<void, PolymorphicClassAnnotationData, PolymorphicNaming> {
+    extends Args<void, PolymorphicDataOrmNode, PolymorphicNaming> {
   const PolymorphicArgs({
     required super.fields,
     required super.naming,
@@ -483,7 +498,7 @@ class PolymorphicArgs
 }
 
 class PolymorphicModelArgs
-    extends Args<PolymorphicData, FieldAnnotationData, PolymorphicNaming> {
+    extends Args<PolymorphicData, FieldOrmNode, PolymorphicModelNaming> {
   const PolymorphicModelArgs({
     required super.annotation,
     required super.fields,
@@ -498,7 +513,7 @@ class PolymorphicModelArgs
         [],
         {'anyMap': cb.literalTrue, 'explicitToJson': cb.literalTrue},
       ));
-      b.name = name.substring(1);
+      b.name = name;
       b.extend = cb.Reference(naming.modelName);
       b.implements.add(cb.Reference(name));
       b.fields.addAll(fields.entries.map((entry) {
@@ -580,7 +595,7 @@ class PolymorphicModelArgs
 }
 
 /// Base of code generation.
-extension _BaseWriting on Map<String, FieldAnnotationData> {
+extension _BaseWriting on Map<String, FieldOrmNode> {
   cb.Spec baseClassOf(String name, {String? baseName}) {
     final bool hasPolymorphism = values
         .map((field) => field.annotation)
@@ -618,7 +633,7 @@ extension _BaseWriting on Map<String, FieldAnnotationData> {
       }
       b.fields.addAll(entries.expand((entry) sync* {
         final String fieldName = entry.key;
-        final FieldAnnotationData data = entry.value;
+        final FieldOrmNode data = entry.value;
         final String fieldType = data.type;
 
         final Field baseField = data.annotation;
@@ -902,7 +917,7 @@ extension _BaseWriting on Map<String, FieldAnnotationData> {
         } else {
           queryObject = {};
           final Map<String, Map<String, Object>> queries = {};
-          for (MapEntry<String, FieldAnnotationData> entry
+          for (MapEntry<String, FieldOrmNode> entry
               in where(FieldFilter.isA<QueryField>).entries) {
             final String? name = (entry.value.annotation as QueryField).name;
             if (name == null) continue;
@@ -945,7 +960,7 @@ extension _BaseWriting on Map<String, FieldAnnotationData> {
   }
 
   Iterable<cb.Method> get queryGetters sync* {
-    for (MapEntry<String, FieldAnnotationData> entry
+    for (MapEntry<String, FieldOrmNode> entry
         in where(FieldFilter.isA<QueryField>).entries) {
       final QueryField field = entry.value.annotation as QueryField;
       if (field.referTo.isEmpty) continue;
@@ -966,7 +981,7 @@ extension _BaseWriting on Map<String, FieldAnnotationData> {
                 );
               }
 
-              final FieldAnnotationData? referredField = this[symbolName];
+              final FieldOrmNode? referredField = this[symbolName];
               if (referredField == null ||
                   referredField.annotation is QueryField) {
                 throw StateError(
@@ -1016,55 +1031,12 @@ class OrmGenerator extends Generator {
         partUris.any((uri) => uri.path.endsWith('.dorm.dart'));
     if (!hasDormDirective) return null;
 
-    final Map<String, ClassAnnotationData<Object>> annotations = {
-      '_Rectangle': PolymorphicClassAnnotationData(
-        annotation: PolymorphicData(name: 'retangulo'),
-        tag: '_Shape',
-        fields: {
-          'width': FieldAnnotationData(
-            annotation: Field(name: 'largura'),
-            type: 'double',
-            required: true,
-          ),
-          'height': FieldAnnotationData(
-            annotation: Field(name: 'altura'),
-            type: 'double',
-            required: true,
-          ),
-        },
-      ),
-      '_Circle': PolymorphicClassAnnotationData(
-        annotation: PolymorphicData(name: 'circulo', as: #circular),
-        tag: '_Shape',
-        fields: {
-          'radius': FieldAnnotationData(
-            annotation: Field(name: 'raio'),
-            type: 'double',
-            required: true,
-          ),
-        },
-      ),
-      '_Drawing': ModelClassAnnotationData(
-        annotation: Model(name: 'desenho', as: #drawings),
-        fields: {
-          'color': FieldAnnotationData(
-            annotation: Field(name: 'cor'),
-            type: 'String',
-            required: true,
-          ),
-          'shape': FieldAnnotationData(
-            annotation: PolymorphicField(name: 'formato', pivotName: 'tipo'),
-            type: '_Shape',
-            required: true,
-          ),
-        },
-      ),
-    };
-
+    final Map<String, FieldedOrmNode<Object>> nodes = parseLibrary(library);
     final cb.Spec spec = cb.Library((b) {
-      for (MapEntry<String, ClassAnnotationData<Object>> entry
-          in annotations.entries) {
-        final Object annotation = entry.value.annotation;
+      for (MapEntry<String, FieldedOrmNode<Object>> entry in nodes.entries) {
+        final FieldedOrmNode<Object> node = entry.value;
+        final Object annotation = node.annotation.annotation;
+
         final Args args;
         if (annotation is Model) {
           args = ModelArgs(
@@ -1074,7 +1046,7 @@ class OrmGenerator extends Generator {
           );
         } else if (annotation is PolymorphicData) {
           args = PolymorphicModelArgs(
-            naming: PolymorphicNaming(entry.key),
+            naming: PolymorphicModelNaming(entry.key),
             annotation: annotation,
             fields: entry.value.fields,
           );
@@ -1084,15 +1056,16 @@ class OrmGenerator extends Generator {
         args.accept(b);
       }
 
-      final Map<String, Map<String, PolymorphicClassAnnotationData>> groups =
-          annotations
-              .filterValues((data) => data is PolymorphicClassAnnotationData)
-              .mapValues((entry) => entry.value as PolymorphicClassAnnotationData)
-              .entries
-              .groupBy((entry) => entry.value.tag)
-              .mapValues((entry) => Map.fromEntries(entry.value));
+      final Map<String, Map<String, PolymorphicDataOrmNode>> groups = nodes
+          .filterValues((data) => data.annotation is PolymorphicDataOrmNode)
+          .mapValues(
+              (entry) => entry.value.annotation as PolymorphicDataOrmNode)
+          .entries
+          .groupBy((entry) => entry.value.tag)
+          .mapValues((entry) => Map.fromEntries(entry.value));
 
-      for (MapEntry<String, Map<String, PolymorphicClassAnnotationData>> entry in groups.entries) {
+      for (MapEntry<String, Map<String, PolymorphicDataOrmNode>> entry
+          in groups.entries) {
         final PolymorphicArgs args = PolymorphicArgs(
           naming: PolymorphicNaming(entry.key),
           fields: entry.value,
@@ -1114,7 +1087,7 @@ class OrmGenerator extends Generator {
             b.name = '_root';
           }));
         }));
-        b.methods.addAll(annotations.entries.mapNotNull((entry) {
+        b.methods.addAll(nodes.entries.mapNotNull((entry) {
           final Object annotation = entry.value.annotation;
           if (annotation is! Model) return null;
 

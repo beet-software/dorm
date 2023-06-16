@@ -2,19 +2,20 @@ import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
+import 'package:analyzer/dart/element/visitor.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
 import 'package:source_gen/source_gen.dart';
 
 import 'custom_types.dart';
+import 'orm_node.dart';
 
-abstract class AnnotationParser<A, T, E extends Element> {
-  const AnnotationParser();
+abstract class NodeParser<A, T, E extends Element> extends SimpleElementVisitor<T?> {
+  const NodeParser();
 
   Type get annotation => A;
 
   T? parseElement(Element element) {
     if (element is! E) return null;
-    if (!_validate(element)) return null;
     final TypeChecker checker = TypeChecker.fromRuntime(annotation);
     final DartObject? object = () {
       final DartObject? fieldAnnotation = checker.firstAnnotationOf(element);
@@ -24,6 +25,7 @@ abstract class AnnotationParser<A, T, E extends Element> {
       return checker.firstAnnotationOf(child);
     }();
     if (object == null) return null;
+    if (!_validate(element)) return null;
     final ConstantReader reader = ConstantReader(object);
     return _convert(_parse(reader), element);
   }
@@ -37,24 +39,32 @@ abstract class AnnotationParser<A, T, E extends Element> {
   Element? _childOf(E element);
 }
 
-abstract class ClassAnnotationParser<A>
-    extends AnnotationParser<A, ClassAnnotationData<A>, ClassElement> {
-  const ClassAnnotationParser();
+abstract class ClassNodeParser<A> extends NodeParser<A, ClassOrmNode<A>, ClassElement> {
+  const ClassNodeParser();
 
   @override
   Element? _childOf(ClassElement element) => element;
+
+  @override
+  ClassOrmNode<A>? visitClassElement(ClassElement element) {
+    return parseElement(element);
+  }
 }
 
-abstract class FieldAnnotationParser<A extends Field>
-    extends AnnotationParser<A, FieldAnnotationData, FieldElement> {
-  const FieldAnnotationParser();
+abstract class FieldNodeParser<A extends Field> extends NodeParser<A, FieldOrmNode, FieldElement> {
+  const FieldNodeParser();
 
   @override
   Element? _childOf(FieldElement element) => element.getter;
 
   @override
-  FieldAnnotationData _convert(Field annotation, FieldElement element) {
-    return FieldAnnotationData(
+  FieldOrmNode? visitFieldElement(FieldElement element) {
+    return parseElement(element);
+  }
+
+  @override
+  FieldOrmNode _convert(Field annotation, FieldElement element) {
+    return FieldOrmNode(
       annotation: annotation,
       type: element.type.getDisplayString(withNullability: true),
       required: element.type.nullabilitySuffix == NullabilitySuffix.none,
@@ -62,7 +72,7 @@ abstract class FieldAnnotationParser<A extends Field>
   }
 }
 
-class ModelParser extends ClassAnnotationParser<Model> {
+class ModelParser extends ClassNodeParser<Model> {
   const ModelParser();
 
   UidType? _decodeUidType(ConstantReader reader) {
@@ -95,15 +105,12 @@ class ModelParser extends ClassAnnotationParser<Model> {
   }
 
   @override
-  ModelClassAnnotationData _convert(Model annotation, ClassElement element) {
-    return ModelClassAnnotationData(
-      annotation: annotation,
-      fields: fields,
-    );
+  ModelOrmNode _convert(Model annotation, ClassElement element) {
+    return ModelOrmNode(annotation: annotation);
   }
 }
 
-class PolymorphicDataParser extends ClassAnnotationParser<PolymorphicData> {
+class PolymorphicDataParser extends ClassNodeParser<PolymorphicData> {
   const PolymorphicDataParser();
 
   @override
@@ -138,7 +145,7 @@ class PolymorphicDataParser extends ClassAnnotationParser<PolymorphicData> {
   }
 
   @override
-  PolymorphicClassAnnotationData _convert(
+  PolymorphicDataOrmNode _convert(
     PolymorphicData annotation,
     ClassElement element,
   ) {
@@ -146,15 +153,14 @@ class PolymorphicDataParser extends ClassAnnotationParser<PolymorphicData> {
         .singleWhere((type) => !type.isDartCoreObject)
         .getDisplayString(withNullability: false);
 
-    return PolymorphicClassAnnotationData(
+    return PolymorphicDataOrmNode(
       annotation: annotation,
-      fields: fields,
       tag: supertypeName,
     );
   }
 }
 
-class FieldParser extends FieldAnnotationParser<Field> {
+class FieldParser extends FieldNodeParser<Field> {
   const FieldParser();
 
   @override
@@ -166,7 +172,7 @@ class FieldParser extends FieldAnnotationParser<Field> {
   }
 }
 
-class ForeignFieldParser extends FieldAnnotationParser<ForeignField> {
+class ForeignFieldParser extends FieldNodeParser<ForeignField> {
   const ForeignFieldParser();
 
   @override
@@ -178,7 +184,7 @@ class ForeignFieldParser extends FieldAnnotationParser<ForeignField> {
   }
 }
 
-class ModelFieldParser extends FieldAnnotationParser<ModelField> {
+class ModelFieldParser extends FieldNodeParser<ModelField> {
   const ModelFieldParser();
 
   @override
@@ -190,7 +196,7 @@ class ModelFieldParser extends FieldAnnotationParser<ModelField> {
   }
 }
 
-class QueryFieldParser extends FieldAnnotationParser<QueryField> {
+class QueryFieldParser extends FieldNodeParser<QueryField> {
   const QueryFieldParser();
 
   @override
@@ -211,7 +217,7 @@ class QueryFieldParser extends FieldAnnotationParser<QueryField> {
   }
 }
 
-class PolymorphicFieldParser extends FieldAnnotationParser<PolymorphicField> {
+class PolymorphicFieldParser extends FieldNodeParser<PolymorphicField> {
   const PolymorphicFieldParser();
 
   @override

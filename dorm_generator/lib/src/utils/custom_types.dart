@@ -3,6 +3,8 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
 import 'package:source_gen/source_gen.dart';
 
+import 'orm_node.dart';
+
 extension AdditionalReads on ConstantReader {
   T? enumValueFrom<T extends Enum>(List<T> values) {
     if (isNull) return null;
@@ -66,56 +68,15 @@ abstract class FieldFilter {
   }
 }
 
-extension FieldFiltering on Map<String, FieldAnnotationData> {
-  Map<String, FieldAnnotationData> where(bool Function(Field field) filter) {
+extension FieldFiltering on Map<String, FieldOrmNode> {
+  Map<String, FieldOrmNode> where(bool Function(Field field) filter) {
     return {
-      for (MapEntry<String, FieldAnnotationData> entry in entries)
+      for (MapEntry<String, FieldOrmNode> entry in entries)
         if (filter(entry.value.annotation)) entry.key: entry.value,
     };
   }
 }
 
-class AnnotationData<T> {
-  final T annotation;
-
-  const AnnotationData({required this.annotation});
-}
-
-abstract class ClassAnnotationData<T> extends AnnotationData<T> {
-  final Map<String, FieldAnnotationData> fields;
-
-  const ClassAnnotationData({required super.annotation, required this.fields});
-}
-
-class ModelClassAnnotationData extends ClassAnnotationData<Model> {
-  const ModelClassAnnotationData({
-    required super.annotation,
-    required super.fields,
-  });
-}
-
-class PolymorphicClassAnnotationData extends ClassAnnotationData<PolymorphicData> {
-  final String tag;
-
-  const PolymorphicClassAnnotationData({
-    required super.annotation,
-    required super.fields,
-    required this.tag,
-  });
-}
-
-class FieldAnnotationData extends AnnotationData<Field> {
-  final String type;
-  final bool required;
-
-  const FieldAnnotationData({
-    required super.annotation,
-    required this.type,
-    required this.required,
-  });
-}
-
-/// Holds the static analysis data inside [CustomUidValue].
 class $CustomUidValue implements CustomUidValue {
   final ConstantReader reader;
 
