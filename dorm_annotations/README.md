@@ -18,10 +18,12 @@ dart pub get
 
 ### Models
 
-The `Model` annotation is used to define a model class. It accepts two parameters:
+The `Model` annotation is used to link a database table to a Dart class. 
+
+It accepts two parameters:
 
 - `name`: Specifies the name of the table in the underlying database.
-- `as`: Provides a name for the repository accessor of the model. 
+- `as`: Provides a name for the repository accessor of the model.
 
 ```dart
 import 'package:dorm_annotations/dorm_annotations.dart';
@@ -32,7 +34,8 @@ abstract class _User {}
 
 ### Fields
 
-The `Field` annotation is used to define a field within a model class.
+The `Field` annotation is used to link a database column to a Dart field within a model class.
+
 It accepts the following parameters:
 
 - `name`: Specifies the name of the column in the underlying database.
@@ -70,10 +73,15 @@ The return type of the getters can be [any of the specified](https://pub.dev/pac
 
 ### Foreign fields
 
-The `ForeignField` annotation is used to define a foreign key relationship between two models. 
+The `ForeignField` annotation is used to link a database foreign key to a Dart field within a model class. 
+
+In a relational database, a foreign key is a column in a table that establishes a relationship or association
+with the primary key column of another table. The foreign column helps enforce referential integrity, which 
+ensures that the referenced data exists and remains consistent.
+
 It accepts the following parameters:
 
-- `name`: Specifies the name of the foreign key field in the underlying database.
+- `name`: Specifies the name of the foreign key column in the underlying database.
 - `referTo`: Specifies the model class that the foreign key references.
 
 ```dart
@@ -94,13 +102,23 @@ abstract class _Post {
 
 ### Query fields
 
-The `QueryField` annotation is used to define a field that can optimize queries and filters on the database.
+The `QueryField` annotation is used to link a database index to a Dart field within a model class.
+
+An index is a data structure that improves the speed and efficiency of data retrieval operations on
+database tables. It provides a way to quickly locate and access specific data within a table based on
+the values stored in one or more columns. When a query includes a condition on indexed columns, the 
+database engine can use the index to quickly identify the relevant rows, rather than scanning the entire table.
+
 It accepts the following parameters:
 
 - `name`: Specifies the name of the column in the underlying database.
-- `referTo`: Specifies the query tokens that the field refers to
+- `referTo`: Specifies the query tokens that the field refers to.
+
+#### Single-column indexing
 
 ```dart
+import 'package:dorm_annotations/dorm_annotations.dart';
+
 @Model(name: 'school', as: #schools)
 abstract class _School {
   @Field(name: 'name')
@@ -114,7 +132,166 @@ abstract class _School {
 }
 ```
 
-Applying `Filter.value(true, key: '_query_active')`, described in the `dorm` package should optimize the reading of all active schools.
+Applying `Filter.value(true, key: '_query_active')` (described in the `dorm` package) should optimize the reading of all active schools.
+
+#### Multiple-column indexing
+
+Combining two or more columns in a query involves searching for data based on the values present in
+two or more different columns simultaneously. This type of query allows you to perform logical operations
+on the values of two or more columns, such as concatenation, comparison, or matching patterns.
+Examples of combining two columns include searching for records where the values in column A and column B are equal:
+
+```dart
+import 'package:dorm_annotations/dorm_annotations.dart';
+
+@Model(name: 'school-address', as: #schoolAddresses)
+abstract class _SchoolAddress {
+  @Field(name: 'zip-code')
+  String get zipCode;
+
+  @Field(name: 'number')
+  int get number;
+
+  @QueryField(
+    name: '_query_address',
+    referTo: [QueryToken(#zipCode), QueryToken(#number)],
+    joinBy: '_',
+  )
+  String get _qAddress;
+}
+```
+
+Applying `Filter.value('99950_13', key: '_query_address')` (described in the `dorm` package) 
+should optimize the reading of all addresses with zip code 99950 and number 13.
+
+#### Text indexing
+
+Searching by prefix involves finding records that match a specific prefix or initial set of 
+characters in a given column. This type of query is particularly useful when you want to retrieve data
+based on partial matches or when you only have partial information about the desired data. Examples of
+searching by prefix include searching for names starting with "John" in a column containing full names:
+
+```dart
+import 'package:dorm_annotations/dorm_annotations.dart';
+
+@Model(name: 'student', as: #students)
+abstract class _Student {
+  @Field(name: 'name')
+  String get name;
+
+  @ForeignField(name: 'id-school', referTo: _School)
+  String get schoolId;
+
+  @QueryField(
+    name: '_query_sbn',
+    referTo: [QueryToken(#schoolId), QueryToken(#name, QueryType.text)],
+    joinBy: '#',
+  )
+  String get _qSchoolByName;
+}
+```
+
+Applying `Filter.text('school7319004#Paul', key: '_query_sbn')` (described in the `dorm` package) 
+should optimize the reading of all Pauls studying at the school with ID `school7319004`.
+
+### Composite fields
+
+The `ModelField` annotation is used to link a database composite column to a Dart field within a model class.
+
+In a non-relational database, a composite column refers to a field that can hold a collection of values or
+sub-attributes within a single column. Unlike a simple column that holds a single value, a composite column
+allows for the grouping or nesting of multiple values or sub-attributes together. This can be useful for
+representing complex or structured data within a single field in a non-relational database model.
+
+It accepts the following parameters:
+
+- `name`: Specifies the name of the column in the underlying database.
+- `referTo`: Specifies the model class that should be represented within this field.
+
+```dart
+import 'package:dorm_annotations/dorm_annotations.dart';
+
+@Model(name: 'school-address', as: #schoolAddresses)
+abstract class _SchoolAddress {
+  @Field(name: 'zip-code')
+  String get zipCode;
+}
+
+@Model(name: 'school', as: #schools)
+abstract class _School {
+  @Field(name: 'name')
+  String get name;
+
+  @ModelField(name: 'address', referTo: _SchoolAddress)
+  get address;
+}
+```
+
+### Polymorphism
+
+The `PolymorphicField` annotation is used to link a database composite column and a pivot column 
+to a Dart field within a model class.
+
+In a non-relational database, polymorphism refers to the ability to store different types of objects
+in a single table. It allows for flexible data modeling, where objects of various types can be stored 
+together, and the specific type of each object is determined by a pivot column. A composite column
+stores the specific contents of each subtable, while the remaining columns store the common attributes 
+of the base table.
+
+- The pivot column, represented as a string, is used to identify the specific type or subtable
+  to which each object belongs. It acts as a discriminator, indicating the type of the object stored
+  in the composite column.
+- The composite column holds the contents or attributes specific to each subtable or object type.
+  Depending on the value of the pivot column, the composite column stores the corresponding data
+  structure or format for that specific object type.
+- The remaining columns in the table represent the common attributes shared by all object types.
+  These columns store the general or shared properties that are applicable to all objects,
+  regardless of their specific type.
+
+It accepts the following parameters:
+
+- `name`: Specifies the name of the composite column in the underlying database.
+- `pivotName`: Specifies the name of the pivot column in the underlying database.
+- `pivotAs`: Specifies the name of the pivot field in the Dart class.
+
+```dart
+import 'package:dorm_annotations/dorm_annotations.dart';
+
+abstract class _Action {}
+
+@Model(name: 'operation', as: #operations)
+abstract class _Operation {
+  @Field(name: 'name')
+  String get name;
+
+  @PolymorphicField(name: 'action', pivotName: 'type', pivotAs: #type)
+  _Action get action;
+}
+```
+
+The `PolymorphicData` is used to create a composite object of a polymorphic field:
+
+```dart
+import 'package:dorm_annotations/dorm_annotations.dart';
+
+@PolymorphicData(name: 'attack')
+abstract class _Attack implements _Action {
+  @Field(name: 'strength')
+  int get strength;
+}
+
+@PolymorphicData(name: 'defence')
+abstract class _Defense implements _Action {
+  @Field(name: 'resistence')
+  int get resistence;
+}
+
+@PolymorphicData(name: 'healing')
+abstract class _Healing implements _Action {
+  @Field(name: 'health')
+  int get health;
+}
+```
 
 ### Unique identification
 
@@ -138,6 +315,8 @@ These types determine how the unique identifier (id) of a model is defined and g
 You can specify the unique identification of a model through `UidType`:
 
 ```dart
+import 'package:dorm_annotations/dorm_annotations.dart';
+
 @Model(name: 'country', as: #countries, uidType: UidType.simple())
 abstract class _Country {}
 
@@ -147,8 +326,8 @@ abstract class _State {}
 @Model(name: 'capital', as: #capitals, uidType: UidType.sameAs(_Country))
 abstract class _Capital {}
 
-CustomUidValue _identifyCitizen(Object obj) {
-  final _Citizen data = obj as _Citizen; 
+CustomUidValue _identifyCitizen(Object data) {
+  data as _Citizen; 
   if (data.isForeigner) {
     return CustomUidValue.value(data.visaCode);
   }
@@ -159,43 +338,4 @@ CustomUidValue _identifyCitizen(Object obj) {
 }
 @Model(name: 'citizen', as: #citizens, uidType: UidType.custom(_identifyCitizen))
 abstract class _Citizen {}
-```
-
-### Polymorphism
-
-If you have a model that may contain different fields for different types, you can use 
-`PolymorphicData` together with `PolymorphicField` to represent it on the database. 
-
-For example, you have a RPG database with a abstract schema named `Operation` and wants
-to derive `Attack`, `Defense` and `Healing` from it. You can use the following:
-
-```dart
-abstract class _Action {}
-
-@PolymorphicData(name: 'attack')
-abstract class _Attack implements _Action {
-  @Field(name: 'strength')
-  int get strength;
-}
-
-@PolymorphicData(name: 'defence')
-abstract class _Defense implements _Action {
-  @Field(name: 'resistence')
-  int get resistence;
-}
-
-@PolymorphicData(name: 'healing')
-abstract class _Healing implements _Action {
-  @Field(name: 'health')
-  int get health;
-}
-
-@Model(name: 'operation', as: #operations)
-abstract class _Operation {
-  @Field(name: 'name')
-  String get name;
-
-  @PolymorphicField(name: 'action', pivotName: 'type')
-  _Action get action;
-}
 ```
