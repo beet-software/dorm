@@ -7,14 +7,14 @@ import 'package:firebase_database/firebase_database.dart' as fd;
 enum OfflineMode {
   /// Fetches data ONLY when the application is online.
   ///
-  /// If you try to [FirebaseQuery.onValue] or [FirebaseQuery.get] while offline,
+  /// If you try to [Query.onValue] or [Query.get] while offline,
   /// the query will hang indefinitely.
   exclude,
 
   /// Fetches data when the application is online, from remote database, and
   /// offline, from local cache.
   ///
-  /// If you try to [FirebaseQuery.onValue] or [FirebaseQuery.get] while offline,
+  /// If you try to [Query.onValue] or [Query.get] while offline,
   /// the query will return the cached instances, if any.
   include,
 }

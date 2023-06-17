@@ -109,30 +109,34 @@ abstract class Entity<Data, Model extends Data> {
 }
 
 class DatabaseEntity<Data, Model extends Data> implements Entity<Data, Model> {
-  final Entity<Data, Model> entity;
-  final Reference reference;
+  final Entity<Data, Model> _entity;
+  final BaseReference _reference;
 
-  const DatabaseEntity(this.entity, {required this.reference});
+  const DatabaseEntity(
+    Entity<Data, Model> entity, {
+    required BaseReference reference,
+  })  : _entity = entity,
+        _reference = reference;
 
   Repository<Data, Model> get repository =>
-      Repository(root: reference, entity: this);
+      Repository(root: _reference, entity: _entity);
 
   @override
-  Model convert(Model model, Data data) => entity.convert(model, data);
+  Model convert(Model model, Data data) => _entity.convert(model, data);
 
   @override
   Model fromData(covariant Dependency<Data> dependency, String id, Data data) =>
-      entity.fromData(dependency, id, data);
+      _entity.fromData(dependency, id, data);
 
   @override
-  Model fromJson(String id, Map data) => entity.fromJson(id, data);
+  Model fromJson(String id, Map data) => _entity.fromJson(id, data);
 
   @override
-  String identify(Model model) => entity.identify(model);
+  String identify(Model model) => _entity.identify(model);
 
   @override
-  String get tableName => entity.tableName;
+  String get tableName => _entity.tableName;
 
   @override
-  Map<String, Object?> toJson(Data data) => entity.toJson(data);
+  Map<String, Object?> toJson(Data data) => _entity.toJson(data);
 }

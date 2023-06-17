@@ -9,64 +9,17 @@ class FilterRange<T> {
   const FilterRange({this.from, this.to});
 }
 
-class DateFilterRange implements FilterRange<String> {
-  static String? _convert(DateTime? dt, {DateFilterUnit? unit}) {
-    if (dt == null) return null;
-
-    // yyyy-MM-ddTHH:mm:ss.mmmuuuZ
-    final String value = dt.toIso8601String();
-    switch (unit) {
-      case null:
-        return value;
-      case DateFilterUnit.year:
-        return value.substring(0, 4);
-      case DateFilterUnit.month:
-        return value.substring(0, 7);
-      case DateFilterUnit.day:
-        return value.substring(0, 10);
-      case DateFilterUnit.hour:
-        return value.substring(0, 13);
-      case DateFilterUnit.minute:
-        return value.substring(0, 16);
-      case DateFilterUnit.second:
-        return value.substring(0, 19);
-      case DateFilterUnit.milliseconds:
-        return value.substring(0, 23);
-    }
-  }
-
-  final DateTime? _from;
-  final DateTime? _to;
-  final DateFilterUnit? unit;
+class DateFilterRange extends FilterRange<DateTime> {
+  final DateFilterUnit unit;
 
   const DateFilterRange({
-    DateTime? from,
-    DateTime? to,
-    this.unit,
-  })  : _from = from,
-        _to = to;
-
-  @override
-  String? get from => _convert(_from, unit: unit);
-
-  @override
-  String? get to => _convert(_to, unit: unit);
+    super.from,
+    super.to,
+    this.unit = DateFilterUnit.milliseconds,
+  });
 }
 
 abstract class Filter {
-  static String normalizeText(String text) {
-    const t0 = 'ÀÁÂÃÄÅàáâãäåÒÓÔÕÕÖØòóôõöøÈÉÊËèéêëðÇçÐÌÍÎÏìíîïÙÚÛÜùúûüÑñŠšŸÿýŽž';
-    const t1 = 'AAAAAAaaaaaaOOOOOOOooooooEEEEeeeeeCcDIIIIiiiiUUUUuuuuNnSsYyyZz';
-
-    String result = text;
-    for (int i = 0; i < t0.length; i++) {
-      result = result.replaceAll(t0[i], t1[i]);
-    }
-    result = result.toUpperCase();
-    result = result.replaceAll(RegExp('[^A-Z]'), '');
-    return result;
-  }
-
   const factory Filter.empty() = _EmptyFilter;
 
   const factory Filter.value(
@@ -77,7 +30,6 @@ abstract class Filter {
   const factory Filter.text(
     String text, {
     required String key,
-    bool normalized,
   }) = _TextFilter;
 
   const factory Filter.textRange(
@@ -98,12 +50,12 @@ abstract class Filter {
   const factory Filter.date(
     DateTime date, {
     required String key,
-    DateFilterUnit? unit,
+    DateFilterUnit unit,
   }) = _DateFilter;
 
   const Filter._();
 
-  Query apply(Query reference);
+  T accept<T>(BaseQuery<T> query);
 
   Filter limit(int value) => _LimitFilter(this, count: value);
 }
@@ -112,7 +64,7 @@ class _EmptyFilter extends Filter {
   const _EmptyFilter() : super._();
 
   @override
-  Query apply(Query reference) => reference;
+  T accept<T>(BaseQuery<T> query) => query.limit(0);
 }
 
 class _ValueFilter extends Filter {
@@ -122,28 +74,17 @@ class _ValueFilter extends Filter {
   const _ValueFilter(this.value, {required this.key}) : super._();
 
   @override
-  Query apply(Query reference) {
-    return reference.orderByChild(key).equalTo(value);
-  }
+  T accept<T>(BaseQuery<T> query) => query.whereValue(key, value);
 }
 
 class _TextFilter extends Filter {
   final String key;
   final String text;
-  final bool normalized;
 
-  const _TextFilter(
-    this.text, {
-    required this.key,
-    this.normalized = false,
-  }) : super._();
+  const _TextFilter(this.text, {required this.key}) : super._();
 
   @override
-  Query apply(Query reference) {
-    final String text = this.text;
-    final String value = normalized ? Filter.normalizeText(text) : text;
-    return reference.orderByChild(key).startAt(value).endAt('$value\uf8ff');
-  }
+  T accept<T>(BaseQuery<T> query) => query.whereText(key, text);
 }
 
 enum DateFilterUnit {
@@ -159,37 +100,26 @@ enum DateFilterUnit {
 class _DateFilter extends Filter {
   final String key;
   final DateTime value;
-  final DateFilterUnit? unit;
+  final DateFilterUnit unit;
 
-  const _DateFilter(this.value, {required this.key, this.unit}) : super._();
+  const _DateFilter(
+    this.value, {
+    required this.key,
+    this.unit = DateFilterUnit.milliseconds,
+  }) : super._();
 
   @override
-  Query apply(Query reference) {
-    final String? value = DateFilterRange._convert(this.value, unit: unit);
-    if (value == null) return reference;
-    return Filter.text(value, key: key).apply(reference);
-  }
+  T accept<T>(BaseQuery<T> query) => query.whereDate(key, value, unit);
 }
 
-abstract class _RangeFilter<T> extends Filter {
+abstract class _RangeFilter<R> extends Filter {
   final String key;
-  final FilterRange<T> range;
+  final FilterRange<R> range;
 
   const _RangeFilter(this.range, {required this.key}) : super._();
 
   @override
-  Query apply(Query reference) {
-    final T? from = range.from;
-    final T? to = range.to;
-
-    Query ref = reference;
-    if (from == null && to == null) return ref;
-
-    ref = ref.orderByChild(key);
-    if (from != null) ref = ref.startAt(from);
-    if (to != null) ref = ref.endAt(to);
-    return ref;
-  }
+  T accept<T>(BaseQuery<T> query) => query.whereRange(key, range);
 }
 
 class _TextRangeFilter extends _RangeFilter<String?> {
@@ -200,7 +130,7 @@ class _NumericRangeFilter extends _RangeFilter<double?> {
   const _NumericRangeFilter(super.range, {required super.key});
 }
 
-class _DateRangeFilter extends _RangeFilter<String?> {
+class _DateRangeFilter extends _RangeFilter<DateTime?> {
   const _DateRangeFilter(DateFilterRange range, {required super.key})
       : super(range);
 }
@@ -212,10 +142,5 @@ class _LimitFilter extends Filter {
   const _LimitFilter(this.filter, {required this.count}) : super._();
 
   @override
-  Query apply(Query reference) {
-    final Query result = filter.apply(reference);
-    if (count < 0) return result.limitToLast(count.abs());
-    if (count > 0) return result.limitToFirst(count);
-    return result;
-  }
+  T accept<T>(BaseQuery<T> query) => query.limit(count);
 }

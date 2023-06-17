@@ -1,8 +1,4 @@
-import 'dependency.dart';
-import 'entity.dart';
-import 'filter.dart';
-import 'reference.dart';
-import 'relationship.dart';
+import 'package:dorm/dorm.dart';
 
 abstract class SingleReadOperation<Model> {
   /// Selects a model in this table, given its [id].
@@ -121,108 +117,67 @@ abstract class DataRepository<Data, Model extends Data>
 
 class Repository<Data, Model extends Data>
     implements DataRepository<Data, Model> {
-  final Reference root;
-  final Entity<Data, Model> entity;
+  final BaseReference _root;
+  final Entity<Data, Model> _entity;
 
-  const Repository({required this.root, required this.entity});
-
-  Reference get _ref => root.child(entity.tableName);
+  const Repository({
+    required BaseReference root,
+    required Entity<Data, Model> entity,
+  })  : _root = root,
+        _entity = entity;
 
   @override
   Future<Model?> peek(String id) {
-    return _ref //
-        .child(id)
-        .get()
-        .then((value) =>
-            value == null ? null : entity.fromJson(id, value as Map));
+    return _root.peek(_entity, id);
   }
 
   @override
   Future<List<Model>> peekAll([Filter filter = const Filter.empty()]) {
-    return filter //
-        .apply(_ref)
-        .getChildren()
-        .then((values) {
-      if (values.isEmpty) return [];
-      return values.entries.map((entry) {
-        final String key = entry.key;
-        final Map value = entry.value as Map;
-        return entity.fromJson(key, value);
-      }).toList();
-    });
+    return _root.peekAll(_entity, filter);
   }
 
   @override
   Future<List<String>> peekAllKeys() {
-    return _ref.shallow();
+    return _root.peekAllKeys(_entity);
   }
 
   @override
   Future<void> pop(String id) async {
-    _ref.child(id).remove();
+    return _root.pop(_entity, id);
   }
 
   @override
-  Future<void> popAll(Iterable<String> ids) async {
-    _ref.update({for (String id in ids) id: null});
+  Future<void> popAll(Iterable<String> ids) {
+    return _root.popAll(_entity, ids);
   }
 
   @override
   Stream<Model?> pull(String id) {
-    return _ref //
-        .child(id)
-        .onValue
-        .map((value) =>
-            value == null ? null : entity.fromJson(id, value as Map));
+    return _root.pull(_entity, id);
   }
 
   @override
   Stream<List<Model>> pullAll([Filter filter = const Filter.empty()]) {
-    return filter //
-        .apply(_ref)
-        .onChildren
-        .map((values) {
-      if (values.isEmpty) return [];
-      return values.entries.map((entry) {
-        final String key = entry.key;
-        final Map value = entry.value as Map;
-        return entity.fromJson(key, value);
-      }).toList();
-    });
+    return _root.pullAll(_entity, filter);
   }
 
   @override
   Future<Model> put(Dependency<Data> dependency, Data data) async {
-    return putAll(dependency, [data]).then((models) => models.single);
+    return _root.put(_entity, dependency, data);
   }
 
   @override
-  Future<List<Model>> putAll(
-    Dependency<Data> dependency,
-    List<Data> datum,
-  ) async {
-    final List<Model> models = [];
-    for (Data data in datum) {
-      final Reference ref = _ref.push();
-      final String id = ref.key as String;
-      final Model model = entity.fromData(dependency, id, data);
-      models.add(model);
-    }
-    _ref.update({
-      for (Model model in models) entity.identify(model): entity.toJson(model),
-    });
-    return models;
+  Future<List<Model>> putAll(Dependency<Data> dependency, List<Data> datum) {
+    return _root.putAll(_entity, dependency, datum);
   }
 
   @override
   Future<void> push(Model model) async {
-    return pushAll([model]);
+    return _root.push(_entity, model);
   }
 
   @override
   Future<void> pushAll(List<Model> models) async {
-    _ref.update({
-      for (Model model in models) entity.identify(model): entity.toJson(model),
-    });
+    return _root.pushAll(_entity, models);
   }
 }
