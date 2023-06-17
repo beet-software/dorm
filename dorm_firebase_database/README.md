@@ -2,25 +2,23 @@
 
 A dORM's Reference implementation using `firebase_database`.
 
-## Features
-
-This package exposes two classes - `FirebaseQuery` and `FirebaseReference` - to use with dORM if
-your application needs the [`firebase_database` package](https://pub.dev/packages/firebase_database).
-It also exposes a `FirebaseInstance` class to manage the current Firebase app.
-
 ## Getting started
 
-Add the following in your *pubspec.yaml* file:
+Run the following commands in your command prompt:
 
-```yaml
-dependencies:
-  firebase_core:
-  dorm_firebase_database:
+```shell
+dart pub add dorm_firebase_database
 ```
 
-## Usage
+Using `dorm_annotations` and `dorm_generator`, generate your dORM code:
 
-### Initializing
+```shell
+dart run build_runner build
+```
+
+This will create a `Dorm` class, which you can use to connect to this package.
+
+## Usage
 
 Before accessing any Firebase classes, initialize your app:
 
@@ -36,9 +34,7 @@ void main() async {
 }
 ```
 
-### Accessing
-
-First create a `FirebaseInstance`, a class that manages your current Firebase app:
+Create a `FirebaseInstance`, a class that manages your current Firebase app:
 
 ```dart
 const FirebaseInstance instance = FirebaseInstance();
@@ -50,18 +46,16 @@ final FirebaseInstance instance = FirebaseInstance.custom(Firebase.app('app-1'))
 const FirebaseInstance instance = FirebaseInstance(offlineMode: OfflineMode.include);
 ```
 
-With this instance, create a `FirebaseReference`:
+With this instance, create a `Reference`:
 
 ```dart
-final FirebaseReference reference = FirebaseReference(instance);
+final Reference reference = Reference(instance);
 
 // Alternatively, if you want to create your database under 'production/'
-final FirebaseReference reference = FirebaseReference(instance, 'production');
+final Reference reference = Reference(instance, 'production');
 ```
 
-### Integrating with dORM
-
-Pass the reference created above to your generated `Dorm` class:
+Finally, pass the reference created above to your generated `Dorm` class:
 
 ```dart
 final Dorm dorm = Dorm(reference);
