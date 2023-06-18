@@ -11,6 +11,8 @@ This ORM uses separation of concerns as the main concept of its framework:
 - The **controller** (*how* to manipulate) represents the database operations. This is where you
   create, read, update and delete the models of your database.
 
+![](https://i.imgur.com/fBpjhA5.png)
+
 ## Getting started
 
 Inside a Dart (or Flutter) project, run the following lines in your command prompt:
