@@ -26,7 +26,7 @@ Create a `Reference`:
 final Reference reference = Reference();
 ```
 
-Finally, pass the reference created above to your generated `Dorm` class:
+Then pass the reference created above to your generated `Dorm` class:
 
 ```dart
 final Dorm dorm = Dorm(reference);
