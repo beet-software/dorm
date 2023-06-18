@@ -20,7 +20,12 @@ dependencies:
       url: https://github.com/enzo-santos/dorm.git
       ref: main
       path: dorm_annotations
+  dartx: ^1.1.0
 
 dev_dependencies:
   lints: ^2.0.0
   build_runner: ^2.1.11
+
+dependency_overrides:
+  dorm_annotations:
+    path: ../dorm_annotations
