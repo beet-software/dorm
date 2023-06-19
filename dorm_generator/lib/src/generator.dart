@@ -987,11 +987,11 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
             final String? name = (entry.value.annotation as QueryField).name;
             if (name == null) continue;
             final List<String> segments = name.split('/');
+            final cb.Expression child = expressionOf(entry.key);
             if (segments.length == 1) {
-              queryObject[name] = cb.literalString(entry.key);
+              queryObject[name] = child;
             } else {
-              queries.putIfAbsent(segments[0], () => {})[segments[1]] =
-                  entry.key;
+              queries.putIfAbsent(segments[0], () => {})[segments[1]] = child;
             }
           }
           if (queries.isNotEmpty) {
