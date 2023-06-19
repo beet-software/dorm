@@ -2,18 +2,16 @@
 
 An Object Relational Mapper framework for Dart.
 
-## Installing
+## Getting started
 
 Run the following commands in your Dart or Flutter project:
 
 ```bash
-dart pub add dorm \
-  --git-url https://github.com/enzo-santos/dorm.git \
-  --git-ref main \
-  --git-path dorm
+dart pub add dorm
+dart pub get
 ```
 
-## The framework
+## Usage
 
 A database schema in this framework is split into two classes: its data and its model. The
 schema data contains all the data used by the real world to represent it, while the schema
@@ -182,7 +180,7 @@ class Student extends StudentData {
 }
 ```
 
-Don't be afraid to also use a serialization library, such as [`json_serializable`](https://pub.dev/packages/json_serializable).
+Feel free to also use a serialization library, such as [`json_serializable`](https://pub.dev/packages/json_serializable).
 
 ### Dependency
 
@@ -575,7 +573,7 @@ filter = Filter.date(dt, key: 'birth-date', unit: DateFilterUnit.hour);
 
 To filter on ranges, you can use the `Range` class:
 
-```
+```dart
 late Filter filter;
 
 // name: ABC, ABD, ABE, ABF
@@ -668,7 +666,7 @@ This way, you can create complex relationship queries.
 
 Another example showing how you can combine relationships:
 
-``` dart
+```dart
 class Country {
   final String id;
 }
@@ -710,4 +708,4 @@ final List<Join<Country, List<Join<State, Capital?>>>> joins =
 ## Automatizing the setup
 
 Found all too much? You can run all these steps using code generation provided 
-by `dorm_generator`.
+by `dorm_annotations` and `dorm_generator`.

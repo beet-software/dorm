@@ -1,0 +1,39 @@
+name: example
+description: A new Flutter project.
+publish_to: none
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.3 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  dorm:
+    path: ../../dorm
+  dorm_annotations:
+    path: ../../dorm_annotations
+  dorm_bloc_database:
+    path: ../../dorm_bloc_database
+  get_it: ^7.6.0
+  provider: ^6.0.5
+  decimal: ^2.3.2
+
+dev_dependencies:
+  flutter_lints: ^2.0.0
+  build_runner: ^2.4.3
+  dorm_generator:
+    path: ../../dorm_generator
+
+flutter:
+  uses-material-design: true
+
+dependency_overrides:
+  dorm:
+    path: ../../dorm
+  dorm_annotations:
+    path: ../../dorm_annotations
+  dorm_bloc_database:
+    path: ../../dorm_bloc_database
+  dorm_generator:
+    path: ../../dorm_generator

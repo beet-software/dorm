@@ -1,0 +1,23 @@
+name: dorm_bloc_database
+description: A dORM's Reference implementation using bloc.
+version: 0.3.0
+publish_to: none
+
+environment:
+  sdk: '>=2.17.3 <3.0.0'
+
+dependencies:
+  bloc: ^8.1.2
+  uuid: ^3.0.7
+  dorm:
+    git:
+      url: https://github.com/enzo-santos/dorm.git
+      ref: main
+      path: dorm
+
+dev_dependencies:
+  lints: ^2.0.1
+
+dependency_overrides:
+  dorm:
+    path: ../dorm

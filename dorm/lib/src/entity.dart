@@ -2,51 +2,47 @@ import 'dependency.dart';
 import 'reference.dart';
 import 'repository.dart';
 
+/// Represents the conversion of a [Model] into dORM's model system.
 abstract class Entity<Data, Model extends Data> {
-  /// The name of the database table of this entity.
-  ///
-  /// ```dart
-  /// final Entity<SchoolData, School> entity = ...;
-  ///
-  /// // Firebase example
-  /// final DataSnapshot snapshot = await FirebaseDatabase
-  ///     .instance
-  ///     .ref(entity.tableName)
-  ///     .get();
-  ///
-  /// print(snapshot.children.length);    // The number of schools on the database
-  /// ```
+  /// The name of the table of this entity in the underlying database engine.
   String get tableName;
 
-  /// Converts an [id] and its [data] as JSON on the database to a [Model].
+  /// Deserializes the [id] and the [data] of a row in the underlying database
+  /// engine to a [Model].
   ///
   /// ```dart
   /// final Entity<SchoolData, School> entity = ...;
   ///
-  /// // Firebase example
-  /// final DataSnapshot snapshot = await FirebaseDatabase
-  ///     .instance
-  ///     .ref('schools/1')
-  ///     .get();
-  ///
-  /// final String id = snapshot.key;            // '1'
-  /// final Map data = snapshot.value as Map;    // {name: "S1", active: false}
+  /// const String id = 'd12207624e35';
+  /// const Map<String, Object?> data = {'name': 'S1', 'active': false};
   ///
   /// final School school = entity.fromJson(id, data);
-  /// print(school.id);        // '1'
+  /// print(school.id);        // 'd12207624e35'
   /// print(school.name);      // 'S1'
   /// print(school.active);    // false
   /// ```
+  ///
+  /// In most of the cases, this method implementation is
+  ///
+  /// ```dart
+  /// Model fromJson(String id, Map data) => Model.fromJson(id, data);
+  /// ```
   Model fromJson(String id, Map data);
 
-  /// Converts [data] to a JSON representation.
+  /// Serializes [data] to the underlying database engine representation.
   ///
   /// ```dart
   /// final Entity<SchoolData, School> entity = ...;
   ///
-  /// final School school = School(id: '1', name: 'S1', active: false);
+  /// final School school = School(id: 'd12207624e35', name: 'S1', active: false);
   /// final Map<String, Object?> json = entity.toJson(school);
-  /// print(json);    // {name: "S1", active: false}
+  /// print(json);    // {'name': 'S1', 'active': false}
+  /// ```
+  ///
+  /// In most of the cases, this method implementation is
+  ///
+  /// ```dart
+  /// Map<String, Object?> toJson(Data data) => data.toJson();
   /// ```
   Map<String, Object?> toJson(Data data);
 
@@ -55,25 +51,25 @@ abstract class Entity<Data, Model extends Data> {
   ///
   /// ```dart
   /// final Entity<SchoolData, School> entity = ...;
-  /// final SchoolData data = SchoolData(name: 'S1', active: true);
-  /// final School school = School(id: '1', name: 'S2', active: false);
+  /// final School school = School(id: 'd12207624e35', name: 'S1', active: false);
+  /// final SchoolData data = SchoolData(name: 'S2', active: true);
   ///
   /// final School updatedSchool = entity.convert(school, data);
-  /// print(updatedSchool.id);        // '1'
-  /// print(updatedSchool.name);      // 'S1'
-  /// print(updatedSchool.active);    // true
+  /// print(updatedSchool.id);        // 'd12207624e35'
+  /// print(updatedSchool.name);      // 'S2'
+  /// print(updatedSchool.active);    // false
   /// ```
   ///
   /// Act as a `copyWith` method and is useful when editing existing data
   /// through a form.
   Model convert(Model model, Data data);
 
-  /// Builds a [Model] using its [dependency], an unique [id] and its [data].
+  /// Creates a [Model] using its [dependency], an unique [id] and its [data].
   ///
   /// ```dart
-  /// final School school = School(id: '1', name: 'S1', active: true);
+  /// final School school = School(id: 'd12207624e35', name: 'S1', active: true);
   /// final Dependency<StudentData> dependency = StudentDependency(schoolId: school.id);
-  /// final String id = ...;   // Can be Uuid().v4() from `uuid` package
+  /// final String id = 'cc03334e70a9';
   /// final StudentData data = StudentData(name: 'John', birthDate: DateTime(1942, 6, 13));
   ///
   /// final Entity<StudentData, Student> entity = ...;
@@ -92,15 +88,15 @@ abstract class Entity<Data, Model extends Data> {
   /// Its useful when modeling *new* data received from a form.
   Model fromData(covariant Dependency<Data> dependency, String id, Data data);
 
-  /// Provides a way to uniquely identify this model.
+  /// Uniquely identify a [model].
   ///
   /// ```dart
   /// final Entity<SchoolData, School> entity = ...;
-  /// final School school = School(id: '1', name: 'S2', active: false);
-  /// print(entity.identify(school));    // '1'
+  /// final School school = School(id: 'd12207624e35', name: 'S2', active: false);
+  /// print(entity.identify(school));    // 'd12207624e35'
   /// ```
   ///
-  /// Most of the cases, this method implementation is
+  /// In most of the cases, this method implementation is
   ///
   /// ```
   /// String identify(Model model) => model.id;
@@ -108,31 +104,37 @@ abstract class Entity<Data, Model extends Data> {
   String identify(Model model);
 }
 
+/// Represents the bridge between a database engine and a controller.
 class DatabaseEntity<Data, Model extends Data> implements Entity<Data, Model> {
-  final Entity<Data, Model> entity;
-  final Reference reference;
+  final Entity<Data, Model> _entity;
+  final BaseReference _reference;
 
-  const DatabaseEntity(this.entity, {required this.reference});
+  const DatabaseEntity(
+    Entity<Data, Model> entity, {
+    required BaseReference reference,
+  })  : _entity = entity,
+        _reference = reference;
 
+  /// The controller of this entity.
   Repository<Data, Model> get repository =>
-      Repository(root: reference, entity: this);
+      Repository(root: _reference, entity: _entity);
 
   @override
-  Model convert(Model model, Data data) => entity.convert(model, data);
+  Model convert(Model model, Data data) => _entity.convert(model, data);
 
   @override
   Model fromData(covariant Dependency<Data> dependency, String id, Data data) =>
-      entity.fromData(dependency, id, data);
+      _entity.fromData(dependency, id, data);
 
   @override
-  Model fromJson(String id, Map data) => entity.fromJson(id, data);
+  Model fromJson(String id, Map data) => _entity.fromJson(id, data);
 
   @override
-  String identify(Model model) => entity.identify(model);
+  String identify(Model model) => _entity.identify(model);
 
   @override
-  String get tableName => entity.tableName;
+  String get tableName => _entity.tableName;
 
   @override
-  Map<String, Object?> toJson(Data data) => entity.toJson(data);
+  Map<String, Object?> toJson(Data data) => _entity.toJson(data);
 }

@@ -1152,7 +1152,7 @@ class OrmGenerator extends Generator {
         b.name = 'Dorm';
         b.fields.add(cb.Field((b) {
           b.modifier = cb.FieldModifier.final$;
-          b.type = cb.Reference('Reference', '$_dormUrl');
+          b.type = cb.Reference('BaseReference', '$_dormUrl');
           b.name = '_root';
         }));
         b.constructors.add(cb.Constructor((b) {
