@@ -13,11 +13,18 @@ dependencies:
     path: ../../dorm
   dorm_annotations:
     path: ../../dorm_annotations
+  dorm_firebase_database:
+    path: ../../dorm_firebase_database
   dorm_bloc_database:
     path: ../../dorm_bloc_database
+
   get_it: ^7.6.0
-  provider: ^6.0.5
   decimal: ^2.3.2
+  provider: ^6.0.5
+  device_preview: ^1.1.0
+  flutter_form_bloc: ^0.30.1
+  intl: ^0.17.0
+  flutter_spinbox: ^0.13.1
 
 dev_dependencies:
   flutter_lints: ^2.0.0
@@ -37,3 +44,4 @@ dependency_overrides:
     path: ../../dorm_bloc_database
   dorm_generator:
     path: ../../dorm_generator
+  intl: 0.17.0

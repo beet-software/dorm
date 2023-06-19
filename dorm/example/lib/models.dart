@@ -48,16 +48,13 @@ abstract class _Product {
 
   @QueryField(
     name: '_q-name',
-    referTo: [QueryToken(#username, QueryType.text)],
+    referTo: [QueryToken(#name, QueryType.text)],
   )
   String get _qName;
 }
 
-@Model(name: 'Orders', as: #orders, uidType: UidType.sameAs(_User))
-abstract class _Order {
-  @Field(name: 'total-amount')
-  int get amount;
-
+@Model(name: 'Carts', as: #carts, uidType: UidType.sameAs(_User))
+abstract class _Cart {
   @Field(name: 'timestamp')
   DateTime get timestamp;
 
@@ -65,16 +62,16 @@ abstract class _Order {
   String get userId;
 }
 
-@Model(name: 'OrderItems', as: #orderItems)
-abstract class _OrderItem {
-  @Field(name: 'quantity')
-  int get quantity;
+@Model(name: 'CartItems', as: #cartItems)
+abstract class _CartItem {
+  @Field(name: 'amount')
+  int get amount;
 
   @ForeignField(name: 'product-id', referTo: _Product)
   String get productId;
 
-  @ForeignField(name: 'order-id', referTo: _Order)
-  String get orderId;
+  @ForeignField(name: 'cart-id', referTo: _Cart)
+  String get cartId;
 }
 
 abstract class _ReviewContent {}
