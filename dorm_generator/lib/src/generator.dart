@@ -1043,7 +1043,17 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
                 );
               }
 
-              final FieldOrmNode? referredField = this[symbolName];
+              final FieldOrmNode? referredField = this[symbolName] ??
+                  where(FieldFilter.isA<PolymorphicField>)
+                      .values
+                      .firstOrNullWhere((node) {
+                    final PolymorphicField field =
+                        node.annotation as PolymorphicField;
+                    final $Symbol? pivotSymbol = field.pivotAs as $Symbol?;
+                    if (pivotSymbol == null) return false;
+                    return (pivotSymbol.name ?? 'type') == symbolName;
+                  });
+
               if (referredField == null ||
                   referredField.annotation is QueryField) {
                 throw StateError(
