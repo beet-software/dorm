@@ -1,5 +1,6 @@
 library dorm_annotations;
 
+export 'package:json_annotation/json_annotation.dart';
 export 'src/field.dart';
 export 'src/helpers.dart';
 export 'src/model.dart';
