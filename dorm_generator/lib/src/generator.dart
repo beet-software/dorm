@@ -1031,6 +1031,7 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
       if (field.referTo.isEmpty) continue;
 
       yield cb.Method((b) {
+        b.annotations.add(expressionOf('override'));
         b.returns = cb.Reference(entry.value.type);
         b.type = cb.MethodType.getter;
         b.name = entry.key;
