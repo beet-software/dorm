@@ -806,7 +806,8 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
               b.name = 'id';
             }));
           }
-          b.optionalParameters.addAll(entries.expand((entry) sync* {
+          b.optionalParameters.addAll(
+              where(FieldFilter.belongsToSchema).entries.expand((entry) sync* {
             final String fieldName = entry.key;
             final String fieldType = entry.value.type;
 
@@ -866,7 +867,9 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
                 [],
                 {
                   if (baseName != null) 'id': expressionOf('id'),
-                  ...Map.fromEntries(entries.expand((entry) sync* {
+                  ...Map.fromEntries(where(FieldFilter.belongsToSchema)
+                      .entries
+                      .expand((entry) sync* {
                     final String fieldName = entry.key;
                     final String fieldType = entry.value.type;
 
