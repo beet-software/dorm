@@ -5,7 +5,7 @@ An Object Relational Mapper library for Dart.
 This ORM uses separation of concerns as the main concept of its framework: 
 
 - The **model** (*what* to manipulate) represents the database schema. If you have an UML diagram
-  of your database, containig the tables, columns and relationships, you can represent it the framework.
+  of your database, containing the tables, columns and relationships, you can represent it the framework.
 - The **engine** (*where* to manipulate) represents the database driver. You can implement your custom
   database engine to work with dORM without affecting your schema or your controller.
 - The **controller** (*how* to manipulate) represents the database operations. This is where you
@@ -83,6 +83,111 @@ Here's a step-by-step guide:
 
 You can find an *example/* folder inside *every* package mentioned above, containing specific examples
 on how to use them. Note that you will not learn the framework just by reading this document or exploring
-just one of the packages above. Every documentation completes the other.
+just one of the packages above. Each documentation complements the other.
 
-## 
+## Disclaimers
+
+dORM does NOT yet handle
+
+- transactions
+- many-to-many relationships
+- sorting on the remote side
+
+These features may be supported in future releases.
+
+## Implementing your own engine
+
+If you want to implement a new database engine for dORM, you can look at `dorm_bloc_database`
+and `dorm_firebase_database` as a base to learn how to implement your own driver, such as MySQL or PostgreSQL.
+
+Basically,
+
+1. Create a new Dart package.
+
+   ```shell
+   dart create -t package dorm_<DRIVER>_database
+   cd dorm_<DRIVER>_database
+   ```
+
+2. Add `dorm` as dependency of your package:
+
+   ```shell
+   dart pub add dorm
+   # Optionally, add lints to your project
+   dart pub add dev:lints
+   ```
+
+3. Make a directory at *lib/src* and create two files: *query.dart* and *reference.dart*.
+4. Inside *query.dart*, add the following contents:
+
+   ```dart
+   import 'package:dorm/dorm.dart';
+
+   class Query implements BaseQuery<Query> { /* ... */ }
+   ```
+
+   As a convention, this class should be named `Query` and should be marked as constant.
+   Add an object as a field of this class such that your database package can handle queries
+   using it. Accept this field as a parameter in the constructor of this class:
+
+   ```dart
+   import 'package:dorm/dorm.dart';
+
+   class Query implements BaseQuery<Query> {
+     final T value;
+
+     const Query({required this.value});
+   }
+   ```
+
+   For every implemented method, you should manipulate this object and create a new `Query` instance
+   with that updated value. [Purely as an pseudocode](https://www.explainxkcd.com/wiki/index.php/327:_Exploits_of_a_Mom), this is a way of doing it using SQL:
+
+   ```dart
+   import 'package:dorm/dorm.dart';
+
+   class Query implements BaseQuery<Query> {
+     final String cmd;
+
+     const Query({required this.cmd});
+
+       @override
+       Query whereValue(String key, Object? value) {
+         return Query(cmd: '$cmd WHERE $key = $value');
+       }
+   }
+   ```
+
+   Implement every method inherited from `BaseQuery`.
+
+5. Inside *reference.dart*, add the following contents:
+
+   ```dart
+   import 'package:dorm/dorm.dart';
+
+   class Reference implements BaseReference { /* ... */ }
+   ```
+
+   As a convention, this class should be named `Reference` and should not necessarily be marked as constant.
+
+   Read the docstring of the methods declared inside `BaseReference` to know how to implement each one.
+   Each method receives as first parameter an `Entity`, which you can access table informations such as
+   its name on the database, how to create a new model and how to (de)serialize an existing model.
+
+7. Inside *lib/dorm_<DRIVER>_database.dart*, add the following contents:
+
+   ```dart
+   library dorm_<DRIVER>_database;
+
+   // Add zero or more third-party exports you may find relevant 
+   export 'package:foo/bar.dart';
+
+   export 'src/query.dart';
+   export 'src/reference.dart';
+   ```
+
+8. Finally, add your created package to the application you want to integrate with dORM: (or make a pull request 🙂)
+
+   ```shell
+   dart pub add dorm_<DRIVER>_database
+   ```
