@@ -806,8 +806,11 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
               b.name = 'id';
             }));
           }
-          b.optionalParameters.addAll(
-              where(FieldFilter.belongsToSchema).entries.expand((entry) sync* {
+          b.optionalParameters.addAll(where(baseName == null
+                  ? FieldFilter.belongsToData
+                  : FieldFilter.belongsToSchema)
+              .entries
+              .expand((entry) sync* {
             final String fieldName = entry.key;
             final String fieldType = entry.value.type;
 
