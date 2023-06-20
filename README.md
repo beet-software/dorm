@@ -174,7 +174,7 @@ Basically,
    Each method receives as first parameter an `Entity`, which you can access table informations such as
    its name on the database, how to create a new model and how to (de)serialize an existing model.
 
-7. Inside *lib/dorm_<DRIVER>_database.dart*, add the following contents:
+7. Inside *lib/dorm_\<DRIVER\>_database.dart*, add the following contents:
 
    ```dart
    library dorm_<DRIVER>_database;
