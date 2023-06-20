@@ -14,12 +14,15 @@ class ProductForm extends ffb.FormBloc<ProductData, void> {
 
   ProductForm([ProductData? data]) : _data = data {
     name = ffb.TextFieldBloc(
+      initialValue: data?.name ?? '',
       validators: [ffb.FieldBlocValidators.required],
     );
     description = ffb.TextFieldBloc(
+      initialValue: data?.description ?? '',
       validators: [ffb.FieldBlocValidators.required],
     );
     price = ffb.TextFieldBloc(
+      initialValue: data?.price.toString() ?? '',
       validators: [
         ffb.FieldBlocValidators.required,
         (text) =>

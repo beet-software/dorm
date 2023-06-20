@@ -67,7 +67,8 @@ class OrderScreen extends StatelessWidget {
         child: Consumer<OrderForm>(
           builder: (context, form, _) {
             return ffb.FormBlocListener<OrderForm, OrderResult, void>(
-              onSuccess: (context, state) => Navigator.of(context).pop(),
+              onSuccess: (context, state) =>
+                  Navigator.of(context).pop(state.successResponse),
               child: ffb.BlocSelector<ffb.BooleanFieldBloc<void>,
                   ffb.BooleanFieldBlocState<void>, bool>(
                 bloc: form.editing,
@@ -99,13 +100,16 @@ class OrderScreen extends StatelessWidget {
                           children: [
                             Expanded(
                               child: _ProductList(
+                                editing: editing,
                                 isSelected: (product) => editing
                                     ? false
                                     : product.id == selectedProductId,
                                 onSelected: editing
                                     ? null
-                                    : (product) =>
-                                        form.productId.updateValue(product.id),
+                                    : (product) => form.productId.updateValue(
+                                        product.id == selectedProductId
+                                            ? null
+                                            : product.id),
                               ),
                             ),
                             if (!editing && selectedProductId != null)
@@ -120,7 +124,7 @@ class OrderScreen extends StatelessWidget {
                                   builder: (context, value) {
                                     return Column(
                                       crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
+                                          CrossAxisAlignment.stretch,
                                       children: [
                                         SpinBox(
                                           value: value.toDouble(),
@@ -179,10 +183,15 @@ class OrderScreen extends StatelessWidget {
 }
 
 class _ProductList extends StatelessWidget {
+  final bool editing;
   final bool Function(Product) isSelected;
   final void Function(Product)? onSelected;
 
-  const _ProductList({required this.onSelected, required this.isSelected});
+  const _ProductList({
+    required this.onSelected,
+    required this.isSelected,
+    required this.editing,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -206,28 +215,86 @@ class _ProductList extends StatelessWidget {
                     isSelected(product) ? Theme.of(context).primaryColor : null,
               ),
               title: Text(product.name),
-              onTap: onSelected == null ? null : () => onSelected(product),
-              subtitle: Text(product.description),
-              trailing: Text(intl.NumberFormat.currency(locale: 'en_US')
-                  .format(DecimalIntl(product.price))),
+              onTap: (editing || onSelected == null)
+                  ? null
+                  : () => onSelected(product),
+              subtitle: editing ? null : Text(product.description),
+              trailing: editing
+                  ? PopupMenuButton<bool>(
+                      onSelected: (action) async {
+                        if (action) {
+                          final ProductData? data =
+                              await Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) {
+                              return ProductFormScreen(
+                                form: ProductForm(product),
+                              );
+                            }),
+                          );
+                          if (data == null) return;
+                          await GetIt.instance
+                              .get<Dorm>()
+                              .products
+                              .repository
+                              .push(GetIt.instance
+                                  .get<Dorm>()
+                                  .products
+                                  .convert(product, data));
+                        } else {
+                          final bool? confirm = await showDialog(
+                            context: context,
+                            builder: (_) => AlertDialog(
+                              title: const Text('Confirm action'),
+                              content: const Text(
+                                'Are you sure you want to delete this product? '
+                                'This action can NOT be undone.',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.of(context).pop(false),
+                                  child: const Text(
+                                    'cancel',
+                                    style: TextStyle(color: Colors.grey),
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.of(context).pop(true),
+                                  child: const Text('proceed'),
+                                ),
+                              ],
+                            ),
+                          );
+                          if (!(confirm ?? false)) return;
+
+                          await GetIt.instance
+                              .get<Dorm>()
+                              .products
+                              .repository
+                              .pop(product.id);
+                        }
+                      },
+                      itemBuilder: (_) => [
+                        const PopupMenuItem(
+                          value: true,
+                          child: Text('edit'),
+                        ),
+                        const PopupMenuItem(
+                          value: false,
+                          child: Text(
+                            'remove',
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ),
+                      ],
+                    )
+                  : Text(intl.NumberFormat.currency(locale: 'en_US')
+                      .format(DecimalIntl(product.price))),
             );
           },
         );
       },
     );
   }
-}
-
-class _ViewBody extends StatelessWidget {
-  const _ViewBody({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) => const SizedBox.shrink();
-}
-
-class _EditBody extends StatelessWidget {
-  const _EditBody({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) => const SizedBox.shrink();
 }

@@ -95,3 +95,5 @@ The screens are available on *lib/screens/*.
 
 - The `OrderScreen` (*order.dart*) can be used to select a product and its amount to be added to a cart.
     - Uses `pullAll` to read all products from the system (no filter)
+    - Uses `push` and `pop` to edit and remove a specific row on the `products` table, respectively
+    - User `put` to create a new row on the `products` table (creating a strong entity)
