@@ -622,6 +622,7 @@ class Review extends ReviewData implements _Review {
     required DateTime timestamp,
     required ReviewContentType type,
     required Map content,
+    required String userId,
   }) {
     final ReviewData data = ReviewData._(
       text: text,
@@ -635,6 +636,7 @@ class Review extends ReviewData implements _Review {
       timestamp: data.timestamp,
       type: data.type,
       content: data.content,
+      userId: userId,
     );
   }
 
@@ -644,6 +646,7 @@ class Review extends ReviewData implements _Review {
     required super.timestamp,
     required super.type,
     required super.content,
+    required this.userId,
   });
 
   @JsonKey(
@@ -654,18 +657,31 @@ class Review extends ReviewData implements _Review {
   final String id;
 
   @override
-  String get _qType => [$normalizeEnum(type)].join('_');
+  @JsonKey(
+    name: 'user-id',
+    required: true,
+    disallowNullValue: true,
+  )
+  final String userId;
+
+  @override
+  String get _qUserIdType => [
+        userId,
+        $normalizeEnum(type),
+      ].join('_');
   @override
   Map<String, Object?> toJson() {
     return {
       ..._$ReviewToJson(this)..remove('_id'),
-      '_q-type': _qType,
+      '_q-type': _qUserIdType,
     };
   }
 }
 
 class ReviewDependency extends Dependency<ReviewData> {
-  const ReviewDependency() : super.strong();
+  ReviewDependency({required this.userId}) : super.weak([userId]);
+
+  final String userId;
 }
 
 class ReviewEntity implements Entity<ReviewData, Review> {
@@ -686,6 +702,7 @@ class ReviewEntity implements Entity<ReviewData, Review> {
       timestamp: data.timestamp,
       type: data.type,
       content: data.content,
+      userId: dependency.userId,
     );
   }
 
@@ -700,6 +717,7 @@ class ReviewEntity implements Entity<ReviewData, Review> {
       timestamp: data.timestamp,
       type: data.type,
       content: data.content,
+      userId: model.userId,
     );
   }
 
@@ -801,15 +819,15 @@ class UserReviewContent extends ReviewContent implements _UserReviewContent {
   factory UserReviewContent.fromJson(Map json) =>
       _$UserReviewContentFromJson(json);
 
-  const UserReviewContent({required this.tags}) : super._();
+  const UserReviewContent({required this.userId}) : super._();
 
   @override
   @JsonKey(
-    name: 'tags',
+    name: 'user-id',
     required: true,
     disallowNullValue: true,
   )
-  final List<String> tags;
+  final String userId;
 
   @override
   final ReviewContentType type = ReviewContentType.user;

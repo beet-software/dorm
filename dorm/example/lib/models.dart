@@ -2,8 +2,9 @@ import 'package:decimal/decimal.dart';
 import 'package:dorm/dorm.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
 
-part 'models.g.dart';
 part 'models.dorm.dart';
+
+part 'models.g.dart';
 
 @Data()
 abstract class _Profile {
@@ -92,8 +93,9 @@ abstract class _ServiceReviewContent implements _ReviewContent {
 
 @PolymorphicData(name: 'user', as: #user)
 abstract class _UserReviewContent implements _ReviewContent {
-  @Field(name: 'tags', defaultValue: [])
-  List<String> get tags;
+  // Use `Field` instead of `ForeignField`
+  @Field(name: 'user-id')
+  String get userId;
 }
 
 @Model(name: 'Reviews', as: #reviews)
@@ -107,9 +109,13 @@ abstract class _Review {
   @PolymorphicField(name: 'content', pivotName: 'type')
   _ReviewContent get content;
 
+  @ForeignField(name: 'user-id', referTo: _User)
+  String get userId;
+
   @QueryField(
     name: '_q-type',
-    referTo: [QueryToken(#type, QueryType.enumeration)],
+    referTo: [QueryToken(#userId), QueryToken(#type, QueryType.enumeration)],
+    joinBy: '_',
   )
-  String get _qType;
+  String get _qUserIdType;
 }

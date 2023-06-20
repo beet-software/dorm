@@ -208,8 +208,22 @@ const _$ReviewContentTypeEnumMap = {
 Review _$ReviewFromJson(Map json) {
   $checkKeys(
     json,
-    requiredKeys: const ['text', 'timestamp', 'type', 'content', '_id'],
-    disallowNullValues: const ['text', 'timestamp', 'type', 'content', '_id'],
+    requiredKeys: const [
+      'text',
+      'timestamp',
+      'type',
+      'content',
+      '_id',
+      'user-id'
+    ],
+    disallowNullValues: const [
+      'text',
+      'timestamp',
+      'type',
+      'content',
+      '_id',
+      'user-id'
+    ],
   );
   return Review._(
     id: json['_id'] as String,
@@ -217,6 +231,7 @@ Review _$ReviewFromJson(Map json) {
     timestamp: DateTime.parse(json['timestamp'] as String),
     type: $enumDecode(_$ReviewContentTypeEnumMap, json['type']),
     content: json['content'] as Map,
+    userId: json['user-id'] as String,
   );
 }
 
@@ -226,6 +241,7 @@ Map<String, dynamic> _$ReviewToJson(Review instance) => <String, dynamic>{
       'type': _$ReviewContentTypeEnumMap[instance.type]!,
       'content': instance.content.toJson(),
       '_id': instance.id,
+      'user-id': instance.userId,
     };
 
 ProductReviewContent _$ProductReviewContentFromJson(Map json) {
@@ -271,15 +287,15 @@ const _$ReviewSatisfactionEnumMap = {
 UserReviewContent _$UserReviewContentFromJson(Map json) {
   $checkKeys(
     json,
-    requiredKeys: const ['tags'],
-    disallowNullValues: const ['tags'],
+    requiredKeys: const ['user-id'],
+    disallowNullValues: const ['user-id'],
   );
   return UserReviewContent(
-    tags: (json['tags'] as List<dynamic>).map((e) => e as String).toList(),
+    userId: json['user-id'] as String,
   );
 }
 
 Map<String, dynamic> _$UserReviewContentToJson(UserReviewContent instance) =>
     <String, dynamic>{
-      'tags': instance.tags,
+      'user-id': instance.userId,
     };

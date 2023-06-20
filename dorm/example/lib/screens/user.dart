@@ -1,10 +1,56 @@
+import 'dart:async';
+
+import 'package:dorm/dorm.dart';
+import 'package:dorm_annotations/dorm_annotations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_form_bloc/flutter_form_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
 
 import '../models.dart';
 import 'cart.dart';
+import 'review_form.dart';
 import 'user_form.dart';
+
+class _Query extends ValueNotifier<AsyncSnapshot<List<Review>>> {
+  final String userId;
+  StreamSubscription<void>? _subscription;
+
+  _Query({required this.userId}) : super(const AsyncSnapshot.waiting()) {
+    _subscription = GetIt.instance
+        .get<Dorm>()
+        .reviews
+        .repository
+        .pullAll(Filter.value(userId, key: 'user-id'))
+        .map((users) => AsyncSnapshot.withData(ConnectionState.active, users))
+        .listen((snapshot) => value = snapshot);
+  }
+
+  ReviewContentType? _type;
+
+  ReviewContentType? get type => _type;
+
+  void updateFilter(ReviewContentType? type) {
+    _type = type;
+    final String query =
+        [userId, if (type != null) $normalizeEnum(type)].join('_');
+
+    value = const AsyncSnapshot.waiting();
+    _subscription = GetIt.instance
+        .get<Dorm>()
+        .reviews
+        .repository
+        .pullAll(Filter.text(query, key: '_q-type'))
+        .map((users) => AsyncSnapshot.withData(ConnectionState.active, users))
+        .listen((snapshot) => value = snapshot);
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
+  }
+}
 
 class UserScreen extends StatelessWidget {
   final String userId;
@@ -35,13 +81,34 @@ class UserScreen extends StatelessWidget {
               .map((event) =>
                   AsyncSnapshot.withData(ConnectionState.active, event)),
         ),
+        ChangeNotifierProvider<_Query>(create: (_) => _Query(userId: userId)),
       ],
       child: SafeArea(
         child: Consumer<AsyncSnapshot<Cart?>>(
           builder: (context, cartSnapshot, _) {
             final Cart? cart = cartSnapshot.data;
             return Scaffold(
-              appBar: AppBar(title: const Text('Profile')),
+              appBar: AppBar(
+                title: const Text('Profile'),
+                actions: [
+                  IconButton(
+                    onPressed: () async {
+                      final ReviewData? data = await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => ReviewFormScreen(form: ReviewForm()),
+                        ),
+                      );
+                      if (data == null) return;
+                      await GetIt.instance
+                          .get<Dorm>()
+                          .reviews
+                          .repository
+                          .put(ReviewDependency(userId: userId), data);
+                    },
+                    icon: const Icon(Icons.reviews),
+                  ),
+                ],
+              ),
               body: Consumer<AsyncSnapshot<User?>>(
                 child: const Center(child: CircularProgressIndicator()),
                 builder: (context, userSnapshot, child) {
@@ -61,88 +128,103 @@ class UserScreen extends StatelessWidget {
                         padding: const EdgeInsets.all(5),
                         child: _UserCard(user: user),
                       ),
+                      _CartCard(userId: userId, cart: cart),
+                      const ListTile(title: Text('My reviews')),
                       Expanded(
-                        child: Center(
-                          child: cart == null
-                              ? const Text('No cart is created yet.')
-                              : MaterialButton(
-                                  onPressed: () async {
-                                    await Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                            builder: (_) =>
-                                                CartScreen(cartId: cart.id)));
-                                  },
-                                  color: Theme.of(context).primaryColor,
-                                  child: const Padding(
-                                    padding: EdgeInsets.all(10),
-                                    child: Text(
-                                      'go to cart',
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                  ),
+                        child: Consumer<_Query>(
+                          child:
+                              const Center(child: CircularProgressIndicator()),
+                          builder: (context, query, child) {
+                            final AsyncSnapshot<List<Review>> snapshot =
+                                query.value;
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return child!;
+                            }
+                            final List<Review> reviews = snapshot.data!;
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                if (query.type != null || reviews.isNotEmpty)
+                                  _FilterCard(query: query),
+                                Expanded(
+                                  child: reviews.isEmpty
+                                      ? const Center(
+                                          child: Text('No reviews yet.'),
+                                        )
+                                      : ListView.builder(
+                                          itemCount: reviews.length,
+                                          itemBuilder: (context, i) {
+                                            final Review review = reviews[i];
+                                            return ListTile(
+                                              leading:
+                                                  const Icon(Icons.rate_review),
+                                              title: Text(review.text),
+                                              subtitle: Text(DateFormat(
+                                                      'dd/MM/yyyy')
+                                                  .format(review.timestamp)),
+                                              trailing: IconButton(
+                                                icon: const Icon(
+                                                  Icons.delete,
+                                                  color: Colors.red,
+                                                ),
+                                                onPressed: () async {
+                                                  await GetIt.instance
+                                                      .get<Dorm>()
+                                                      .reviews
+                                                      .repository
+                                                      .pop(review.id);
+                                                },
+                                              ),
+                                            );
+                                          },
+                                        ),
                                 ),
+                              ],
+                            );
+                          },
                         ),
                       )
                     ],
                   );
                 },
               ),
-              floatingActionButton:
-                  cartSnapshot.connectionState == ConnectionState.waiting
-                      ? null
-                      : cart == null
-                          ? FloatingActionButton(
-                              child: const Icon(Icons.add_shopping_cart),
-                              onPressed: () async {
-                                await GetIt.instance
-                                    .get<Dorm>()
-                                    .carts
-                                    .repository
-                                    .put(
-                                      CartDependency(userId: userId),
-                                      CartData(timestamp: DateTime.now()),
-                                    );
-                              },
-                            )
-                          : FloatingActionButton(
-                              child: const Icon(Icons.remove_shopping_cart),
-                              onPressed: () async {
-                                final bool? confirm = await showDialog(
-                                  context: context,
-                                  builder: (_) => AlertDialog(
-                                    title: const Text('Confirm action'),
-                                    content: const Text(
-                                      'Are you sure you want to empty your cart? '
-                                      'This action can NOT be undone.',
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.of(context).pop(false),
-                                        child: const Text(
-                                          'cancel',
-                                          style: TextStyle(color: Colors.grey),
-                                        ),
-                                      ),
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.of(context).pop(true),
-                                        child: const Text('proceed'),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                                if (!(confirm ?? false)) return;
-                                await GetIt.instance
-                                    .get<Dorm>()
-                                    .carts
-                                    .repository
-                                    .pop(cart.id);
-                              },
-                            ),
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+class _FilterCard extends StatelessWidget {
+  final _Query query;
+
+  const _FilterCard({required this.query});
+
+  @override
+  Widget build(BuildContext context) {
+    final ReviewContentType? selectedType = query.type;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (ReviewContentType type in ReviewContentType.values)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 3),
+              child: FilterChip(
+                selected: selectedType == type,
+                label: Text(switch (type) {
+                  ReviewContentType.product => 'products',
+                  ReviewContentType.user => 'users',
+                  ReviewContentType.service => 'services',
+                }),
+                onSelected: (value) => query.updateFilter(value ? type : null),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -232,6 +314,74 @@ class _UserCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _CartCard extends StatelessWidget {
+  final String userId;
+  final Cart? cart;
+
+  const _CartCard({required this.cart, required this.userId});
+
+  @override
+  Widget build(BuildContext context) {
+    final Cart? cart = this.cart;
+    if (cart == null) {
+      return ListTile(
+        leading: const Icon(Icons.shopping_cart),
+        title: const Text('Cart'),
+        subtitle: const Text('Your cart is empty.'),
+        trailing: IconButton(
+          icon: const Icon(Icons.add_circle),
+          onPressed: () async {
+            await GetIt.instance.get<Dorm>().carts.repository.put(
+                  CartDependency(userId: userId),
+                  CartData(timestamp: DateTime.now()),
+                );
+          },
+        ),
+      );
+    }
+    return ListTile(
+      leading: const Icon(Icons.shopping_cart),
+      title: const Text('Cart'),
+      subtitle: const Text('Click here to access your cart'),
+      onTap: () async {
+        await Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => CartScreen(cartId: cart.id)));
+      },
+      trailing: IconButton(
+        icon: const Icon(Icons.delete, color: Colors.red),
+        onPressed: () async {
+          final bool? confirm = await showDialog(
+            context: context,
+            builder: (_) => AlertDialog(
+              title: const Text('Confirm action'),
+              content: const Text(
+                'Are you sure you want to empty your cart? '
+                'This action can NOT be undone.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text(
+                    'cancel',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('proceed'),
+                ),
+              ],
+            ),
+          );
+          if (!(confirm ?? false)) return;
+
+          await GetIt.instance.get<Dorm>().carts.repository.pop(cart.id);
+        },
       ),
     );
   }

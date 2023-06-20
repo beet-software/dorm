@@ -63,9 +63,11 @@ The screens are available on *lib/screens/*.
     - Uses `put` to create a new user (creating a strong entity)
 
 - The `UserScreen` (*user.dart*) can be used to update an user and view its cart, if created.
-    - Uses `pull` to read an user with its cart, if exists
-    - Uses `push` and `pop` to edit and remove a specific user, respectively
+    - Uses `pull` to read this user with its cart, if exists
+    - Uses `push` and `pop` to edit and remove this user, respectively
     - Uses `put` to create a new cart (creating a weak entity)
+    - Uses `pullAll` to read all reviews of a given type from this user (filtering by many values)
+    - Uses `pop` to remove a review
 
 - The `CartScreen` (*cart.dart*) can be used to see the products placed in its cart by an user.
     - Uses `pullAll` to read all items of a specific cart (filtering by value)
@@ -84,8 +86,11 @@ The screens are available on *lib/screens/*.
     - Uses `ManyToOneRelationship` to how many users have ordered a given product
 
 [//]: # (TODO Filter by enum)
+
 [//]: # (TODO pullAll read all orders made in a given day)
+
 [//]: # (TODO pullAll read all orders made in a given date range)
+
 [//]: # (TODO pullAll read all products ordered more than 10 amounts)
 
 ## Tips
