@@ -80,7 +80,7 @@ The user should be able to
 The screens are available on *lib/screens/*.
 
 - The `UsersScreen` (*users.dart*) can be used to see all the users or add an user to the system.
-    - Uses `pullAll` to read all users from the system (no filter)
+    - Uses `pullAll` to read all users from the system, given a name (filter by text)
     - Uses `put` to create a new row on the `users` table (creating a strong entity)
 
 - The `UserScreen` (*user.dart*) can be used to update an user and view its cart, if created.
