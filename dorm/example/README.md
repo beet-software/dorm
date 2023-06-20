@@ -85,14 +85,6 @@ The screens are available on *lib/screens/*.
       by an user
     - Uses `ManyToOneRelationship` to how many users have ordered a given product
 
-[//]: # (TODO Filter by enum)
-
-[//]: # (TODO pullAll read all orders made in a given day)
-
-[//]: # (TODO pullAll read all orders made in a given date range)
-
-[//]: # (TODO pullAll read all products ordered more than 10 amounts)
-
 ## Tips
 
 - Prefer using `pull` and `pullAll` instead of `peek` and `peekAll`, since their stream will
