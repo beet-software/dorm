@@ -2,12 +2,13 @@ import 'dart:async';
 
 import 'package:dorm/dorm.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
-import 'package:example/screens/user.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
 
 import '../models.dart';
+import 'dashboard.dart';
+import 'user.dart';
 import 'user_form.dart';
 
 class _Query extends ValueNotifier<AsyncSnapshot<List<User>>> {
@@ -65,7 +66,18 @@ class UsersScreen extends StatelessWidget {
       ],
       child: SafeArea(
         child: Scaffold(
-          appBar: AppBar(title: const Text('Users')),
+          appBar: AppBar(
+            title: const Text('Users'),
+            actions: [
+              IconButton(
+                onPressed: () async {
+                  await Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const DashboardScreen()));
+                },
+                icon: const Icon(Icons.dataset),
+              ),
+            ],
+          ),
           body: Consumer<_Query>(
             child: const Center(child: CircularProgressIndicator()),
             builder: (context, query, child) {

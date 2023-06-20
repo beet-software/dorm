@@ -2,6 +2,13 @@
 
 A full Flutter application using dORM.
 
+This example helps you to understand how to integrate dORM within your application using an
+e-commerce code sample. It contains CRUDs, joins and some commonly used database filters, such as by
+text, by value and by range.
+
+It also shows how to integrate dORM models with forms, using
+the [`flutter_form_bloc` package](https://pub.dev/packages/flutter_form_bloc).
+
 ## Getting started
 
 Clone this repository:
@@ -14,27 +21,12 @@ cd dorm/dorm/example
 If you want a local Firebase instance, run the following line in your command prompt:
 
 ```shell
-firebase init
+firebase emulators:start --only database --project react-native-firebase-testing
 ```
 
-- For "You're about to initialize a Firebase project in this directory. Are you ready to proceed?",
-  enter *Y*.
-- For "Which Firebase features do you want to set up for this directory?", only select *Emulators*.
-- For "Let's associate this project directory with a Firebase project", select *Don't set up a
-  default project*.
-- For "Which Firebase emulators do you want to set up?", only select *Database Emulator*.
-- For "Which port do you want to use for the database emulator?", leave the default (9000).
-- For "Would you like to enable the Emulator UI?", enter *Y* or *n*.
-    - If you entered *Y*, for "Which port do you want to use for the Emulator UI?", leave empty.
-- For "Would you like to download the emulators now?", enter *Y*.
-
-Wait for the message "Firebase initialization complete" to show up.
-
-Run the emulator:
-
-```shell
-firebase emulators:start --only database
-```
+The command above can be run verbatim, since `react-native-firebase-testing` is generally used as a
+dummy project ID. If you already have a project you want to integrate dORM, replace it with your own
+project's ID.
 
 Wait for the message "All emulators ready! It is now safe to connect your app" to show up.
 
@@ -62,38 +54,43 @@ The application shall be an e-commerce.
 - A user can make infinite reviews.
 - A user can review a product, a service or another user.
 
-The user should be able to
-
-1. retrieve user information, including their associated orders and profile details.
-2. get all products in an order, along with their quantities.
-3. fetch all orders placed by a specific user.
-4. find the total number of orders.
-5. get the average rating for a product based on reviews.
-6. search for reviews of a particular type and filter them based on review content attributes.
-7. get the most recent orders placed.
-8. find products with a specific price range.
-9. retrieve the user who placed a particular order.
-10. search for orders containing specific products.
-
 ## Implementation
 
 The screens are available on *lib/screens/*.
 
 - The `UsersScreen` (*users.dart*) can be used to see all the users or add an user to the system.
-    - Uses `pullAll` to read all users from the system, given a name (filter by text)
-    - Uses `put` to create a new row on the `users` table (creating a strong entity)
+    - Uses `pullAll` to read all users from the system, given a username (filtering by text)
+    - Uses `put` to create a new user (creating a strong entity)
 
 - The `UserScreen` (*user.dart*) can be used to update an user and view its cart, if created.
-    - Uses `pull` to read a specific row on the `users` and `carts` table (one-to-one relationship)
-    - Uses `push` and `pop` to edit and remove a specific row on the `users` table, respectively
-    - Uses `put` to create a new row on the `carts` table (creating a weak entity)
+    - Uses `pull` to read an user with its cart, if exists
+    - Uses `push` and `pop` to edit and remove a specific user, respectively
+    - Uses `put` to create a new cart (creating a weak entity)
 
 - The `CartScreen` (*cart.dart*) can be used to see the products placed in its cart by an user.
-    - Uses `pullAll` to read all items of a specific cart (filter by value)
-    - Uses `OneToOneRelationship` to associate items with their respective products
-    - Uses `put` to create a new row on the `order-items` table (creating a weak entity)
+    - Uses `pullAll` to read all items of a specific cart (filtering by value)
+    - Uses `OneToOneRelationship` to associate cart items with their respective products (1-to-1)
+    - Uses `put` to create a new item on user's cart (creating a weak entity)
 
-- The `OrderScreen` (*order.dart*) can be used to select a product and its amount to be added to a cart.
-    - Uses `pullAll` to read all products from the system (no filter)
-    - Uses `push` and `pop` to edit and remove a specific row on the `products` table, respectively
-    - User `put` to create a new row on the `products` table (creating a strong entity)
+- The `OrderScreen` (*order.dart*) can be used to select a product and its amount to be added to a
+  cart.
+    - Uses `pullAll` to read all products from the system (without filtering)
+    - Uses `push` and `pop` to edit and remove a product, respectively
+    - User `put` to create a new product (creating a strong entity)
+
+- The `DashboardScreen` (*dashboard.dart*) can be used to view some statistics about the system.
+    - Uses `OneToManyRelationship` combined with `OneToOneRelationship` to list all products ordered
+      by an user
+    - Uses `ManyToOneRelationship` to how many users have ordered a given product
+
+[//]: # (TODO Filter by enum)
+[//]: # (TODO pullAll read all orders made in a given day)
+[//]: # (TODO pullAll read all orders made in a given date range)
+[//]: # (TODO pullAll read all products ordered more than 10 amounts)
+
+## Tips
+
+- Prefer using `pull` and `pullAll` instead of `peek` and `peekAll`, since their stream will
+  synchronize updates made on the model by other parts of the application.
+- Use the `*Data` version of a dORM model when creating it from a form.
+- Don't pass a `*Model` as argument to a new screen. Instead, pass its ID and read it again.

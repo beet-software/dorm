@@ -1,9 +1,10 @@
 import 'package:dorm/dorm.dart';
-import 'package:example/models.dart';
-import 'package:example/screens/order.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
+
+import '../models.dart';
+import 'order.dart';
 
 class CartScreen extends StatelessWidget {
   final String cartId;
