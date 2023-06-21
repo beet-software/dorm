@@ -90,7 +90,7 @@ just one of the packages above. Each documentation complements the other.
 
 ## Disclaimers
 
-dORM does NOT yet handle
+dORM does not yet handle
 
 - transactions
 - paginations
