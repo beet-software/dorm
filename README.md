@@ -1,6 +1,6 @@
 # dORM
 
-An Object Relational Mapper library for Dart.
+A language-agnostic Object Relational Mapper library for Dart.
 
 This ORM uses separation of concerns as the main concept of its framework: 
 
@@ -66,6 +66,9 @@ This is a flowchart explaining this procedure:
 
 The frame on the right represents your application code, ready to use dORM.
 
+On *dorm/example* directory, there is a complete Flutter application integrated with dORM, using a lot of 
+features for you to understand better how this package works.
+
 ## Documentation
 
 dORM is a framework with a lot of features, so before diving into it, read the vast documentation and its well-crafted
@@ -90,7 +93,7 @@ just one of the packages above. Each documentation complements the other.
 dORM does NOT yet handle
 
 - transactions
-- many-to-many relationships
+- many-to-many joins
 - sorting on the remote side
 
 These features may be supported in future releases.
@@ -98,7 +101,7 @@ These features may be supported in future releases.
 ## Implementing your own engine
 
 If you want to implement a new database engine for dORM, you can look at `dorm_bloc_database`
-and `dorm_firebase_database` as a base to learn how to implement your own driver, such as MySQL or PostgreSQL.
+and `dorm_firebase_database` as a base to learn how to implement your own driver, such as MySQL or MongoDB.
 
 Basically,
 
