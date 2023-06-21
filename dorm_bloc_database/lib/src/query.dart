@@ -51,7 +51,7 @@ class Query implements BaseQuery<Query> {
       final Object? value = row[key];
       if (value is! DateTime) return false;
       return DateFilterUnit.values
-          .takeWhile((currentUnit) => currentUnit != unit)
+          .takeWhile((currentUnit) => currentUnit.index != unit.index + 1)
           .map((unit) => unit.access)
           .every((accessor) => accessor(value) == accessor(date));
     });
