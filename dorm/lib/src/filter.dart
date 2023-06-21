@@ -100,13 +100,31 @@ class _TextFilter extends Filter {
 }
 
 enum DateFilterUnit {
-  year,
-  month,
-  day,
-  hour,
-  minute,
-  second,
-  milliseconds,
+  year(_yearAccessor),
+  month(_monthAccessor),
+  day(_dayAccessor),
+  hour(_hourAccessor),
+  minute(_minuteAccessor),
+  second(_secondAccessor),
+  milliseconds(_millisecondsAccessor);
+
+  static int _yearAccessor(DateTime dt) => dt.year;
+
+  static int _monthAccessor(DateTime dt) => dt.month;
+
+  static int _dayAccessor(DateTime dt) => dt.day;
+
+  static int _hourAccessor(DateTime dt) => dt.hour;
+
+  static int _minuteAccessor(DateTime dt) => dt.minute;
+
+  static int _secondAccessor(DateTime dt) => dt.second;
+
+  static int _millisecondsAccessor(DateTime dt) => dt.millisecond;
+
+  final int Function(DateTime dt) access;
+
+  const DateFilterUnit(this.access);
 }
 
 class _DateFilter extends Filter {
