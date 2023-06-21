@@ -19,34 +19,46 @@ class DateFilterRange extends FilterRange<DateTime> {
   });
 }
 
+/// Represents a filter for rows.
 abstract class Filter {
+  /// Evaluates to true for all the rows in the table.
   const factory Filter.empty() = _EmptyFilter;
 
+  /// Evaluates to true for rows where its [key] attribute is equal to [value].
   const factory Filter.value(
     Object value, {
     required String key,
   }) = _ValueFilter;
 
+  /// Evaluates to true for rows where its [key] attribute starts with [text].
   const factory Filter.text(
     String text, {
     required String key,
   }) = _TextFilter;
 
+  /// Evaluates to true for rows where its [key] attribute is lexicographically
+  /// between [FilterRange.from] and [FilterRange.to], provided by [range].
   const factory Filter.textRange(
     FilterRange<String> range, {
     required String key,
   }) = _TextRangeFilter;
 
+  /// Evaluates to true for rows where its [key] attribute is numerically
+  /// between [FilterRange.from] and [FilterRange.to], provided by [range].
   const factory Filter.numericRange(
     FilterRange<double> range, {
     required String key,
   }) = _NumericRangeFilter;
 
+  /// Evaluates to true for rows where its [key] attribute is temporally
+  /// between [FilterRange.from] and [FilterRange.to], provided by [range].
   const factory Filter.dateRange(
     DateFilterRange range, {
     required String key,
   }) = _DateRangeFilter;
 
+  /// Evaluates to true for rows where its [key] attribute is a [DateTime] or a
+  /// ISO-8901 formatted [String], and matches [date] at a certain [unit].
   const factory Filter.date(
     DateTime date, {
     required String key,
