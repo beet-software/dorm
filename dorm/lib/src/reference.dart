@@ -17,14 +17,14 @@ abstract class BaseReference {
     String id,
   );
 
-  /// Defines how the database engine reads multiple models, given a [filter].
+  /// Defines how the database engine reads multiple models matching a [filter].
   Future<List<Model>> peekAll<Data, Model extends Data>(
     Entity<Data, Model> entity,
     Filter filter,
   );
 
-  /// Defines how the database engine listen to the changes of multiple models,
-  /// given a [filter].
+  /// Defines how the database engine listen to the changes of multiple models
+  /// matching a [filter].
   Stream<List<Model>> pullAll<Data, Model extends Data>(
     Entity<Data, Model> entity,
     Filter filter,
@@ -42,7 +42,7 @@ abstract class BaseReference {
   );
 
   /// Defines how the database engine deletes multiple models, given their [ids].
-  Future<void> popAll<Data, Model extends Data>(
+  Future<void> popKeys<Data, Model extends Data>(
     Entity<Data, Model> entity,
     Iterable<String> ids,
   );
@@ -57,6 +57,20 @@ abstract class BaseReference {
   Future<void> pushAll<Data, Model extends Data>(
     Entity<Data, Model> entity,
     List<Model> models,
+  );
+
+  /// Defines how the database engine deletes multiple models matching a [filter].
+  Future<void> popAll<Data, Model extends Data>(
+    Entity<Data, Model> entity,
+    Filter filter,
+  );
+
+  /// Defines how the database engine updates a single model using [update],
+  /// given its [id].
+  Future<void> patch<Data, Model extends Data>(
+    Entity<Data, Model> entity,
+    String id,
+    Model? Function(Model?) update,
   );
 
   /// Defines how the database engine creates a single model, given a

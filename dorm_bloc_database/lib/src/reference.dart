@@ -50,7 +50,7 @@ class _EntityReference<Data, Model extends Data>
     _emit((models) => models.remove(id));
   }
 
-  void popAll(Iterable<String> ids) {
+  void popKeys(Iterable<String> ids) {
     _emit((models) => models.removeWhere((id, _) => ids.contains(id)));
   }
 
@@ -63,6 +63,25 @@ class _EntityReference<Data, Model extends Data>
       current.addAll({
         for (Model model in models) entity.identify(model): model,
       });
+    });
+  }
+
+  void popAll(TableOperator operator) {
+    _emit((models) {
+      return operator(
+        models.map((key, value) => MapEntry(key, entity.toJson(value))),
+      );
+    });
+  }
+
+  void patch(String id, Model? Function(Model?) update) {
+    _emit((models) {
+      final Model? model = update(models[id]);
+      if (model == null) {
+        models.remove(id);
+      } else {
+        models[id] = model;
+      }
     });
   }
 
@@ -125,9 +144,9 @@ class Reference extends Cubit<_State> implements BaseReference {
     Filter filter,
   ) async {
     final _EntityReference<Data, Model> bloc = _access(entity);
-    final Query query = filter.accept(Query((models) => models));
+    final Query query = filter.accept(const Query());
     return query
-        .filter(bloc.state.models
+        .operator(bloc.state.models
             .map((key, value) => MapEntry(key, entity.toJson(value))))
         .entries
         .map((entry) => entity.fromJson(entry.key, entry.value))
@@ -154,10 +173,20 @@ class Reference extends Cubit<_State> implements BaseReference {
   @override
   Future<void> popAll<Data, Model extends Data>(
     Entity<Data, Model> entity,
+    Filter filter,
+  ) async {
+    final _EntityReference<Data, Model> bloc = _access(entity);
+    final Query query = filter.accept(const Query());
+    bloc.popAll(query.operator);
+  }
+
+  @override
+  Future<void> popKeys<Data, Model extends Data>(
+    Entity<Data, Model> entity,
     Iterable<String> ids,
   ) async {
     final _EntityReference<Data, Model> bloc = _access(entity);
-    bloc.popAll(ids.toSet());
+    bloc.popKeys(ids.toSet());
   }
 
   @override
@@ -175,12 +204,23 @@ class Reference extends Cubit<_State> implements BaseReference {
     Filter filter,
   ) {
     final _EntityReference<Data, Model> bloc = _access(entity);
-    final Query query = filter.accept(Query((models) => models));
+    final Query query = filter.accept(const Query());
     return bloc.dataStream.map((models) => query
-        .filter(models.map((key, value) => MapEntry(key, entity.toJson(value))))
+        .operator(
+            models.map((key, value) => MapEntry(key, entity.toJson(value))))
         .entries
         .map((entry) => entity.fromJson(entry.key, entry.value))
         .toList());
+  }
+
+  @override
+  Future<void> patch<Data, Model extends Data>(
+    Entity<Data, Model> entity,
+    String id,
+    Model? Function(Model?) update,
+  ) async {
+    final _EntityReference<Data, Model> bloc = _access(entity);
+    bloc.patch(id, update);
   }
 
   @override

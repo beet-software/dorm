@@ -67,11 +67,51 @@ class Reference implements BaseReference {
   }
 
   @override
-  Future<void> popAll<Data, Model extends Data>(
+  Future<void> popKeys<Data, Model extends Data>(
     Entity<Data, Model> entity,
     Iterable<String> ids,
   ) {
     return _refOf(entity).update({for (String id in ids) id: null});
+  }
+
+  @override
+  Future<void> popAll<Data, Model extends Data>(
+    Entity<Data, Model> entity,
+    Filter filter,
+  ) async {
+    // TODO Refactor this operation as atomic.
+    // Firebase does not have `runTransaction` as a method of fd.Query.
+    // Also, a fd.Query can't be used inside a fd.TransactionHandler.
+    final List<Model> models = await peekAll(entity, filter);
+    await popKeys(entity, models.map(entity.identify));
+  }
+
+  @override
+  Future<void> patch<Data, Model extends Data>(
+    Entity<Data, Model> entity,
+    String id,
+    Model? Function(Model?) update,
+  ) {
+    return _refOf(entity).child(id).runTransaction((value) {
+      final Model? model;
+      if (value == null) {
+        model = null;
+      } else {
+        model = entity.fromJson(id, value as Map);
+      }
+
+      final Model? updatedModel;
+      try {
+        updatedModel = update(model);
+      } catch (_) {
+        return fd.Transaction.abort();
+      }
+
+      if (updatedModel == null) {
+        return fd.Transaction.success(null);
+      }
+      return fd.Transaction.success(entity.toJson(updatedModel));
+    });
   }
 
   @override

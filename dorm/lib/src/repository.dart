@@ -8,17 +8,16 @@ import 'relationship.dart';
 abstract class SingleReadOperation<Model> {
   /// Selects a model in this table, given its [id].
   ///
-  /// This method should do the operation in a single database engine call and
-  /// retrieve only the accessed model:
+  /// This method should retrieve *only* the accessed model:
   ///
-  /// ```
+  /// ```dart
   /// const String id = '7a3ee40b4a6b';
   ///
-  /// // DON'T: Downloads *all* the models to the client
+  /// // DON'T: Downloads all the models to the client
   /// final List<Model> models = await peekAll();
   /// final Model? model = models.where((model) => model.id == id).singleOrNull;
   ///
-  /// // DO: Downloads *only* the given model to the client
+  /// // DO: Downloads only the given model to the client
   /// final Model? model = await peek(id);
   /// ```
   ///
@@ -37,12 +36,12 @@ abstract class SingleReadOperation<Model> {
 
 /// Represents reading multiple models from the database engine.
 abstract class BatchReadOperation<Model> {
-  /// Selects all the models in this table.
+  /// Selects all the models matching [filter] in this table.
   ///
   /// If there are no models, this method will return an empty list.
   Future<List<Model>> peekAll([Filter filter = const Filter.empty()]);
 
-  /// Listens for all the models in this table and their changes.
+  /// Listens for all the models in this table matching [filter] and their changes.
   ///
   /// As soon as this stream is listened, an event should be emitted containing
   /// the actual state of the query. Subsequent events should be emitted
@@ -56,15 +55,14 @@ abstract class BatchReadOperation<Model> {
 abstract class ModelRepository<Model> implements Mergeable<Model> {
   /// Selects all the ids from the models of this table.
   ///
-  /// This method should do the operation in a single database engine call and
-  /// retrieve only the ids:
+  /// This method should retrieve *only* the ids:
   ///
-  /// ```
-  /// // DON'T: Downloads *all* the models (including attributes) to the client
+  /// ```dart
+  /// // DON'T: Downloads all the models (including attributes) to the client
   /// final List<Model> models = await peekAll();
   /// final List<String> ids = models.map((model) => model.id).toList();
   ///
-  /// // DO: Download *only* the ids of the models (does not include attributes)
+  /// // DO: Download only the ids of the models (does not include attributes)
   /// final List<String> ids = await peekAllKeys();
   /// ```
   ///
@@ -78,9 +76,9 @@ abstract class ModelRepository<Model> implements Mergeable<Model> {
 
   /// Deletes all the models in this table with the given [ids].
   ///
-  /// This method should do the operation in a single database engine call:
+  /// This method should be atomic:
   ///
-  /// ```
+  /// ```dart
   /// const List<String> ids = ['f0b44d79a39c', '9d223f993f08', 'e7b608870ad0'];
   ///
   /// // DON'T: Calls the database engine 3 times, sequentially
@@ -90,11 +88,33 @@ abstract class ModelRepository<Model> implements Mergeable<Model> {
   /// Future.wait(ids.map((id) => pop(id)));
   ///
   /// // DO: Calls the database engine once
-  /// popAll(ids);
+  /// await popAll(ids);
   /// ```
   ///
   /// If there are no models with the given [ids], this method will do nothing.
-  Future<void> popAll(Iterable<String> ids);
+  Future<void> popKeys(Iterable<String> ids);
+
+  /// Deletes all the models in this table matching the given [filter].
+  ///
+  /// If [filter] is an instance of [Filter.empty], this method will delete
+  /// *all* the rows in the table.
+  ///
+  /// This method should be atomic:
+  ///
+  /// ```dart
+  /// const Filter filter = /* ... */;
+  ///
+  /// // DON'T: Calls the database engine twice
+  /// final List<Model> models = await peekAll(filter);
+  /// await popKeys(models.map((model) => model.id));
+  ///
+  /// // DO: Calls the database engine once
+  /// await popAll(ids);
+  /// ```
+  ///
+  /// If there are no rows matching [filter] in the table, this method will do
+  /// nothing.
+  Future<void> popAll(Filter filter);
 
   /// Inserts a [model] into its respective table on the database engine.
   ///
@@ -104,24 +124,52 @@ abstract class ModelRepository<Model> implements Mergeable<Model> {
 
   /// Inserts all [models] into this table.
   ///
-  /// This method should do the operation in a single database engine call:
+  /// This method should be atomic:
   ///
-  /// ```
+  /// ```dart
   /// const List<Model> models = [ /* ... */ ];
   ///
   /// // DON'T: Calls the database engine N times, sequentially
   /// for (Model model in models) await push(model);
   ///
   /// // DON'T: Calls the database engine N times, in parallel
-  /// Future.wait(models.map((model) => push(model)));
+  /// await Future.wait(models.map((model) => push(model)));
   ///
   /// // DO: Calls the database engine once
-  /// pushAll(models);
+  /// await pushAll(models);
   /// ```
   ///
   /// If there are any models in the table with the same id as any of the ones
   /// being inserted, the existing models will be overwritten by those on [models].
   Future<void> pushAll(List<Model> models);
+
+  /// Updates a model using a [update] function, given its [id].
+  ///
+  /// If [update] receives null, this means there is no model with the given
+  /// [id] on the table. If [update] returns null, the existing model will be
+  /// deleted from the table.
+  ///
+  /// Changing the received model's id inside [update] will not have any effects.
+  ///
+  /// This method should be atomic:
+  ///
+  /// ```dart
+  /// const String id = '7a3ee40b4a6b';
+  /// Model? _update(Model? model) { /* ... */ }
+  ///
+  /// // DON'T: Calls the database engine twice
+  /// final Model model = await peek(id);
+  /// final Model? updatedModel = _update(model);
+  /// if (updatedModel == null) {
+  ///   await pop(id);
+  /// } else {
+  ///   await push(updatedModel);
+  /// }
+  ///
+  /// // DO: Calls the database engine once
+  /// await patch(id, _update);
+  /// ```
+  Future<void> patch(String id, Model? Function(Model?) update);
 }
 
 /// Represents creating models into the database engine.
@@ -179,8 +227,13 @@ class Repository<Data, Model extends Data>
   }
 
   @override
-  Future<void> popAll(Iterable<String> ids) {
-    return _root.popAll(_entity, ids);
+  Future<void> popKeys(Iterable<String> ids) {
+    return _root.popKeys(_entity, ids);
+  }
+
+  @override
+  Future<void> popAll(Filter filter) {
+    return _root.popAll(_entity, filter);
   }
 
   @override
@@ -211,5 +264,10 @@ class Repository<Data, Model extends Data>
   @override
   Future<void> pushAll(List<Model> models) async {
     return _root.pushAll(_entity, models);
+  }
+
+  @override
+  Future<void> patch(String id, Model? Function(Model?) update) {
+    return _root.patch(_entity, id, update);
   }
 }

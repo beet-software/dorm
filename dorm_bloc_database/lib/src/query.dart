@@ -1,90 +1,59 @@
 import 'package:dorm/dorm.dart';
 
-typedef QueryFilter = Map<String, Map<String, Object?>> Function(
-  Map<String, Map<String, Object?>> data,
+typedef TableRow = Map<String, Object?>;
+typedef TableOperator = Map<String, TableRow> Function(
+  Map<String, TableRow> table,
 );
+typedef RowPredicate = bool Function(TableRow row);
 
 class Query implements BaseQuery<Query> {
-  final QueryFilter filter;
+  static Map<String, TableRow> _defaultTableOperator(
+      Map<String, TableRow> rows) {
+    return rows;
+  }
 
-  const Query(this.filter);
+  final TableOperator operator;
 
-  Query _where(QueryFilter filter) {
-    return Query((data) => filter(this.filter(data)));
+  const Query() : this._(_defaultTableOperator);
+
+  const Query._(this.operator);
+
+  Query _where(RowPredicate predicate) {
+    return _operate((rows) {
+      return {
+        for (MapEntry<String, TableRow> entry in rows.entries)
+          if (predicate(entry.value)) entry.key: entry.value,
+      };
+    });
+  }
+
+  Query _operate(TableOperator operator) {
+    return Query._((data) => operator(this.operator(data)));
   }
 
   @override
   Query whereValue(String key, Object? value) {
-    return _where((data) {
-      return Map.fromEntries(
-        data.entries.where((entry) => entry.value[key] == value),
-      );
-    });
+    return _where((row) => row[key] == value);
   }
 
   @override
   Query whereText(String key, String prefix) {
-    return _where((data) {
-      return Map.fromEntries(data.entries.where((entry) {
-        final Object? value = entry.value[key];
-        if (value is! String) return false;
-        return value.startsWith(prefix);
-      }));
+    return _where((row) {
+      final Object? value = row[key];
+      if (value is! String) return false;
+      return value.startsWith(prefix);
     });
   }
 
   @override
   Query whereDate(String key, DateTime date, DateFilterUnit unit) {
-    return _where((data) {
-      return Map.fromEntries(data.entries.where((entry) {
-        final Object? value = entry.value[key];
-        if (value is! DateTime) return false;
-        final bool condition;
-        switch (unit) {
-          case DateFilterUnit.year:
-            condition = value.year == date.year;
-            break;
-          case DateFilterUnit.month:
-            condition = value.year == date.year && value.month == date.month;
-            break;
-          case DateFilterUnit.day:
-            condition = value.year == date.year &&
-                value.month == date.month &&
-                value.day == date.day;
-            break;
-          case DateFilterUnit.hour:
-            condition = value.year == date.year &&
-                value.month == date.month &&
-                value.day == date.day &&
-                value.hour == date.hour;
-            break;
-          case DateFilterUnit.minute:
-            condition = value.year == date.year &&
-                value.month == date.month &&
-                value.day == date.day &&
-                value.hour == date.hour &&
-                value.minute == date.minute;
-            break;
-          case DateFilterUnit.second:
-            condition = value.year == date.year &&
-                value.month == date.month &&
-                value.day == date.day &&
-                value.hour == date.hour &&
-                value.minute == date.minute &&
-                value.second == date.second;
-            break;
-          case DateFilterUnit.milliseconds:
-            condition = value.year == date.year &&
-                value.month == date.month &&
-                value.day == date.day &&
-                value.hour == date.hour &&
-                value.minute == date.minute &&
-                value.second == date.second &&
-                value.millisecond == date.millisecond;
-            break;
-        }
-        return condition;
-      }));
+    return _where((row) {
+      final Object? value = row[key];
+      if (value is! DateTime) return false;
+      return DateFilterUnit.values
+          .takeWhile((currentUnit) => currentUnit != unit)
+          .map((unit) => unit.access)
+          .every((accessor) => accessor(value) == accessor(date));
     });
   }
 
@@ -93,24 +62,22 @@ class Query implements BaseQuery<Query> {
     final T? from = range.from;
     final T? to = range.to;
     if (from == null && to == null) return this;
-    return _where((data) {
-      return Map.fromEntries(data.entries.where((entry) {
-        final Object? value = entry.value[key];
-        if (value is! Comparable<T>) return false;
-        if (from != null && value.compareTo(from) < 0) return false;
-        if (to != null && value.compareTo(to) > 0) return false;
-        return true;
-      }));
+    return _where((row) {
+      final Object? value = row[key];
+      if (value is! Comparable<T>) return false;
+      if (from != null && value.compareTo(from) < 0) return false;
+      if (to != null && value.compareTo(to) > 0) return false;
+      return true;
     });
   }
 
   @override
   Query limit(int count) {
     if (count == 0) return this;
-    return _where((data) {
+    return _operate((table) {
       return Map.fromEntries(count > 0
-          ? data.entries.take(count)
-          : data.entries.toList().reversed.take(count.abs()));
+          ? table.entries.take(count)
+          : table.entries.toList().reversed.take(count.abs()));
     });
   }
 }
