@@ -93,6 +93,7 @@ just one of the packages above. Each documentation complements the other.
 dORM does NOT yet handle
 
 - transactions
+- paginations
 - many-to-many joins
 - sorting on the remote side
 
@@ -189,7 +190,7 @@ Basically,
    export 'src/reference.dart';
    ```
 
-8. Finally, add your created package to the application you want to integrate with dORM: (or make a pull request 🙂)
+8. Finally, add your created package to the application you want to integrate with dORM (or make a pull request 🙂):
 
    ```shell
    dart pub add dorm_<DRIVER>_database
