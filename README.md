@@ -66,7 +66,9 @@ This is a flowchart explaining this procedure:
 
 The frame on the right represents your application code, ready to use dORM.
 
-On *dorm/example* directory, there is a complete Flutter application integrated with dORM, using a lot of 
+### Examples
+
+On the *dorm/example* directory, there is a complete Flutter application integrated with dORM, using a lot of 
 features for you to understand better how this package works.
 
 ## Documentation
