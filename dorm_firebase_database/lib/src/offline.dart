@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:dorm_firebase_database/dorm_firebase_database.dart';
 import 'package:firebase_database/firebase_database.dart' as fd;
 
 /// Defines the offline mode to be used while connecting to Firebase.

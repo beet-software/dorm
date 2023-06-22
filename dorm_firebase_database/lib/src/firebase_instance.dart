@@ -1,7 +1,8 @@
-import 'package:dorm_firebase_database/src/offline.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fa;
 import 'package:firebase_core/firebase_core.dart' as fc;
 import 'package:firebase_database/firebase_database.dart' as fd;
+
+import 'offline.dart';
 
 abstract class FirebaseInstance {
   const factory FirebaseInstance({

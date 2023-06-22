@@ -20,7 +20,8 @@ class Reference implements BaseReference {
   const Reference._(this.instance, this._ref);
 
   fd.DatabaseReference _refOf<Data, Model extends Data>(
-      Entity<Data, Model> entity) {
+    Entity<Data, Model> entity,
+  ) {
     return _ref.child(entity.tableName);
   }
 

@@ -18,13 +18,13 @@ dependencies:
   dorm_bloc_database:
     path: ../../dorm_bloc_database
 
+  intl: ^0.17.0
   get_it: ^7.6.0
   decimal: ^2.3.2
   provider: ^6.0.5
   device_preview: ^1.1.0
-  flutter_form_bloc: ^0.30.1
-  intl: ^0.17.0
   flutter_spinbox: ^0.13.1
+  flutter_form_bloc: ^0.30.1
   flutter_rating_bar: ^4.0.1
 
 dev_dependencies:
