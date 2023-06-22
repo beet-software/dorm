@@ -13,10 +13,6 @@ dart pub get
 
 ## Usage
 
-> This document only explains the annotations exported by this package.
->
-> Refer to the `dorm_generator` package to read more about how to generate and what code is generated for these annotations.
-
 ### Models
 
 The `Model` annotation is used to link a database table to a Dart class. 
