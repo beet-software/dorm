@@ -224,6 +224,30 @@ abstract class _School {
 }
 ```
 
+### Plain models
+
+The `Data` annotation is used to simply serialize a class.
+
+It accepts no arguments.
+
+```dart
+import 'package:dorm_annotations/dorm_annotations.dart';
+
+@Data()
+abstract class _SchoolAddress {
+  @Field(name: 'zip-code')
+  String get zipCode;
+
+  @Field(name: 'district')
+  String get district;
+
+  @Field(name: 'house-number')
+  int get number;
+}
+```
+
+You can also use a class annotated with `Data` as an argument to `referTo` of a `ModelField` annotation.
+
 ### Polymorphism
 
 The `PolymorphicField` annotation is used to link a database composite column and a pivot column 
