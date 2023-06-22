@@ -32,8 +32,8 @@ Take a look at the chosen `dorm_*_database` package to learn how to set it up.
 ## Usage
 
 dORM works based on code generation. Take a look at the `dorm_annotations` and `dorm_generator` packages
-to learn how to annotate your code, discover what annotations are available to you and run the generator
-to create your *.dorm.dart* and *.g.dart* files.
+(in this order) to learn how to annotate your code, discover what annotations are available to you and 
+run the generator to create your *.dorm.dart* and *.g.dart* files.
 
 This is a flowchart for code generation exposed by this package:
 
