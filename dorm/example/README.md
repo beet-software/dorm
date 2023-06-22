@@ -11,33 +11,31 @@ the [`flutter_form_bloc` package](https://pub.dev/packages/flutter_form_bloc).
 
 ## Getting started
 
-Clone this repository:
+1. Clone this repository:
 
-```shell
-git clone https://github.com/enzo-santos/dorm.git
-cd dorm/dorm/example
-```
+   ```shell
+   git clone https://github.com/enzo-santos/dorm.git
+   cd dorm/dorm/example
+   ```
 
-If you want a local Firebase instance, run the following line in your command prompt:
+2. *(optional)* If you want a local Firebase instance, run the following line in your command prompt:
 
-```shell
-firebase emulators:start --only database --project react-native-firebase-testing
-```
+   ```shell
+   firebase emulators:start --only database --project react-native-firebase-testing
+   ```
 
-The command above can be run verbatim, since `react-native-firebase-testing` is generally used as a
-dummy project ID. If you already have a project you want to integrate dORM, replace it with your own
-project's ID.
+   The command above can be run verbatim, since `react-native-firebase-testing` is generally used as a
+   dummy project ID. If you already have a project you want to integrate dORM, replace it with your own
+   project's ID.
 
-Wait for the message "All emulators ready! It is now safe to connect your app" to show up.
+   Wait for the message "All emulators ready! It is now safe to connect your app" to show up.
 
-## Usage
+3. Get the dependencies and run the application:
 
-Get the dependencies and run the application:
-
-```shell
-flutter pub get
-flutter run
-```
+   ```shell
+   flutter pub get
+   flutter run
+   ```
 
 ## Requirements
 
@@ -85,9 +83,96 @@ The screens are available on *lib/screens/*.
       by an user
     - Uses `ManyToOneRelationship` to how many users have ordered a given product
 
+## Usage
+
+The first screen manages all users in the system. Tap the icon on the bottom right corner to add a new user:
+
+<div>
+  <img src="https://i.imgur.com/MVxWGH0.png" style="height: 400px"/>
+  <img src="https://i.imgur.com/wtkpqYU.png" style="height: 400px"/>
+  <img src="https://i.imgur.com/V7lSsFK.png" style="height: 400px"/>
+</div>
+
+After you add a couple of users, you can search them by username:
+
+<div>
+  <img src="https://i.imgur.com/47h2z3M.png" style="height: 400px"/>
+  <img src="https://i.imgur.com/hS9JBJB.png" style="height: 400px"/>
+  <img src="https://i.imgur.com/VssRAQ4.png" style="height: 400px"/>
+</div>
+
+You can tap on a user to view, edit or delete its profile:
+
+<div>
+  <img src="https://i.imgur.com/HkdW6BN.png" style="height: 400px"/>
+  <img src="https://i.imgur.com/uAowC0K.png" style="height: 400px"/>
+  <img src="https://i.imgur.com/mS1E9kc.png" style="height: 400px"/>
+</div>
+
+Each user has a single cart, which you can access on its respective tile:
+
+<div>
+  <img src="https://i.imgur.com/HkdW6BN.png" style="height: 400px"/>
+  <img src="https://i.imgur.com/7IIbrZq.png" style="height: 400px"/>
+  <img src="https://i.imgur.com/c0rFnsE.png" style="height: 400px"/>
+</div>
+
+Tap the icon on the bottom right corner to add a new order to this user's cart:
+
+<div>
+  <img src="https://i.imgur.com/7IIbrZq.png" style="height: 400px"/>
+  <img src="https://i.imgur.com/c0rFnsE.png" style="height: 400px"/>
+  <img src="https://i.imgur.com/ZJcbtjY.png" style="height: 400px"/>
+</div>
+
+There won't be any products registered yet. Tap the icon on the top right corner to
+enable editing mode in this screen, where you can create, edit or delete products.
+When done editing, tap the icon again to reenable selection mode:
+
+<div>
+  <img src="https://i.imgur.com/c0rFnsE.png" style="height: 400px"/>
+  <img src="https://i.imgur.com/ZJcbtjY.png" style="height: 400px"/>
+  <img src="https://i.imgur.com/R9gicQZ.png" style="height: 400px"/>
+</div>
+
+When on editing mode, tap the icon on the bottom right corner to add a new product:
+
+<div>
+  <img src="https://i.imgur.com/R9gicQZ.png" style="height: 400px"/>
+  <img src="https://i.imgur.com/6LGp0Gi.png" style="height: 400px"/>
+  <img src="https://i.imgur.com/6Sq61Dz.png" style="height: 400px"/>
+</div>
+
+Add a couple of products. You can edit or remove them:
+
+<div>
+  <img src="https://i.imgur.com/kmu9FHK.png" style="height: 400px"/>
+  <img src="https://i.imgur.com/mT5o7EY.png" style="height: 400px"/>
+  <img src="https://i.imgur.com/BMsF4gR.png" style="height: 400px"/>
+</div>
+
+When you reenable selection mode, you'll be able to select a product and its amount:
+
+<div>
+  <img src="https://i.imgur.com/Ji8GQ0k.png" style="height: 400px"/>
+  <img src="https://i.imgur.com/7BW2GYi.png" style="height: 400px"/>
+  <img src="https://i.imgur.com/uAfuwxR.png" style="height: 400px"/>
+</div>
+
+When selecting a couple of products and their respective amounts, go to the main screen and
+tap the button on the top right corner. This is the dashboard, and you can see the products ordered
+by each user, as well as how many products each user has ordered:
+
+<div>
+  <img src="https://i.imgur.com/47h2z3M.png" style="height: 400px"/>
+  <img src="https://i.imgur.com/1VaTIqR.png" style="height: 400px"/>
+  <img src="https://i.imgur.com/UPmTw6i.png" style="height: 400px"/>
+</div>
+
 ## Tips
 
 - Prefer using `pull` and `pullAll` instead of `peek` and `peekAll`, since their stream will
   synchronize updates made on the model by other parts of the application.
 - Use the `*Data` version of a dORM model when creating it from a form.
 - Don't pass a `*Model` as argument to a new screen. Instead, pass its ID and read it again.
+
