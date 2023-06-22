@@ -52,37 +52,6 @@ The application shall be an e-commerce.
 - A user can make infinite reviews.
 - A user can review a product, a service or another user.
 
-## Implementation
-
-The screens are available on *lib/screens/*.
-
-- The `UsersScreen` (*users.dart*) can be used to see all the users or add an user to the system.
-    - Uses `pullAll` to read all users from the system, given a username (filtering by text)
-    - Uses `put` to create a new user (creating a strong entity)
-
-- The `UserScreen` (*user.dart*) can be used to update an user and view its cart, if created.
-    - Uses `pull` to read this user with its cart, if exists
-    - Uses `push` and `pop` to edit and remove this user, respectively
-    - Uses `put` to create a new cart (creating a weak entity)
-    - Uses `pullAll` to read all reviews of a given type from this user (filtering by many values)
-    - Uses `pop` to remove a review
-
-- The `CartScreen` (*cart.dart*) can be used to see the products placed in its cart by an user.
-    - Uses `pullAll` to read all items of a specific cart (filtering by value)
-    - Uses `OneToOneRelationship` to associate cart items with their respective products (1-to-1)
-    - Uses `put` to create a new item on user's cart (creating a weak entity)
-
-- The `OrderScreen` (*order.dart*) can be used to select a product and its amount to be added to a
-  cart.
-    - Uses `pullAll` to read all products from the system (without filtering)
-    - Uses `push` and `pop` to edit and remove a product, respectively
-    - User `put` to create a new product (creating a strong entity)
-
-- The `DashboardScreen` (*dashboard.dart*) can be used to view some statistics about the system.
-    - Uses `OneToManyRelationship` combined with `OneToOneRelationship` to list all products ordered
-      by an user
-    - Uses `ManyToOneRelationship` to how many users have ordered a given product
-
 ## Usage
 
 The first screen manages all users in the system. Tap the icon on the bottom right corner to add a new user:
@@ -168,6 +137,54 @@ by each user, as well as how many products each user has ordered:
   <img src="https://i.imgur.com/1VaTIqR.png" style="height: 400px"/>
   <img src="https://i.imgur.com/UPmTw6i.png" style="height: 400px"/>
 </div>
+
+Finally, tapping on an user allows you to make a review on behalf of that user, tapping the button
+on the top right corner:
+
+<div>
+  <img src="https://i.imgur.com/7IIbrZq.png" style="height: 400px"/>
+  <img src="https://i.imgur.com/9UIjIuB.png" style="height: 400px"/>
+  <img src="https://i.imgur.com/ekRJYYA.png" style="height: 400px"/>
+</div>
+
+Add a couple of reviews and use the chips to filter them by type:
+
+<div>
+  <img src="https://i.imgur.com/KL3TrAr.png" style="height: 400px"/>
+  <img src="https://i.imgur.com/SoimMLj.png" style="height: 400px"/>
+  <img src="https://i.imgur.com/b2oaoBn.png" style="height: 400px"/>
+</div>
+
+## dORM integration
+
+The screens are available on *lib/screens/*.
+
+- The `UsersScreen` (*users.dart*) can be used to see all the users or add an user to the system.
+    - Uses `pullAll` to read all users from the system, given a username (filtering by text)
+    - Uses `put` to create a new user (creating a strong entity)
+
+- The `UserScreen` (*user.dart*) can be used to update an user and view its cart, if created.
+    - Uses `pull` to read this user with its cart, if exists
+    - Uses `push` and `pop` to edit and remove this user, respectively
+    - Uses `put` to create a new cart (creating a weak entity)
+    - Uses `pullAll` to read all reviews of a given type from this user (filtering by many values)
+    - Uses `pop` to remove a review
+
+- The `CartScreen` (*cart.dart*) can be used to see the products placed in its cart by an user.
+    - Uses `pullAll` to read all items of a specific cart (filtering by value)
+    - Uses `OneToOneRelationship` to associate cart items with their respective products (1-to-1)
+    - Uses `put` to create a new item on user's cart (creating a weak entity)
+
+- The `OrderScreen` (*order.dart*) can be used to select a product and its amount to be added to a
+  cart.
+    - Uses `pullAll` to read all products from the system (without filtering)
+    - Uses `push` and `pop` to edit and remove a product, respectively
+    - User `put` to create a new product (creating a strong entity)
+
+- The `DashboardScreen` (*dashboard.dart*) can be used to view some statistics about the system.
+    - Uses `OneToManyRelationship` combined with `OneToOneRelationship` to list all products ordered
+      by an user
+    - Uses `ManyToOneRelationship` to how many users have ordered a given product
 
 ## Tips
 
