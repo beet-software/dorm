@@ -46,7 +46,7 @@ This will generate all the files based on the annotated classes.
 
 ### Models
 
-Any class `Class` annotated with `Model` will create four new classes: `ClassData`, `Class`,
+Any class `_Class` annotated with `Model` will create four new classes: `ClassData`, `Class`,
 `ClassDependency` and `ClassEntity`. 
 
 ```dart
@@ -162,7 +162,7 @@ await dorm.classes.repository.pop('class-1');
 
 ### Polymorphism
 
-If 
+Consider the following annotated code: 
 
 ```dart
 abstract class _Action {}
@@ -195,7 +195,15 @@ abstract class _Operation {
 }
 ```
 
-then
+The generated code will contain an abstract class named `Action` with three subclasses:
+`Attack`, `Defense` and `Healing`. It'll also contain an enum named `ActionType` with three
+values: `attack`, `defense` and `heal` (not `healing`; see its `PolymorphicData`'s `as` argument).
+
+The `_Operation` model will be generated as described previously, except that will contain an additional
+field named `type` of type `ActionType`, which will allow the user to check the runtime type of the 
+`action` field.  
+
+The following code explains how to manipulate generated code for a `Model` with a field annotated with `PolymorphicField`:
 
 ```dart
 final Operation o1 = await dorm.operations.repository.put(
