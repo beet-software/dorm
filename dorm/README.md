@@ -13,6 +13,11 @@ dart pub get
 
 ## Usage
 
+> **Note**: This is a section that explains the *theoretical* concept of dORM. It uses the
+> ideas and abstract principles related to dORM, rather than the practical uses of it. You
+> can automatize all of the steps below using code generation, provided by `dorm_annotations` 
+> and `dorm_generator`. If you are interested on how dORM works behind the scenes, keep reading!
+
 A database schema in this framework is split into two classes: its data and its model. The
 schema data contains all the data used by the real world to represent it, while the schema
 model also contains the relationship between other schema models.
@@ -83,7 +88,8 @@ class Student extends StudentData {
 }
 ```
 
-> **Why don't keep all the fields in a single model class?** Because of separation of concerns. A
+
+The fields aren't kept in a single model class because of *separation of concerns*. A
 form should only be concerned about real world information of a schema, not their primary or 
 foreign keys. So when using a form, use the schema data. When reading from database, use the 
 schema model.
@@ -704,8 +710,3 @@ final OneToManyRelationship<Country, Join<State, Capital?>> r1 = OneToManyRelati
 final List<Join<Country, List<Join<State, Capital?>>>> joins = 
     await r1.peekAll(Filter.text('AB', key: 'name'));
 ```
-
-## Automatizing the setup
-
-Found all too much? You can run all these steps using code generation provided 
-by `dorm_annotations` and `dorm_generator`.
