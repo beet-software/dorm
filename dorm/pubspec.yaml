@@ -1,12 +1,7 @@
 name: dorm
 description: Provides classes to implement the dORM framework.
 version: 0.3.0
-
-environment:
-  sdk: ">=2.17.3 <3.0.0"
-
 dev_dependencies:
-  test: ^1.21.4
   lints: ^2.0.0
-  build_runner: ^2.2.1
-  mockito: ^5.3.2
+environment:
+  sdk: ">=3.0.5 <4.0.0"

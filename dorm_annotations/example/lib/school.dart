@@ -1,8 +1,5 @@
-// ignore_for_file: unused_element
-
 import 'package:dorm/dorm.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
-import 'package:json_annotation/json_annotation.dart';
 
 part 'school.dorm.dart';
 
@@ -38,6 +35,7 @@ abstract class _School {
     name: '_query/nome',
     referTo: [QueryToken(#name, QueryType.text)],
   )
+  // ignore: unused_element
   String get _q0;
 }
 
@@ -56,12 +54,14 @@ abstract class _Student {
     name: '_query/nome',
     referTo: [QueryToken(#name, QueryType.text)],
   )
+  // ignore: unused_element
   String get _q0;
 
   @QueryField(
     name: '_query/id-escola_nome',
     referTo: [QueryToken(#schoolId), QueryToken(#name, QueryType.text)],
   )
+  // ignore: unused_element
   String get _q1;
 }
 
@@ -71,7 +71,7 @@ abstract class _Teacher {
     data as _Teacher;
     final String? ssn = data.ssn;
     if (ssn == null) return const CustomUidValue.composite();
-    return CustomUidValue.value(ssn.replaceAll(RegExp(r'[^0-9]'), ''));
+    return CustomUidValue.value(ssn.replaceAll(RegExp(r'\D'), ''));
   }
 
   @Field(name: 'nome')
@@ -81,6 +81,7 @@ abstract class _Teacher {
   String? get ssn;
 
   @QueryField(name: '_query/cpf', referTo: [QueryToken(#ssn)])
+  // ignore: unused_element
   String get _q0;
 }
 

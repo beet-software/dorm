@@ -248,7 +248,7 @@ class Circle extends Shape implements _Circle {
 class Dorm {
   const Dorm(this._root);
 
-  final Reference _root;
+  final BaseReference _root;
 
   DatabaseEntity<DrawingData, Drawing> get drawings => DatabaseEntity(
         const DrawingEntity(),

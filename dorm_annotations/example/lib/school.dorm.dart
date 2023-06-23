@@ -111,12 +111,13 @@ class School extends SchoolData implements _School {
   )
   final String id;
 
+  @override
   String get _q0 => [$normalizeText(name)].join('_');
   @override
   Map<String, Object?> toJson() {
     return {
       ..._$SchoolToJson(this)..remove('_id'),
-      '_query': {'nome': '_q0'},
+      '_query': {'nome': _q0},
     };
   }
 }
@@ -237,7 +238,9 @@ class Student extends StudentData implements _Student {
   )
   final String schoolId;
 
+  @override
   String get _q0 => [$normalizeText(name)].join('_');
+  @override
   String get _q1 => [
         schoolId,
         $normalizeText(name),
@@ -247,8 +250,8 @@ class Student extends StudentData implements _Student {
     return {
       ..._$StudentToJson(this)..remove('_id'),
       '_query': {
-        'nome': '_q0',
-        'id-escola_nome': '_q1',
+        'nome': _q0,
+        'id-escola_nome': _q1,
       },
     };
   }
@@ -329,6 +332,7 @@ class _$Teacher implements _Teacher {
   @override
   final String? ssn;
 
+  @override
   String get _q0 => [ssn ?? ''].join('_');
 }
 
@@ -384,12 +388,13 @@ class Teacher extends TeacherData implements _Teacher {
   )
   final String id;
 
+  @override
   String get _q0 => [ssn ?? ''].join('_');
   @override
   Map<String, Object?> toJson() {
     return {
       ..._$TeacherToJson(this)..remove('_id'),
-      '_query': {'cpf': '_q0'},
+      '_query': {'cpf': _q0},
     };
   }
 }
@@ -827,7 +832,7 @@ class ClassEntity implements Entity<ClassData, Class> {
 class Dorm {
   const Dorm(this._root);
 
-  final Reference _root;
+  final BaseReference _root;
 
   DatabaseEntity<SchoolData, School> get schools => DatabaseEntity(
         const SchoolEntity(),

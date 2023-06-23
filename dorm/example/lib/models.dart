@@ -33,6 +33,7 @@ abstract class _User {
     name: '_q-username',
     referTo: [QueryToken(#username, QueryType.text)],
   )
+  // ignore: unused_element
   String get _qUsername;
 }
 
@@ -51,6 +52,7 @@ abstract class _Product {
     name: '_q-name',
     referTo: [QueryToken(#name, QueryType.text)],
   )
+  // ignore: unused_element
   String get _qName;
 }
 
@@ -117,5 +119,6 @@ abstract class _Review {
     referTo: [QueryToken(#userId), QueryToken(#type, QueryType.enumeration)],
     joinBy: '_',
   )
+  // ignore: unused_element
   String get _qUserIdType;
 }

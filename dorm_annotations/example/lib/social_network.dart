@@ -1,6 +1,5 @@
 import 'package:dorm/dorm.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
-import 'package:json_annotation/json_annotation.dart';
 
 part 'social_network.dorm.dart';
 

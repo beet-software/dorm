@@ -408,7 +408,7 @@ class MessageEntity implements Entity<MessageData, Message> {
 class Dorm {
   const Dorm(this._root);
 
-  final Reference _root;
+  final BaseReference _root;
 
   DatabaseEntity<UserData, User> get users => DatabaseEntity(
         const UserEntity(),
