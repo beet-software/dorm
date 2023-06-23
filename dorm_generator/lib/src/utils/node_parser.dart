@@ -1,3 +1,19 @@
+// dORM
+// Copyright (C) 2023  Beet Software
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
@@ -9,7 +25,8 @@ import 'package:source_gen/source_gen.dart';
 import 'custom_types.dart';
 import 'orm_node.dart';
 
-abstract class NodeParser<A, T, E extends Element> extends SimpleElementVisitor<T?> {
+abstract class NodeParser<A, T, E extends Element>
+    extends SimpleElementVisitor<T?> {
   const NodeParser();
 
   Type get annotation => A;
@@ -39,7 +56,8 @@ abstract class NodeParser<A, T, E extends Element> extends SimpleElementVisitor<
   Element? _childOf(E element);
 }
 
-abstract class ClassNodeParser<A> extends NodeParser<A, ClassOrmNode<A>, ClassElement> {
+abstract class ClassNodeParser<A>
+    extends NodeParser<A, ClassOrmNode<A>, ClassElement> {
   const ClassNodeParser();
 
   @override
@@ -51,7 +69,8 @@ abstract class ClassNodeParser<A> extends NodeParser<A, ClassOrmNode<A>, ClassEl
   }
 }
 
-abstract class FieldNodeParser<A extends Field> extends NodeParser<A, FieldOrmNode, FieldElement> {
+abstract class FieldNodeParser<A extends Field>
+    extends NodeParser<A, FieldOrmNode, FieldElement> {
   const FieldNodeParser();
 
   @override

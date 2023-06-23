@@ -1,14 +1,30 @@
+// dORM
+// Copyright (C) 2023  Beet Software
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import 'package:analyzer/dart/element/element.dart';
 import 'package:build/build.dart';
 import 'package:code_builder/code_builder.dart' as cb;
 import 'package:dart_style/dart_style.dart';
 import 'package:dartx/dartx.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
-import 'package:dorm_generator/src/visitors.dart';
 import 'package:source_gen/source_gen.dart';
 
 import 'utils/custom_types.dart';
 import 'utils/orm_node.dart';
+import 'visitors.dart';
 
 final Uri _jsonAnnotationUrl = Uri(
   scheme: 'package',
