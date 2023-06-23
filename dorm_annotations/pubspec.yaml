@@ -1,11 +1,12 @@
 name: dorm_annotations
-version: 0.3.0
-description: Provides annotations related with dORM code generation.
-homepage: https://github.com/enzo-santos/dorm/tree/main/dorm_annotations
-repository: https://github.com/enzo-santos/dorm.git
+version: 1.0.0
+description: Exposes annotations related to dORM code generation.
+homepage: https://github.com/beet-software/dorm/tree/main/dorm_annotations
+repository: https://github.com/beet-software/dorm.git
+environment:
+  sdk: '>=3.0.5 <4.0.0'
+
 dependencies:
   meta: ^1.7.0
   lints: ^2.0.0
   json_annotation: ^4.8.1
-environment:
-  sdk: ">=3.0.5 <4.0.0"

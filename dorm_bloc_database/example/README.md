@@ -14,7 +14,7 @@ Explore the example project! Check out
 Clone this repository:
 
 ```shell
-git clone https://github.com/enzo-santos/dorm.git
+git clone https://github.com/beet-software/dorm.git
 cd dorm/dorm_bloc_database/example
 ```
 

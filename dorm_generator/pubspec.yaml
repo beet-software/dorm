@@ -1,10 +1,10 @@
 name: dorm_generator
-description: A new Flutter package project.
-version: 0.1.0
-publish_to: none
-
+version: 1.0.0
+description: A code generator to implement dORM framework.
+homepage: https://github.com/beet-software/dorm/tree/main/dorm_generator
+repository: https://github.com/beet-software/dorm.git
 environment:
-  sdk: ">=3.0.5 <4.0.0"
+  sdk: '>=3.0.5 <4.0.0'
 
 dependencies:
   dartx: ^1.1.0
@@ -18,14 +18,12 @@ dependencies:
 
   dorm_annotations:
     git:
-      url: https://github.com/enzo-santos/dorm.git
+      url: https://github.com/beet-software/dorm.git
       ref: main
       path: dorm_annotations
-
 dev_dependencies:
   lints: ^2.0.0
   build_runner: ^2.1.11
-
 dependency_overrides:
   dorm_annotations:
     path: ../dorm_annotations

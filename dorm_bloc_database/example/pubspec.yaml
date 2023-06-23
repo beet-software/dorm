@@ -14,17 +14,17 @@ dependencies:
 
   dorm:
     git:
-      url: https://github.com/enzo-santos/dorm.git
+      url: https://github.com/beet-software/dorm.git
       path: dorm
       ref: main
   dorm_annotations:
     git:
-      url: https://github.com/enzo-santos/dorm.git
+      url: https://github.com/beet-software/dorm.git
       path: dorm_annotations
       ref: main
   dorm_bloc_database:
     git:
-      url: https://github.com/enzo-santos/dorm.git
+      url: https://github.com/beet-software/dorm.git
       path: dorm_bloc_database
       ref: main
 
@@ -36,7 +36,7 @@ dev_dependencies:
   build_runner: ^2.4.3
   dorm_generator:
     git:
-      url: https://github.com/enzo-santos/dorm.git
+      url: https://github.com/beet-software/dorm.git
       path: dorm_generator
       ref: main
 

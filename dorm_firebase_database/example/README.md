@@ -20,7 +20,7 @@ from [the official site](https://www.oracle.com/br/java/technologies/javase/jdk1
 3. Clone this repository:
 
     ```shell
-    git clone https://github.com/enzo-santos/dorm.git
+    git clone https://github.com/beet-software/dorm.git
     cd dorm/dorm_firebase_database/example
     ```
 

@@ -14,7 +14,7 @@ the [`flutter_form_bloc` package](https://pub.dev/packages/flutter_form_bloc).
 1. Clone this repository:
 
    ```shell
-   git clone https://github.com/enzo-santos/dorm.git
+   git clone https://github.com/beet-software/dorm.git
    cd dorm/dorm/example
    ```
 
