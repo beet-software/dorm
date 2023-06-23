@@ -97,7 +97,6 @@ dORM does not yet handle
 - transactions
 - paginations
 - many-to-many joins
-- sorting on the remote side
 
 These features may be supported in future releases.
 
