@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'dart:collection';
+
 import 'package:dorm/dorm.dart';
 
 typedef TableRow = Map<String, Object?>;
@@ -94,6 +96,21 @@ class Query implements BaseQuery<Query> {
       return Map.fromEntries(count > 0
           ? table.entries.take(count)
           : table.entries.toList().reversed.take(count.abs()));
+    });
+  }
+
+  @override
+  Query sorted(String key) {
+    return _operate((table) {
+      return LinkedHashMap.fromEntries(table.entries.toList()
+        ..sort((e0, e1) {
+          final Object? v0 = e0.value[key];
+          final Object? v1 = e1.value[key];
+          return Comparable.compare(
+            v0 is Comparable<Object> ? v0 : 0,
+            v1 is Comparable<Object> ? v1 : 0,
+          );
+        }));
     });
   }
 }

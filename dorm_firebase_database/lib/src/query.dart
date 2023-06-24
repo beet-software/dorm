@@ -96,4 +96,9 @@ class Query implements BaseQuery<Query> {
     if (count < 0) return Query(query.limitToLast(count.abs()));
     return Query(query.limitToFirst(count));
   }
+
+  @override
+  Query sorted(String key) {
+    return Query(query.orderByChild(key));
+  }
 }

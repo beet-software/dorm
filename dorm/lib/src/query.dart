@@ -50,10 +50,13 @@ abstract class BaseQuery<T> {
   /// that can be used to delimit the comparison.
   T whereRange<R>(String key, FilterRange<R> range);
 
-  /// Includes only a [count] number of the rows from the query.
+  /// From previous queries, includes only a [count] number of the rows.
   ///
   /// If [count] is positive, only the first [count] rows are included.
   /// If [count] is negative, only the last abs([count]) rows are included.
   /// If [count] is zero, no row is filtered (all rows are included).
   T limit(int count);
+
+  /// From previous queries, sorts the query by the field [key].
+  T sorted(String key);
 }
