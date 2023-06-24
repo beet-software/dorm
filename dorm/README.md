@@ -1,4 +1,4 @@
-# dORM
+# dorm
 
 An Object Relational Mapper framework for Dart.
 
