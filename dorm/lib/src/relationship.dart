@@ -25,10 +25,23 @@ class Join<LeftModel, RightModel> {
   final RightModel right;
 
   const Join({required this.left, required this.right});
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Join &&
+          runtimeType == other.runtimeType &&
+          left == other.left &&
+          right == other.right;
+
+  @override
+  int get hashCode => left.hashCode ^ right.hashCode;
 }
 
-abstract class Mergeable<Model>
+abstract class Readable<Model>
     implements SingleReadOperation<Model>, BatchReadOperation<Model> {}
+
+abstract class Mergeable<L, R> implements Readable<Join<L, R>> {}
 
 /// Represents an one-to-one relationship.
 ///
@@ -76,9 +89,9 @@ abstract class Mergeable<Model>
 /// final Stream<List<Join<School, Principal?>>> s0 = relationship
 ///     .pullAll(const Filter.value(true, key: 'active'));
 /// ```
-class OneToOneRelationship<L, R> implements Mergeable<Join<L, R?>> {
-  final Mergeable<L> left;
-  final Mergeable<R> right;
+class OneToOneRelationship<L, R> implements Mergeable<L, R?> {
+  final Readable<L> left;
+  final Readable<R> right;
   final String Function(L) on;
 
   const OneToOneRelationship({
@@ -110,7 +123,7 @@ class OneToOneRelationship<L, R> implements Mergeable<Join<L, R?>> {
 
   @override
   Stream<Join<L, R?>?> pull(String id) {
-    return ForwardLinkMerge<L, R?>(
+    return OneToOneSingleMerge<L, R?>(
       left: left.pull(id),
       map: (leftModel) => right.pull(on(leftModel)),
     ).stream;
@@ -120,7 +133,7 @@ class OneToOneRelationship<L, R> implements Mergeable<Join<L, R?>> {
   Stream<List<Join<L, R?>>> pullAll([
     Filter filter = const Filter.empty(),
   ]) {
-    return ExpandMerge<L, R?>(
+    return OneToOneBatchMerge<L, R?>(
       left: left.pullAll(filter),
       map: (leftModel) => right.pull(on(leftModel)),
     ).stream;
@@ -173,9 +186,9 @@ class OneToOneRelationship<L, R> implements Mergeable<Join<L, R?>> {
 /// final Stream<List<Join<School, List<Student>>>> s0 = relationship
 ///     .pullAll(const Filter.value(true, key: 'active'));
 /// ```
-class OneToManyRelationship<L, R> implements Mergeable<Join<L, List<R>>> {
-  final Mergeable<L> left;
-  final Mergeable<R> right;
+class OneToManyRelationship<L, R> implements Mergeable<L, List<R>> {
+  final Readable<L> left;
+  final Readable<R> right;
   final Filter Function(L) on;
 
   const OneToManyRelationship({
@@ -211,7 +224,7 @@ class OneToManyRelationship<L, R> implements Mergeable<Join<L, List<R>>> {
 
   @override
   Stream<Join<L, List<R>>?> pull(String id) {
-    return ForwardLinkMerge<L, List<R>>(
+    return OneToOneSingleMerge<L, List<R>>(
       left: left.pull(id),
       map: (leftModel) => right.pullAll(on(leftModel)),
     ).stream;
@@ -221,7 +234,7 @@ class OneToManyRelationship<L, R> implements Mergeable<Join<L, List<R>>> {
   Stream<List<Join<L, List<R>>>> pullAll([
     Filter filter = const Filter.empty(),
   ]) {
-    return ExpandMerge<L, List<R>>(
+    return OneToOneBatchMerge<L, List<R>>(
       left: left.pullAll(filter),
       map: (leftModel) => right.pullAll(on(leftModel)),
     ).stream;
@@ -281,8 +294,8 @@ class ManyToOneRelationship<L, R>
     implements
         SingleReadOperation<Join<R, L>>,
         BatchReadOperation<Join<R, List<L>>> {
-  final Mergeable<L> left;
-  final Mergeable<R> right;
+  final Readable<L> left;
+  final Readable<R> right;
   final String Function(L) on;
 
   const ManyToOneRelationship({
@@ -326,7 +339,7 @@ class ManyToOneRelationship<L, R>
 
   @override
   Stream<Join<R, L>?> pull(String id) {
-    return BackwardLinkMerge<L, R>(
+    return ManyToOneSingleMerge<L, R>(
       left: left.pull(id),
       map: (leftModel) => right.pull(on(leftModel)),
     ).stream;
@@ -336,7 +349,7 @@ class ManyToOneRelationship<L, R>
   Stream<List<Join<R, List<L>>>> pullAll([
     Filter filter = const Filter.empty(),
   ]) {
-    return CollapseMerge<L, R>(
+    return ManyToOneBatchMerge<R, L>(
       left: left.pullAll(filter),
       onLeft: (leftModel) => on(leftModel),
       onRight: (rightId) => right.pull(rightId),

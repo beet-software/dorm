@@ -18,19 +18,24 @@ import 'dart:async';
 
 import 'relationship.dart';
 
-abstract class Merge {}
+abstract class Merge<T> {
+  Stream<T> get stream;
+}
 
-class ForwardLinkMerge<L, R> implements Merge {
-  final StreamController<Join<L, R>?> _controller =
-      StreamController.broadcast();
+/// Represents a merge that listens an [InputValue] and emits its respective
+/// [OutputKey] joined with an [OutputValue].
+abstract class SingleMerge<InputValue, OutputKey, OutputValue, R>
+    implements Merge<Join<OutputKey, OutputValue>?> {
+  final Stream<InputValue?> left;
+  final Stream<R> Function(InputValue) map;
 
   late final StreamSubscription<void> _subscription;
   StreamSubscription<void>? _childSubscription;
 
-  ForwardLinkMerge({
-    required Stream<L?> left,
-    required Stream<R> Function(L) map,
-  }) {
+  final StreamController<Join<OutputKey, OutputValue>?> _controller =
+      StreamController.broadcast();
+
+  SingleMerge({required this.left, required this.map}) {
     _subscription = left.listen(
       (leftModel) async {
         await _childSubscription?.cancel();
@@ -40,7 +45,7 @@ class ForwardLinkMerge<L, R> implements Merge {
         } else {
           _childSubscription = map(leftModel).listen(
             (rightModel) {
-              _controller.add(Join(left: leftModel, right: rightModel));
+              _controller.add(parse(leftModel, rightModel));
             },
             onDone: () => _childSubscription?.cancel(),
             onError: (e, s) => _controller.addError(e, s),
@@ -55,36 +60,58 @@ class ForwardLinkMerge<L, R> implements Merge {
     );
   }
 
-  Stream<Join<L, R>?> get stream => _controller.stream;
+  /// Transforms input values into joins.
+  Join<OutputKey, OutputValue>? parse(InputValue leftModel, R rightModel);
+
+  @override
+  Stream<Join<OutputKey, OutputValue>?> get stream => _controller.stream;
 }
 
-class BackwardLinkMerge<R, L> implements Merge {
-  final StreamController<Join<L, R>?> _controller =
+/// Represents a merge that listens many [InputValue]s and emits their
+/// respective [OutputKey]s joined with [OutputValue]s.
+abstract class BatchMerge<InputValue, OutputKey, OutputValue>
+    implements Merge<List<Join<OutputKey, OutputValue>>> {
+  final Stream<List<InputValue>> left;
+
+  final StreamController<List<Join<OutputKey, OutputValue>>> _controller =
       StreamController.broadcast();
 
   late final StreamSubscription<void> _subscription;
-  StreamSubscription<void>? _childSubscription;
+  List<StreamSubscription<void>> _childSubscriptions = [];
+  List<Join<OutputKey?, OutputValue>?> _snapshots = [];
 
-  BackwardLinkMerge({
-    required Stream<R?> left,
-    required Stream<L?> Function(R) map,
-  }) {
+  BatchMerge({required this.left}) {
     _subscription = left.listen(
-      (leftModel) async {
-        await _childSubscription?.cancel();
-        if (leftModel == null) {
-          _controller.add(null);
-          _childSubscription = null;
+      (leftModels) async {
+        await Future.wait(_childSubscriptions.map((s) => s.cancel()));
+
+        final List<Stream<Join<OutputKey?, OutputValue>>> streams =
+            parse(leftModels);
+        _snapshots = List.filled(streams.length, null);
+        if (streams.isEmpty) {
+          _controller.add([]);
+          _childSubscriptions = [];
         } else {
-          _childSubscription = map(leftModel).listen(
-            (rightModel) {
-              _controller.add(rightModel == null
-                  ? null
-                  : Join(left: rightModel, right: leftModel));
-            },
-            onDone: () => _childSubscription?.cancel(),
-            onError: (e, s) => _controller.addError(e, s),
-          );
+          _childSubscriptions.addAll(List.generate(streams.length, (i) {
+            return streams[i].listen(
+              (snapshot) {
+                _snapshots[i] = snapshot;
+
+                final List<Join<OutputKey, OutputValue>> joins = [];
+                for (Join<OutputKey?, OutputValue>? snapshot in _snapshots) {
+                  if (snapshot == null) return;
+
+                  final OutputKey? outputKey = snapshot.left;
+                  if (outputKey == null) continue;
+                  joins.add(Join(left: outputKey, right: snapshot.right));
+                }
+                _controller.add(joins);
+              },
+              onDone: () =>
+                  Future.wait(_childSubscriptions.map((s) => s.cancel())),
+              onError: (e, s) => _controller.addError(e, s),
+            );
+          }));
         }
       },
       onDone: () async {
@@ -95,130 +122,70 @@ class BackwardLinkMerge<R, L> implements Merge {
     );
   }
 
-  Stream<Join<L, R>?> get stream => _controller.stream;
+  /// Transforms input values into snapshots.
+  List<Stream<Join<OutputKey?, OutputValue>>> parse(List<InputValue> values);
+
+  @override
+  Stream<List<Join<OutputKey, OutputValue>>> get stream => _controller.stream;
 }
 
-class ExpandMerge<L, R> implements Merge {
-  final StreamController<List<Join<L, R>>> _controller =
-      StreamController.broadcast();
+class OneToOneSingleMerge<L, R> extends SingleMerge<L, L, R, R> {
+  OneToOneSingleMerge({required super.left, required super.map});
 
-  late final StreamSubscription<void> _subscription;
-  List<StreamSubscription<void>> _childSubscriptions = [];
+  @override
+  Stream<Join<L, R>?> get stream => _controller.stream;
 
-  List<Join<L, R>?> _snapshots = [];
+  @override
+  Join<L, R> parse(L leftModel, R rightModel) {
+    return Join(left: leftModel, right: rightModel);
+  }
+}
 
-  ExpandMerge({
-    required Stream<List<L>> left,
+class ManyToOneSingleMerge<R, L> extends SingleMerge<R, L, R, L?> {
+  ManyToOneSingleMerge({required super.left, required super.map});
+
+  @override
+  Join<L, R>? parse(R leftModel, L? rightModel) {
+    return rightModel == null ? null : Join(left: rightModel, right: leftModel);
+  }
+}
+
+class OneToOneBatchMerge<L, R> extends BatchMerge<L, L, R> {
+  final Stream<R> Function(L) _map;
+
+  OneToOneBatchMerge({
+    required super.left,
     required Stream<R> Function(L) map,
-  }) {
-    _subscription = left.listen(
-      (leftModels) async {
-        await Future.wait(_childSubscriptions.map((s) => s.cancel()));
-        _snapshots = List.filled(leftModels.length, null);
+  }) : _map = map;
 
-        if (leftModels.isEmpty) {
-          _controller.add([]);
-          _childSubscriptions = [];
-        } else {
-          for (int i = 0; i < leftModels.length; i++) {
-            final L leftModel = leftModels[i];
-            _childSubscriptions.add(map(leftModel).listen(
-              (rightModel) {
-                _snapshots[i] = Join(left: leftModel, right: rightModel);
-                _checkSnapshots();
-              },
-              onDone: () =>
-                  Future.wait(_childSubscriptions.map((s) => s.cancel())),
-              onError: (e, s) => _controller.addError(e, s),
-            ));
-          }
-        }
-      },
-      onDone: () async {
-        await _subscription.cancel();
-        await _controller.close();
-      },
-      onError: (e, s) => _controller.addError(e, s),
-    );
+  @override
+  List<Stream<Join<L?, R>>> parse(List<L> values) {
+    return values
+        .map((leftModel) => _map(leftModel)
+            .map((rightModel) => Join(left: leftModel, right: rightModel)))
+        .toList();
   }
-
-  void _checkSnapshots() {
-    final List<Join<L, R>> joins = [];
-    for (Join<L, R>? join in _snapshots) {
-      if (join == null) return;
-      joins.add(join);
-    }
-    _controller.add(joins);
-  }
-
-  Stream<List<Join<L, R>>> get stream => _controller.stream;
 }
 
-class CollapseMerge<R, L> implements Merge {
-  final StreamController<List<Join<L, List<R>>>> _controller =
-      StreamController.broadcast();
+class ManyToOneBatchMerge<L, R> extends BatchMerge<R, L, List<R>> {
+  final String Function(R) onLeft;
+  final Stream<L?> Function(String) onRight;
 
-  late final StreamSubscription<void> _subscription;
-  List<StreamSubscription<void>> _childSubscriptions = [];
+  ManyToOneBatchMerge({
+    required super.left,
+    required this.onLeft,
+    required this.onRight,
+  });
 
-  List<Join<L?, List<R>>?> _snapshots = [];
-
-  CollapseMerge({
-    required Stream<List<R>> left,
-    required String Function(R) onLeft,
-    required Stream<L?> Function(String) onRight,
-  }) {
-    _subscription = left.listen(
-      (leftModels) async {
-        await Future.wait(_childSubscriptions.map((s) => s.cancel()));
-
-        final Map<String, List<R>> groups = {};
-        for (R leftModel in leftModels) {
-          groups.putIfAbsent(onLeft(leftModel), () => []).add(leftModel);
-        }
-        _snapshots = List.filled(groups.length, null);
-
-        if (groups.isEmpty) {
-          _controller.add([]);
-          _childSubscriptions = [];
-        } else {
-          final List<MapEntry<String, List<R>>> entries =
-              groups.entries.toList();
-          for (int i = 0; i < entries.length; i++) {
-            final MapEntry<String, List<R>> entry = entries[i];
-            final List<R> leftModels = entry.value;
-
-            _childSubscriptions.add(onRight(entry.key).listen(
-              (rightModel) {
-                _snapshots[i] = Join(left: rightModel, right: leftModels);
-                _checkSnapshots();
-              },
-              onDone: () =>
-                  Future.wait(_childSubscriptions.map((s) => s.cancel())),
-              onError: (e, s) => _controller.addError(e, s),
-            ));
-          }
-        }
-      },
-      onDone: () async {
-        await _subscription.cancel();
-        await _controller.close();
-      },
-      onError: (e, s) => _controller.addError(e, s),
-    );
-  }
-
-  void _checkSnapshots() {
-    final List<Join<L, List<R>>> joins = [];
-    for (Join<L?, List<R>>? join in _snapshots) {
-      if (join == null) return;
-      final L? left = join.left;
-
-      if (left == null) continue;
-      joins.add(Join(left: left, right: join.right));
+  @override
+  List<Stream<Join<L?, List<R>>>> parse(List<R> values) {
+    final Map<String, List<R>> groups = {};
+    for (R value in values) {
+      groups.putIfAbsent(onLeft(value), () => []).add(value);
     }
-    _controller.add(joins);
+    return groups.entries
+        .map((entry) => onRight(entry.key)
+            .map((leftModel) => Join(left: leftModel, right: entry.value)))
+        .toList();
   }
-
-  Stream<List<Join<L, List<R>>>> get stream => _controller.stream;
 }

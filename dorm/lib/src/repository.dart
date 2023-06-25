@@ -68,7 +68,7 @@ abstract class BatchReadOperation<Model> {
 }
 
 /// Represents the operations available for a [Model] in a database.
-abstract class ModelRepository<Model> implements Mergeable<Model> {
+abstract class ModelRepository<Model> implements Readable<Model> {
   /// Selects all the ids from the models of this table.
   ///
   /// This method should retrieve *only* the ids:
