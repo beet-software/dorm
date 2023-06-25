@@ -1,5 +1,5 @@
 name: dorm_bloc_database
-version: 1.0.0
+version: 1.0.0-alpha.1
 description: An in-memory database engine for dORM, using bloc.
 homepage: https://github.com/beet-software/dorm/tree/main/dorm_bloc_database
 repository: https://github.com/beet-software/dorm.git
