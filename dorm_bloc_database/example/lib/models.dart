@@ -1,5 +1,4 @@
-import 'package:dorm/dorm.dart';
-import 'package:json_annotation/json_annotation.dart';
+import 'package:dorm_framework/dorm_framework.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
 
 part 'models.g.dart';

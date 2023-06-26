@@ -129,7 +129,7 @@ abstract class _School {
 }
 ```
 
-Applying `Filter.value(true, key: '_query_active')` (described in the `dorm` package) should optimize the reading of all active schools.
+Applying `Filter.value(true, key: '_query_active')` (described in the `dorm_framework` package) should optimize the reading of all active schools.
 
 #### Multiple-column indexing
 
@@ -158,7 +158,7 @@ abstract class _SchoolAddress {
 }
 ```
 
-Applying `Filter.value('99950_13', key: '_query_address')` (described in the `dorm` package) 
+Applying `Filter.value('99950_13', key: '_query_address')` (described in the `dorm_framework` package) 
 should optimize the reading of all addresses with zip code 99950 and number 13.
 
 #### Text indexing
@@ -188,7 +188,7 @@ abstract class _Student {
 }
 ```
 
-Applying `Filter.text('school7319004#Paul', key: '_query_sbn')` (described in the `dorm` package) 
+Applying `Filter.text('school7319004#Paul', key: '_query_sbn')` (described in the `dorm_framework` package) 
 should optimize the reading of all Pauls studying at the school with ID `school7319004`.
 
 ### Composite fields

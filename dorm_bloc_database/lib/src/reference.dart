@@ -17,7 +17,7 @@
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
-import 'package:dorm/dorm.dart';
+import 'package:dorm_framework/dorm_framework.dart';
 import 'package:uuid/uuid.dart';
 
 import 'query.dart';

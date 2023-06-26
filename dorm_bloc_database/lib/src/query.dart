@@ -16,7 +16,7 @@
 
 import 'dart:collection';
 
-import 'package:dorm/dorm.dart';
+import 'package:dorm_framework/dorm_framework.dart';
 
 typedef TableRow = Map<String, Object?>;
 typedef TableOperator = Map<String, TableRow> Function(

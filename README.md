@@ -18,7 +18,7 @@ This ORM uses separation of concerns as the main concept of its framework:
 Inside a Dart (or Flutter) project, run the following lines in your command prompt:
 
 ```shell
-dart pub add dorm
+dart pub add dorm_framework
 dart pub add dorm_annotations
 dart pub add dev:dorm_generator
 dart pub add dev:build_runner
@@ -50,7 +50,7 @@ dart pub run build_runner build
 ``` 
 
 This will create a *.dorm.dart* file (shown in the right frame) and a *.g.dart* file. Don't worry about the
-generated code for now. If you want to learn more about it, take a look at the `dorm` package. What you need
+generated code for now. If you want to learn more about it, take a look at the `dorm_framework` package. What you need
 to know is that there will be a generated class named `Dorm`. For every model you set up, a field will be
 added to this class, allowing you to manipulate the database (such as creating, reading, updating and deleting)
 based on each table.
@@ -80,7 +80,7 @@ Here's a step-by-step guide:
 
 1. Represent your database schema as source code, explained by `dorm_annotations`
 2. Fit your schema into dORM's framework, explained by `dorm_generator`
-3. Manipulate the generated code using filters and joins, explained by `dorm`
+3. Manipulate the generated code using filters and joins, explained by `dorm_framework`
 4. Discover what database engines are available to integrate with dORM
    - Integrate using Firebase Realtime Database, explained by `dorm_firebase_database`
    - Integrate using local memory and the BLoC pattern, explained by `dorm_bloc_database`
@@ -113,7 +113,7 @@ Basically,
    cd dorm_<DRIVER>_database
    ```
 
-2. Add `dorm` as dependency of your package:
+2. Add `dorm_framework` as dependency of your package:
 
    ```shell
    dart pub add dorm
@@ -125,7 +125,7 @@ Basically,
 4. Inside *query.dart*, add the following contents:
 
    ```dart
-   import 'package:dorm/dorm.dart';
+   import 'package:dorm_framework/dorm_framework.dart';
 
    class Query implements BaseQuery<Query> { /* ... */ }
    ```
@@ -135,7 +135,7 @@ Basically,
    using it. Accept this field as a parameter in the constructor of this class:
 
    ```dart
-   import 'package:dorm/dorm.dart';
+   import 'package:dorm_framework/dorm_framework.dart';
 
    class Query implements BaseQuery<Query> {
      final T value;
@@ -148,7 +148,7 @@ Basically,
    with that updated value. [Purely as an pseudocode](https://www.explainxkcd.com/wiki/index.php/327:_Exploits_of_a_Mom), this is a way of doing it using SQL:
 
    ```dart
-   import 'package:dorm/dorm.dart';
+   import 'package:dorm_framework/dorm_framework.dart';
 
    class Query implements BaseQuery<Query> {
      final String cmd;
@@ -167,7 +167,7 @@ Basically,
 5. Inside *reference.dart*, add the following contents:
 
    ```dart
-   import 'package:dorm/dorm.dart';
+   import 'package:dorm_framework/dorm_framework.dart';
 
    class Reference implements BaseReference { /* ... */ }
    ```

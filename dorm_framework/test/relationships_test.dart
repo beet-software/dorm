@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:dorm/dorm.dart';
+import 'package:dorm_framework/dorm_framework.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart' as mock;
 import 'package:test/test.dart';

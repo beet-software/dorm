@@ -9,8 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  dorm:
-    path: ../../dorm
+  dorm_framework:
+    path: ../../dorm_framework
   dorm_annotations:
     path: ../../dorm_annotations
   dorm_firebase_database:
@@ -37,8 +37,8 @@ flutter:
   uses-material-design: true
 
 dependency_overrides:
-  dorm:
-    path: ../../dorm
+  dorm_framework:
+    path: ../../dorm_framework
   dorm_annotations:
     path: ../../dorm_annotations
   dorm_bloc_database:

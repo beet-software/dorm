@@ -16,7 +16,7 @@
 
 import 'dart:convert';
 
-import 'package:dorm/dorm.dart';
+import 'package:dorm_framework/dorm_framework.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fa;
 import 'package:firebase_database/firebase_database.dart' as fd;
 import 'package:http/http.dart' as http;

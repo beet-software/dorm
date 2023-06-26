@@ -15,7 +15,7 @@ the [`flutter_form_bloc` package](https://pub.dev/packages/flutter_form_bloc).
 
    ```shell
    git clone https://github.com/beet-software/dorm.git
-   cd dorm/dorm/example
+   cd dorm/dorm_framework/example
    ```
 
 2. *(optional)* If you want a local Firebase instance, run the following line in your command prompt:

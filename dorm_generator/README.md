@@ -25,7 +25,7 @@ Add the following directives to top of this file:
 
 ```dart
 import 'package:dorm_annotations/dorm_annotations.dart';
-import 'package:dorm/dorm.dart';
+import 'package:dorm_framework/dorm_framework.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'models.g.dart';
@@ -109,7 +109,7 @@ class Class extends ClassData implements _Class {
 ```
 
 A `ClassDependency` and a `ClassEntity` extends respectively `Dependency<ClassData>` 
-and `Entity<ClassData, Class>`, exported by the `dorm` package.
+and `Entity<ClassData, Class>`, exported by the `dorm_framework` package.
 
 The code generation will also create a new class named `Dorm`, which will contain the
 repository accessors. In the above example, it is defined as:
@@ -127,7 +127,7 @@ class Dorm {
 
 Refer to the `dorm_*_database` packages to read more about how to obtain a `Reference`.
 With a `Dorm` instance, you can operate on classes using a `Repository`, exported by the 
-`dorm` package:
+`dorm_framework` package:
 
 ```dart
 final Dorm dorm = /* ... */;

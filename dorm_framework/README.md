@@ -1,4 +1,4 @@
-# dorm
+# dorm_framework
 
 An Object Relational Mapper framework for Dart.
 
@@ -7,7 +7,7 @@ An Object Relational Mapper framework for Dart.
 Run the following commands in your Dart or Flutter project:
 
 ```bash
-dart pub add dorm
+dart pub add dorm_framework
 dart pub get
 ```
 

@@ -1,5 +1,5 @@
 import 'package:device_preview/device_preview.dart';
-import 'package:dorm/dorm.dart';
+import 'package:dorm_framework/dorm_framework.dart';
 import 'package:dorm_bloc_database/dorm_bloc_database.dart' as dorm_bloc;
 import 'package:dorm_firebase_database/dorm_firebase_database.dart'
     as dorm_firebase;

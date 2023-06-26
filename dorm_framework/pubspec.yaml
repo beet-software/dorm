@@ -1,5 +1,5 @@
-name: dorm
-version: 1.0.0-alpha.2
+name: dorm_framework
+version: 1.0.0-alpha.3
 description: Exposes classes to implement the dORM framework.
 homepage: https://github.com/beet-software/dorm/tree/main/dorm
 repository: https://github.com/beet-software/dorm.git
