@@ -45,9 +45,9 @@ Take a look at the chosen `dorm_*_database` package to learn how to set it up.
 
 ## Usage
 
-dORM works based on code generation. Take a look at the `dorm_annotations` and `dorm_generator` packages
-(in this order) to learn how to annotate your code, discover what annotations are available to you and 
-run the generator to create your *.dorm.dart* and *.g.dart* files.
+dORM works based on code generation. Take a look at the [`dorm_annotations`](https://pub.dev/packages/dorm_annotations)
+and [`dorm_generator`](https://pub.dev/packages/dorm_generator) packages (in this order) to learn how to annotate your
+code, discover what annotations are available to you and run the generator to create your *.dorm.dart* and *.g.dart* files.
 
 This is a flowchart for code generation exposed by this package:
 
@@ -64,14 +64,15 @@ dart pub run build_runner build
 ``` 
 
 This will create a *.dorm.dart* file (shown in the right frame) and a *.g.dart* file. Don't worry about the
-generated code for now. If you want to learn more about it, take a look at the `dorm_framework` package. What you need
-to know is that there will be a generated class named `Dorm`. For every model you set up, a field will be
-added to this class, allowing you to manipulate the database (such as creating, reading, updating and deleting)
-based on each table.
+generated code for now. If you want to learn more about it, take a look at the 
+[`dorm_framework` package](https://pub.dev/packages/dorm_framework). What you need to know is that there will
+be a generated class named `Dorm`. For every model you set up, a field will be added to this class, allowing
+you to manipulate the database (such as creating, reading, updating and deleting) based on each table.
 
 However, `Dorm` accepts a `BaseReference` as an argument on its constructor. In this step, you must select
-a `dorm_*_database` to use as your database engine. This library exports some engines as default, such as `firebase`
-and `bloc`, but you can implement your own if you want (read more below). Every `dorm_*_database` exports a
+a `dorm_*_database` to use as your database engine. This library exports some engines as default, such as 
+[`firebase`](https://pub.dev/packages/dorm_firebase_database) and [`bloc`](https://pub.dev/packages/dorm_bloc_database),
+but you can implement your own if you want (read more below). Every `dorm_*_database` exports a
 `Reference` class, which inherits from `BaseReference` and you can pass to the generated `Dorm` class.
 
 This is a flowchart explaining this procedure:
@@ -80,25 +81,24 @@ This is a flowchart explaining this procedure:
 
 The frame on the right represents your application code, ready to use dORM.
 
-### Examples
-
-On the *dorm/example* directory, there is a complete Flutter application integrated with dORM, using a lot of 
-features for you to understand better how this package works.
-
 ## Documentation
 
 dORM is a framework with a lot of features, so before diving into it, read the vast documentation and its well-crafted
 examples.  
 
+On the [*dorm_framework/example* directory](https://github.com/beet-software/dorm/tree/main/dorm_framework/example), 
+there is a complete Flutter application integrated with dORM, using a lot of features for you to understand better
+how this package works.
+
 Here's a step-by-step guide:
 
-1. Represent your database schema as source code, explained by `dorm_annotations`
-2. Fit your schema into dORM's framework, explained by `dorm_generator`
-3. Manipulate the generated code using filters and joins, explained by `dorm_framework`
+1. Represent your database schema as source code, explained by [`dorm_annotations`](https://pub.dev/packages/dorm_annotations)
+2. Fit your schema into dORM's framework, explained by [`dorm_generator`](https://pub.dev/packages/dorm_generator)
+3. Manipulate the generated code using filters and joins, explained by [`dorm_framework`](https://pub.dev/packages/dorm_framework)
 4. Discover what database engines are available to integrate with dORM
-   - Integrate using Firebase Realtime Database, explained by `dorm_firebase_database`
-   - Integrate using local memory and the BLoC pattern, explained by `dorm_bloc_database`
-   - Your app uses another engine? Take a look at the "Implementing your own engine" section below
+   - Integrate using Firebase Realtime Database, explained by [`dorm_firebase_database`](https://pub.dev/packages/dorm_firebase_database)
+   - Integrate using local memory and the BLoC pattern, explained by [`dorm_bloc_database`](https://pub.dev/packages/dorm_bloc_database)
+   - Using another engine? Take a look at the "Implementing your own engine" section below
 
 You can find an *example/* folder inside *every* package mentioned above, containing specific examples
 on how to use them. Note that you will not learn the framework just by reading this document or exploring
@@ -115,8 +115,10 @@ These features may be supported in future releases.
 
 ## Implementing your own engine
 
-If you want to implement a new database engine for dORM, you can look at `dorm_bloc_database`
-and `dorm_firebase_database` as a base to learn how to implement your own driver, such as MySQL or MongoDB.
+If you want to implement a new database engine for dORM, you can look at 
+[`dorm_bloc_database`](https://pub.dev/packages/dorm_bloc_database) and 
+[`dorm_firebase_database`](https://pub.dev/packages/dorm_firebase_database) 
+as a base to learn how to implement your own driver, such as MySQL or MongoDB.
 
 Basically,
 
@@ -204,7 +206,7 @@ Basically,
    export 'src/reference.dart';
    ```
 
-8. Finally, add your created package to the application you want to integrate with dORM (or make a pull request 🙂):
+8. Finally, add your package to the project you want to integrate with dORM (or make a pull request 🙂):
 
    ```shell
    dart pub add dorm_<DRIVER>_database
