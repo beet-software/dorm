@@ -5,6 +5,8 @@ homepage: https://github.com/beet-software/dorm/tree/main/dorm
 repository: https://github.com/beet-software/dorm.git
 environment:
   sdk: '>=3.0.5 <4.0.0'
+false_secrets:
+  - example/lib/main.dart
 
 dependencies:
   rxdart: ^0.27.7

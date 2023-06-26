@@ -9,21 +9,13 @@ environment:
 dependencies:
   dartx: ^1.1.0
   build: ^2.3.0
-  graphs: 2.0.0
+  graphs: ^2.0.0
   analyzer: ^5.3.1
   source_gen: ^1.2.2
   dart_style: ^2.3.1
   code_builder: ^4.5.0
   json_serializable: ^6.3.1
-
-  dorm_annotations:
-    git:
-      url: https://github.com/beet-software/dorm.git
-      ref: main
-      path: dorm_annotations
+  dorm_annotations: ^1.0.0-alpha.3
 dev_dependencies:
   lints: ^2.0.0
   build_runner: ^2.1.11
-dependency_overrides:
-  dorm_annotations:
-    path: ../dorm_annotations
