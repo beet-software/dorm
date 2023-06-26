@@ -1,5 +1,19 @@
 # dORM
 
+
+![license](https://img.shields.io/github/license/beet-software/dorm?color=yellow)
+![GitHub Repo stars](https://img.shields.io/github/stars/beet-software/dorm)
+![GitHub forks](https://img.shields.io/github/forks/beet-software/dorm)
+
+
+[![pub package](https://img.shields.io/pub/v/dorm_framework.svg?label=dorm_framework)](https://pub.dev/packages/dorm_framework)
+[![pub package](https://img.shields.io/pub/v/dorm_annotations.svg?label=dorm_annotations)](https://pub.dev/packages/dorm_annotations)
+[![pub package](https://img.shields.io/pub/v/dorm_generator.svg?label=dorm_generator)](https://pub.dev/packages/dorm_generator)
+
+[![pub package](https://img.shields.io/pub/v/dorm_firebase_database.svg?label=dorm_firebase_database)](https://pub.dev/packages/dorm_firebase_database)
+[![pub package](https://img.shields.io/pub/v/dorm_bloc_database.svg?label=dorm_bloc_database)](https://pub.dev/packages/dorm_bloc_database)
+
+
 A language-agnostic Object Relational Mapper library for Dart.
 
 This ORM uses separation of concerns as the main concept of its framework: 
