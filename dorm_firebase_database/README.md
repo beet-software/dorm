@@ -1,6 +1,12 @@
 # dorm_firebase_database
 
-A dORM's Reference implementation using `firebase_database`.
+[![pub package](https://img.shields.io/pub/v/dorm_firebase_database.svg?label=dorm_firebase_database)](https://pub.dev/packages/dorm_firebase_database)
+[![pub popularity](https://img.shields.io/pub/popularity/dorm_firebase_database?logo=dart)](https://pub.dev/packages/dorm_firebase_database)
+[![pub likes](https://img.shields.io/pub/likes/dorm_firebase_database?logo=dart)](https://pub.dev/packages/dorm_firebase_database)
+[![pub points](https://img.shields.io/pub/points/dorm_firebase_database?logo=dart)](https://pub.dev/packages/dorm_firebase_database)
+
+A dORM's database engine implementation using the
+[`firebase_database` package](https://pub.dev/packages/firebase_database).
 
 ## Getting started
 
@@ -10,7 +16,8 @@ Run the following commands in your command prompt:
 dart pub add dorm_firebase_database
 ```
 
-Using `dorm_annotations` and `dorm_generator`, generate your dORM code:
+Using [`dorm_annotations`](https://pub.dev/packages/dorm_annotations) and
+[`dorm_generator`](https://pub.dev/packages/dorm_generator), generate your dORM code:
 
 ```shell
 dart run build_runner build
@@ -37,26 +44,32 @@ void main() async {
 Create a `FirebaseInstance`, a class that manages your current Firebase app:
 
 ```dart
-const FirebaseInstance instance = FirebaseInstance();
+void main() {
+  const FirebaseInstance instance = FirebaseInstance();
 
-// Alternatively, if you're working with non-default apps
-final FirebaseInstance instance = FirebaseInstance.custom(Firebase.app('app-1'));
+  // Alternatively, if you're working with non-default apps
+  final FirebaseInstance instance = FirebaseInstance.custom(Firebase.app('app-1'));
 
-// You can also to control the offline management, through `offlineMode`
-const FirebaseInstance instance = FirebaseInstance(offlineMode: OfflineMode.include);
+  // You can also to control the offline management, through `offlineMode`
+  const FirebaseInstance instance = FirebaseInstance(offlineMode: OfflineMode.include);
+}
 ```
 
 With this instance, create a `Reference`:
 
 ```dart
-final Reference reference = Reference(instance);
+void main() {
+  final Reference reference = Reference(instance);
 
 // Alternatively, if you want to create your database under 'production/'
-final Reference reference = Reference(instance, 'production');
+  final Reference reference = Reference(instance, 'production');
+}
 ```
 
 Finally, pass the reference created above to your generated `Dorm` class:
 
 ```dart
-final Dorm dorm = Dorm(reference);
+void main() {
+  final Dorm dorm = Dorm(reference);
+}
 ```

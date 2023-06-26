@@ -20,23 +20,34 @@ import 'package:firebase_database/firebase_database.dart' as fd;
 
 import 'offline.dart';
 
+/// Provides Firebase dependencies.
 abstract class FirebaseInstance {
+  /// Creates the default Firebase dependencies.
+  ///
+  /// Each dependency is created by calling its `instance` static getter.
   const factory FirebaseInstance({
     OfflineMode offlineMode,
   }) = _DefaultFirebaseInstance;
 
+  /// Creates custom Firebase dependencies.
+  ///
+  /// Each dependency is created by calling its `instanceFor` static method.
   const factory FirebaseInstance.custom(
     fc.FirebaseApp app, {
     OfflineMode offlineMode,
     String? databaseUrl,
   }) = _CustomFirebaseInstance;
 
+  /// Firebase Core application.
   fc.FirebaseApp get app;
 
+  /// Firebase Database dependency.
   fd.FirebaseDatabase get database;
 
+  /// Firebase Authentication dependency.
   fa.FirebaseAuth get auth;
 
+  /// How to handle offline.
   OfflineMode get offlineMode;
 }
 

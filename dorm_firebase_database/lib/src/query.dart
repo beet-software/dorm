@@ -17,6 +17,7 @@
 import 'package:dorm_framework/dorm_framework.dart';
 import 'package:firebase_database/firebase_database.dart' as fd;
 
+/// A [BaseQuery] that uses Firebase Realtime Database as engine.
 class Query implements BaseQuery<Query> {
   static String normalizeText(String text) {
     const t0 = 'ÀÁÂÃÄÅàáâãäåÒÓÔÕÕÖØòóôõöøÈÉÊËèéêëðÇçÐÌÍÎÏìíîïÙÚÛÜùúûüÑñŠšŸÿýŽž';

@@ -1,5 +1,5 @@
 name: dorm_firebase_database
-version: 1.0.0-alpha.3
+version: 1.0.0-alpha.4
 description: A firebase_database database engine for dORM.
 homepage: https://github.com/beet-software/dorm/tree/main/dorm_firebase_database
 repository: https://github.com/beet-software/dorm.git

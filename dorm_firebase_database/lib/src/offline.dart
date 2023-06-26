@@ -34,6 +34,7 @@ enum OfflineMode {
   include,
 }
 
+/// Adapts a Firebase query to work offline.
 class OfflineAdapter {
   final fd.FirebaseDatabase instance;
   final fd.Query query;
@@ -42,6 +43,7 @@ class OfflineAdapter {
   StreamSubscription<void>? _connectivitySubscription;
   StreamSubscription<void>? _querySubscription;
 
+  /// Creates an [OfflineAdapter] by its attributes.
   OfflineAdapter({required this.instance, required this.query}) {
     _controller = StreamController.broadcast(
       onListen: () {

@@ -22,8 +22,10 @@ import 'package:firebase_database/firebase_database.dart' as fd;
 import 'package:http/http.dart' as http;
 
 import 'firebase_instance.dart';
+import 'offline.dart';
 import 'query.dart';
 
+/// A [BaseReference] that uses Firebase Realtime Database as engine.
 class Reference implements BaseReference {
   final FirebaseInstance instance;
   final fd.DatabaseReference _ref;
@@ -136,12 +138,19 @@ class Reference implements BaseReference {
     Entity<Data, Model> entity,
     String id,
   ) {
-    return _refOf(entity)
-        .child(id)
-        .onValue
-        .map((event) => event.snapshot.value)
+    return _onValueOf(_refOf(entity).child(id))
+        .map((snapshot) => snapshot.value)
         .map((value) =>
             value == null ? null : entity.fromJson(id, value as Map));
+  }
+
+  Stream<fd.DataSnapshot> _onValueOf(fd.Query query) {
+    switch (instance.offlineMode) {
+      case OfflineMode.exclude:
+        return query.onValue.map((event) => event.snapshot);
+      case OfflineMode.include:
+        return OfflineAdapter(instance: instance.database, query: query).stream;
+    }
   }
 
   @override
@@ -150,7 +159,7 @@ class Reference implements BaseReference {
     Filter filter,
   ) {
     final Query query = filter.accept(Query(_refOf(entity)));
-    return query.query.onValue.map((event) => event.snapshot).map((snapshot) {
+    return _onValueOf(query.query).map((snapshot) {
       return {
         for (fd.DataSnapshot child in snapshot.children)
           child.key as String: child.value as Object,
