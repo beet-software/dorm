@@ -129,6 +129,7 @@ class _EntityReference<Data, Model extends Data>
   }
 }
 
+/// A [BaseReference] implementation backed by a [Bloc].
 class Reference extends Cubit<_State> implements BaseReference {
   Reference() : super(const _State({}));
 

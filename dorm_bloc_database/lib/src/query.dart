@@ -18,15 +18,24 @@ import 'dart:collection';
 
 import 'package:dorm_framework/dorm_framework.dart';
 
+/// Row of the underlying database table.
+///
+/// Equivalent to a JSON object.
 typedef TableRow = Map<String, Object?>;
+
+/// Operates on the underlying database table.
 typedef TableOperator = Map<String, TableRow> Function(
   Map<String, TableRow> table,
 );
+
+/// Validates a [TableRow].
 typedef RowPredicate = bool Function(TableRow row);
 
+/// An in-memory [BaseQuery] implementation.
 class Query implements BaseQuery<Query> {
   static Map<String, TableRow> _defaultTableOperator(
-      Map<String, TableRow> rows) {
+    Map<String, TableRow> rows,
+  ) {
     return rows;
   }
 
