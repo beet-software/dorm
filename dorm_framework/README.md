@@ -1,5 +1,10 @@
 # dorm_framework
 
+[![pub package](https://img.shields.io/pub/v/dorm_framework.svg?label=dorm_framework)](https://pub.dev/packages/dorm_framework)
+[![pub popularity](https://img.shields.io/pub/popularity/dorm_framework?logo=dart)](https://pub.dev/packages/dorm_framework)
+[![pub likes](https://img.shields.io/pub/likes/dorm_framework?logo=dart)](https://pub.dev/packages/dorm_framework)
+[![pub points](https://img.shields.io/pub/points/dorm_framework?logo=dart)](https://pub.dev/packages/dorm_framework)
+
 An Object Relational Mapper framework for Dart.
 
 ## Getting started
@@ -13,10 +18,12 @@ dart pub get
 
 ## Usage
 
-> **Note**: This is a section that explains the *theoretical* concept of dORM. It uses the
-> ideas and abstract principles related to dORM, rather than the practical uses of it. You
-> can automatize all of the steps below using code generation, provided by `dorm_annotations` 
-> and `dorm_generator`. If you are interested on how dORM works behind the scenes, keep reading!
+> **Note**: This is a section that explains the *theoretical* concept of dORM: it uses the ideas and
+> abstract principles related to dORM rather than the practical uses of it. You can automatize all
+> of the steps below using code generation, provided by
+> [`dorm_annotations`](https://pub.dev/packages/dorm_annotations) and
+> [`dorm_generator`](https://pub.dev/packages/dorm_generator) packages. If you are interested on how
+> dORM works behind the scenes, keep reading!
 
 A database schema in this framework is split into two classes: its data and its model. The
 schema data contains all the data used by the real world to represent it, while the schema
@@ -33,23 +40,19 @@ class SchoolData {
   final String name;
   final String phoneNumber;
   final String address;
-  
-  const SchoolData({
-    required this.name,
-    required this.phoneNumber,
-    required this.address,
-  });
+
+  const SchoolData(/*{
+    required this.declarations,
+  }*/);
 }
 
 // Naming convention for schema model: schema name
 class School extends SchoolData {
   final String id;
-  
+
   const School({
     required this.id,
-    required super.name,
-    required super.phoneNumber,
-    required super.address,
+    // required super.declarations,
   });
 }
 ```
@@ -57,20 +60,17 @@ class School extends SchoolData {
 - A student schema has a data model (`StudentData`) and a model class (`Student`).
   A student has a name, birth date, school grade and email. It also contains a reference
   to its school.
-  
+
 ```dart
 class StudentData {
   final String name;
   final DateTime birthDate;
   final String grade;
   final String email;
-  
-  const StudentData({
-    required this.name,
-    required this.birthDate,
-    required this.grade,
-    required this.email,
-  });
+
+  const StudentData(/*{
+    required this.declarations,
+  }*/);
 }
 
 class Student extends StudentData {
@@ -80,22 +80,17 @@ class Student extends StudentData {
   const School({
     required this.id,
     required this.schoolId,
-    required super.name,
-    required super.birthDate,
-    required super.grade,
-    required super.email,
+    // required super.declarations,
   });
 }
 ```
 
+The fields aren't kept in a single model class because of *separation of concerns*. A form should
+only be concerned about real world information of a schema, not their primary or foreign keys. So
+when using a form, use the schema data. When reading from database, use the schema model.
 
-The fields aren't kept in a single model class because of *separation of concerns*. A
-form should only be concerned about real world information of a schema, not their primary or 
-foreign keys. So when using a form, use the schema data. When reading from database, use the 
-schema model.
-
-It's highly recommended to add serialization methods to each class, commonly implemented using `fromJson`
-and `toJson`:
+It's highly recommended to add serialization methods to each class, commonly implemented using
+`fromJson` and `toJson`:
 
 ```dart
 class SchoolData {
@@ -108,9 +103,9 @@ class SchoolData {
       address: json['address'] as String,
     );
   }
-  
+
   // ...
-  
+
   Map<String, Object?> toJson() {
     return {'name': name, 'phone-number': phoneNumber, 'address': address};
   }
@@ -118,7 +113,7 @@ class SchoolData {
 
 class School extends SchoolData {
   // ...
-  
+
   // Since this is a schema model, you must pass an `id` parameter
   factory School.fromJson(String id, Map<String, Object?> json) {
     final SchoolData data = SchoolData.fromJson(json);
@@ -129,9 +124,9 @@ class School extends SchoolData {
       address: data.address,
     );
   }
-  
+
   // ...
-  
+
   // There is no need to serialize `id`
   @override
   Map<String, Object?> toJson() {
@@ -141,7 +136,7 @@ class School extends SchoolData {
 
 class StudentData {
   // ...
-  
+
   factory StudentData.fromJson(Map<String, Object?> json) {
     return StudentData({
       name: json['name'],
@@ -150,9 +145,9 @@ class StudentData {
       email: json['email'],
     });
   }
-  
+
   // ...
-  
+
   Map<String, Object?> toJson() {
     return {
       'name': name,
@@ -165,7 +160,7 @@ class StudentData {
 
 class Student extends StudentData {
   // ...
-  
+
   factory Student.fromJson(String id, Map<String, Object?> json) {
     final StudentData data = StudentData.fromJson(json);
     return Student(
@@ -179,30 +174,29 @@ class Student extends StudentData {
   }
 
   // ...
-  
+
   Map<String, Object?> toJson() {
     return {'school-id': schoolId, ...super.toJson()};
   }
 }
 ```
 
-Feel free to also use a serialization library, such as [`json_serializable`](https://pub.dev/packages/json_serializable).
+Feel free to also use a serialization package, such
+as [`json_serializable`](https://pub.dev/packages/json_serializable).
 
 ### Dependency
 
-To implement a dependency for a given schema data, you should ask yourself: what does this 
-schema depends on to exist?
+To implement a dependency for a given schema data, you should ask yourself: what does this schema
+depends on to exist?
 
-- A school can exist without any student. Since there are no more models in this system,
-  we can say that `School` does not depend on any model to exist, so its entity type is
-  strong.
-  
-- A student cannot exist without a school, since they study there. Since there are no
-  more models in this system, we can say that `Student` depends on `School` to exist,
-  so its entity type is weak.
-  
-This reasoning is important to implement a dependency for a schema data, which is used
-when you want to create a new model (an INSERT operation) in the database.
+- A school can exist without any student. Since there are no more models in this system, we can say
+  that `School` does not depend on any model to exist, so its entity type is strong.
+
+- A student cannot exist without a school, since they study there. Since there are no more models in
+  this system, we can say that `Student` depends on `School` to exist, so its entity type is weak.
+
+This reasoning is important to implement a dependency for a schema data, which is used when you want
+to create a new model (an INSERT operation) in the database.
 
 Let's implement a dependency for both schemas above:
 
@@ -213,18 +207,17 @@ class SchoolDependency extends Dependency<SchoolData> {
 
 class StudentDependency extends Dependency<StudentData> {
   final String schoolId;
-  
+
   StudentDependency({required this.schoolId}) : super.weak([schoolId]);
 }
 ```
 
-Note that subclasses of `Dependency<Data>` must include as fields the primary keys of
-all the dependencies of `Data`. 
+Note that subclasses of `Dependency<Data>` must include as fields the primary keys of all the
+dependencies of `Data`.
 
 #### What to use as primary key?
 
-To transform a schema data into a schema model, you can use two methods: create or 
-update. 
+To transform a schema data into a schema model, you can use two methods: create or update.
 
 The following represents an update transformation:
 
@@ -278,39 +271,42 @@ primary key here? You can either use
 Here's the implementations of each methods:
 
 ```dart
-final String uniqueId = 'primary-key';
+void main() {
+  final String uniqueId = 'primary-key';
 
-final Student current = Student(
-  // Simple primary key
-  id: uniqueId,
-  
-  // Composite primary key
-  id: dependency.key(uniqueId),
-  // If `dependency.schoolId` is 'school-key', the above call will return `school-key&primary-key` 
-  
-  // Foreign primary key
-  id: dependency.schoolId,
-);
+  final Student current = Student(
+    // Simple primary key
+    id: uniqueId,
+
+    // Composite primary key
+    id: dependency.key(uniqueId),
+    // If `dependency.schoolId` is 'school-key', the above call will return `school-key&primary-key` 
+
+    // Foreign primary key
+    id: dependency.schoolId,
+  );
+}
 ```
 
 If you're using Firebase, `uniqueId` here is commonly replaced by Firebase's push ID.
 
-> Push IDs are string identifiers that are generated client-side. They are a 
+> Push IDs are string identifiers that are generated client-side. They are a
 > combination of a timestamp and some random bits. The timestamp ensures they are
 > ordered chronologically, and the random bits ensure that each ID is unique, even
 > if thousands of people are creating push IDs at the same time.
 >
-> *Source:* [The 2^120 Ways to Ensure Unique Identifiers](https://firebase.blog/posts/2015/02/the-2120-ways-to-ensure-unique_68https://firebase.blog/posts/2015/02/the-2120-ways-to-ensure-unique_68), The Firebase Blog
+> *Source:*
+> [The 2^120 Ways to Ensure Unique Identifiers](https://firebase.blog/posts/2015/02/the-2120-ways-to-ensure-unique_68https://firebase.blog/posts/2015/02/the-2120-ways-to-ensure-unique_68)
+> (The Firebase Blog)
 
-If you're using pure Dart code, you can use `const Uuid().v4()` from 
-[`uuid`](https://pub.dev/packages/uuid) library.
-
+If you're using pure Dart code, you can use `const Uuid().v4()` from the
+[`uuid` package](https://pub.dev/packages/uuid).
 
 ### Entity
 
-To join a model, its data and its dependency to a single, robust model, there is an
-`Entity` class, which acts as a bridge that can be used to manipulate the database.
-This is an abstract class, so implement it for each schema created:
+To join a model, its data and its dependency to a single, robust model, there is an `Entity` class,
+which acts as a bridge that can be used to manipulate the database. This is an abstract class, so
+implement it for each schema created:
 
 ```dart
 // Naming convention for schema entity: schema name + Entity
@@ -321,22 +317,23 @@ class SchoolEntity implements Entity<SchoolData, School> {
   // to `CREATE TABLE schools` from SQL
   @override
   String get tableName => 'schools';
-  
+
   @override
   School fromJson(String id, Map data) => School.fromJson(id, data);
-  
+
   @override
   Map<String, Object?> toJson(SchoolData data) => data.toJson();
-  
+
   // This represents an UPDATE transformation, see the previous section
   @override
-  School convert(School model, SchoolData data) => School(
-      id: model.id,
-      name: data.name,
-      phoneNumber: data.phoneNumber,
-      address: data.address,
-    );
-    
+  School convert(School model, SchoolData data) =>
+      School(
+        id: model.id,
+        name: data.name,
+        phoneNumber: data.phoneNumber,
+        address: data.address,
+      );
+
   // This represents a CREATE transformation, see the previous section
   @override
   School fromData(SchoolDependency dependency, String id, SchoolData data) {
@@ -348,7 +345,7 @@ class SchoolEntity implements Entity<SchoolData, School> {
       address: data.address,
     );
   }
-  
+
   @override
   String identify(School model) => model.id;
 }
@@ -358,23 +355,24 @@ class StudentEntity implements Entity<StudentData, Student> {
 
   @override
   String get tableName => 'students';
-  
+
   @override
   Student fromJson(String id, Map data) => Student.fromJson(id, data);
-  
+
   @override
   Map<String, Object?> toJson(StudentData data) => data.toJson();
-  
+
   @override
-  Student convert(Student model, StudentData data) => Student(
-      id: model.id,
-      schoolId: model.schoolId,
-      name: data.name,
-      birthDate: data.birthDate,
-      grade: data.grade,
-      email: data.email,
-    );
-    
+  Student convert(Student model, StudentData data) =>
+      Student(
+        id: model.id,
+        schoolId: model.schoolId,
+        name: data.name,
+        birthDate: data.birthDate,
+        grade: data.grade,
+        email: data.email,
+      );
+
   @override
   Student fromData(StudentDependency dependency, String id, StudentData data) {
     return Student(
@@ -386,123 +384,123 @@ class StudentEntity implements Entity<StudentData, Student> {
       email: data.email,
     );
   }
-  
+
   @override
   String identify(Student model) => model.id;
 }
 ```
 
-
 ### Reference
 
-The database access is done using a `Reference`, an abstract class. This library
-provides some out-of-the-box implementations of `Reference` you can integrate into
-your code, but if you want to implement it for a database language not available 
-yet, implement this class.
-
+The database access is done using a `BaseReference`, an abstract class. This library provides some
+out-of-the-box implementations of `Reference` you can integrate into your code, but if you want to
+implement it for a database language not available yet, implement this class.
 
 ### Repository
 
-Database operations should be separated from the model, so it relies on an external
-class called repository. This is a concrete class, so there is not need to implement
-it. Since this class provides all the database operations we need, this is the end of
-our setup journey: with a `Reference` and an `Entity`, you can instantiate a `Repository`.
+Database operations should be separated from the model, so it relies on an external class called
+repository. This is a concrete class, so there is not need to implement it. Since this class
+provides all the database operations we need, this is the end of our setup journey: with a
+`BaseReference` and an `Entity`, you can instantiate a `Repository`.
 
 ```dart
-final Reference reference = ...;
-final SchoolEntity entity = const SchoolEntity();
-final Repository<School, SchoolData> schoolRepository = Repository(root: reference, entity: entity);
+void main() async {
+  final Reference reference /* = ... */;
 
-// Read all
-final List<School> schools = await schoolRepository.peekAll();
+  final SchoolEntity entity = const SchoolEntity();
+  final Repository<School, SchoolData> schoolRepository = Repository(
+      root: reference, entity: entity);
 
-// Read all and listen for changes
-final Stream<List<School>> schoolsStream = schoolRepository.pullAll();
+  // Read all
+  final List<School> schools = await schoolRepository.peekAll();
 
-// Read single
-final School? hogwarts = await schoolRepository.peek('hogwarts');
-if (hogwarts == null) {
-  throw StateError('The id `hogwarts` was not found in the database');
-}
+  // Read all and listen for changes
+  final Stream<List<School>> schoolsStream = schoolRepository.pullAll();
 
-// Create with an ID defined by the framework
-final School school0 = await schoolRepository.put(
-  const SchoolDependency(), 
-  SchoolData(
-    name: 'School 1',
-    phoneNumber: '5511111111111',
+  // Read single
+  final School? hogwarts = await schoolRepository.peek('hogwarts');
+  if (hogwarts == null) {
+    throw StateError('The id `hogwarts` was not found in the database');
+  }
+
+  // Create with an ID defined by the framework
+  final School school0 = await schoolRepository.put(
+    const SchoolDependency(),
+    SchoolData(
+      name: 'School 1',
+      phoneNumber: '5511111111111',
+      address: 'Sao Paulo, BR',
+    ),
+  );
+
+  // Create with an ID defined by yourself
+  // If the given ID already exists, the old model will be overwritten
+  final School school1 = await schoolRepository.push(School(
+    id: '12345678',
+    name: 'School 2',
+    phoneNumber: '5522222222222',
     address: 'Sao Paulo, BR',
-  ),
-);
+  ));
 
-// Create with an ID defined by yourself
-// If the given ID already exists, the old model will be overwritten
-final School school1 = await schoolRepository.push(School(
-  id: '12345678',
-  name: 'School 2',
-  phoneNumber: '5522222222222',
-  address: 'Sao Paulo, BR',
-));
+  // Update
+  await schoolRepository.push(School(
+    id: school0.id,
+    name: 'School 3',
+    phoneNumber: '5533333333333',
+    address: 'Sao Paulo, BR',
+  ));
 
-// Update
-await schoolRepository.push(School(
-  id: school0.id,
-  name: 'School 3',
-  phoneNumber: '5533333333333', 
-  address: 'Sao Paulo, BR',
-));
-
-// Delete
-await schoolRepository.pop(school1.id);
+  // Delete
+  await schoolRepository.pop(school1.id);
+}
 ```
 
 ### Filtering
 
-Batch-read methods of repositories, such as `peekAll` (which returns a Future)
-and `pullAll` (which returns a Stream), receives an optional filter parameter.
-This parameter is, by default, equals to `Filter.empty()`, which downloads all 
-models from this repository. If you want to limit how many data is downloaded,
-you can pass to these methods custom filters:
+Batch-read methods of repositories, such as `peekAll` (which returns a Future) and `pullAll` (which
+returns a Stream), receives an optional filter parameter. This parameter is, by default, equals to
+`Filter.empty()`, which downloads all models from this repository. If you want to limit how many
+data is downloaded, you can pass to these methods custom filters:
 
 ```dart
-// Peek all schools
-await schoolRepository.peekAll(const Filter.empty());
+void main() async {
+  // Peek all schools
+  await schoolRepository.peekAll(const Filter.empty());
 
-// Peek all schools with name equal to ABC
-await schoolRepository.peekAll(const Filter.value('ABC', key: 'name'));
+  // Peek all schools with name equal to ABC
+  await schoolRepository.peekAll(const Filter.value('ABC', key: 'name'));
 
-// Peek all schools with name *prefixed* with DEF
-await schoolRepository.peekAll(const Filter.text('DEF', key: 'name'));
+  // Peek all schools with name *prefixed* with DEF
+  await schoolRepository.peekAll(const Filter.text('DEF', key: 'name'));
+}
 ```
 
 You can also use methods of filters, such as `limit`:
 
 ```dart
-// Peek first 10 schools with name equal to ABC
-await schoolRepository
-    .peekAll(Filter.value('ABC', key: 'name').limit(10));
+void main() async {
+  // Peek first 10 schools with name equal to ABC
+  await schoolRepository.peekAll(Filter.value('ABC', key: 'name').limit(10));
 
-// Peek last 20 schools with name prefixed with DEF
-await schoolRepository
-    .peekAll(Filter.text('DEF', key: 'name').limit(-20));
+  // Peek last 20 schools with name prefixed with DEF
+  await schoolRepository.peekAll(Filter.text('DEF', key: 'name').limit(-20));
+}
 ```
 
-Note that filters containing `key` as parameters receive a String, which should be
-the same as their serialization fields. In the beginning of this document, we
-serialized the name of a school as `'name'`, so that's what we should use as `key`
-parameter in a filter when filtering by a school name.
-
+Note that filters containing `key` as parameters receive a String, which should be the same as their
+serialization fields. In the beginning of this document, we serialized the name of a school as
+`'name'`, so that's what we should use as `key` parameter in a filter when filtering by a school
+name.
 
 #### Filtering on normalized text
 
-To filter on normalized text, you must transform a copy of your text
-field using `Filter.normalizeText` method when serializing it inside
-`toJson`:
+To filter on normalized text, you must transform a copy of your text field using
+`Filter.normalizeText` method when serializing it inside `toJson`:
 
 ```dart
 class Student {
   final String name;
-  
+
   // ...
 
   Map<String, Object?> toJson() {
@@ -525,26 +523,29 @@ This static method will
 You can now use another text to belong to your filter:
 
 ```dart
-final String value = Filter.normalizeText(' jóHn');
+void main() {
+  final String value = Filter.normalizeText(' jóHn');
 
-// Finds all students that starts with "John", "john", "joHn", etc.
-final Filter filter = Filter.text(value, key: '.name', normalized: true);
+  // Finds all students that starts with "John", "john", "joHn", etc.
+  final Filter filter = Filter.text(value, key: '.name', normalized: true);
+}
 ```
 
-This becomes useful when a student name is "John" and the user enters 
-" jóHn" in the text field. Since text is normalized here, both texts 
-will match and the user will be able to find all Johns in the system.
+This becomes useful when a student name is "John" and the user enters "jóHn" in the text field, for
+example. Since text is normalized here, both texts will match and the user will be able to find all
+Johns in the system.
 
+If this is not desired (so that "jóHn" returns no students), do not use `Filter.normalizeText`.
 
 #### Filtering on dates
 
-To filter on dates, you must transform your date field using `DateTime`'s 
-`toIso8601String` method when serializing it inside `toJson`:
+To filter on dates, you must transform your date field using `DateTime`'s `toIso8601String` method
+when serializing it inside `toJson`:
 
 ```dart
 class Student {
   final DateTime birthDate;
-  
+
   // ...
 
   Map<String, Object?> toJson() {
@@ -559,20 +560,29 @@ class Student {
 You can now use another date to belong to your filter:
 
 ```dart
-final DateTime dt = DateTime(2021, 06, 13, 16, 05, 12, 111);
-late Filter filter;
+void main() {
+  final DateTime dt = DateTime(
+      2021,
+      06,
+      13,
+      16,
+      05,
+      12,
+      111);
+  late Filter filter;
 
-// Select entries occurred at 13/06/2021, 16:05:12.111
-filter = Filter.date(dt, key: 'birth-date');
+  // Select entries occurred at 13/06/2021, 16:05:12.111
+  filter = Filter.date(dt, key: 'birth-date');
 
-// Select entries occurred at 2021
-filter = Filter.date(dt, key: 'birth-date', unit: DateFilterUnit.year);
+  // Select entries occurred at 2021
+  filter = Filter.date(dt, key: 'birth-date', unit: DateFilterUnit.year);
 
-// Select entries occurred at 13/06/2021
-filter = Filter.date(dt, key: 'birth-date', unit: DateFilterUnit.day);
+  // Select entries occurred at 13/06/2021
+  filter = Filter.date(dt, key: 'birth-date', unit: DateFilterUnit.day);
 
-// Select entries occurred at 13/06/2021, from 16:00 to 16:59
-filter = Filter.date(dt, key: 'birth-date', unit: DateFilterUnit.hour);
+  // Select entries occurred at 13/06/2021, from 16:00 to 16:59
+  filter = Filter.date(dt, key: 'birth-date', unit: DateFilterUnit.hour);
+}
 ```
 
 #### Filtering on ranges
@@ -580,91 +590,94 @@ filter = Filter.date(dt, key: 'birth-date', unit: DateFilterUnit.hour);
 To filter on ranges, you can use the `Range` class:
 
 ```dart
-late Filter filter;
+void main() {
+  late Filter filter;
 
-// name: ABC, ABD, ABE, ABF
-filter = Filter.textRange(FilterRange(from: 'ABC', 'ABF'), key: 'name');
+  // name: ABC, ABD, ABE, ABF
+  filter = Filter.textRange(FilterRange(from: 'ABC', 'ABF'), key: 'name');
 
-// age: 0 to 18
-filter = Filter.numericRange(FilterRange(from: 0, to: 18), key: 'age');
+  // age: 0 to 18
+  filter = Filter.numericRange(FilterRange(from: 0, to: 18), key: 'age');
 
-// age: 18+
-filter = Filter.numericRange(FilterRange(from: 18), key: 'age');
+  // age: 18+
+  filter = Filter.numericRange(FilterRange(from: 18), key: 'age');
 
-// birth-date: 2020, spanning 10 years (see previous section on how to setup `toJson` for this case)
-filter = Filter.dateRange(
-  DateFilterRange(
-    from: DateTime(2020),
-    to: DateTime(2030),
-    unit: DateFilterUnit.year,
-  ),
-  key: 'birth-date',
-);
+  // birth-date: 2020, spanning 10 years (see previous section on how to setup `toJson` for this case)
+  filter = Filter.dateRange(
+    DateFilterRange(
+      from: DateTime(2020),
+      to: DateTime(2030),
+      unit: DateFilterUnit.year,
+    ),
+    key: 'birth-date',
+  );
+}
 ```
 
 ### Relationships
 
-With a repository ready to be used, we want to ask the database questions related to
-relationships between schemas, such as "What are the students of a given school?". These
-questions can be asked through the `Relationship` subclasses: `OneToOneRelationship` and 
-`OneToManyRelationship`. Given we have a school repository and a student repository, that
-question can be answered in the following way:
+With a repository ready to be used, we want to ask the database questions related to relationships
+between schemas, such as "What are the students of a given school?". These questions can be asked
+through the `Relationship` subclasses: `OneToOneRelationship` and `OneToManyRelationship`. Given we
+have a school repository and a student repository, that question can be answered in the following
+way:
 
 ```dart
-final Repository<School, SchoolData> schoolRepository = ...;
-final Repository<Student, StudentData> studentRepository = ...;
+void main() async {
+  final Repository<School, SchoolData> schoolRepository /* = ... */;
+  final Repository<Student, StudentData> studentRepository /* = ... */;
 
-// Creating a new school
-final School hogwarts = await schoolRepository.put(
-  const SchoolDependency(), 
-  SchoolData(
-    name: 'Hogwarts School of Witchcraft and Wizardry',
-    phoneNumber: '605-475-6961',
-    address: 'Hogwarts Castle, Highlands, Scotland',
-  ),
-);
+  // Creating a new school
+  final School hogwarts = await schoolRepository.put(
+    const SchoolDependency(),
+    SchoolData(
+      name: 'Hogwarts School of Witchcraft and Wizardry',
+      phoneNumber: '605-475-6961',
+      address: 'Hogwarts Castle, Highlands, Scotland',
+    ),
+  );
 
-// Creating students
-await studentRepository.put(
-  StudentDependency(schoolId: hogwarts.id),
-  StudentData(
-    name: 'Harry Potter',
-    birthDate: DateTime(1980, 7, 31),
-    grade: '1',
-    email: 'harrypotter@gmail.co.uk',
-  ),
-);
+  // Creating students
+  await studentRepository.put(
+    StudentDependency(schoolId: hogwarts.id),
+    StudentData(
+      name: 'Harry Potter',
+      birthDate: DateTime(1980, 7, 31),
+      grade: '1',
+      email: 'harrypotter@gmail.co.uk',
+    ),
+  );
 
-await studentRepository.put(
-  StudentDependency(schoolId: hogwarts.id),
-  StudentData(
-    name: 'Rony Weasley',
-    birthDate: DateTime(1980, 3, 1),
-    grade: '1',
-    email: 'ronyweasley@gmail.co.uk',
-  ),
-);
+  await studentRepository.put(
+    StudentDependency(schoolId: hogwarts.id),
+    StudentData(
+      name: 'Rony Weasley',
+      birthDate: DateTime(1980, 3, 1),
+      grade: '1',
+      email: 'ronyweasley@gmail.co.uk',
+    ),
+  );
 
-// Creating a relationship between schools and students
-final OneToManyRelationship<School, Student> relationship = OneToManyRelationship(
-  left: schoolRepository,
-  right: studentRepository,
+  // Creating a relationship between schools and students
+  final OneToManyRelationship<School, Student> relationship = OneToManyRelationship(
+    left: schoolRepository,
+    right: studentRepository,
+    // For a given `school` of this relationship, 
+    // filter students where `school-id` equals to `school`'s ID 
+    on: (school) => Filter.value(school.id, key: 'school-id'),
+  );
 
-  // For a given `school` of this relationship, 
-  // filter students where `school-id` equals to `school`'s ID 
-  on: (school) => Filter.value(school.id, key: 'school-id'),
-);
+  // What are the students of Hogwarts?
+  final Join<School, List<Student>>? join = await relationship.peek(hogwarts.id);
 
-// What are the students of Hogwarts?
-final Join<School, List<Student>>? join = await relationship.peek(hogwarts.id);
-
-if (join == null) {
-  // If `hogwarts.id` does not exist or was deleted in this interval of time
-} else {
-  final School school = join.left;
-  final List<Student> students = join.right;
-  print(school.name);        // Hogwarts School of Witchcraft and Wizardry
-  print(students.length);    // 2
+  if (join == null) {
+    // If `hogwarts.id` does not exist or was deleted in this interval of time
+  } else {
+    final School school = join.left;
+    final List<Student> students = join.right;
+    print(school.name); // Hogwarts School of Witchcraft and Wizardry
+    print(students.length); // 2
+  }
 }
 ```
 
@@ -693,20 +706,22 @@ abstract class Capital {
   final String id;
 }
 
-final OneToOneRelationship<State, Capital> r0 = OneToOneRelationship(
-  left: stateRepository,
-  right: capitalRepository,
-  on: (state) => state.id,
-);
+void main() async {
+  final OneToOneRelationship<State, Capital> r0 = OneToOneRelationship(
+    left: stateRepository,
+    right: capitalRepository,
+    on: (state) => state.id,
+  );
 
-final OneToManyRelationship<Country, Join<State, Capital?>> r1 = OneToManyRelationship(
-  left: countryRepository,
-  right: r0,    // You can use another relationship here!
-  on: (country) => Filter.value(country.id, key: 'country-id'),
-);
+  final OneToManyRelationship<Country, Join<State, Capital?>> r1 = OneToManyRelationship(
+    left: countryRepository,
+    right: r0, // You can use another relationship here!
+    on: (country) => Filter.value(country.id, key: 'country-id'),
+  );
 
-// Peek all countries whose name starts with AB and their 
-// respective states with their respective capitals
-final List<Join<Country, List<Join<State, Capital?>>>> joins = 
-    await r1.peekAll(Filter.text('AB', key: 'name'));
+  // Peek all countries whose name starts with AB and their 
+  // respective states with their respective capitals
+  final List<Join<Country, List<Join<State, Capital?>>>> joins = await r1
+      .peekAll(Filter.text('AB', key: 'name'));
+}
 ```
