@@ -18,19 +18,31 @@ import 'package:meta/meta_meta.dart';
 
 import 'field.dart';
 
+/// Associates a composite object to a [PolymorphicField].
 @Target({TargetKind.classType})
 class PolymorphicData {
+  /// Name of the discriminator value on the pivot column associated with this
+  /// data.
   final String name;
+
+  /// Name for the Dart enum value associated with this data.
   final Symbol? as;
 
+  /// Creates a [PolymorphicData] by its attributes.
   const PolymorphicData({required this.name, this.as});
 }
 
+/// Links a database composite column and a pivot column to a Dart field within
+/// a model class.
 @Target({TargetKind.getter})
 class PolymorphicField extends Field {
+  /// Name of the pivot column in the underlying database.
   final String pivotName;
+
+  /// Name for the pivot Dart field.
   final Symbol? pivotAs;
 
+  /// Creates a [PolymorphicField] by its attributes.
   const PolymorphicField({
     required super.name,
     required this.pivotName,

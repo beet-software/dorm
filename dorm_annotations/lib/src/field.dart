@@ -16,33 +16,39 @@
 
 import 'package:meta/meta_meta.dart';
 
+/// Links a database column to a Dart field within a model class.
 @Target({TargetKind.getter})
 class Field {
+  /// Name of the column in the underlying database.
   final String? name;
+
+  /// Optional default value for the field.
+  ///
+  /// If not explicitly set and and return type of the annotated getter is
+  /// nullable, the field will default to null.
   final Object? defaultValue;
 
-  const Field({
-    this.name,
-    this.defaultValue,
-  });
+  /// Creates a [Field] by its attributes.
+  const Field({this.name, this.defaultValue});
 }
 
+/// Links a database foreign key to a Dart field within a model class.
 @Target({TargetKind.getter})
 class ForeignField extends Field {
+  /// The class annotated with [Model] that this field references.
   final Type referTo;
 
-  const ForeignField({
-    required super.name,
-    required this.referTo,
-  });
+  /// Creates a [ForeignField] by its attributes.
+  const ForeignField({required super.name, required this.referTo});
 }
 
+/// Links a database composite column to a Dart field within a model class.
 @Target({TargetKind.getter})
 class ModelField extends Field {
+  /// The class annotated with [Model] or [Data] that should be represented
+  /// within this field.
   final Type referTo;
 
-  const ModelField({
-    required super.name,
-    required this.referTo,
-  });
+  /// Creates a [ModelField] by its attributes.
+  const ModelField({required super.name, required this.referTo});
 }

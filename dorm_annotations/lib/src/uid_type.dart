@@ -45,9 +45,11 @@ abstract class UidType {
   const factory UidType.sameAs(Type type) = _SameAsUidType;
 
   /// Identifies a model based on [builder].
-  const factory UidType.custom(CustomUidValue Function(Object) builder) =
-      _CustomUidType;
+  const factory UidType.custom(
+    CustomUidValue Function(Object) builder,
+  ) = _CustomUidType;
 
+  /// Evaluates a value based on the runtime type of this class.
   T when<T>({
     required T Function() caseSimple,
     required T Function() caseComposite,
@@ -118,12 +120,16 @@ class _CustomUidType implements UidType {
 
 /// Represents a value to be returned by [UidType.custom];
 abstract class CustomUidValue {
+  /// Evaluates to a ID equivalent to [UidType.simple].
   const factory CustomUidValue.simple() = _SimpleCustomUidValue;
 
+  /// Evaluates to a ID equivalent to [UidType.composite].
   const factory CustomUidValue.composite() = _CompositeCustomUidValue;
 
+  /// Evaluates to a ID equal to [id].
   const factory CustomUidValue.value(String id) = _ValueCustomUidValue;
 
+  /// Evaluates a value based on the runtime type of this class.
   T when<T>({
     required T Function() caseSimple,
     required T Function() caseComposite,

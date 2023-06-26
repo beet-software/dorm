@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+/// Removes spaces, replace diacritics and capitalization for a [value].
 String? $normalizeText(String? value) {
   if (value == null) return null;
   if (value.isEmpty) return value;
@@ -36,6 +37,7 @@ String? $normalizeText(String? value) {
   return result;
 }
 
+/// Formats a [value] as "YYYYMMDD".
 String? $normalizeDate(DateTime? value) {
   if (value == null) return null;
   final int day = value.day;
@@ -46,6 +48,7 @@ String? $normalizeDate(DateTime? value) {
       '$day'.padLeft(2, '0');
 }
 
+/// Removes the `Class.` component of a [value] string-formatted as `Class.value`.
 String? $normalizeEnum(Object? value) {
   if (value == null) return null;
   if (value is Enum) return value.name;

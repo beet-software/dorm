@@ -18,19 +18,26 @@ import 'package:meta/meta_meta.dart';
 
 import 'uid_type.dart';
 
-/// Represents a model to be mapped.
+/// Allows a class to be serialized.
 @Target({TargetKind.classType})
 class Data {
+  /// Creates a [Data].
   const Data();
 }
 
-/// Represents an abstract schema to be mapped.
+/// Links a database table to a Dart class.
 @Target({TargetKind.classType})
 class Model {
+  /// Name of the table in the underlying database.
   final String name;
+
+  /// Name for the Dart repository accessor of this model.
   final Symbol? as;
+
+  /// Unique identification type for this model.
   final UidType uidType;
 
+  /// Creates a [Model] by its attributes.
   const Model({
     required this.name,
     this.as,

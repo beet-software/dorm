@@ -1,6 +1,6 @@
 name: dorm_annotations
-version: 1.0.0-alpha.3
-description: Exposes annotations related to dORM code generation.
+version: 1.0.0-alpha.4
+description: Exposes annotations used to generate code for dORM framework.
 homepage: https://github.com/beet-software/dorm/tree/main/dorm_annotations
 repository: https://github.com/beet-software/dorm.git
 environment:

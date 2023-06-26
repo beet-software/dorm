@@ -1,5 +1,10 @@
 # dorm_annotations
 
+[![pub package](https://img.shields.io/pub/v/dorm_annotations.svg?label=dorm_annotations)](https://pub.dev/packages/dorm_annotations)
+[![pub popularity](https://img.shields.io/pub/popularity/dorm_annotations?logo=dart)](https://pub.dev/packages/dorm_annotations)
+[![pub likes](https://img.shields.io/pub/likes/dorm_annotations?logo=dart)](https://pub.dev/packages/dorm_annotations)
+[![pub points](https://img.shields.io/pub/points/dorm_annotations?logo=dart)](https://pub.dev/packages/dorm_annotations)
+
 Provides annotations related with dORM code generation.
 
 ## Getting started
@@ -11,11 +16,14 @@ dart pub add dorm_annotations
 dart pub get
 ```
 
+Take a look at the [`dorm_generator` package](https://pub.dev/packages/dorm_generator) to learn how
+to generate code for these annotations.
+
 ## Usage
 
 ### Models
 
-The `Model` annotation is used to link a database table to a Dart class. 
+The `Model` annotation is used to link a database table to a Dart class.
 
 It accepts two parameters:
 
@@ -58,23 +66,29 @@ abstract class _User {
 }
 ```
 
-The return type of the getters can be [any of the specified](https://pub.dev/packages/json_serializable#supported-types) on the `json_serializable` package:
+The return type of the getters can be any of the specified on the
+[`json_serializable` package](https://pub.dev/packages/json_serializable#supported-types):
 
-> `BigInt`, `bool`, `DateTime`, `double`, `Duration`, `Enum`, `int`, `Iterable`, `List`, `Map`, `num`, `Object`, `Record`, `Set`, `String`, `Uri`.
+> `BigInt`, `bool`, `DateTime`, `double`, `Duration`, `Enum`, `int`, `Iterable`, `List`, `Map`,
+> `num`, `Object`, `Record`, `Set`, `String` and `Uri`.
 >
-> The collection types - `Iterable`, `List`, `Map`, `Record`, `Set` - can contain values of all the above types.
+> The collection types - `Iterable`, `List`, `Map`, `Record`, `Set` - can contain values of all the
+> above types.
 >
-> For `Map`, the key value must be one of `BigInt`, `DateTime`, `Enum`, `int`, `Object`, `String`, `Uri`.
+> For `Map`, the key value must be one of `BigInt`, `DateTime`, `Enum`, `int`, `Object`, `String`
+> and `Uri`.
 >
-> If you own/control the desired type, add a `fromJson` constructor and a `toJson` function to the type.
+> If you own/control the desired type, add a `fromJson` constructor and a `toJson` function to the
+> type.
 
 ### Foreign fields
 
-The `ForeignField` annotation is used to link a database foreign key to a Dart field within a model class. 
+The `ForeignField` annotation is used to link a database foreign key to a Dart field within a model
+class.
 
-In a relational database, a foreign key is a column in a table that establishes a relationship or association
-with the primary key column of another table. The foreign column helps enforce referential integrity, which 
-ensures that the referenced data exists and remains consistent.
+In a relational database, a foreign key is a column in a table that establishes a relationship or
+association with the primary key column of another table. The foreign column helps enforce 
+referential integrity, which ensures that the referenced data exists and remains consistent.
 
 It accepts the following parameters:
 
@@ -102,9 +116,10 @@ abstract class _Post {
 The `QueryField` annotation is used to link a database index to a Dart field within a model class.
 
 An index is a data structure that improves the speed and efficiency of data retrieval operations on
-database tables. It provides a way to quickly locate and access specific data within a table based on
-the values stored in one or more columns. When a query includes a condition on indexed columns, the 
-database engine can use the index to quickly identify the relevant rows, rather than scanning the entire table.
+database tables. It provides a way to quickly locate and access specific data within a table based
+on the values stored in one or more columns. When a query includes a condition on indexed columns,
+the database engine can use the index to quickly identify the relevant rows, rather than scanning
+the entire table.
 
 It accepts the following parameters:
 
@@ -129,14 +144,17 @@ abstract class _School {
 }
 ```
 
-Applying `Filter.value(true, key: '_query_active')` (described in the `dorm_framework` package) should optimize the reading of all active schools.
+Applying `Filter.value(true, key: '_query_active')` (described in the
+[`dorm_framework` package](https://pub.dev/packages/dorm_framework)) should optimize the reading of
+all active schools.
 
 #### Multiple-column indexing
 
 Combining two or more columns in a query involves searching for data based on the values present in
-two or more different columns simultaneously. This type of query allows you to perform logical operations
-on the values of two or more columns, such as concatenation, comparison, or matching patterns.
-Examples of combining two columns include searching for records where the values in column A and column B are equal:
+two or more different columns simultaneously. This type of query allows you to perform logical
+operations on the values of two or more columns, such as concatenation, comparison, or matching
+patterns. Examples of combining two columns include searching for records where the values in column
+A and column B are equal:
 
 ```dart
 import 'package:dorm_annotations/dorm_annotations.dart';
@@ -158,15 +176,16 @@ abstract class _SchoolAddress {
 }
 ```
 
-Applying `Filter.value('99950_13', key: '_query_address')` (described in the `dorm_framework` package) 
-should optimize the reading of all addresses with zip code 99950 and number 13.
+Applying `Filter.value('99950_13', key: '_query_address')` should optimize the reading of all
+addresses with zip code 99950 and number 13.
 
 #### Text indexing
 
-Searching by prefix involves finding records that match a specific prefix or initial set of 
-characters in a given column. This type of query is particularly useful when you want to retrieve data
-based on partial matches or when you only have partial information about the desired data. Examples of
-searching by prefix include searching for names starting with "John" in a column containing full names:
+Searching by prefix involves finding records that match a specific prefix or initial set of
+characters in a given column. This type of query is particularly useful when you want to retrieve
+data based on partial matches or when you only have partial information about the desired data.
+Examples of searching by prefix include searching for names starting with "John" in a column
+containing full names:
 
 ```dart
 import 'package:dorm_annotations/dorm_annotations.dart';
@@ -188,17 +207,19 @@ abstract class _Student {
 }
 ```
 
-Applying `Filter.text('school7319004#Paul', key: '_query_sbn')` (described in the `dorm_framework` package) 
-should optimize the reading of all Pauls studying at the school with ID `school7319004`.
+Applying `Filter.text('school7319004#Paul', key: '_query_sbn')` should optimize the reading of all
+Pauls studying at the school with ID `school7319004`.
 
 ### Composite fields
 
-The `ModelField` annotation is used to link a database composite column to a Dart field within a model class.
+The `ModelField` annotation is used to link a database composite column to a Dart field within a
+model class.
 
-In a non-relational database, a composite column refers to a field that can hold a collection of values or
-sub-attributes within a single column. Unlike a simple column that holds a single value, a composite column
-allows for the grouping or nesting of multiple values or sub-attributes together. This can be useful for
-representing complex or structured data within a single field in a non-relational database model.
+In a non-relational database, a composite column refers to a field that can hold a collection of
+values or sub-attributes within a single column. Unlike a simple column that holds a single value, a
+composite column allows for the grouping or nesting of multiple values or sub-attributes together.
+This can be useful for representing complex or structured data within a single field in a
+non-relational database model.
 
 It accepts the following parameters:
 
@@ -246,23 +267,24 @@ abstract class _SchoolAddress {
 }
 ```
 
-You can also use a class annotated with `Data` as an argument to `referTo` of a `ModelField` annotation.
+You can also use a class annotated with `Data` as an argument to `referTo` of a `ModelField`
+annotation.
 
 ### Polymorphism
 
-The `PolymorphicField` annotation is used to link a database composite column and a pivot column 
+The `PolymorphicField` annotation is used to link a database composite column and a pivot column
 to a Dart field within a model class.
 
 In a non-relational database, polymorphism refers to the ability to store different types of objects
-in a single table. It allows for flexible data modeling, where objects of various types can be stored 
-together, and the specific type of each object is determined by a pivot column. A composite column
-stores the specific contents of each subtable, while the remaining columns store the common attributes 
-of the base table.
+in a single table. It allows for flexible data modeling, where objects of various types can be
+stored together, and the specific type of each object is determined by a pivot column. A composite
+column stores the specific contents of each sub-table, while the remaining columns store the common
+attributes of the base table.
 
-- The pivot column, represented as a string, is used to identify the specific type or subtable
+- The pivot column, represented as a string, is used to identify the specific type or sub-table
   to which each object belongs. It acts as a discriminator, indicating the type of the object stored
   in the composite column.
-- The composite column holds the contents or attributes specific to each subtable or object type.
+- The composite column holds the contents or attributes specific to each sub-table or object type.
   Depending on the value of the pivot column, the composite column stores the corresponding data
   structure or format for that specific object type.
 - The remaining columns in the table represent the common attributes shared by all object types.
@@ -303,8 +325,8 @@ abstract class _Attack implements _Action {
 
 @PolymorphicData(name: 'defence')
 abstract class _Defense implements _Action {
-  @Field(name: 'resistence')
-  int get resistence;
+  @Field(name: 'resistance')
+  int get resistance;
 }
 
 @PolymorphicData(name: 'healing')
@@ -316,22 +338,27 @@ abstract class _Healing implements _Action {
 
 ### Unique identification
 
-In the context of unique identification types for models, there are four types: simple, composite, same-as, and custom.
-These types determine how the unique identifier (id) of a model is defined and generated:
+In the context of unique identification types for models, there are four types: simple, composite,
+same-as, and custom. These types determine how the unique identifier (id) of a model is defined and
+generated:
 
-- Simple *(default)*: generates a universally unique identifier as the id for the model. They are highly likely to be unique across
-  different systems. This type of UID is suitable when a globally unique identifier is required for each instance of the model.
-- Composite: creates a string by joining all foreign keys of the model with a given separator and appending a universally unique
-  identifier to it. This type is particularly useful when users frequently query models by their ids and want to include related
-  foreign keys in the id for easier referencing. The resulting id can be used to identify a specific instance of the model and
+- Simple *(default)*: generates a universally unique identifier as the id for the model. They are
+  highly likely to be unique across different systems. This type of UID is suitable when a globally
+  unique identifier is required for each instance of the model.
+- Composite: creates a string by joining all foreign keys of the model with a given separator and
+  appending a universally unique identifier to it. This type is particularly useful when users
+  frequently query models by their ids and want to include related foreign keys in the id for easier
+  referencing. The resulting id can be used to identify a specific instance of the model and
   maintain a relationship with its associated foreign keys.
-- Same-as: receives a model class type and creates the same id as the referenced model. This type is ideal for establishing
-  one-to-one relationships between models where both models share the same unique identifier. When two models have a same-as,
-  it means they are linked by the same id, allowing for efficient retrieval and synchronization of related data.
-- Custom: is a function that receives a model class and returns a string as the id. This type allows users to customize the
-  generation of the model's id based on their specific requirements. The function can incorporate any logic or algorithm to
-  generate a unique identifier based on the model's attributes or external factors. This type is useful when users need fine-grained
-  control over how the id is generated, allowing for unique identification according to their own criteria.
+- Same-as: receives a model class type and creates the same id as the referenced model. This type is
+  ideal for establishing one-to-one relationships between models where both models share the same
+  unique identifier. When two models have a same-as, it means they are linked by the same id,
+  allowing for efficient retrieval and synchronization of related data.
+- Custom: is a function that receives a model class and returns a string as the id. This type allows
+  users to customize the generation of the model's id based on their specific requirements. The
+  function can incorporate any logic or algorithm to generate a unique identifier based on the
+  model's attributes or external factors. This type is useful when users need fine-grained control
+  over how the id is generated, allowing for unique identification according to their own criteria.
 
 You can specify the unique identification of a model through `UidType`:
 
@@ -348,7 +375,7 @@ abstract class _State {}
 abstract class _Capital {}
 
 CustomUidValue _identifyCitizen(Object data) {
-  data as _Citizen; 
+  data as _Citizen;
   if (data.isForeigner) {
     return CustomUidValue.value(data.visaCode);
   }
@@ -357,6 +384,7 @@ CustomUidValue _identifyCitizen(Object data) {
   }
   return const CustomUidValue.simple(); // or const CustomUidValue.composite();
 }
+
 @Model(name: 'citizen', as: #citizens, uidType: UidType.custom(_identifyCitizen))
 abstract class _Citizen {}
 ```
