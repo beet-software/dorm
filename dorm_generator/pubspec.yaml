@@ -1,5 +1,5 @@
 name: dorm_generator
-version: 1.0.0-alpha.1
+version: 1.0.0-alpha.2
 description: Generates code to implement the dORM framework.
 homepage: https://github.com/beet-software/dorm/tree/main/dorm_generator
 repository: https://github.com/beet-software/dorm.git

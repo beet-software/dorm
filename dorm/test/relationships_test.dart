@@ -646,6 +646,52 @@ void main() {
       expect(join?.left.id, '4');
       expect(join?.right.$1?.id, null);
       expect(join?.right.$2?.id, '2');
-    }, skip: 'Not implemented');
+
+      join = await relationship.pull('5').first;
+      expect(join?.left.id, null);
+      expect(join?.right.$1?.id, null);
+      expect(join?.right.$2?.id, null);
+    });
+    test('peekAll', () async {
+      final List<Join<Item, (Order?, Product?)>> joins =
+          await relationship.peekAll();
+      expect(joins.length, 4);
+      expect(joins[0].left.id, '1');
+      expect(joins[0].right.$1?.id, '101');
+      expect(joins[0].right.$2?.id, '1');
+
+      expect(joins[1].left.id, '2');
+      expect(joins[1].right.$1?.id, '102');
+      expect(joins[1].right.$2?.id, '3');
+
+      expect(joins[2].left.id, '3');
+      expect(joins[2].right.$1?.id, '102');
+      expect(joins[2].right.$2?.id, null);
+
+      expect(joins[3].left.id, '4');
+      expect(joins[3].right.$1?.id, null);
+      expect(joins[3].right.$2?.id, '2');
+    });
+    test('pullAll', () async {
+      final List<Join<Item, (Order?, Product?)>> joins =
+          await relationship.pullAll().first;
+
+      expect(joins.length, 4);
+      expect(joins[0].left.id, '1');
+      expect(joins[0].right.$1?.id, '101');
+      expect(joins[0].right.$2?.id, '1');
+
+      expect(joins[1].left.id, '2');
+      expect(joins[1].right.$1?.id, '102');
+      expect(joins[1].right.$2?.id, '3');
+
+      expect(joins[2].left.id, '3');
+      expect(joins[2].right.$1?.id, '102');
+      expect(joins[2].right.$2?.id, null);
+
+      expect(joins[3].left.id, '4');
+      expect(joins[3].right.$1?.id, null);
+      expect(joins[3].right.$2?.id, '2');
+    });
   });
 }

@@ -96,7 +96,6 @@ dORM does not yet handle
 
 - transactions
 - paginations
-- many-to-many joins
 
 These features may be supported in future releases.
 
@@ -182,7 +181,7 @@ Basically,
 7. Inside *lib/dorm_\<DRIVER\>_database.dart*, add the following contents:
 
    ```dart
-   library dorm_<DRIVER>_database;
+   library dorm_DRIVER_database;
 
    // Add zero or more third-party exports you may find relevant 
    export 'package:foo/bar.dart';

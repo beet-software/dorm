@@ -1,13 +1,15 @@
 name: dorm
-version: 1.0.0-alpha.1
+version: 1.0.0-alpha.2
 description: Exposes classes to implement the dORM framework.
 homepage: https://github.com/beet-software/dorm/tree/main/dorm
 repository: https://github.com/beet-software/dorm.git
 environment:
   sdk: '>=3.0.5 <4.0.0'
 
+dependencies:
+  rxdart: ^0.27.7
 dev_dependencies:
-  build_runner: ^2.4.5
+  test: ^1.24.3
   lints: ^2.0.0
   mockito: ^5.4.2
-  test: ^1.24.3
+  build_runner: ^2.4.5

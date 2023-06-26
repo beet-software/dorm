@@ -16,6 +16,8 @@
 
 import 'dart:async';
 
+import 'package:rxdart/rxdart.dart';
+
 import 'filter.dart';
 import 'merge.dart';
 import 'repository.dart';
@@ -425,15 +427,22 @@ class ManyToManyRelationship<M, L, R> implements Mergeable<M, (L?, R?)> {
 
   @override
   Stream<Join<M, (L?, R?)>?> pull(String id) {
-    // TODO: implement pull
-    throw UnimplementedError();
+    return ManyToManySingleMerge<M, L?, R?>(
+      left: middle.pull(id),
+      map: (model) => ZipStream(
+          [left.pull(onLeft(model)), right.pull(onRight(model))],
+          (values) => (values[0] as L?, values[1] as R?)),
+    ).stream;
   }
 
   @override
   Stream<List<Join<M, (L?, R?)>>> pullAll([
     Filter filter = const Filter.empty(),
   ]) {
-    // TODO: implement pullAll
-    throw UnimplementedError();
+    return ManyToManyBatchMerge<M, L?, R?>(
+      left: middle.pullAll(filter),
+      onLeft: (model) => left.pull(onLeft(model)),
+      onRight: (model) => right.pull(onRight(model)),
+    ).stream;
   }
 }

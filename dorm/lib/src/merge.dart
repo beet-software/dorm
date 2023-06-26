@@ -16,6 +16,8 @@
 
 import 'dart:async';
 
+import 'package:rxdart/rxdart.dart';
+
 import 'relationship.dart';
 
 abstract class Merge<T> {
@@ -133,9 +135,6 @@ class OneToOneSingleMerge<L, R> extends SingleMerge<L, L, R, R> {
   OneToOneSingleMerge({required super.left, required super.map});
 
   @override
-  Stream<Join<L, R>?> get stream => _controller.stream;
-
-  @override
   Join<L, R> parse(L leftModel, R rightModel) {
     return Join(left: leftModel, right: rightModel);
   }
@@ -147,6 +146,16 @@ class ManyToOneSingleMerge<R, L> extends SingleMerge<R, L, R, L?> {
   @override
   Join<L, R>? parse(R leftModel, L? rightModel) {
     return rightModel == null ? null : Join(left: rightModel, right: leftModel);
+  }
+}
+
+class ManyToManySingleMerge<M, L, R>
+    extends SingleMerge<M, M, (L?, R?), (L?, R?)> {
+  ManyToManySingleMerge({required super.left, required super.map});
+
+  @override
+  Join<M, (L?, R?)>? parse(M leftModel, (L?, R?) rightModel) {
+    return Join(left: leftModel, right: rightModel);
   }
 }
 
@@ -187,5 +196,25 @@ class ManyToOneBatchMerge<L, R> extends BatchMerge<R, L, List<R>> {
         .map((entry) => onRight(entry.key)
             .map((leftModel) => Join(left: leftModel, right: entry.value)))
         .toList();
+  }
+}
+
+class ManyToManyBatchMerge<M, L, R> extends BatchMerge<M, M, (L?, R?)> {
+  final Stream<L> Function(M) onLeft;
+  final Stream<R> Function(M) onRight;
+
+  ManyToManyBatchMerge({
+    required super.left,
+    required this.onLeft,
+    required this.onRight,
+  });
+
+  @override
+  List<Stream<Join<M?, (L?, R?)>>> parse(List<M> values) {
+    return values.map((middleModel) {
+      return ZipStream([onLeft, onRight].map((apply) => apply(middleModel)),
+              (values) => (values[0] as L?, values[1] as R?))
+          .map((join) => Join(left: middleModel, right: join));
+    }).toList();
   }
 }
