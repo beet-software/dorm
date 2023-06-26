@@ -21,5 +21,6 @@ import 'package:source_gen/source_gen.dart';
 
 import 'src/generator.dart';
 
+/// Creates the code generator.
 Builder generateOrm(BuilderOptions options) =>
     PartBuilder([OrmGenerator()], '.dorm.dart');

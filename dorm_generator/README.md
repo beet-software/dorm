@@ -1,5 +1,10 @@
 # dorm_generator
 
+[![pub package](https://img.shields.io/pub/v/dorm_generator.svg?label=dorm_generator)](https://pub.dev/packages/dorm_generator)
+[![pub popularity](https://img.shields.io/pub/popularity/dorm_generator?logo=dart)](https://pub.dev/packages/dorm_generator)
+[![pub likes](https://img.shields.io/pub/likes/dorm_generator?logo=dart)](https://pub.dev/packages/dorm_generator)
+[![pub points](https://img.shields.io/pub/points/dorm_generator?logo=dart)](https://pub.dev/packages/dorm_generator)
+
 Provides code adapted to work with the dORM framework.
 
 ## Getting started
@@ -14,21 +19,23 @@ dart pub get
 
 ## Usage
 
-> **Note**: This document assumes that you have already seen the `dorm_annotations` documentation.
+> **Note**: This document assumes that you have already seen the
+> [`dorm_annotations` documentation](https://pub.dev/packages/dorm_annotations).
 
 ### Generating
 
-Create a file inside the *lib* folder of your Dart project. In this example, it will be *lib/models.dart*.
+Create a file inside the *lib* folder of your Dart project. In this example, it will be
+*lib/models.dart*.
 
-Write the classes, their getters and their annotations to this file, as described in `dorm_annotations`.
-Add the following directives to top of this file:
+Write the classes, their getters and their annotations to this file. Add the following directives to
+top of this file:
 
 ```dart
 import 'package:dorm_annotations/dorm_annotations.dart';
 import 'package:dorm_framework/dorm_framework.dart';
-import 'package:json_annotation/json_annotation.dart';
 
 part 'models.g.dart';
+
 part 'models.dorm.dart';
 ```
 
@@ -43,7 +50,7 @@ This will generate all the files based on the annotated classes.
 ### Models
 
 Any class `_Class` annotated with `Model` will create four new classes: `ClassData`, `Class`,
-`ClassDependency` and `ClassEntity`. 
+`ClassDependency` and `ClassEntity`.
 
 ```dart
 @Model(name: 'class', as: #classes)
@@ -59,7 +66,9 @@ abstract class _Class {
 }
 ```
 
-A `ClassData` will contain only the getters annotated with `Field`, 
+#### Data
+
+A `ClassData` will contain only the getters annotated with `Field`,
 `PolymorphicField` and `ModelField`. In the above example is defined as:
 
 ```dart
@@ -82,8 +91,11 @@ class ClassData {
 }
 ```
 
+#### Model
+
 A `Class` extends `ClassData`, implements `_Class`, has an additional `id` field and will
-contain only the getters annotated with `ForeignField` and `QueryField`. In the above example is defined as:
+contain only the getters annotated with `ForeignField` and `QueryField`. In the above example is
+defined as:
 
 ```dart
 @JsonSerializable(anyMap: true, explicitToJson: true)
@@ -104,12 +116,19 @@ class Class extends ClassData implements _Class {
     required super.timestamp,
   });
 
-  Map<String, Object?> toJson() => _$ClassToJson(this)..remove('_id');
+  Map<String, Object?> toJson() =>
+      _$ClassToJson(this)
+        ..remove('_id');
 }
 ```
 
-A `ClassDependency` and a `ClassEntity` extends respectively `Dependency<ClassData>` 
-and `Entity<ClassData, Class>`, exported by the `dorm_framework` package.
+#### dORM components
+
+A `ClassDependency` and a `ClassEntity` extends respectively `Dependency<ClassData>`
+and `Entity<ClassData, Class>`, exported by the
+[`dorm_framework` package](https://pub.dev/packages/dorm_framework).
+
+#### Accessors
 
 The code generation will also create a new class named `Dorm`, which will contain the
 repository accessors. In the above example, it is defined as:
@@ -126,39 +145,41 @@ class Dorm {
 ```
 
 Refer to the `dorm_*_database` packages to read more about how to obtain a `Reference`.
-With a `Dorm` instance, you can operate on classes using a `Repository`, exported by the 
-`dorm_framework` package:
+With a `Dorm` instance, you can operate on classes using a `Repository`, also exported by
+`dorm_framework`:
 
 ```dart
-final Dorm dorm = /* ... */;
+void main() async {
+  final Dorm dorm /* =  ... */;
 
-/// Create
-final Class c = await dorm.classes.repository.put(
-  ClassDependency(schoolId: 'school-0'),
-  ClassData(name: 'A class.', timestamp: DateTime.now()),
-);
+  // Create
+  final Class c = await dorm.classes.repository.put(
+    ClassDependency(schoolId: 'school-0'),
+    ClassData(name: 'A class.', timestamp: DateTime.now()),
+  );
 
-// Read
-final Future<Class> fc = await dorm.classes.repository.peek('class-1');
-final Future<List<Class>> fcs = await dorm.classes.repository.peekAll();
-final Stream<Class> sc = dorm.classes.repository.pull('class-1');
-final Stream<List<Class>> scs = dorm.classes.repository.pullAll();
+  // Read
+  final Future<Class> fc = await dorm.classes.repository.peek('class-1');
+  final Future<List<Class>> fcs = await dorm.classes.repository.peekAll();
+  final Stream<Class> sc = dorm.classes.repository.pull('class-1');
+  final Stream<List<Class>> scs = dorm.classes.repository.pullAll();
 
-// Update
-final Class uc = await dorm.classes.repository.push(Class(
-  id: 'class-1',
-  schoolId: 'school-1',
-  name: 'A new class.',
-  timestamp: DateTime.now(),
-));
+  // Update
+  final Class uc = await dorm.classes.repository.push(Class(
+    id: 'class-1',
+    schoolId: 'school-1',
+    name: 'A new class.',
+    timestamp: DateTime.now(),
+  ));
 
-// Delete
-await dorm.classes.repository.pop('class-1');
+  // Delete
+  await dorm.classes.repository.pop('class-1');
+}
 ```
 
 ### Polymorphism
 
-Consider the following annotated code: 
+Consider the following annotated code:
 
 ```dart
 abstract class _Action {}
@@ -195,34 +216,37 @@ The generated code will contain an abstract class named `Action` with three subc
 `Attack`, `Defense` and `Healing`. It'll also contain an enum named `ActionType` with three
 values: `attack`, `defense` and `heal` (not `healing`; see its `PolymorphicData`'s `as` argument).
 
-The `_Operation` model will be generated as described previously, except that will contain an additional
-field named `type` of type `ActionType`, which will allow the user to check the runtime type of the 
-`action` field.  
+The `_Operation` model will be generated as described previously, except that will contain an
+additional field named `type` of type `ActionType`, which will allow the user to check the runtime
+type of the `action` field.
 
-The following code explains how to manipulate generated code for a `Model` with a field annotated with `PolymorphicField`:
+The following code explains how to manipulate generated code for a `Model` with a field annotated
+with `PolymorphicField`:
 
 ```dart
-final Operation o1 = await dorm.operations.repository.put(
-  const OperationDependency(),
-  OperationData(name: 'AoT', action: Attack(strength: 42), type: ActionType.attack),
-);
+void main() async {
+  final Operation o1 = await dorm.operations.repository.put(
+    const OperationDependency(),
+    OperationData(name: 'AoT', action: Attack(strength: 42), type: ActionType.attack),
+  );
 
-final Operation o2 = await dorm.operations.repository.peek('543f2f8da023');
+  final Operation o2 = await dorm.operations.repository.peek('543f2f8da023');
 
-final int value;
-switch (operation.type) {
-  case ActionType.attack:
-    final Attack attack = operation.action as Attack; 
-    value = attack.strength;
-    break;
-  case ActionType.defense:
-    final Defense defense = operation.action as Defense;
-    value = defense.resistence;
-    break;
-  case ActionType.heal:
-    final Healing healing = operation.action as Healing;
-    value = healing.health;
-    break;
+  final int value;
+  switch (operation.type) {
+    case ActionType.attack:
+      final Attack attack = operation.action as Attack;
+      value = attack.strength;
+      break;
+    case ActionType.defense:
+      final Defense defense = operation.action as Defense;
+      value = defense.resistence;
+      break;
+    case ActionType.heal:
+      final Healing healing = operation.action as Healing;
+      value = healing.health;
+      break;
+  }
 }
 ```
 
@@ -230,7 +254,7 @@ switch (operation.type) {
 
 #### Simple
 
-If 
+If
 
 ```dart
 @Model(name: 'country', as: #countries, uidType: UidType.simple())
@@ -243,17 +267,19 @@ abstract class _Country {
 then
 
 ```dart
-final Country country = await dorm.countries.repository.put(
-  CountryDependency(),
-  CountryData(name: 'Brazil'),
-);
-// uuid
-assert(country.id == '27f04af67a1f');
+void main() async {
+  final Country country = await dorm.countries.repository.put(
+    CountryDependency(),
+    CountryData(name: 'Brazil'),
+  );
+  // uuid
+  assert(country.id == '27f04af67a1f');
+}
 ```
 
 #### Composite
 
-If 
+If
 
 ```dart
 @Model(name: 'state', as: #states, uidType: UidType.composite())
@@ -269,17 +295,19 @@ abstract class _State {
 then
 
 ```dart
-final State state = await dorm.states.repository.put(
-  StateDependency(countryId: '27f04af67a1f'),
-  StateData(name: 'Rio de Janeiro'),
-);
-// countryId_uuid
-assert(country.id == '27f04af67a1f_367f1672f637');
+void main() async {
+  final State state = await dorm.states.repository.put(
+    StateDependency(countryId: '27f04af67a1f'),
+    StateData(name: 'Rio de Janeiro'),
+  );
+  // ${countryId}_uuid
+  assert(country.id == '27f04af67a1f_367f1672f637');
+}
 ```
 
 #### Same-as
 
-If 
+If
 
 ```dart
 @Model(name: 'capital', as: #capitals, uidType: UidType.sameAs(_Country))
@@ -295,12 +323,14 @@ abstract class _Capital {
 then
 
 ```dart
-final Capital capital = await dorm.capitals.repository.put(
-  CapitalDependency(countryId: '27f04af67a1f'),
-  CapitalData(name: 'Brasilia'),
-);
-// countryId
-assert(capital.id == '27f04af67a1f');
+void main() async {
+  final Capital capital = await dorm.capitals.repository.put(
+    CapitalDependency(countryId: '27f04af67a1f'),
+    CapitalData(name: 'Brasilia'),
+  );
+  // countryId
+  assert(capital.id == '27f04af67a1f');
+}
 ```
 
 #### Custom
@@ -309,7 +339,7 @@ If
 
 ```dart
 CustomUidValue _identifyCitizen(Object data) {
-  data as _Citizen; 
+  data as _Citizen;
   if (data.isForeigner) {
     return CustomUidValue.value(data.visaCode!);
   }
@@ -318,6 +348,7 @@ CustomUidValue _identifyCitizen(Object data) {
   }
   return const CustomUidValue.simple();
 }
+
 @Model(name: 'citizen', as: #citizens, uidType: UidType.custom(_identifyCitizen))
 abstract class _Citizen {
   @Field(name: 'name')
@@ -328,7 +359,7 @@ abstract class _Citizen {
 
   @Field(name: 'visa-code')
   String? get visaCode;
-  
+
   @Field(name: 'ssn')
   String? get socialSecurity;
 
@@ -340,24 +371,36 @@ abstract class _Citizen {
 then
 
 ```dart
-final Citizen c1 = await dorm.citizens.repository.put(
-  CitizenDependency(countryId: '27f04af67a1f'),
-  CitizenData(name: 'Rodrigo Maia', isForeigner: true, visaCode: '4bb6', socialSecurity: '11111111111'),
-);
-// visaCode
-assert(c1.id == '4bb6');
+void main() async {
+  final Citizen c1 = await dorm.citizens.repository.put(
+    CitizenDependency(countryId: '27f04af67a1f'),
+    CitizenData(
+      name: 'Rodrigo Maia',
+      isForeigner: true,
+      visaCode: '4bb6',
+      socialSecurity: '11111111111',
+    ),
+  );
+  // visaCode
+  assert(c1.id == '4bb6');
 
-final Citizen c2 = await dorm.citizens.repository.put(
-  CitizenDependency(countryId: '27f04af67a1f'),
-  CitizenData(name: 'Arthur Lira', isForeigner: false, visaCode: null, socialSecurity: '22222222222'),
-);
-// socialSecurity
-assert(c2.id == '22222222222');
+  final Citizen c2 = await dorm.citizens.repository.put(
+    CitizenDependency(countryId: '27f04af67a1f'),
+    CitizenData(
+      name: 'Arthur Lira',
+      isForeigner: false,
+      visaCode: null,
+      socialSecurity: '22222222222',
+    ),
+  );
+  // socialSecurity
+  assert(c2.id == '22222222222');
 
-final Citizen c3 = await dorm.citizens.repository.put(
-  CitizenDependency(countryId: '27f04af67a1f'),
-  CitizenData(name: 'Capivara Filó', isForeigner: false, visaCode: null, socialSecurity: null),
-);
-// uuid
-assert(c3.id == 'b2a6304807a0');
+  final Citizen c3 = await dorm.citizens.repository.put(
+    CitizenDependency(countryId: '27f04af67a1f'),
+    CitizenData(name: 'Capivara Filó', isForeigner: false, visaCode: null, socialSecurity: null),
+  );
+  // uuid
+  assert(c3.id == 'b2a6304807a0');
+}
 ```
