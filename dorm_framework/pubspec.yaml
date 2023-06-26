@@ -1,7 +1,7 @@
 name: dorm_framework
 version: 1.0.0-alpha.4
 description: Exposes classes, filters and joins to implement the dORM framework.
-homepage: https://github.com/beet-software/dorm/tree/main/dorm
+homepage: https://github.com/beet-software/dorm/tree/main/dorm_framework
 repository: https://github.com/beet-software/dorm.git
 environment:
   sdk: '>=3.0.5 <4.0.0'
