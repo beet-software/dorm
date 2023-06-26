@@ -356,3 +356,84 @@ class ManyToOneRelationship<L, R>
     ).stream;
   }
 }
+
+class ManyToManyRelationship<M, L, R> implements Mergeable<M, (L?, R?)> {
+  final Readable<M> middle;
+  final Readable<L> left;
+  final Readable<R> right;
+  final String Function(M) onLeft;
+  final String Function(M) onRight;
+
+  const ManyToManyRelationship({
+    required this.middle,
+    required this.left,
+    required this.right,
+    required this.onLeft,
+    required this.onRight,
+  });
+
+  @override
+  Future<Join<M, (L?, R?)>?> peek(String id) async {
+    final M? middleModel = await middle.peek(id);
+    if (middleModel == null) return null;
+
+    final L? leftModel = await left.peek(onLeft(middleModel));
+    final R? rightModel = await right.peek(onRight(middleModel));
+    return Join(
+      left: middleModel,
+      right: (leftModel, rightModel),
+    );
+  }
+
+  static Future<Map<K, V>> _waitAssociateWith<K, V>(
+    List<K> keys,
+    Future<V> Function(K) associate,
+  ) async {
+    final List<V> values = await Future.wait(keys.map(associate));
+    final Map<K, V> result = {};
+    for (int i = 0; i < values.length; i++) {
+      final K key = keys[i];
+      final V value = values[i];
+      result[key] = value;
+    }
+    return result;
+  }
+
+  @override
+  Future<List<Join<M, (L?, R?)>>> peekAll([
+    Filter filter = const Filter.empty(),
+  ]) async {
+    final List<M> middleModels = await middle.peekAll(filter);
+    final List<String> leftIds = middleModels.map(onLeft).toSet().toList();
+    final List<String> rightIds = middleModels.map(onRight).toSet().toList();
+
+    final Map<String, L?> leftModels =
+        await _waitAssociateWith(leftIds, left.peek);
+    final Map<String, R?> rightModels =
+        await _waitAssociateWith(rightIds, right.peek);
+
+    return middleModels.map((middleModel) {
+      return Join(
+        left: middleModel,
+        right: (
+          leftModels[onLeft(middleModel)],
+          rightModels[onRight(middleModel)],
+        ),
+      );
+    }).toList();
+  }
+
+  @override
+  Stream<Join<M, (L?, R?)>?> pull(String id) {
+    // TODO: implement pull
+    throw UnimplementedError();
+  }
+
+  @override
+  Stream<List<Join<M, (L?, R?)>>> pullAll([
+    Filter filter = const Filter.empty(),
+  ]) {
+    // TODO: implement pullAll
+    throw UnimplementedError();
+  }
+}

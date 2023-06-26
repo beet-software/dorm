@@ -91,6 +91,14 @@ class _EmptyFilter extends Filter {
 
   @override
   T accept<T>(BaseQuery<T> query) => query.limit(0);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is _EmptyFilter && runtimeType == other.runtimeType;
+
+  @override
+  int get hashCode => 0;
 }
 
 class _ValueFilter extends Filter {
@@ -98,6 +106,17 @@ class _ValueFilter extends Filter {
   final Object? value;
 
   const _ValueFilter(this.value, {required this.key}) : super._();
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is _ValueFilter &&
+          runtimeType == other.runtimeType &&
+          key == other.key &&
+          value == other.value;
+
+  @override
+  int get hashCode => key.hashCode ^ value.hashCode;
 
   @override
   T accept<T>(BaseQuery<T> query) => query.whereValue(key, value);
@@ -111,6 +130,17 @@ class _TextFilter extends Filter {
 
   @override
   T accept<T>(BaseQuery<T> query) => query.whereText(key, text);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is _TextFilter &&
+          runtimeType == other.runtimeType &&
+          key == other.key &&
+          text == other.text;
+
+  @override
+  int get hashCode => key.hashCode ^ text.hashCode;
 }
 
 enum DateFilterUnit {
