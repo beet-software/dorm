@@ -1,37 +1,13 @@
-targets:
-  $default:
-    builders:
-      generators|annotations:
-        enabled: true
-
-global_options:
-  json_serializable:
-    runs_before:
-      - dorm_generator
-
 builders:
   generators:
     target: :lib
     import: package:dorm_generator/dorm_generator.dart
+    build_extensions:
+      .dart:
+        - .dorm.dart
     auto_apply: dependents
     build_to: source
-    applies_builders:
-      - source_gen|combining_builder
-      - json_serializable:json_serializable
+    runs_before:
+      - json_serializable|json_serializable
     builder_factories:
       - generateOrm
-    build_extensions:
-      .dart:
-        - .g.part
-
-  json_serializable:json_serializable:
-    import: package:json_serializable/builder.dart
-    auto_apply: dependents
-    build_to: source
-    applies_builders:
-      - source_gen|combining_builder
-    builder_factories:
-      - jsonSerializable
-    build_extensions:
-      .dart:
-        - json_serializable.g.part
