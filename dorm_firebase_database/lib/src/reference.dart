@@ -221,6 +221,11 @@ class Reference implements BaseReference {
   }
 
   @override
+  Future<void> purge<Data, Model extends Data>(Entity<Data, Model> entity) {
+    return _refOf(entity).remove();
+  }
+
+  @override
   Future<List<String>> peekAllKeys<Data, Model extends Data>(
     Entity<Data, Model> entity,
   ) async {

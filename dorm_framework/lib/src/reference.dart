@@ -104,4 +104,7 @@ abstract class BaseReference {
     Dependency<Data> dependency,
     List<Data> datum,
   );
+
+  /// Defines how the database engine drops a table.
+  Future<void> purge<Data, Model extends Data>(Entity<Data, Model> entity);
 }

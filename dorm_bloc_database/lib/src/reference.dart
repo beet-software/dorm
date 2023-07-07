@@ -101,6 +101,12 @@ class _EntityReference<Data, Model extends Data>
     });
   }
 
+  void purge() {
+    _emit((models) {
+      models.clear();
+    });
+  }
+
   Model put(Dependency<Data> dependency, Data data) {
     return _emit((models) {
       final Model model = entity.fromData(dependency, _uuid.v4(), data);
@@ -266,6 +272,14 @@ class Reference extends Cubit<_State> implements BaseReference {
   ) async {
     final _EntityReference<Data, Model> bloc = _access(entity);
     return bloc.put(dependency, data);
+  }
+
+  @override
+  Future<void> purge<Data, Model extends Data>(
+    Entity<Data, Model> entity,
+  ) async {
+    final _EntityReference<Data, Model> bloc = _access(entity);
+    bloc.purge();
   }
 
   @override

@@ -113,7 +113,7 @@ abstract class ModelRepository<Model> implements Readable<Model> {
   /// Deletes all the models in this table matching the given [filter].
   ///
   /// If [filter] is an instance of [Filter.empty], this method will delete
-  /// *all* the rows in the table.
+  /// *all* the rows in the table. However, for this intent, call [purge].
   ///
   /// This method should be atomic:
   ///
@@ -186,6 +186,12 @@ abstract class ModelRepository<Model> implements Readable<Model> {
   /// await patch(id, _update);
   /// ```
   Future<void> patch(String id, Model? Function(Model?) update);
+
+  /// Removes all models from this table.
+  ///
+  /// This method should be more efficient than calling [popAll] passing
+  /// [Filter.empty] as argument.
+  Future<void> purge();
 }
 
 /// Represents creating models into the database engine.
@@ -285,5 +291,10 @@ class Repository<Data, Model extends Data>
   @override
   Future<void> patch(String id, Model? Function(Model?) update) {
     return _root.patch(_entity, id, update);
+  }
+
+  @override
+  Future<void> purge() {
+    return _root.purge(_entity);
   }
 }
