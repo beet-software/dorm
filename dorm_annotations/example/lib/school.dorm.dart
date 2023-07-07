@@ -468,16 +468,10 @@ extension TeacherProperties on Teacher {
   }
 }
 
-@JsonSerializable(
-  anyMap: true,
-  explicitToJson: true,
-)
 class HistoryData {
-  factory HistoryData.fromJson(Map json) => _$HistoryDataFromJson(json);
-
   const HistoryData();
 
-  Map<String, Object?> toJson() => _$HistoryDataToJson(this);
+  Map<String, Object?> toJson() => const {};
 }
 
 @JsonSerializable(

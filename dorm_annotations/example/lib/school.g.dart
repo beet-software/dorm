@@ -151,11 +151,6 @@ Map<String, dynamic> _$TeacherToJson(Teacher instance) => <String, dynamic>{
       '_id': instance.id,
     };
 
-HistoryData _$HistoryDataFromJson(Map json) => HistoryData();
-
-Map<String, dynamic> _$HistoryDataToJson(HistoryData instance) =>
-    <String, dynamic>{};
-
 History _$HistoryFromJson(Map json) {
   $checkKeys(
     json,

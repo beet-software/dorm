@@ -630,6 +630,8 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
     String? polymorphicName,
   }) {
     final bool base = polymorphicName != null || baseName == null;
+    final bool serializable =
+        !base || where(FieldFilter.belongsToData).isNotEmpty;
 
     final bool hasPolymorphism = values
         .map((field) => field.annotation)
@@ -637,15 +639,17 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
         .isNotEmpty;
 
     return cb.Class((b) {
-      b.annotations.add(cb.InvokeExpression.newOf(
-        cb.Reference('JsonSerializable', '$_jsonAnnotationUrl'),
-        [],
-        {
-          'anyMap': cb.literalTrue,
-          'explicitToJson': cb.literalTrue,
-          if (hasPolymorphism) 'constructor': cb.literalString('_'),
-        },
-      ));
+      if (serializable) {
+        b.annotations.add(cb.InvokeExpression.newOf(
+          cb.Reference('JsonSerializable', '$_jsonAnnotationUrl'),
+          [],
+          {
+            'anyMap': cb.literalTrue,
+            'explicitToJson': cb.literalTrue,
+            if (hasPolymorphism) 'constructor': cb.literalString('_'),
+          },
+        ));
+      }
       b.name = name;
       if (baseName != null) {
         if (polymorphicName == null) {
@@ -756,29 +760,31 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
         }));
       }
       // `fromJson` factory method
-      b.constructors.add(cb.Constructor((b) {
-        b.factory = true;
-        b.name = 'fromJson';
-        if (!base) {
+      if (serializable) {
+        b.constructors.add(cb.Constructor((b) {
+          b.factory = true;
+          b.name = 'fromJson';
+          if (!base) {
+            b.requiredParameters.add(cb.Parameter((b) {
+              b.type = cb.Reference('String');
+              b.name = 'id';
+            }));
+          }
           b.requiredParameters.add(cb.Parameter((b) {
-            b.type = cb.Reference('String');
-            b.name = 'id';
+            b.type = cb.Reference('Map');
+            b.name = 'json';
           }));
-        }
-        b.requiredParameters.add(cb.Parameter((b) {
-          b.type = cb.Reference('Map');
-          b.name = 'json';
+          b.lambda = true;
+          b.body = cb.ToCodeExpression(expressionOf('_\$${name}FromJson').call([
+            base
+                ? expressionOf('json')
+                : cb.literalMap({
+                    cb.literalSpread(): expressionOf('json'),
+                    cb.literalString('_id'): expressionOf('id'),
+                  }),
+          ]));
         }));
-        b.lambda = true;
-        b.body = cb.ToCodeExpression(expressionOf('_\$${name}FromJson').call([
-          base
-              ? expressionOf('json')
-              : cb.literalMap({
-                  cb.literalSpread(): expressionOf('json'),
-                  cb.literalString('_id'): expressionOf('id'),
-                }),
-        ]));
-      }));
+      }
       // Polymorphic constructor
       if (hasPolymorphism) {
         b.constructors.add(cb.Constructor((b) {
@@ -966,51 +972,57 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
         b.name = 'toJson';
 
         final bool lambda = base;
-
-        final Map<String, cb.Expression>? queryObject;
-        if (lambda) {
-          queryObject = null;
-        } else {
-          queryObject = {};
-          final Map<String, Map<String, Object>> queries = {};
-          for (MapEntry<String, FieldOrmNode> entry
-              in where(FieldFilter.isA<QueryField>).entries) {
-            final String? name = (entry.value.annotation as QueryField).name;
-            if (name == null) continue;
-            final List<String> segments = name.split('/');
-            final cb.Expression child = expressionOf(entry.key);
-            if (segments.length == 1) {
-              queryObject[name] = child;
-            } else {
-              queries.putIfAbsent(segments[0], () => {})[segments[1]] = child;
-            }
-          }
-          if (queries.isNotEmpty) {
-            for (MapEntry<String, Map<String, Object>> entry
-                in queries.entries) {
-              queryObject[entry.key] = cb.literalMap(entry.value);
-            }
-          }
-        }
-
         b.lambda = lambda;
-        final cb.Expression baseExpression = cb.InvokeExpression.newOf(
-          cb.Reference('_\$${name}ToJson'),
-          [expressionOf('this')],
-        );
-        if (queryObject == null) {
-          b.body = cb.ToCodeExpression(baseExpression);
+
+        final cb.Code body;
+        if (serializable) {
+          final Map<String, cb.Expression>? queryObject;
+          if (lambda) {
+            queryObject = null;
+          } else {
+            queryObject = {};
+            final Map<String, Map<String, Object>> queries = {};
+            for (MapEntry<String, FieldOrmNode> entry
+                in where(FieldFilter.isA<QueryField>).entries) {
+              final String? name = (entry.value.annotation as QueryField).name;
+              if (name == null) continue;
+              final List<String> segments = name.split('/');
+              final cb.Expression child = expressionOf(entry.key);
+              if (segments.length == 1) {
+                queryObject[name] = child;
+              } else {
+                queries.putIfAbsent(segments[0], () => {})[segments[1]] = child;
+              }
+            }
+            if (queries.isNotEmpty) {
+              for (MapEntry<String, Map<String, Object>> entry
+                  in queries.entries) {
+                queryObject[entry.key] = cb.literalMap(entry.value);
+              }
+            }
+          }
+
+          final cb.Expression baseExpression = cb.InvokeExpression.newOf(
+            cb.Reference('_\$${name}ToJson'),
+            [expressionOf('this')],
+          );
+          if (queryObject == null) {
+            body = cb.ToCodeExpression(baseExpression);
+          } else {
+            body = cb
+                .literalMap({
+                  cb.literalSpread(): baseExpression
+                      .cascade('remove')
+                      .call([cb.literalString('_id')]),
+                  ...queryObject,
+                })
+                .returned
+                .statement;
+          }
         } else {
-          b.body = cb
-              .literalMap({
-                cb.literalSpread(): baseExpression
-                    .cascade('remove')
-                    .call([cb.literalString('_id')]),
-                ...queryObject,
-              })
-              .returned
-              .statement;
+          body = cb.ToCodeExpression(cb.literalConstMap({}));
         }
+        b.body = body;
       }));
     });
   }
