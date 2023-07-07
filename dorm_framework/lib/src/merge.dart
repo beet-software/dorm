@@ -212,7 +212,8 @@ class ManyToManyBatchMerge<M, L, R> extends BatchMerge<M, M, (L?, R?)> {
   @override
   List<Stream<Join<M?, (L?, R?)>>> parse(List<M> values) {
     return values.map((middleModel) {
-      return ZipStream([onLeft, onRight].map((apply) => apply(middleModel)),
+      return CombineLatestStream(
+              [onLeft, onRight].map((apply) => apply(middleModel)),
               (values) => (values[0] as L?, values[1] as R?))
           .map((join) => Join(left: middleModel, right: join));
     }).toList();
