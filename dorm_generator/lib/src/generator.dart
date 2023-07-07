@@ -548,10 +548,6 @@ class PolymorphicArgs extends Args<void, PolymorphicDataOrmNode, TagNaming> {
           b.statements.add(cb.Code('}'));
         });
       }));
-      b.constructors.add(cb.Constructor((b) {
-        b.constant = true;
-        b.name = '_';
-      }));
       b.methods.add(cb.Method((b) {
         b.returns = cb.Reference(naming.enumName);
         b.type = cb.MethodType.getter;
@@ -584,84 +580,12 @@ class PolymorphicModelArgs
   }) : super(annotation: null);
 
   cb.Spec get _class {
-    final String name = naming.modelName;
-    return cb.Class((b) {
-      b.annotations.add(cb.InvokeExpression.newOf(
-        cb.Reference('JsonSerializable', '$_jsonAnnotationUrl'),
-        [],
-        {'anyMap': cb.literalTrue, 'explicitToJson': cb.literalTrue},
-      ));
-      b.name = name;
-      b.extend = cb.Reference(naming.tag.modelName);
-      b.implements.add(cb.Reference(naming.schemaName));
-      b.fields.addAll(fields.entries.map((entry) {
-        final String? key = entry.value.annotation.name;
-        final String name = entry.key;
-        final String type = entry.value.type;
-        final bool required = entry.value.required;
-        return cb.Field((b) {
-          b.annotations.add(expressionOf('override'));
-          b.annotations.add(cb.InvokeExpression.newOf(
-            cb.Reference('JsonKey', '$_jsonAnnotationUrl'),
-            [],
-            {
-              if (key != null) 'name': cb.literalString(key),
-              if (required) 'required': cb.literalTrue,
-              if (required) 'disallowNullValue': cb.literalTrue,
-            },
-          ));
-          b.modifier = cb.FieldModifier.final$;
-          b.type = cb.Reference(type);
-          b.name = name;
-        });
-      }));
-      b.constructors.add(cb.Constructor((b) {
-        b.factory = true;
-        b.name = 'fromJson';
-        b.requiredParameters.add(cb.Parameter((b) {
-          b.type = cb.Reference('Map');
-          b.name = 'json';
-        }));
-        b.lambda = true;
-        b.body = expressionOf('_\$${name}FromJson')
-            .call([expressionOf('json')]).code;
-      }));
-      b.constructors.add(cb.Constructor((b) {
-        b.constant = true;
-        b.optionalParameters.addAll(fields.keys.map((name) {
-          return cb.Parameter((b) {
-            b.required = true;
-            b.named = true;
-            b.toThis = true;
-            b.name = name;
-          });
-        }));
-        b.initializers.add(cb.ToCodeExpression(
-          expressionOf('super').property('_').call([]),
-        ));
-      }));
-      b.fields.add(cb.Field((b) {
-        b.annotations.add(expressionOf('override'));
-        b.modifier = cb.FieldModifier.final$;
-        b.type = cb.Reference(naming.tag.enumName);
-        b.name = 'type';
-        b.assignment = expressionOf(naming.tag.enumName)
-            .property(naming.enumFieldName)
-            .code;
-      }));
-      b.methods.add(cb.Method((b) {
-        b.annotations.add(expressionOf('override'));
-        b.returns = cb.TypeReference((b) {
-          b.symbol = 'Map';
-          b.types.add(cb.Reference('String'));
-          b.types.add(cb.Reference('Object?'));
-        });
-        b.name = 'toJson';
-        b.lambda = true;
-        b.body =
-            expressionOf('_\$${name}ToJson').call([expressionOf('this')]).code;
-      }));
-    });
+    return fields.baseClassOf(
+      nodes,
+      name: naming.modelName,
+      baseName: naming.tag.modelName,
+      polymorphicName: naming.enumFieldName,
+    );
   }
 
   @override
@@ -676,7 +600,10 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
     Map<String, FieldedOrmNode<Object>> nodes, {
     required String name,
     String? baseName,
+    String? polymorphicName,
   }) {
+    final bool base = polymorphicName != null || baseName == null;
+
     final bool hasPolymorphism = values
         .map((field) => field.annotation)
         .whereType<PolymorphicField>()
@@ -694,8 +621,14 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
       ));
       b.name = name;
       if (baseName != null) {
-        b.extend = cb.Reference(baseName);
+        if (polymorphicName == null) {
+          b.extend = cb.Reference(baseName);
+        } else {
+          b.implements.add(cb.Reference(baseName));
+        }
         b.implements.add(cb.Reference('_$name'));
+      }
+      if (!base) {
         b.fields.add(cb.Field((b) {
           b.annotations.add(cb.InvokeExpression.newOf(
             cb.Reference('JsonKey', '$_jsonAnnotationUrl'),
@@ -717,7 +650,7 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
         final String fieldType = data.type;
 
         final Field baseField = data.annotation;
-        if (baseName == null) {
+        if (base) {
           if (!FieldFilter.belongsToData(baseField)) return;
         } else {
           if (!FieldFilter.belongsToModel(baseField)) return;
@@ -747,7 +680,7 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
         }
 
         yield cb.Field((b) {
-          if (baseName != null) {
+          if (polymorphicName != null || baseName != null) {
             b.annotations.add(expressionOf('override'));
           }
           b.annotations.add(cb.InvokeExpression.newOf(
@@ -764,7 +697,7 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
           b.modifier = cb.FieldModifier.final$;
 
           final cb.Reference type;
-          if (baseName != null) {
+          if (!base) {
             type = cb.Reference(fieldType);
           } else if (baseField is PolymorphicField) {
             type = cb.Reference(fieldType.substring(1));
@@ -785,11 +718,21 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
           b.name = fieldName;
         });
       }));
+      if (polymorphicName != null) {
+        b.fields.add(cb.Field((b) {
+          b.annotations.add(expressionOf('override'));
+          b.modifier = cb.FieldModifier.final$;
+          b.type = cb.Reference('${baseName}Type');
+          b.name = 'type';
+          b.assignment =
+              expressionOf('${baseName}Type').property(polymorphicName).code;
+        }));
+      }
       // `fromJson` factory method
       b.constructors.add(cb.Constructor((b) {
         b.factory = true;
         b.name = 'fromJson';
-        if (baseName != null) {
+        if (!base) {
           b.requiredParameters.add(cb.Parameter((b) {
             b.type = cb.Reference('String');
             b.name = 'id';
@@ -801,7 +744,7 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
         }));
         b.lambda = true;
         b.body = cb.ToCodeExpression(expressionOf('_\$${name}FromJson').call([
-          baseName == null
+          base
               ? expressionOf('json')
               : cb.literalMap({
                   cb.literalSpread(): expressionOf('json'),
@@ -814,7 +757,7 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
         b.constructors.add(cb.Constructor((b) {
           b.factory = true;
           b.name = '_';
-          if (baseName != null) {
+          if (!base) {
             b.optionalParameters.add(cb.Parameter((b) {
               b.required = true;
               b.named = true;
@@ -885,7 +828,7 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
                 cb.Reference(name),
                 [],
                 {
-                  if (baseName != null) 'id': expressionOf('id'),
+                  if (!base) 'id': expressionOf('id'),
                   ...Map.fromEntries(where(FieldFilter.belongsToSchema)
                       .entries
                       .expand((entry) sync* {
@@ -943,7 +886,7 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
       // Default constructor
       b.constructors.add(cb.Constructor((b) {
         b.constant = true;
-        if (baseName != null) {
+        if (!base) {
           b.optionalParameters.add(cb.Parameter((b) {
             b.required = true;
             b.named = true;
@@ -968,7 +911,7 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
           yield cb.Parameter((b) {
             b.required = true;
             b.named = true;
-            final bool toThis = baseName == null || baseField is ForeignField;
+            final bool toThis = base || baseField is ForeignField;
             b.toThis = toThis;
             b.toSuper = !toThis;
             b.name = fieldName;
@@ -995,8 +938,10 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
         });
         b.name = 'toJson';
 
+        final bool lambda = base;
+
         final Map<String, cb.Expression>? queryObject;
-        if (baseName == null) {
+        if (lambda) {
           queryObject = null;
         } else {
           queryObject = {};
@@ -1021,7 +966,7 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
           }
         }
 
-        b.lambda = baseName == null;
+        b.lambda = lambda;
         final cb.Expression baseExpression = cb.InvokeExpression.newOf(
           cb.Reference('_\$${name}ToJson'),
           [expressionOf('this')],

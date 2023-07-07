@@ -29,7 +29,11 @@ const Map<ClassNodeParser<Object>, List<FieldNodeParser<Field>>> _visiting = {
     QueryFieldParser(),
     FieldParser(),
   ],
-  PolymorphicDataParser(): [FieldParser()],
+  PolymorphicDataParser(): [
+    ModelFieldParser(),
+    ForeignFieldParser(),
+    FieldParser(),
+  ],
   DataParser(): [ModelFieldParser(), FieldParser()],
 };
 

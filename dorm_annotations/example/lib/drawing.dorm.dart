@@ -180,8 +180,6 @@ abstract class Shape implements _Shape {
     }
   }
 
-  const Shape._();
-
   ShapeType get type;
   Map<String, Object?> toJson();
 }
@@ -190,13 +188,13 @@ abstract class Shape implements _Shape {
   anyMap: true,
   explicitToJson: true,
 )
-class Rectangle extends Shape implements _Rectangle {
+class Rectangle implements Shape, _Rectangle {
   factory Rectangle.fromJson(Map json) => _$RectangleFromJson(json);
 
   const Rectangle({
     required this.width,
     required this.height,
-  }) : super._();
+  });
 
   @override
   @JsonKey(
@@ -225,10 +223,10 @@ class Rectangle extends Shape implements _Rectangle {
   anyMap: true,
   explicitToJson: true,
 )
-class Circle extends Shape implements _Circle {
+class Circle implements Shape, _Circle {
   factory Circle.fromJson(Map json) => _$CircleFromJson(json);
 
-  const Circle({required this.radius}) : super._();
+  const Circle({required this.radius});
 
   @override
   @JsonKey(
