@@ -141,15 +141,8 @@ class DrawingEntity implements Entity<DrawingData, Drawing> {
   Drawing convert(
     Drawing model,
     DrawingData data,
-  ) {
-    return Drawing(
-      id: model.id,
-      color: data.color,
-      type: data.type,
-      shape: data.shape,
-    );
-  }
-
+  ) =>
+      model.copyWith(data);
   @override
   Drawing fromJson(
     String id,
@@ -163,6 +156,17 @@ class DrawingEntity implements Entity<DrawingData, Drawing> {
   String identify(Drawing model) => model.id;
   @override
   Map<String, Object?> toJson(DrawingData data) => data.toJson();
+}
+
+extension DrawingProperties on Drawing {
+  Drawing copyWith(DrawingData data) {
+    return Drawing(
+      id: id,
+      color: data.color,
+      type: data.type,
+      shape: data.shape,
+    );
+  }
 }
 
 enum ShapeType { rectangle, circular }

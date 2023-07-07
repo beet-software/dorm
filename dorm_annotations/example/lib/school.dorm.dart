@@ -150,15 +150,8 @@ class SchoolEntity implements Entity<SchoolData, School> {
   School convert(
     School model,
     SchoolData data,
-  ) {
-    return School(
-      id: model.id,
-      name: data.name,
-      address: data.address,
-      phoneNumbers: data.phoneNumbers,
-    );
-  }
-
+  ) =>
+      model.copyWith(data);
   @override
   School fromJson(
     String id,
@@ -172,6 +165,17 @@ class SchoolEntity implements Entity<SchoolData, School> {
   String identify(School model) => model.id;
   @override
   Map<String, Object?> toJson(SchoolData data) => data.toJson();
+}
+
+extension SchoolProperties on School {
+  School copyWith(SchoolData data) {
+    return School(
+      id: id,
+      name: data.name,
+      address: data.address,
+      phoneNumbers: data.phoneNumbers,
+    );
+  }
 }
 
 @JsonSerializable(
@@ -287,15 +291,8 @@ class StudentEntity implements Entity<StudentData, Student> {
   Student convert(
     Student model,
     StudentData data,
-  ) {
-    return Student(
-      id: model.id,
-      name: data.name,
-      hasDisabilities: data.hasDisabilities,
-      schoolId: model.schoolId,
-    );
-  }
-
+  ) =>
+      model.copyWith(data);
   @override
   Student fromJson(
     String id,
@@ -309,6 +306,17 @@ class StudentEntity implements Entity<StudentData, Student> {
   String identify(Student model) => model.id;
   @override
   Map<String, Object?> toJson(StudentData data) => data.toJson();
+}
+
+extension StudentProperties on Student {
+  Student copyWith(StudentData data) {
+    return Student(
+      id: id,
+      name: data.name,
+      hasDisabilities: data.hasDisabilities,
+      schoolId: schoolId,
+    );
+  }
 }
 
 class _$Teacher implements _Teacher {
@@ -433,14 +441,8 @@ class TeacherEntity implements Entity<TeacherData, Teacher> {
   Teacher convert(
     Teacher model,
     TeacherData data,
-  ) {
-    return Teacher(
-      id: model.id,
-      name: data.name,
-      ssn: data.ssn,
-    );
-  }
-
+  ) =>
+      model.copyWith(data);
   @override
   Teacher fromJson(
     String id,
@@ -454,6 +456,16 @@ class TeacherEntity implements Entity<TeacherData, Teacher> {
   String identify(Teacher model) => model.id;
   @override
   Map<String, Object?> toJson(TeacherData data) => data.toJson();
+}
+
+extension TeacherProperties on Teacher {
+  Teacher copyWith(TeacherData data) {
+    return Teacher(
+      id: id,
+      name: data.name,
+      ssn: data.ssn,
+    );
+  }
 }
 
 @JsonSerializable(
@@ -536,13 +548,8 @@ class HistoryEntity implements Entity<HistoryData, History> {
   History convert(
     History model,
     HistoryData data,
-  ) {
-    return History(
-      id: model.id,
-      studentId: model.studentId,
-    );
-  }
-
+  ) =>
+      model;
   @override
   History fromJson(
     String id,
@@ -661,15 +668,8 @@ class TeachingEntity implements Entity<TeachingData, Teaching> {
   Teaching convert(
     Teaching model,
     TeachingData data,
-  ) {
-    return Teaching(
-      id: model.id,
-      teacherId: model.teacherId,
-      schoolId: model.schoolId,
-      code: data.code,
-    );
-  }
-
+  ) =>
+      model.copyWith(data);
   @override
   Teaching fromJson(
     String id,
@@ -683,6 +683,17 @@ class TeachingEntity implements Entity<TeachingData, Teaching> {
   String identify(Teaching model) => model.id;
   @override
   Map<String, Object?> toJson(TeachingData data) => data.toJson();
+}
+
+extension TeachingProperties on Teaching {
+  Teaching copyWith(TeachingData data) {
+    return Teaching(
+      id: id,
+      teacherId: teacherId,
+      schoolId: schoolId,
+      code: data.code,
+    );
+  }
 }
 
 @JsonSerializable(
@@ -804,16 +815,8 @@ class ClassEntity implements Entity<ClassData, Class> {
   Class convert(
     Class model,
     ClassData data,
-  ) {
-    return Class(
-      id: model.id,
-      patron: data.patron,
-      teacherId: model.teacherId,
-      studentId: model.studentId,
-      location: data.location,
-    );
-  }
-
+  ) =>
+      model.copyWith(data);
   @override
   Class fromJson(
     String id,
@@ -827,6 +830,18 @@ class ClassEntity implements Entity<ClassData, Class> {
   String identify(Class model) => model.id;
   @override
   Map<String, Object?> toJson(ClassData data) => data.toJson();
+}
+
+extension ClassProperties on Class {
+  Class copyWith(ClassData data) {
+    return Class(
+      id: id,
+      patron: data.patron,
+      teacherId: teacherId,
+      studentId: studentId,
+      location: data.location,
+    );
+  }
 }
 
 class Dorm {

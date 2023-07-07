@@ -82,6 +82,9 @@ class ModelNaming extends Naming<ModelOrmNode> {
   /// users
   String get repositoryName =>
       (node.annotation.as as $Symbol?)?.name ?? _defaultRepositoryName;
+
+  /// UserProperties
+  String get extensionName => '${modelName}Properties';
 }
 
 class PolymorphicDataNaming extends Naming<PolymorphicDataOrmNode> {
@@ -394,34 +397,14 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
           b.type = cb.Reference(naming.dataName);
           b.name = 'data';
         }));
-        b.lambda = false;
-        b.body = cb.InvokeExpression.newOf(
-          cb.Reference(naming.modelName),
-          [],
-          {
-            'id': expressionOf('model').property('id'),
-            ...Map.fromEntries(fields
-                .where(FieldFilter.belongsToSchema)
-                .entries
-                .expand((entry) sync* {
-              final String fieldName = entry.key;
-              final Field baseField = entry.value.annotation;
-              if (baseField is PolymorphicField) {
-                yield MapEntry(
-                  'type',
-                  expressionOf('data').property('type'),
-                );
-              }
-              final cb.Expression prefixExpression;
-              if (entry.value.annotation is ForeignField) {
-                prefixExpression = expressionOf('model');
-              } else {
-                prefixExpression = expressionOf('data');
-              }
-              yield MapEntry(fieldName, prefixExpression.property(fieldName));
-            })),
-          },
-        ).returned.statement;
+        b.lambda = true;
+
+        cb.Expression baseExpression = expressionOf('model');
+        if (fields.where(FieldFilter.belongsToData).isNotEmpty) {
+          baseExpression =
+              baseExpression.property('copyWith').call([expressionOf('data')]);
+        }
+        b.body = cb.ToCodeExpression(baseExpression);
       }));
       b.methods.add(cb.Method((b) {
         b.annotations.add(expressionOf('override'));
@@ -475,6 +458,47 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
     });
   }
 
+  cb.Spec get _extension {
+    return cb.Extension((b) {
+      b.name = naming.extensionName;
+      b.on = cb.Reference(naming.modelName);
+      b.methods.add(cb.Method((b) {
+        b.returns = cb.Reference(naming.modelName);
+        b.name = 'copyWith';
+        b.requiredParameters.add(cb.Parameter((b) {
+          b.type = cb.Reference(naming.dataName);
+          b.name = 'data';
+        }));
+        b.body = cb.InvokeExpression.newOf(
+          cb.Reference(naming.modelName),
+          [],
+          {
+            'id': expressionOf('id'),
+            ...Map.fromEntries(fields
+                .where(FieldFilter.belongsToSchema)
+                .entries
+                .expand((entry) sync* {
+              final String fieldName = entry.key;
+              final Field baseField = entry.value.annotation;
+              if (baseField is PolymorphicField) {
+                yield MapEntry(
+                  'type',
+                  expressionOf('data').property('type'),
+                );
+              }
+              yield MapEntry(
+                fieldName,
+                entry.value.annotation is ForeignField
+                    ? expressionOf(fieldName)
+                    : expressionOf('data').property(fieldName),
+              );
+            })),
+          },
+        ).returned.statement;
+      }));
+    });
+  }
+
   @override
   void accept(cb.LibraryBuilder b) {
     annotation.uidType.when(
@@ -487,6 +511,9 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
     b.body.add(_modelClass);
     b.body.add(_dependencyClass);
     b.body.add(_entityClass);
+    if (fields.where(FieldFilter.belongsToData).isNotEmpty) {
+      b.body.add(_extension);
+    }
   }
 }
 

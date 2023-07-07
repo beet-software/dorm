@@ -111,16 +111,8 @@ class UserEntity implements Entity<UserData, User> {
   User convert(
     User model,
     UserData data,
-  ) {
-    return User(
-      id: model.id,
-      name: data.name,
-      birthDate: data.birthDate,
-      email: data.email,
-      pictureUrl: data.pictureUrl,
-    );
-  }
-
+  ) =>
+      model.copyWith(data);
   @override
   User fromJson(
     String id,
@@ -134,6 +126,18 @@ class UserEntity implements Entity<UserData, User> {
   String identify(User model) => model.id;
   @override
   Map<String, Object?> toJson(UserData data) => data.toJson();
+}
+
+extension UserProperties on User {
+  User copyWith(UserData data) {
+    return User(
+      id: id,
+      name: data.name,
+      birthDate: data.birthDate,
+      email: data.email,
+      pictureUrl: data.pictureUrl,
+    );
+  }
 }
 
 @JsonSerializable(
@@ -237,15 +241,8 @@ class PostEntity implements Entity<PostData, Post> {
   Post convert(
     Post model,
     PostData data,
-  ) {
-    return Post(
-      id: model.id,
-      contents: data.contents,
-      creationDate: data.creationDate,
-      userId: model.userId,
-    );
-  }
-
+  ) =>
+      model.copyWith(data);
   @override
   Post fromJson(
     String id,
@@ -259,6 +256,17 @@ class PostEntity implements Entity<PostData, Post> {
   String identify(Post model) => model.id;
   @override
   Map<String, Object?> toJson(PostData data) => data.toJson();
+}
+
+extension PostProperties on Post {
+  Post copyWith(PostData data) {
+    return Post(
+      id: id,
+      contents: data.contents,
+      creationDate: data.creationDate,
+      userId: userId,
+    );
+  }
 }
 
 @JsonSerializable(
@@ -380,16 +388,8 @@ class MessageEntity implements Entity<MessageData, Message> {
   Message convert(
     Message model,
     MessageData data,
-  ) {
-    return Message(
-      id: model.id,
-      contents: data.contents,
-      creationDate: data.creationDate,
-      senderId: model.senderId,
-      receiverId: model.receiverId,
-    );
-  }
-
+  ) =>
+      model.copyWith(data);
   @override
   Message fromJson(
     String id,
@@ -403,6 +403,18 @@ class MessageEntity implements Entity<MessageData, Message> {
   String identify(Message model) => model.id;
   @override
   Map<String, Object?> toJson(MessageData data) => data.toJson();
+}
+
+extension MessageProperties on Message {
+  Message copyWith(MessageData data) {
+    return Message(
+      id: id,
+      contents: data.contents,
+      creationDate: data.creationDate,
+      senderId: senderId,
+      receiverId: receiverId,
+    );
+  }
 }
 
 class Dorm {
