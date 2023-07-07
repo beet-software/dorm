@@ -19,3 +19,7 @@ dependencies:
 dev_dependencies:
   lints: ^2.0.0
   build_runner: ^2.1.11
+
+dependency_overrides:
+  dorm_annotations:
+    path: ../dorm_annotations

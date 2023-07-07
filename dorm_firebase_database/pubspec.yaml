@@ -17,3 +17,6 @@ dependencies:
 dev_dependencies:
   lints: ^2.0.1
 
+dependency_overrides:
+  dorm_framework:
+    path: ../dorm_framework
