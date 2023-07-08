@@ -18,26 +18,35 @@ class DashboardScreen extends StatelessWidget {
         // Allows reading all products ordered by an user
         StreamProvider<AsyncSnapshot<_OrderView>>(
           initialData: const AsyncSnapshot.waiting(),
-          create: (_) => OneToManyRelationship(
-            left: GetIt.instance.get<Dorm>().users.repository,
-            right: OneToOneRelationship(
-              left: GetIt.instance.get<Dorm>().cartItems.repository,
-              right: GetIt.instance.get<Dorm>().products.repository,
-              on: (item) => item.productId,
-            ),
-            on: (user) => Filter.value(user.id, key: 'cart-id'),
-          ).pullAll().map(
-              (event) => AsyncSnapshot.withData(ConnectionState.active, event)),
+          create: (_) => GetIt.instance
+              .get<Dorm>()
+              .users
+              .relationships
+              .oneToMany(
+                GetIt.instance.get<Dorm>().cartItems.relationships.oneToOne(
+                      GetIt.instance.get<Dorm>().products.repository,
+                      on: (item) => item.productId,
+                    ),
+                on: (user) => Filter.value(user.id, key: 'cart-id'),
+              )
+              .pullAll()
+              .map((event) =>
+                  AsyncSnapshot.withData(ConnectionState.active, event)),
         ),
         // Allows reading how many times a product was included in a order
         StreamProvider<AsyncSnapshot<_CountView>>(
           initialData: const AsyncSnapshot.waiting(),
-          create: (_) => ManyToOneRelationship(
-            left: GetIt.instance.get<Dorm>().cartItems.repository,
-            right: GetIt.instance.get<Dorm>().products.repository,
-            on: (item) => item.productId,
-          ).pullAll().map(
-              (event) => AsyncSnapshot.withData(ConnectionState.active, event)),
+          create: (_) => GetIt.instance
+              .get<Dorm>()
+              .cartItems
+              .relationships
+              .manyToOne(
+                GetIt.instance.get<Dorm>().products.repository,
+                on: (item) => item.productId,
+              )
+              .pullAll()
+              .map((event) =>
+                  AsyncSnapshot.withData(ConnectionState.active, event)),
         ),
       ],
       child: DefaultTabController(

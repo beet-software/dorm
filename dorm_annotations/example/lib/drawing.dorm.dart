@@ -248,12 +248,12 @@ class Circle implements Shape, _Circle {
 }
 
 class Dorm {
-  const Dorm(this._root);
+  const Dorm(this._engine);
 
-  final BaseReference _root;
+  final BaseEngine _engine;
 
   DatabaseEntity<DrawingData, Drawing> get drawings => DatabaseEntity(
         const DrawingEntity(),
-        reference: _root,
+        engine: _engine,
       );
 }

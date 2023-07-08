@@ -1,20 +1,20 @@
 import 'package:device_preview/device_preview.dart';
 import 'package:dorm_bloc_database/dorm_bloc_database.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:get_it/get_it.dart';
+import 'package:provider/provider.dart';
 
 import 'models.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final Reference reference = Reference();
+  final Engine engine = Engine();
 
   // It's recommended to have a way to access a global instance of the generated
   // `Dorm` class. Here, we are using dependency injection with a great solution
   // called `get_it`, but you are free to use `provider` or any other method.
-  GetIt.instance.registerSingleton<Dorm>(Dorm(reference));
+  GetIt.instance.registerSingleton<Dorm>(Dorm(engine));
 
   runApp(DevicePreview(
     defaultDevice: DeviceInfo.genericPhone(

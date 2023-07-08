@@ -1169,14 +1169,14 @@ class OrmGenerator extends Generator {
         b.name = 'Dorm';
         b.fields.add(cb.Field((b) {
           b.modifier = cb.FieldModifier.final$;
-          b.type = cb.Reference('BaseReference', '$_dormUrl');
-          b.name = '_root';
+          b.type = cb.Reference('BaseEngine', '$_dormUrl');
+          b.name = '_engine';
         }));
         b.constructors.add(cb.Constructor((b) {
           b.constant = true;
           b.requiredParameters.add(cb.Parameter((b) {
             b.toThis = true;
-            b.name = '_root';
+            b.name = '_engine';
           }));
         }));
         b.methods.addAll(nodes.entries.mapNotNull((entry) {
@@ -1204,7 +1204,7 @@ class OrmGenerator extends Generator {
                   ),
                 ],
                 {
-                  'reference': expressionOf('_root'),
+                  'engine': expressionOf('_engine'),
                 },
               ),
             );

@@ -218,83 +218,84 @@ abstract class DataRepository<Data, Model extends Data>
 /// Represents the controller of the underlying database engine.
 class Repository<Data, Model extends Data>
     implements DataRepository<Data, Model> {
-  final BaseReference _root;
+  final BaseReference _reference;
   final Entity<Data, Model> _entity;
 
   /// Creates a repository by its attributes.
   const Repository({
-    required BaseReference root,
+    required BaseReference reference,
+    required BaseRelationship relationship,
     required Entity<Data, Model> entity,
-  })  : _root = root,
+  })  : _reference = reference,
         _entity = entity;
 
   @override
   Future<Model?> peek(String id) {
-    return _root.peek(_entity, id);
+    return _reference.peek(_entity, id);
   }
 
   @override
   Future<List<Model>> peekAll([Filter filter = const Filter.empty()]) {
-    return _root.peekAll(_entity, filter);
+    return _reference.peekAll(_entity, filter);
   }
 
   @override
   Future<List<String>> peekAllKeys() {
-    return _root.peekAllKeys(_entity);
+    return _reference.peekAllKeys(_entity);
   }
 
   @override
   Future<void> pop(String id) async {
-    return _root.pop(_entity, id);
+    return _reference.pop(_entity, id);
   }
 
   @override
   Future<void> popKeys(Iterable<String> ids) {
-    return _root.popKeys(_entity, ids);
+    return _reference.popKeys(_entity, ids);
   }
 
   @override
   Future<void> popAll(Filter filter) {
-    return _root.popAll(_entity, filter);
+    return _reference.popAll(_entity, filter);
   }
 
   @override
   Stream<Model?> pull(String id) {
-    return _root.pull(_entity, id);
+    return _reference.pull(_entity, id);
   }
 
   @override
   Stream<List<Model>> pullAll([Filter filter = const Filter.empty()]) {
-    return _root.pullAll(_entity, filter);
+    return _reference.pullAll(_entity, filter);
   }
 
   @override
   Future<Model> put(Dependency<Data> dependency, Data data) async {
-    return _root.put(_entity, dependency, data);
+    return _reference.put(_entity, dependency, data);
   }
 
   @override
   Future<List<Model>> putAll(Dependency<Data> dependency, List<Data> datum) {
-    return _root.putAll(_entity, dependency, datum);
+    return _reference.putAll(_entity, dependency, datum);
   }
 
   @override
   Future<void> push(Model model) async {
-    return _root.push(_entity, model);
+    return _reference.push(_entity, model);
   }
 
   @override
   Future<void> pushAll(List<Model> models) async {
-    return _root.pushAll(_entity, models);
+    return _reference.pushAll(_entity, models);
   }
 
   @override
   Future<void> patch(String id, Model? Function(Model?) update) {
-    return _root.patch(_entity, id, update);
+    return _reference.patch(_entity, id, update);
   }
 
   @override
   Future<void> purge() {
-    return _root.purge(_entity);
+    return _reference.purge(_entity);
   }
 }

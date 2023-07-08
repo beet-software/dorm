@@ -1,8 +1,8 @@
 import 'package:device_preview/device_preview.dart';
-import 'package:dorm_framework/dorm_framework.dart';
 import 'package:dorm_bloc_database/dorm_bloc_database.dart' as dorm_bloc;
 import 'package:dorm_firebase_database/dorm_firebase_database.dart'
     as dorm_firebase;
+import 'package:dorm_framework/dorm_framework.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 
@@ -13,7 +13,7 @@ const bool useFirebase = true;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final BaseReference reference;
+  final BaseEngine engine;
   if (useFirebase) {
     const String host = 'localhost';
     const int port = 9000;
@@ -31,12 +31,12 @@ void main() async {
       ),
     );
     dorm_firebase.FirebaseDatabase.instance.useDatabaseEmulator(host, port);
-    reference = dorm_firebase.Reference(const dorm_firebase.FirebaseInstance());
+    engine = const dorm_firebase.Engine(dorm_firebase.FirebaseInstance());
   } else {
-    reference = dorm_bloc.Reference();
+    engine = dorm_bloc.Engine();
   }
 
-  GetIt.instance.registerSingleton<Dorm>(Dorm(reference));
+  GetIt.instance.registerSingleton<Dorm>(Dorm(engine));
   runApp(DevicePreview(
     defaultDevice: DeviceInfo.genericPhone(
       platform: TargetPlatform.android,

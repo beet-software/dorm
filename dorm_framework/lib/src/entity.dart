@@ -14,9 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import 'dependency.dart';
-import 'reference.dart';
-import 'repository.dart';
+import 'package:dorm_framework/dorm_framework.dart';
 
 /// Represents the conversion of a [Model] into dORM's model system.
 abstract class Entity<Data, Model extends Data> {
@@ -124,16 +122,27 @@ abstract class Entity<Data, Model extends Data> {
 class DatabaseEntity<Data, Model extends Data> implements Entity<Data, Model> {
   final Entity<Data, Model> _entity;
   final BaseReference _reference;
+  final BaseRelationship _relationship;
 
-  const DatabaseEntity(
+  DatabaseEntity(
     Entity<Data, Model> entity, {
-    required BaseReference reference,
+    required BaseEngine engine,
   })  : _entity = entity,
-        _reference = reference;
+        _reference = engine.createReference(),
+        _relationship = engine.createRelationship();
+
+  ModelRelationship<Model> get relationships {
+    return ModelRelationship(left: repository, relationship: _relationship);
+  }
 
   /// The controller of this entity.
-  Repository<Data, Model> get repository =>
-      Repository(root: _reference, entity: _entity);
+  Repository<Data, Model> get repository {
+    return Repository(
+      entity: _entity,
+      reference: _reference,
+      relationship: _relationship,
+    );
+  }
 
   @override
   Model convert(Model model, Data data) => _entity.convert(model, data);

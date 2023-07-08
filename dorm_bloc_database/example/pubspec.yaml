@@ -41,6 +41,7 @@ dev_dependencies:
 
   # The dependencies below are not required for dORM to work
   flutter_lints: ^2.0.0
+  json_serializable: ^6.7.1
 
 flutter:
   uses-material-design: true

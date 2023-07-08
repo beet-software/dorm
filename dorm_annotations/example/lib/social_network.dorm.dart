@@ -418,20 +418,20 @@ extension MessageProperties on Message {
 }
 
 class Dorm {
-  const Dorm(this._root);
+  const Dorm(this._engine);
 
-  final BaseReference _root;
+  final BaseEngine _engine;
 
   DatabaseEntity<UserData, User> get users => DatabaseEntity(
         const UserEntity(),
-        reference: _root,
+        engine: _engine,
       );
   DatabaseEntity<PostData, Post> get post => DatabaseEntity(
         const PostEntity(),
-        reference: _root,
+        engine: _engine,
       );
   DatabaseEntity<MessageData, Message> get messages => DatabaseEntity(
         const MessageEntity(),
-        reference: _root,
+        engine: _engine,
       );
 }

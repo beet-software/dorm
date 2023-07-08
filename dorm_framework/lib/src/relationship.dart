@@ -14,12 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import 'dart:async';
-
-import 'package:rxdart/rxdart.dart';
-
 import 'filter.dart';
-import 'merge.dart';
 import 'repository.dart';
 
 class Join<LeftModel, RightModel> {
@@ -40,409 +35,189 @@ class Join<LeftModel, RightModel> {
   int get hashCode => left.hashCode ^ right.hashCode;
 }
 
-abstract class Readable<Model>
-    implements SingleReadOperation<Model>, BatchReadOperation<Model> {}
-
-abstract class Mergeable<L, R> implements Readable<Join<L, R>> {}
-
-/// Represents an one-to-one relationship.
-///
-/// Let's suppose you have two tables: `School` and `Principal`:
-///
-/// ```none
-/// |                            `School`                            |
-/// |:----:|:---------------------------:|:--------------:|:--------:|
-/// | `id` |            `name`           | `principal-id` | `active` |
-/// |   0  |    School of Happy Valley   |       10       |   true   |
-/// |   1  |     Sacred Heart Academy    |       11       |   false  |
-/// |   2  | Horizon Education Institute |       12       |   true   |
-///
-/// |      `Principal`      |
-/// |:----:|:--------------:|
-/// | `id` |     `name`     |
-/// |  10  | Kennedy Heaven |
-/// |  11  |    Rolf Finn   |
-/// |  12  |   Byron Phil   |
-/// ```
-///
-/// Since a `School` has only one `Principal`, this is a 1-to-1 relationship.
-///
-/// In SQL, you'd do:
-///
-/// ```sql
-/// SELECT A.id, A.name, A.principal-id, A.active, B.id, B.name
-/// FROM School A
-/// LEFT JOIN Principal B
-/// ON A.principal-id = B.id
-/// WHERE A.active = true
-/// ```
-///
-/// In Dorm, you'd do:
-///
-/// ```dart
-/// final ModelRepository<School> schools = ...;
-/// final ModelRepository<Principal> principals = ...;
-///
-/// final OneToOneRelationship<School, Principal> relationship = OneToOneRelationship(
-///   left: schools,
-///   right: principals,
-///   on: (school) => school.principalId,
-/// );
-/// final Stream<List<Join<School, Principal?>>> s0 = relationship
-///     .pullAll(const Filter.value(true, key: 'active'));
-/// ```
-class OneToOneRelationship<L, R> implements Mergeable<L, R?> {
-  final Readable<L> left;
-  final Readable<R> right;
-  final String Function(L) on;
-
-  const OneToOneRelationship({
-    required this.left,
-    required this.right,
-    required this.on,
-  });
-
-  @override
-  Future<Join<L, R?>?> peek(String id) async {
-    final L? leftModel = await left.peek(id);
-    if (leftModel == null) return null;
-    final R? rightModel = await right.peek(on(leftModel));
-    return Join(left: leftModel, right: rightModel);
-  }
-
-  @override
-  Future<List<Join<L, R?>>> peekAll([
-    Filter filter = const Filter.empty(),
-  ]) async {
-    final List<L> leftModels = await left.peekAll(filter);
-    final List<Join<L, R?>> joins = [];
-    for (L leftModel in leftModels) {
-      final R? rightModel = await right.peek(on(leftModel));
-      joins.add(Join(left: leftModel, right: rightModel));
-    }
-    return joins;
-  }
-
-  @override
-  Stream<Join<L, R?>?> pull(String id) {
-    return OneToOneSingleMerge<L, R?>(
-      left: left.pull(id),
-      map: (leftModel) => right.pull(on(leftModel)),
-    ).stream;
-  }
-
-  @override
-  Stream<List<Join<L, R?>>> pullAll([
-    Filter filter = const Filter.empty(),
-  ]) {
-    return OneToOneBatchMerge<L, R?>(
-      left: left.pullAll(filter),
-      map: (leftModel) => right.pull(on(leftModel)),
-    ).stream;
-  }
-}
-
-/// Represents an one-to-many relationship.
-///
-/// Let's suppose you have two tables: `School` and `Student`:
-///
-/// ```none
-/// |                    `School`                   |
-/// |:----:|:---------------------------:|:--------:|
-/// | `id` |            `name`           | `active` |
-/// |   0  |    School of Happy Valley   |   true   |
-/// |   1  |     Sacred Heart Academy    |   false  |
-/// |   2  | Horizon Education Institute |   true   |
-///
-/// |                      `Student`                     |
-/// |:----:|:--------------:|:------------:|:-----------:|
-/// | `id` |     `name`     | `birth-date` | `school-id` |
-/// |  10  | Kennedy Heaven |  2017-06-13  |      0      |
-/// |  11  |    Rolf Finn   |  2018-01-29  |      0      |
-/// |  12  |   Byron Phil   |  2019-07-17  |      1      |
-/// ```
-///
-/// Since a `School` can have more than one `Student`, this is a 1-to-N relationship.
-///
-/// In SQL, you'd do:
-///
-/// ```sql
-/// SELECT A.id, A.name, A.active, B.id, B.school-id, B.name, B.birth-date
-/// FROM School A
-/// LEFT JOIN Student B
-/// ON A.id = B.school-id
-/// WHERE A.active = true
-/// ```
-///
-/// In Dorm, you'd do:
-///
-/// ```dart
-/// final ModelRepository<School> schools = ...;
-/// final ModelRepository<Student> students = ...;
-///
-/// final OneToManyRelationship<School, Student> relationship = OneToManyRelationship(
-///   left: schools,
-///   right: students,
-///   on: (school) => Filter.value(school.id, key: 'school-id'),
-/// );
-/// final Stream<List<Join<School, List<Student>>>> s0 = relationship
-///     .pullAll(const Filter.value(true, key: 'active'));
-/// ```
-class OneToManyRelationship<L, R> implements Mergeable<L, List<R>> {
-  final Readable<L> left;
-  final Readable<R> right;
-  final Filter Function(L) on;
-
-  const OneToManyRelationship({
-    required this.left,
-    required this.right,
-    required this.on,
-  });
-
-  @override
-  Future<Join<L, List<R>>?> peek(String id) async {
-    final L? leftModel = await left.peek(id);
-    if (leftModel == null) return null;
-    final List<R> rightModels = await right.peekAll(on(leftModel));
-    return Join(left: leftModel, right: rightModels);
-  }
-
-  @override
-  Future<List<Join<L, List<R>>>> peekAll([
-    Filter filter = const Filter.empty(),
-  ]) async {
-    final List<L> leftModels = await left.peekAll(filter);
-    final List<List<R>> associatedModels = await Future.wait(
-        leftModels.map((leftModel) => right.peekAll(on(leftModel))).toList());
-
-    final List<Join<L, List<R>>> joins = [];
-    for (int i = 0; i < leftModels.length; i++) {
-      final L leftModel = leftModels[i];
-      final List<R> rightModels = associatedModels[i];
-      joins.add(Join(left: leftModel, right: rightModels));
-    }
-    return joins;
-  }
-
-  @override
-  Stream<Join<L, List<R>>?> pull(String id) {
-    return OneToOneSingleMerge<L, List<R>>(
-      left: left.pull(id),
-      map: (leftModel) => right.pullAll(on(leftModel)),
-    ).stream;
-  }
-
-  @override
-  Stream<List<Join<L, List<R>>>> pullAll([
-    Filter filter = const Filter.empty(),
-  ]) {
-    return OneToOneBatchMerge<L, List<R>>(
-      left: left.pullAll(filter),
-      map: (leftModel) => right.pullAll(on(leftModel)),
-    ).stream;
-  }
-}
-
-/// Represents an many-to-one relationship.
-///
-/// Let's suppose you have two tables: `School` and `Student`:
-///
-/// ```none
-/// |                    `School`                   |
-/// |:----:|:---------------------------:|:--------:|
-/// | `id` |            `name`           | `active` |
-/// |   0  |    School of Happy Valley   |   true   |
-/// |   1  |     Sacred Heart Academy    |   false  |
-/// |   2  | Horizon Education Institute |   true   |
-///
-/// |                      `Student`                     |
-/// |:----:|:--------------:|:------------:|:-----------:|
-/// | `id` |     `name`     | `birth-date` | `school-id` |
-/// |  10  | Kennedy Heaven |  2017-06-13  |      0      |
-/// |  11  |    Rolf Finn   |  2018-01-29  |      0      |
-/// |  12  |   Byron Phil   |  2019-07-17  |      1      |
-/// ```
-///
-/// Since a `School` can have more than one `Student`, this is a 1-to-N relationship.
-/// If you want to fetch all schools and their respective students, you can use
-/// [OneToManyRelationship]. However, not all schools have students (in the
-/// example above, school 2).
-///
-/// In SQL, you'd do:
-///
-/// ```sql
-/// SELECT A.id, A.name, A.active, B.id, B.school-id, B.name, B.birth-date
-/// FROM School A
-/// RIGHT JOIN Student B
-/// ON A.id = B.school-id
-/// WHERE YEAR(birth-date) = 2018
-/// ```
-///
-/// In Dorm, you'd do:
-///
-/// ```dart
-/// final ModelRepository<School> schools = ...;
-/// final ModelRepository<Student> students = ...;
-///
-/// final ManyToOneRelationship<Student, School> relationship = ManyToOneRelationship(
-///   left: students,
-///   right: schools,
-///   on: (student) => student.schoolId,
-/// );
-/// final Stream<List<Join<School, List<Student>>>> s0 = relationship
-///     .pullAll(Filter.date(DateTime(2018), key: 'birth-date', unit: DateFilterUnit.year));
-/// ```
-class ManyToOneRelationship<L, R>
+/// A type that can evaluate [SingleReadModel] given a [String] and a list of
+/// [BatchReadModel]s given a [Filter].
+abstract class Readable2<SingleReadModel, BatchReadModel>
     implements
-        SingleReadOperation<Join<R, L>>,
-        BatchReadOperation<Join<R, List<L>>> {
-  final Readable<L> left;
-  final Readable<R> right;
-  final String Function(L) on;
+        SingleReadOperation<SingleReadModel>,
+        BatchReadOperation<BatchReadModel> {}
 
-  const ManyToOneRelationship({
+/// A type that can evaluate [Model] given a [String] and a list of [Model]s
+/// given a [Filter].
+///
+/// This is a special case of [Readable2].
+typedef Readable<Model> = Readable2<Model, Model>;
+
+/// A type that can evaluate a [Join] between [L] and [SingleR] given a
+/// [String] and a list of [Join]s between [L] and [BatchR] given a [Filter].
+typedef Association2<L, SingleR, BatchR>
+    = Readable2<Join<L, SingleR>, Join<L, BatchR>>;
+
+/// A type that can evaluate a value given a [String] and to a list of values
+/// given a [Filter], where this value is a [Join] between [L] and [R].
+///
+/// This is a special case of [Association2].
+typedef Association<L, R> = Association2<L, R, R>;
+
+/// An association that evaluates joins between [L] to [R]?.
+typedef OneToOneAssociation<L, R> = Association<L, R?>;
+
+/// An association that evaluates joins between [L] and a list of [R]s.
+typedef OneToManyAssociation<L, R> = Association<L, List<R>>;
+
+/// An association that evaluates a join between [R] and [L] given a [String]
+/// and joins between [R] and a list of [L] given a [Filter].
+typedef ManyToOneAssociation<L, R> = Association2<R, L, List<L>>;
+
+/// An association that evaluates joins between [M] and a tuple of [L] and [R].
+typedef ManyToManyAssociation<M, L, R> = Association<M, (L?, R?)>;
+
+/// Declares associations between two models.
+abstract class BaseRelationship {
+  /// Represents an one-to-one operation.
+  ///
+  /// Let's suppose you have two models: `School` and `Principal`. Since a
+  /// `School` has only one `Principal`, this is a 1-to-1 relationship:
+  ///
+  /// ```dart
+  /// final Relationship relationship /* = ... */;
+  /// final Repository<SchoolData, School> schools /* = ... */;
+  /// final Repository<PrincipalData, Principal> principals /* = ... */;
+  ///
+  /// final OneToOneAssociation<School, Principal> association = relationship.oneToOne(
+  ///   left: schools,
+  ///   right: principals,
+  ///   on: (school) => school.principalId,
+  /// );
+  /// final Stream<List<Join<School, Principal?>>> result = association
+  ///     .pullAll(const Filter.value(true, key: 'active'));
+  /// ```
+  OneToOneAssociation<L, R> oneToOne<L, R>(
+    Readable<L> left,
+    Readable<R> right,
+    String Function(L) on,
+  );
+
+  /// Represents an one-to-many operation.
+  ///
+  /// Let's suppose you have two models: `School` and `Student`. Since a
+  /// `School` can have more than one `Student`, this is a 1-to-N relationship:
+  ///
+  /// ```dart
+  /// final Relationship relationship /* = ... */;
+  /// final Repository<SchoolData, School> schools = ...;
+  /// final Repository<StudentData, Student> students = ...;
+  ///
+  /// final OneToManyAssociation<School, Student> association = relationship.oneToMany(
+  ///   left: schools,
+  ///   right: students,
+  ///   on: (school) => Filter.value(school.id, key: 'school-id'),
+  /// );
+  /// final Stream<List<Join<School, List<Student>>>> result = association
+  ///     .pullAll(const Filter.value(true, key: 'active'));
+  /// ```
+  OneToManyAssociation<L, R> oneToMany<L, R>(
+    Readable<L> left,
+    Readable<R> right,
+    Filter Function(L) on,
+  );
+
+  /// Represents a many-to-one operation.
+  ///
+  /// Let's suppose you have two models: `School` and `Student`. Since a
+  /// `School` can have more than one `Student`, this is a 1-to-N relationship.
+  /// If you want to fetch all schools and their respective students, you can use
+  /// [oneToMany]. However, not all schools have students. Using this operation
+  /// can omit the schools without students (a right-join):
+  ///
+  /// ```dart
+  /// final Relationship relationship /* = ... */;
+  /// final Repository<SchoolData, School> schools /* = ... */;
+  /// final Repository<StudentData, Student> students /* = ... */;
+  ///
+  /// final ManyToOneAssociation<School, Student> association = relationship.manyToOne(
+  ///   left: students,
+  ///   right: schools,
+  ///   on: (student) => student.schoolId,
+  /// );
+  /// final Stream<List<Join<School, List<Student>>>> result = association
+  ///     .pullAll(Filter.date(DateTime(2018), key: 'birth-date', unit: DateFilterUnit.year));
+  /// ```
+  ManyToOneAssociation<L, R> manyToOne<L, R>(
+    Readable<L> left,
+    Readable<R> right,
+    String Function(L) on,
+  );
+
+  /// Represents a many-to-many operation.
+  ///
+  /// Let's suppose you have two models: `School`, `Professor` and `Teaching`.
+  /// Since a `Professor` can teach on more than one `School`, this is a M-to-N
+  /// relationship through `Teaching`:
+  ///
+  /// ```dart
+  /// final Relationship relationship /* = ... */;
+  /// final Repository<TeachingData, Teaching> teachings /* = ... */;
+  /// final Repository<SchoolData, School> schools /* = ... */;
+  /// final Repository<StudentData, Student> students /* = ... */;
+  ///
+  /// final ManyToManyAssociation<Teaching, School, Student> association = relationship.manyToMany(
+  ///   middle: teachings,
+  ///   left: students,
+  ///   onLeft: (teaching) => teaching.studentId,
+  ///   right: schools,
+  ///   onRight: (teaching) => teaching.schoolId,
+  /// );
+  /// final Stream<List<Join<Teaching, (School?, Student?)>>> result = association
+  ///     .pullAll(Filter.value(true, key: 'active'));
+  /// ```
+  ManyToManyAssociation<M, L, R> manyToMany<M, L, R>(
+    Readable<M> middle,
+    Readable<L> left,
+    String Function(M) onLeft,
+    Readable<R> right,
+    String Function(M) onRight,
+  );
+}
+
+
+class ModelRelationship<L> {
+  final BaseRelationship relationship;
+  final Readable<L> left;
+
+  const ModelRelationship({
+    required this.relationship,
     required this.left,
-    required this.right,
-    required this.on,
   });
 
-  @override
-  Future<Join<R, L>?> peek(String id) async {
-    final L? leftModel = await left.peek(id);
-    if (leftModel == null) return null;
-    final R? rightModel = await right.peek(on(leftModel));
-    if (rightModel == null) return null;
-    return Join(left: rightModel, right: leftModel);
+  OneToOneAssociation<L, R> oneToOne<R>(
+    Readable<R> right, {
+    required String Function(L) on,
+  }) {
+    return relationship.oneToOne(left, right, on);
   }
 
-  @override
-  Future<List<Join<R, List<L>>>> peekAll([
-    Filter filter = const Filter.empty(),
-  ]) async {
-    final List<L> leftModels = await left.peekAll(filter);
-    final Map<String, List<L>> groups = {};
-    for (L leftModel in leftModels) {
-      groups.putIfAbsent(on(leftModel), () => []).add(leftModel);
-    }
-    final List<MapEntry<String, List<L>>> entries = groups.entries.toList();
-    final List<R?> rightModels = await Future.wait(
-        entries.map((entry) => right.peek(entry.key)).toList());
-
-    final List<Join<R, List<L>>> joins = [];
-    for (int i = 0; i < entries.length; i++) {
-      final MapEntry<String, List<L>> entry = entries[i];
-      final List<L> leftModels = entry.value;
-      final R? rightModel = rightModels[i];
-      if (rightModel == null) continue;
-      joins.add(Join(left: rightModel, right: leftModels));
-    }
-    return joins;
+  OneToManyAssociation<L, R> oneToMany<R>(
+    Readable<R> right, {
+    required Filter Function(L) on,
+  }) {
+    return relationship.oneToMany(left, right, on);
   }
 
-  @override
-  Stream<Join<R, L>?> pull(String id) {
-    return ManyToOneSingleMerge<L, R>(
-      left: left.pull(id),
-      map: (leftModel) => right.pull(on(leftModel)),
-    ).stream;
+  ManyToOneAssociation<L, R> manyToOne<R>(
+    Readable<R> right, {
+    required String Function(L) on,
+  }) {
+    return relationship.manyToOne(left, right, on);
   }
 
-  @override
-  Stream<List<Join<R, List<L>>>> pullAll([
-    Filter filter = const Filter.empty(),
-  ]) {
-    return ManyToOneBatchMerge<R, L>(
-      left: left.pullAll(filter),
-      onLeft: (leftModel) => on(leftModel),
-      onRight: (rightId) => right.pull(rightId),
-    ).stream;
+  ManyToManyAssociation<L, RL, RR> manyToMany<RL, RR>({
+    required Readable<RL> left,
+    required String Function(L) onLeft,
+    required Readable<RR> right,
+    required String Function(L) onRight,
+  }) {
+    return relationship.manyToMany(this.left, left, onLeft, right, onRight);
   }
 }
 
-class ManyToManyRelationship<M, L, R> implements Mergeable<M, (L?, R?)> {
-  final Readable<M> middle;
-  final Readable<L> left;
-  final Readable<R> right;
-  final String Function(M) onLeft;
-  final String Function(M) onRight;
-
-  const ManyToManyRelationship({
-    required this.middle,
-    required this.left,
-    required this.right,
-    required this.onLeft,
-    required this.onRight,
-  });
-
-  @override
-  Future<Join<M, (L?, R?)>?> peek(String id) async {
-    final M? middleModel = await middle.peek(id);
-    if (middleModel == null) return null;
-
-    final L? leftModel = await left.peek(onLeft(middleModel));
-    final R? rightModel = await right.peek(onRight(middleModel));
-    return Join(
-      left: middleModel,
-      right: (leftModel, rightModel),
-    );
-  }
-
-  static Future<Map<K, V>> _waitAssociateWith<K, V>(
-    List<K> keys,
-    Future<V> Function(K) associate,
-  ) async {
-    final List<V> values = await Future.wait(keys.map(associate));
-    final Map<K, V> result = {};
-    for (int i = 0; i < values.length; i++) {
-      final K key = keys[i];
-      final V value = values[i];
-      result[key] = value;
-    }
-    return result;
-  }
-
-  @override
-  Future<List<Join<M, (L?, R?)>>> peekAll([
-    Filter filter = const Filter.empty(),
-  ]) async {
-    final List<M> middleModels = await middle.peekAll(filter);
-    final List<String> leftIds = middleModels.map(onLeft).toSet().toList();
-    final List<String> rightIds = middleModels.map(onRight).toSet().toList();
-
-    final Map<String, L?> leftModels =
-        await _waitAssociateWith(leftIds, left.peek);
-    final Map<String, R?> rightModels =
-        await _waitAssociateWith(rightIds, right.peek);
-
-    return middleModels.map((middleModel) {
-      return Join(
-        left: middleModel,
-        right: (
-          leftModels[onLeft(middleModel)],
-          rightModels[onRight(middleModel)],
-        ),
-      );
-    }).toList();
-  }
-
-  @override
-  Stream<Join<M, (L?, R?)>?> pull(String id) {
-    return ManyToManySingleMerge<M, L?, R?>(
-      left: middle.pull(id),
-      map: (model) => ZipStream(
-          [left.pull(onLeft(model)), right.pull(onRight(model))],
-          (values) => (values[0] as L?, values[1] as R?)),
-    ).stream;
-  }
-
-  @override
-  Stream<List<Join<M, (L?, R?)>>> pullAll([
-    Filter filter = const Filter.empty(),
-  ]) {
-    return ManyToManyBatchMerge<M, L?, R?>(
-      left: middle.pullAll(filter),
-      onLeft: (model) => left.pull(onLeft(model)),
-      onRight: (model) => right.pull(onRight(model)),
-    ).stream;
-  }
-}

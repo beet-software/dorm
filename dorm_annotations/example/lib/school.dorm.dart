@@ -839,32 +839,32 @@ extension ClassProperties on Class {
 }
 
 class Dorm {
-  const Dorm(this._root);
+  const Dorm(this._engine);
 
-  final BaseReference _root;
+  final BaseEngine _engine;
 
   DatabaseEntity<SchoolData, School> get schools => DatabaseEntity(
         const SchoolEntity(),
-        reference: _root,
+        engine: _engine,
       );
   DatabaseEntity<StudentData, Student> get students => DatabaseEntity(
         const StudentEntity(),
-        reference: _root,
+        engine: _engine,
       );
   DatabaseEntity<TeacherData, Teacher> get teachers => DatabaseEntity(
         const TeacherEntity(),
-        reference: _root,
+        engine: _engine,
       );
   DatabaseEntity<HistoryData, History> get histories => DatabaseEntity(
         const HistoryEntity(),
-        reference: _root,
+        engine: _engine,
       );
   DatabaseEntity<TeachingData, Teaching> get teachings => DatabaseEntity(
         const TeachingEntity(),
-        reference: _root,
+        engine: _engine,
       );
   DatabaseEntity<ClassData, Class> get classes => DatabaseEntity(
         const ClassEntity(),
-        reference: _root,
+        engine: _engine,
       );
 }

@@ -30,12 +30,12 @@ void main() async {
 
   // Required for dORM, initialize it as described in the documentation.
   const FirebaseInstance instance = FirebaseInstance();
-  final Reference reference = Reference(instance, 'prod');
+  const Engine engine = Engine(instance, path: 'prod');
 
   // It's recommended to have a way to access a global instance of the generated
   // `Dorm` class. Here, we are using dependency injection with a great solution
   // called `get_it`, but you are free to use `provider` or any other method.
-  GetIt.instance.registerSingleton<Dorm>(Dorm(reference));
+  GetIt.instance.registerSingleton<Dorm>(const Dorm(engine));
 
   runApp(DevicePreview(
     defaultDevice: DeviceInfo.genericPhone(

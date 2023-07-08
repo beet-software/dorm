@@ -143,15 +143,8 @@ class UserEntity implements Entity<UserData, User> {
   User convert(
     User model,
     UserData data,
-  ) {
-    return User(
-      id: model.id,
-      username: data.username,
-      email: data.email,
-      profile: data.profile,
-    );
-  }
-
+  ) =>
+      model.copyWith(data);
   @override
   User fromJson(
     String id,
@@ -165,6 +158,17 @@ class UserEntity implements Entity<UserData, User> {
   String identify(User model) => model.id;
   @override
   Map<String, Object?> toJson(UserData data) => data.toJson();
+}
+
+extension UserProperties on User {
+  User copyWith(UserData data) {
+    return User(
+      id: id,
+      username: data.username,
+      email: data.email,
+      profile: data.profile,
+    );
+  }
 }
 
 @JsonSerializable(
@@ -271,15 +275,8 @@ class ProductEntity implements Entity<ProductData, Product> {
   Product convert(
     Product model,
     ProductData data,
-  ) {
-    return Product(
-      id: model.id,
-      name: data.name,
-      description: data.description,
-      price: data.price,
-    );
-  }
-
+  ) =>
+      model.copyWith(data);
   @override
   Product fromJson(
     String id,
@@ -293,6 +290,17 @@ class ProductEntity implements Entity<ProductData, Product> {
   String identify(Product model) => model.id;
   @override
   Map<String, Object?> toJson(ProductData data) => data.toJson();
+}
+
+extension ProductProperties on Product {
+  Product copyWith(ProductData data) {
+    return Product(
+      id: id,
+      name: data.name,
+      description: data.description,
+      price: data.price,
+    );
+  }
 }
 
 @JsonSerializable(
@@ -384,14 +392,8 @@ class CartEntity implements Entity<CartData, Cart> {
   Cart convert(
     Cart model,
     CartData data,
-  ) {
-    return Cart(
-      id: model.id,
-      timestamp: data.timestamp,
-      userId: model.userId,
-    );
-  }
-
+  ) =>
+      model.copyWith(data);
   @override
   Cart fromJson(
     String id,
@@ -405,6 +407,16 @@ class CartEntity implements Entity<CartData, Cart> {
   String identify(Cart model) => model.id;
   @override
   Map<String, Object?> toJson(CartData data) => data.toJson();
+}
+
+extension CartProperties on Cart {
+  Cart copyWith(CartData data) {
+    return Cart(
+      id: id,
+      timestamp: data.timestamp,
+      userId: userId,
+    );
+  }
 }
 
 @JsonSerializable(
@@ -514,15 +526,8 @@ class CartItemEntity implements Entity<CartItemData, CartItem> {
   CartItem convert(
     CartItem model,
     CartItemData data,
-  ) {
-    return CartItem(
-      id: model.id,
-      amount: data.amount,
-      productId: model.productId,
-      cartId: model.cartId,
-    );
-  }
-
+  ) =>
+      model.copyWith(data);
   @override
   CartItem fromJson(
     String id,
@@ -536,6 +541,17 @@ class CartItemEntity implements Entity<CartItemData, CartItem> {
   String identify(CartItem model) => model.id;
   @override
   Map<String, Object?> toJson(CartItemData data) => data.toJson();
+}
+
+extension CartItemProperties on CartItem {
+  CartItem copyWith(CartItemData data) {
+    return CartItem(
+      id: id,
+      amount: data.amount,
+      productId: productId,
+      cartId: cartId,
+    );
+  }
 }
 
 @JsonSerializable(
@@ -710,17 +726,8 @@ class ReviewEntity implements Entity<ReviewData, Review> {
   Review convert(
     Review model,
     ReviewData data,
-  ) {
-    return Review(
-      id: model.id,
-      text: data.text,
-      timestamp: data.timestamp,
-      type: data.type,
-      content: data.content,
-      userId: model.userId,
-    );
-  }
-
+  ) =>
+      model.copyWith(data);
   @override
   Review fromJson(
     String id,
@@ -734,6 +741,19 @@ class ReviewEntity implements Entity<ReviewData, Review> {
   String identify(Review model) => model.id;
   @override
   Map<String, Object?> toJson(ReviewData data) => data.toJson();
+}
+
+extension ReviewProperties on Review {
+  Review copyWith(ReviewData data) {
+    return Review(
+      id: id,
+      text: data.text,
+      timestamp: data.timestamp,
+      type: data.type,
+      content: data.content,
+      userId: userId,
+    );
+  }
 }
 
 enum ReviewContentType { product, service, user }
@@ -753,8 +773,6 @@ abstract class ReviewContent implements _ReviewContent {
     }
   }
 
-  const ReviewContent._();
-
   ReviewContentType get type;
   Map<String, Object?> toJson();
 }
@@ -763,12 +781,11 @@ abstract class ReviewContent implements _ReviewContent {
   anyMap: true,
   explicitToJson: true,
 )
-class ProductReviewContent extends ReviewContent
-    implements _ProductReviewContent {
+class ProductReviewContent implements ReviewContent, _ProductReviewContent {
   factory ProductReviewContent.fromJson(Map json) =>
       _$ProductReviewContentFromJson(json);
 
-  const ProductReviewContent({required this.rating}) : super._();
+  const ProductReviewContent({required this.rating});
 
   @override
   @JsonKey(
@@ -789,12 +806,11 @@ class ProductReviewContent extends ReviewContent
   anyMap: true,
   explicitToJson: true,
 )
-class ServiceReviewContent extends ReviewContent
-    implements _ServiceReviewContent {
+class ServiceReviewContent implements ReviewContent, _ServiceReviewContent {
   factory ServiceReviewContent.fromJson(Map json) =>
       _$ServiceReviewContentFromJson(json);
 
-  const ServiceReviewContent({required this.rating}) : super._();
+  const ServiceReviewContent({required this.rating});
 
   @override
   @JsonKey(
@@ -815,11 +831,11 @@ class ServiceReviewContent extends ReviewContent
   anyMap: true,
   explicitToJson: true,
 )
-class UserReviewContent extends ReviewContent implements _UserReviewContent {
+class UserReviewContent implements ReviewContent, _UserReviewContent {
   factory UserReviewContent.fromJson(Map json) =>
       _$UserReviewContentFromJson(json);
 
-  const UserReviewContent({required this.userId}) : super._();
+  const UserReviewContent({required this.userId});
 
   @override
   @JsonKey(
@@ -837,28 +853,28 @@ class UserReviewContent extends ReviewContent implements _UserReviewContent {
 }
 
 class Dorm {
-  const Dorm(this._root);
+  const Dorm(this._engine);
 
-  final BaseReference _root;
+  final BaseEngine _engine;
 
   DatabaseEntity<UserData, User> get users => DatabaseEntity(
         const UserEntity(),
-        reference: _root,
+        engine: _engine,
       );
   DatabaseEntity<ProductData, Product> get products => DatabaseEntity(
         const ProductEntity(),
-        reference: _root,
+        engine: _engine,
       );
   DatabaseEntity<CartData, Cart> get carts => DatabaseEntity(
         const CartEntity(),
-        reference: _root,
+        engine: _engine,
       );
   DatabaseEntity<CartItemData, CartItem> get cartItems => DatabaseEntity(
         const CartItemEntity(),
-        reference: _root,
+        engine: _engine,
       );
   DatabaseEntity<ReviewData, Review> get reviews => DatabaseEntity(
         const ReviewEntity(),
-        reference: _root,
+        engine: _engine,
       );
 }

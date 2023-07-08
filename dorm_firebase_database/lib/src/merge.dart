@@ -16,9 +16,8 @@
 
 import 'dart:async';
 
+import 'package:dorm_framework/dorm_framework.dart';
 import 'package:rxdart/rxdart.dart';
-
-import 'relationship.dart';
 
 abstract class Merge<T> {
   Stream<T> get stream;
@@ -35,18 +34,18 @@ abstract class SingleMerge<InputValue, OutputKey, OutputValue, R>
   StreamSubscription<void>? _childSubscription;
 
   final StreamController<Join<OutputKey, OutputValue>?> _controller =
-      StreamController.broadcast();
+  StreamController.broadcast();
 
   SingleMerge({required this.left, required this.map}) {
     _subscription = left.listen(
-      (leftModel) async {
+          (leftModel) async {
         await _childSubscription?.cancel();
         if (leftModel == null) {
           _controller.add(null);
           _childSubscription = null;
         } else {
           _childSubscription = map(leftModel).listen(
-            (rightModel) {
+                (rightModel) {
               _controller.add(parse(leftModel, rightModel));
             },
             onDone: () => _childSubscription?.cancel(),
@@ -76,7 +75,7 @@ abstract class BatchMerge<InputValue, OutputKey, OutputValue>
   final Stream<List<InputValue>> left;
 
   final StreamController<List<Join<OutputKey, OutputValue>>> _controller =
-      StreamController.broadcast();
+  StreamController.broadcast();
 
   late final StreamSubscription<void> _subscription;
   List<StreamSubscription<void>> _childSubscriptions = [];
@@ -84,11 +83,11 @@ abstract class BatchMerge<InputValue, OutputKey, OutputValue>
 
   BatchMerge({required this.left}) {
     _subscription = left.listen(
-      (leftModels) async {
+          (leftModels) async {
         await Future.wait(_childSubscriptions.map((s) => s.cancel()));
 
         final List<Stream<Join<OutputKey?, OutputValue>>> streams =
-            parse(leftModels);
+        parse(leftModels);
         _snapshots = List.filled(streams.length, null);
         if (streams.isEmpty) {
           _controller.add([]);
@@ -96,7 +95,7 @@ abstract class BatchMerge<InputValue, OutputKey, OutputValue>
         } else {
           _childSubscriptions.addAll(List.generate(streams.length, (i) {
             return streams[i].listen(
-              (snapshot) {
+                  (snapshot) {
                 _snapshots[i] = snapshot;
 
                 final List<Join<OutputKey, OutputValue>> joins = [];
@@ -171,7 +170,7 @@ class OneToOneBatchMerge<L, R> extends BatchMerge<L, L, R> {
   List<Stream<Join<L?, R>>> parse(List<L> values) {
     return values
         .map((leftModel) => _map(leftModel)
-            .map((rightModel) => Join(left: leftModel, right: rightModel)))
+        .map((rightModel) => Join(left: leftModel, right: rightModel)))
         .toList();
   }
 }
@@ -194,7 +193,7 @@ class ManyToOneBatchMerge<L, R> extends BatchMerge<R, L, List<R>> {
     }
     return groups.entries
         .map((entry) => onRight(entry.key)
-            .map((leftModel) => Join(left: leftModel, right: entry.value)))
+        .map((leftModel) => Join(left: leftModel, right: entry.value)))
         .toList();
   }
 }
@@ -214,7 +213,7 @@ class ManyToManyBatchMerge<M, L, R> extends BatchMerge<M, M, (L?, R?)> {
     return values.map((middleModel) {
       return CombineLatestStream(
         [onLeft, onRight].map((apply) => apply(middleModel)),
-        (values) => (values[0] as L?, values[1] as R?),
+            (values) => (values[0] as L?, values[1] as R?),
       ).map((join) => Join(left: middleModel, right: join));
     }).toList();
   }

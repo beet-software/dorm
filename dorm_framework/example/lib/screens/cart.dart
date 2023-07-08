@@ -17,12 +17,17 @@ class CartScreen extends StatelessWidget {
       providers: [
         StreamProvider<AsyncSnapshot<List<Join<CartItem, Product?>>>>(
           initialData: const AsyncSnapshot.waiting(),
-          create: (_) => OneToOneRelationship<CartItem, Product>(
-            left: GetIt.instance.get<Dorm>().cartItems.repository,
-            right: GetIt.instance.get<Dorm>().products.repository,
-            on: (item) => item.productId,
-          ).pullAll(Filter.value(cartId, key: 'cart-id')).map(
-              (event) => AsyncSnapshot.withData(ConnectionState.active, event)),
+          create: (_) => GetIt.instance
+              .get<Dorm>()
+              .cartItems
+              .relationships
+              .oneToOne(
+                GetIt.instance.get<Dorm>().products.repository,
+                on: (item) => item.productId,
+              )
+              .pullAll(Filter.value(cartId, key: 'cart-id'))
+              .map((event) =>
+                  AsyncSnapshot.withData(ConnectionState.active, event)),
         ),
       ],
       child: SafeArea(
