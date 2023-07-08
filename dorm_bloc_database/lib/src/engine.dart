@@ -1,7 +1,7 @@
 import 'package:dorm_framework/dorm_framework.dart';
 
-import 'src/reference.dart';
-import 'src/relationship.dart';
+import 'reference.dart';
+import 'relationship.dart';
 
 class Engine implements BaseEngine {
   final Reference _reference = Reference();
