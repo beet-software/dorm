@@ -14,7 +14,8 @@ jobs:
         pkg: [dorm_framework, dorm_annotations, dorm_generator, dorm_firebase_database, dorm_bloc_database]
     steps:
       - uses: actions/checkout@v3
-      - uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603
+      - uses: subosito/flutter-action@v2
+      # - uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603
 
       - name: Install dependencies
         working-directory: ./${{ matrix.pkg }}
