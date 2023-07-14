@@ -16,9 +16,9 @@ jobs:
       - uses: actions/checkout@v3
       - uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603
 
-      - name: Move into subdirectory
-        run: cd ${{ matrix.pkg }}
       - name: Install dependencies
+        working-directory: ./${{ matrix.pkg }}
         run: dart pub get
       - name: Analyze project source
+        working-directory: ./${{ matrix.pkg }}
         run: dart analyze
