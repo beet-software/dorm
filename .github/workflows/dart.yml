@@ -21,7 +21,7 @@ jobs:
         run: dart pub get
       - name: Build models
         if: ${{ matrix.pkg == 'dorm_framework' }}
-        run: dart run build_runner build test
+        run: flutter pub run build_runner build test
       - name: Analyze project source
         working-directory: ./${{ matrix.pkg }}
         run: dart analyze
