@@ -44,7 +44,7 @@ jobs:
           relativePath: ${{ matrix.pkg }}
           flutter: true
           skipTests: true
-          suppressBuildRunner: true
+          suppressBuildRunner: ${{ matrix.pkg != 'dorm_framework' }}
       
   update-children:
     runs-on: ubuntu-latest
