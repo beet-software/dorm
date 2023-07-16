@@ -105,8 +105,8 @@ Future<bool> execute(Directory tempDir) async {
         }
         sink.writeln(updatedLine);
       }
-      await newPubspecFile.copy(actualPubspecFile.path);
       await sink.close();
+      await newPubspecFile.copy(actualPubspecFile.path);
     } finally {
       await newPubspecFile.delete(recursive: true);
     }
