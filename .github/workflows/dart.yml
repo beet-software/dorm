@@ -45,6 +45,7 @@ jobs:
     needs: build
     steps:
       - uses: actions/checkout@v3
+      - uses: subosito/flutter-action@v2
 
       - name: Update outdated changes
         run: dart run dorm_meta/lib/dorm_meta.dart --outdated
