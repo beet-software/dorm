@@ -1,5 +1,6 @@
 name: dorm_meta
 version: 1.0.0
+publish_to: none
 
 environment:
   sdk: ^3.0.5
