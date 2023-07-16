@@ -42,6 +42,7 @@ jobs:
           accessToken: ${{ secrets.OAUTH_ACCESS_TOKEN }}
           refreshToken: ${{ secrets.OAUTH_REFRESH_TOKEN }}
           relativePath: ${{ matrix.pkg }}
+          flutter: true
           skipTests: true
           suppressBuildRunner: true
       
@@ -59,7 +60,7 @@ jobs:
         with:
           author_name: Enzo Santos
           author_email: enzosantos29@hotmail.com
-          message: Update outdated global versioning state
+          message: "[skip ci] Update outdated global versioning state"
           push: true
 
   publish-children:
@@ -77,5 +78,6 @@ jobs:
           accessToken: ${{ secrets.OAUTH_ACCESS_TOKEN }}
           refreshToken: ${{ secrets.OAUTH_REFRESH_TOKEN }}
           relativePath: ${{ matrix.pkg }}
+          flutter: true
           skipTests: true
           suppressBuildRunner: true
