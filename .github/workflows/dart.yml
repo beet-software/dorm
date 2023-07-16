@@ -43,9 +43,9 @@ jobs:
           refreshToken: ${{ secrets.OAUTH_REFRESH_TOKEN }}
           relativePath: ${{ matrix.pkg }}
           flutter: true
-          skipTests: true
+          skipTests: ${{ matrix.pkg != 'dorm_framework' }}
           suppressBuildRunner: ${{ matrix.pkg != 'dorm_framework' }}
-      
+
   update-children:
     runs-on: ubuntu-latest
     needs: publish-parent
