@@ -111,20 +111,30 @@ Future<bool> execute(Directory tempDir) async {
       await newPubspecFile.delete(recursive: true);
     }
 
-    final bool hasLicenseFile = await checkLicenseFile(dir);
-    if (!hasLicenseFile) {
-      stderr.writeln('packages with no license file: $dirName');
-      hasErrors = true;
-    }
-
     final Directory libDir = Directory(p.join(dir.path, 'lib'));
-    await for (FileSystemEntity entity in dartGlob.list(root: libDir.path)) {
-      if (entity is! File) continue;
+    await for (FileSystemEntity dartFile in dartGlob.list(root: libDir.path)) {
+      if (dartFile is! File) continue;
 
-      final bool hasLicenseHeader = await checkLicenseHeader(entity);
-      if (!hasLicenseHeader) {
-        stderr.writeln('Files with no license header: ${entity.path}');
-        hasErrors = true;
+      final bool hasLicenseHeader = await checkLicenseHeader(dartFile);
+      if (hasLicenseHeader) continue;
+
+      final File newDartFile =
+          File(p.join(tempDir.path, p.basename(dartFile.path)));
+      try {
+        final IOSink sink = newDartFile.openWrite();
+        for (String line in const LineSplitter().convert(_licenseHeader)) {
+          sink.writeln(line.isEmpty ? '//' : '// $line');
+        }
+        sink.writeln();
+        await dartFile
+            .openRead()
+            .transform(utf8.decoder)
+            .transform(LineSplitter())
+            .forEach(sink.writeln);
+        await sink.close();
+        await newDartFile.copy(dartFile.path);
+      } finally {
+        await newDartFile.delete(recursive: true);
       }
     }
   }
