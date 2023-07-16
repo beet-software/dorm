@@ -26,3 +26,56 @@ jobs:
       - name: Analyze project source
         working-directory: ./${{ matrix.pkg }}
         run: dart analyze
+
+  publish-parent:
+    runs-on: ubuntu-latest
+    needs: build
+    strategy:
+      matrix:
+        pkg: [dorm_framework, dorm_annotations]
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Dart and Flutter Package Publisher
+        uses: k-paxian/dart-package-publisher@v1.6
+        with:
+          accessToken: ${{ secrets.OAUTH_ACCESS_TOKEN }}
+          refreshToken: ${{ secrets.OAUTH_REFRESH_TOKEN }}
+          relativePath: ${{ matrix.pkg }}
+          skipTests: true
+          suppressBuildRunner: true
+      
+  update-children:
+    runs-on: ubuntu-latest
+    needs: publish-parent
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Update outdated changes
+        run: dart run dorm_meta/lib/dorm_meta.dart --outdated
+
+      - name: Add and commit outdated changes
+        uses: EndBug/add-and-commit@v9.1.3
+        with:
+          author_name: Enzo Santos
+          author_email: enzosantos29@hotmail.com
+          message: Update outdated global versioning state
+          push: true
+
+  publish-children:
+    runs-on: ubuntu-latest
+    needs: update-children
+    strategy:
+      matrix:
+        pkg: [dorm_generator, dorm_firebase_database, dorm_bloc_database]
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Dart and Flutter Package Publisher
+        uses: k-paxian/dart-package-publisher@v1.6
+        with:
+          accessToken: ${{ secrets.OAUTH_ACCESS_TOKEN }}
+          refreshToken: ${{ secrets.OAUTH_REFRESH_TOKEN }}
+          relativePath: ${{ matrix.pkg }}
+          skipTests: true
+          suppressBuildRunner: true
