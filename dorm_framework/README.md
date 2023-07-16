@@ -7,6 +7,33 @@
 
 An Object Relational Mapper framework for Dart.
 
+## Table of contents
+
+- [Getting started](#getting-started)
+- [Model](#model)
+  - [Object structure](#object-structure)
+  - [Serialization](#serialization)
+  - [Dependency](#dependency)
+  - [Instantiation](#instantiation)
+  - [Entity](#entity)
+- [Engine](#engine)
+- [Controller](#controller)
+  - [Operations](#operations)
+    - [Creating](#creating)
+    - [Reading](#reading)
+    - [Updating](#updating)
+    - [Deleting](#deleting)
+  - [Filters](#filters)
+    - [By value](#by-value)
+    - [By text](#by-text)
+    - [By dates](#by-dates)
+    - [By amount](#by-amount)
+  - [Relationships](#relationships)
+    - [One-to-one](#one-to-one)
+    - [One-to-many](#one-to-many)
+    - [Many-to-one](#many-to-one)
+    - [Many-to-many](#many-to-many)
+
 ## Getting started
 
 Run the following commands in your Dart or Flutter project:
@@ -105,9 +132,9 @@ class SchoolData {
   // ...
 
   Map<String, Object?> toJson() =>
-          {
-            /*  encode to JSON */
-          };
+      {
+        /*  encode to JSON */
+      };
 }
 
 class School extends SchoolData {
@@ -123,22 +150,22 @@ class School extends SchoolData {
 
   @override
   Map<String, Object?> toJson() =>
-          {
-            ...super.toJson(),
-            /* encode to JSON */
-          };
+      {
+        ...super.toJson(),
+        /* encode to JSON */
+      };
 }
 ```
 
 ### Dependency
 
 The dependency of an object *O* contains all the references to other objects that *O* depends to be
-created (a.k.a. foreign keys). A school can exist without any student. Since there are no more models in our schema, we
-can say that `School` does not depend on any model to exist, so its entity type is *strong*. A
-student cannot exist without a school, since they study there. Since there are no more models in
-this system, we can say that `Student` depends on `School` to exist, so its entity type is *weak*.
-This reasoning is important to implement a dependency for a schema data, which is used when you want
-to create a new model (an INSERT operation, for example) in the database.
+created (a.k.a. foreign keys). A school can exist without any student. Since there are no more
+models in our schema, we can say that `School` does not depend on any model to exist, so its entity
+type is *strong*. A student cannot exist without a school, since they study there. Since there are
+no more models in this system, we can say that `Student` depends on `School` to exist, so its entity
+type is *weak*. This reasoning is important to implement a dependency for a schema data, which is
+used when you want to create a new model (an INSERT operation, for example) in the database.
 
 You can represent the dependency of an object in Dart using a class that inherits from `Dependency`,
 a class that this package exports:
@@ -205,7 +232,8 @@ void main() {
 }
 ```
 
-What can we use as primary key here? You can use some techniques depending on how your object should be identified:
+What can we use as primary key here? You can use some techniques depending on how your object should
+be identified:
 
 - If your object needs to be uniquely identified across the system, use an unique identifier such as
   the one provided by the [`uuid` package](https://pub.dev/packages/uuid):
@@ -263,12 +291,12 @@ class SchoolEntity implements Entity<SchoolData, School> {
   // This represents the UPDATE method, see the previous section
   @override
   School convert(School model, SchoolData data) =>
-          School(
-            id: model.id,
-            name: data.name,
-            phoneNumber: data.phoneNumber,
-            address: data.address,
-          );
+      School(
+        id: model.id,
+        name: data.name,
+        phoneNumber: data.phoneNumber,
+        address: data.address,
+      );
 
   // This represents the CREATE method, see the previous section
   @override
@@ -286,12 +314,12 @@ class SchoolEntity implements Entity<SchoolData, School> {
 
 ## Engine
 
-An engine is a dORM component that enables communication between the model (defined in the previous section)
-and the controller. It behaves as a *pointer* to where the serialized models should be located and as a
-*guide* to how the controller should use its syntax to execute queries.
+An engine is a dORM component that enables communication between the model (defined in the previous
+section) and the controller. It behaves as a *pointer* to where the serialized models should be
+located and as a *guide* to how the controller should use its syntax to execute queries.
 
-You can represent an engine in Dart using a class that inherits from `BaseEngine`, a class that this package
-exports:
+You can represent an engine in Dart using a class that inherits from `BaseEngine`, a class that this
+package exports:
 
 ```dart
 class Engine implements BaseEngine {
@@ -301,8 +329,8 @@ class Engine implements BaseEngine {
 } 
 ```
 
-Note that every engine must provide a reference, which allows the controller to execute queries, and a
-relationship, which allows the controller to associate tables and join records.
+Note that every engine must provide a reference, which allows the controller to execute queries, and
+a relationship, which allows the controller to associate tables and join records.
 
 At the moment, dORM exports two database engines through Dart packages: `dorm_bloc_database` and
 `dorm_firebase_database`. These two packages exports a class named `Engine`, which extends from
@@ -336,8 +364,10 @@ void main() {
   final BaseEngine engine /* = ... */;
   const SchoolEntity entity = SchoolEntity();
 
-  final DatabaseEntity<SchoolData, School> schoolController
-      = DatabaseEntity(engine: engine, entity: entity);
+  final DatabaseEntity<SchoolData, School> schoolController = DatabaseEntity(
+    engine: engine,
+    entity: entity,
+  );
 }
 ```
 
@@ -349,7 +379,7 @@ void main() {
   final DatabaseEntity<SchoolData, School> controller /* = ... */;
 
   // Access the table name
-  print(controller.tableName);    // schools
+  print(controller.tableName); // schools
 
   // Decode a row
   school = controller.fromJson('123456', {'name': 'School'});
@@ -358,7 +388,7 @@ void main() {
   final Map<String, Object?> data = controller.toJson(school);
 
   // Identify a model
-  print(controller.identify(school));    // 123456
+  print(controller.identify(school)); // 123456
 
   // Create a model
   school = controller.fromData(
@@ -550,8 +580,8 @@ void main(Repository<SchoolData, School> repository) async {
 
 The `popAll` method receives a `Filter` and remove all models that match this filter. You'll read
 more about filtering later, but for now keep in mind that `Filter.empty()` matches all models.
-Therefore, if you use it in this method, it'll be the equivalent to removing all models from the table.
-It returns nothing:
+Therefore, if you use it in this method, it'll be the equivalent to removing all models from the
+table. It returns nothing:
 
 ```dart
 void main(Repository<SchoolData, School> repository) async {
@@ -559,9 +589,9 @@ void main(Repository<SchoolData, School> repository) async {
 }
 ``` 
 
-The `purge` method drops the underlying database table (removes all models). If you want to remove all
-models from a table, this method is preferred rather than calling `popAll` passing `Filter.empty()`.
-It returns nothing:
+The `purge` method drops the underlying database table (removes all models). If you want to remove
+all models from a table, this method is preferred rather than calling `popAll` passing
+`Filter.empty()`. It returns nothing:
 
 ```dart
 void main(Repository<SchoolData, School> repository) async {
@@ -569,11 +599,12 @@ void main(Repository<SchoolData, School> repository) async {
 }
 ```
 
-### Filtering
+### Filters
 
-Batch methods of repositories, such as `peekAll`, `pullAll` and `popAll`, can receive a `Filter` as parameter.
-In read operations, this parameter defaults to `Filter.empty()`, which matches all models from that repository.
-If you want to limit how many models are matched, you can change it to your appropriate use case.
+Batch methods of repositories, such as `peekAll`, `pullAll` and `popAll`, can receive a `Filter` as
+parameter. In read operations, this parameter defaults to `Filter.empty()`, which matches all models
+from that repository. If you want to limit how many models are matched, you can change it to your
+appropriate use case.
 
 #### By value
 
@@ -677,7 +708,14 @@ parameter to control how exact do you want this matching:
 
 ```dart
 void main() {
-  final DateTime dt = DateTime(2021, 06, 13, 16, 05, 12, 111);
+  final DateTime dt = DateTime(
+      2021,
+      06,
+      13,
+      16,
+      05,
+      12,
+      111);
   Filter? filter;
 
   // Select entries occurred at 13/06/2021, 16:05:12.111
@@ -711,110 +749,155 @@ void main(Repository<SchoolData, School> repository) async {
 ### Relationships
 
 With a database entity ready to be used, we want to ask the database questions related to
-relationships
-between schemas, such as "What are the students of a given school?". These questions can be asked
-through the `Relationship` subclasses: `OneToOneRelationship` and `OneToManyRelationship`. Given we
-have a school repository and a student repository, that question can be answered in the following
-way:
+relationships between schemas, such as "What are the students of a given school?". These questions
+can be asked through the `relationships` field of a database entity.
+
+#### One-to-one
+
+An one-to-one relationship between two models refers to a unique and bidirectional association where
+each record in one model is linked to at most one corresponding record in the other model. The
+relationship is established through a shared key or a foreign key in the database tables.
+
+For instance, consider the models `School` and `Principal`. In this scenario, each school can have
+only one principal, and each principal can be assigned to only one school. This creates a one-to-one
+association between the school and principal models:
 
 ```dart
 void main() async {
-  final Repository<School, SchoolData> schoolRepository /* = ... */;
-  final Repository<Student, StudentData> studentRepository /* = ... */;
+  final DatabaseEntity<SchoolData, School> schoolController /* = ... */;
+  final DatabaseEntity<PrincipalData, Principal> principalController /* = ... */;
 
-  // Creating a new school
-  final School hogwarts = await schoolRepository.put(
-    const SchoolDependency(),
-    SchoolData(
-      name: 'Hogwarts School of Witchcraft and Wizardry',
-      phoneNumber: '605-475-6961',
-      address: 'Hogwarts Castle, Highlands, Scotland',
-    ),
+  final OneToOneAssociation<School, Principal> association;
+  association = schoolController.relationships.oneToOne(
+    principalController.repository,
+    on: (School school) => school.id,
   );
 
-  // Creating students
-  await studentRepository.put(
-    StudentDependency(schoolId: hogwarts.id),
-    StudentData(
-      name: 'Harry Potter',
-      birthDate: DateTime(1980, 7, 31),
-      grade: '1',
-      email: 'harrypotter@gmail.co.uk',
-    ),
-  );
-
-  await studentRepository.put(
-    StudentDependency(schoolId: hogwarts.id),
-    StudentData(
-      name: 'Rony Weasley',
-      birthDate: DateTime(1980, 3, 1),
-      grade: '1',
-      email: 'ronyweasley@gmail.co.uk',
-    ),
-  );
-
-  // Creating an association between schools and students
-  final OneToManyAssociation<School, Student> association = schoolRepository.oneToMany(
-    studentRepository,
-    // For a given `school` of this relationship, 
-    // filter students where `school-id` equals to `school`'s ID 
-    on: (school) => Filter.value(school.id, key: 'school-id'),
-  );
-
-  // What are the students of Hogwarts?
-  final Join<School, List<Student>>? join = await association.peek(hogwarts.id);
-
+  final Join<School, Principal?>? join = await association.peek('123456');
   if (join == null) {
-    // If `hogwarts.id` does not exist or was deleted in this interval of time
+    // There is no school associated with the '123456' primary key 
   } else {
     final School school = join.left;
-    final List<Student> students = join.right;
-    print(school.name); // Hogwarts School of Witchcraft and Wizardry
-    print(students.length); // 2
+    final Principal? principal = join.right;
+    if (principal == null) {
+      // There is no principal associated with the referred school
+    }
   }
 }
 ```
 
-This way, you can create complex relationship queries.
+#### One-to-many
 
-Another example showing how you can combine relationships:
+An one-to-many relationship between two models represents a type of association where a record in
+one model (the "one" side) can be related to multiple records in the other model (the "many" side).
+However, each record in the second model can only be associated with one record in the first model.
+This relationship is established through a foreign key in the "many" side table, which references
+the primary key of the "one" side table.
+
+For instance, consider the models `School` and `Student`. In this scenario, each school can have
+zero or more students, while each student can be assigned to only one school. This creates an
+one-to-many association between the school and student models:
 
 ```dart
-class Country {
-  final String id;
-}
-
-abstract class State {
-  final String id;
-
-  // A country has multiple states (Country 1-to-N State)
-  final String countryId;
-}
-
-abstract class Capital {
-  // A state has a single capital (State 1-to-1 Capital)
-  // Since a capital depends exclusively on a state, they 
-  // must have the same ID. This ID sharing is the only
-  // way to guarantee that one row in a table may be linked
-  // with ONLY one row in another table.
-  final String id;
-}
-
 void main() async {
-  final OneToOneAssociation<State, Capital> r0 = stateRepository(
-    right: capitalRepository,
-    on: (state) => state.id,
+  final DatabaseEntity<SchoolData, School> schoolController /* = ... */;
+  final DatabaseEntity<StudentData, Student> studentController /* = ... */;
+
+  final OneToManyAssociation<School, Student> association;
+  association = schoolController.relationships.oneToMany(
+    studentController.repository,
+    on: (School school) => Filter.value(school.id, key: 'school-id'),
   );
 
-  final OneToManyRelationship<Country, Join<State, Capital?>> r1 = OneToManyRelationship(
-    left: countryRepository,
-    right: r0, // You can use another relationship here!
-    on: (country) => Filter.value(country.id, key: 'country-id'),
+  final Join<School, List<Student>>? join = await association.peek('123456');
+  if (join == null) {
+    // There is no school associated with the '123456' primary key 
+  } else {
+    final School school = join.left;
+    final List<Student> students = join.right;
+    if (students.isEmpty) {
+      // There are no students associated with the referred school
+    }
+  }
+}
+```
+
+#### Many-to-one
+
+In an one-to-many relationship, all records from the "left" table (the "one" side) are included,
+along with any matching records from the "right" table (the "many" side). If there are no matches in
+the "right" table, the result still includes the record from the "left" table.
+
+A many-to-one relationship is the same as the one-to-many relationship. However, in an many-to-one
+relationship, if there are no matches in the "right" table, the result will *not* include the record
+from the "left" table. In the example above, this allows you to assert that `students` will never be
+empty:
+
+```dart
+void main() async {
+  final DatabaseEntity<SchoolData, School> schoolController /* = ... */;
+  final DatabaseEntity<StudentData, Student> studentController /* = ... */;
+
+  final ManyToOneAssociation<Student, School> association;
+  association = studentController.relationships.oneToMany(
+    schoolController.repository,
+    on: (Student student) => student.schoolId,
   );
 
-  // Peek all countries whose name starts with AB and their 
-  // respective states with their respective capitals
-  final List<Join<Country, List<Join<State, Capital?>>>> joins = await r1
-          .peekAll(Filter.text('AB', key: 'name'));
+  final Join<School, List<Student>>? join = await association.peek('123456');
+  if (join == null) {
+    // There is no school associated with the '123456' primary key 
+  } else {
+    final School school = join.left;
+    final List<Student> students = join.right;
+    assert(students.isNotEmpty);
+  }
+}
+```
+
+#### Many-to-many
+
+A many-to-many relationship between two models represents an association where multiple records in
+one model can be related to multiple records in the other model. This type of relationship cannot be
+directly represented by a single foreign key in either model. Instead, an intermediary table (also
+known as a junction table or association table) is used to connect the two models. This intermediary
+table contains foreign keys that reference the primary keys of both models, establishing the link
+between them.
+
+Now, let's consider the models `School` and `Teacher`. In this scenario, a many-to-many association
+exists them: a school can have multiple teachers, and a teacher can work in multiple schools. To
+create this association, an additional `Teaching` model (intermediary table) is introduced,
+containing foreign keys that reference the primary keys of both the school and teacher models. Each
+record in the teaching model represents a connection between a specific teacher and a specific
+school. This way, the many-to-many relationship is effectively managed through the teaching model,
+allowing multiple teachers to be associated with multiple schools while maintaining data integrity:
+
+```dart
+void main() async {
+  final DatabaseEntity<SchoolData, School> schoolController /* = ... */;
+  final DatabaseEntity<TeacherData, Teacher> teacherController /* = ... */;
+  final DatabaseEntity<TeachingData, Teaching> teachingController /* = ... */;
+
+  final ManyToManyAssociation<Student, School> association;
+  association = teachingController.relationships.manyToMany(
+    left: schoolController.repository,
+    onLeft: (Teaching teaching) => teaching.schoolId,
+    right: teacherController.repository,
+    onRight: (Teaching teaching) => teaching.teacherId,
+  );
+
+  final Join<Teaching, (School?, Teacher?)>? join = await association.peek('123456');
+  if (join == null) {
+    // There is no teaching associated with the '123456' primary key 
+  } else {
+    final Teaching teaching = join.left;
+    final (School? school, Teacher? teacher) = join.right;
+    if (school == null) {
+      // There is no school associated with the referred teaching
+    }
+    if (teacher == null) {
+      // There is no teacher associated with the referred teaching
+    }
+  }
 }
 ```

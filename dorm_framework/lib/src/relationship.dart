@@ -53,8 +53,8 @@ typedef Readable<Model> = Readable2<Model, Model>;
 typedef Association2<L, SingleR, BatchR>
     = Readable2<Join<L, SingleR>, Join<L, BatchR>>;
 
-/// A type that can evaluate a value given a [String] and to a list of values
-/// given a [Filter], where this value is a [Join] between [L] and [R].
+/// A type that can evaluate *V* given a [String] and to a list of *V* given a
+/// [Filter], where *V* is a [Join] between [L] and [R].
 ///
 /// This is a special case of [Association2].
 typedef Association<L, R> = Association2<L, R, R>;
@@ -72,7 +72,7 @@ typedef ManyToOneAssociation<L, R> = Association2<R, L, List<L>>;
 /// An association that evaluates joins between [M] and a tuple of [L] and [R].
 typedef ManyToManyAssociation<M, L, R> = Association<M, (L?, R?)>;
 
-/// Declares associations between two models.
+/// Declares associations between any two models.
 abstract class BaseRelationship {
   /// Represents an one-to-one operation.
   ///
@@ -180,16 +180,54 @@ abstract class BaseRelationship {
   );
 }
 
-
+/// Declares associations between [left] and another model.
+///
+/// A [Relationship] associates two models by declaring two parameters to each
+/// method in the class. In the other hand, a [ModelRelationship] associates
+/// two models by declaring a [left] property and a parameter to each method in
+/// this class. Basically, calling
+///
+/// ```dart
+/// final Relationship relationship /* = ... */;
+/// relationship.oneToOne<L, R>(left, right, on);
+/// ```
+///
+/// is virtually the same as calling
+///
+/// ```dart
+/// final ModelRelationship<L> relationship = ModelRelationship(
+///   left: left,
+///   relationship: /* ... */,
+/// );
+/// relationship.oneToOne<R>(right, on);
+/// ```
 class ModelRelationship<L> {
   final BaseRelationship relationship;
   final Readable<L> left;
 
+  /// Creates a [ModelRelationship] from its attributes.
   const ModelRelationship({
     required this.relationship,
     required this.left,
   });
 
+  /// Represents an one-to-one .
+  ///
+  /// Let's suppose you have two models: `School` and `Principal`. Since a
+  /// `School` has only one `Principal`, this is a 1-to-1 relationship:
+  ///
+  /// ```dart
+  /// final ModelRelationship<School> relationship /* = ... */;
+  /// final Repository<PrincipalData, Principal> principals /* = ... */;
+  ///
+  /// final OneToOneAssociation<School, Principal> association;
+  /// association = relationship.oneToOne(
+  ///   principals,
+  ///   on: (school) => school.principalId,
+  /// );
+  /// final Stream<List<Join<School, Principal?>>> result = association
+  ///     .pullAll(const Filter.value(true, key: 'active'));
+  /// ```
   OneToOneAssociation<L, R> oneToOne<R>(
     Readable<R> right, {
     required String Function(L) on,
@@ -197,6 +235,23 @@ class ModelRelationship<L> {
     return relationship.oneToOne(left, right, on);
   }
 
+  /// Represents an one-to-many association.
+  ///
+  /// Let's suppose you have two models: `School` and `Student`. Since a
+  /// `School` can have more than one `Student`, this is a 1-to-N relationship:
+  ///
+  /// ```dart
+  /// final ModelRelationship<School> relationship /* = ... */;
+  /// final Repository<StudentData, Student> students = ...;
+  ///
+  /// final OneToManyAssociation<School, Student> association;
+  /// association = relationship.oneToMany(
+  ///   students,
+  ///   on: (school) => Filter.value(school.id, key: 'school-id'),
+  /// );
+  /// final Stream<List<Join<School, List<Student>>>> result = association
+  ///     .pullAll(const Filter.value(true, key: 'active'));
+  /// ```
   OneToManyAssociation<L, R> oneToMany<R>(
     Readable<R> right, {
     required Filter Function(L) on,
@@ -204,6 +259,26 @@ class ModelRelationship<L> {
     return relationship.oneToMany(left, right, on);
   }
 
+  /// Represents a many-to-one association.
+  ///
+  /// Let's suppose you have two models: `School` and `Student`. Since a
+  /// `School` can have more than one `Student`, this is a 1-to-N relationship.
+  /// If you want to fetch all schools and their respective students, you can use
+  /// [oneToMany]. However, not all schools have students. Using this operation
+  /// can omit the schools without students (a right-join):
+  ///
+  /// ```dart
+  /// final Relationship<School> relationship /* = ... */;
+  /// final Repository<StudentData, Student> students /* = ... */;
+  ///
+  /// final ManyToOneAssociation<School, Student> association;
+  /// association = relationship.manyToOne(
+  ///   schools,
+  ///   on: (student) => student.schoolId,
+  /// );
+  /// final Stream<List<Join<School, List<Student>>>> result = association
+  ///     .pullAll(Filter.date(DateTime(2018), key: 'birth-date', unit: DateFilterUnit.year));
+  /// ```
   ManyToOneAssociation<L, R> manyToOne<R>(
     Readable<R> right, {
     required String Function(L) on,
@@ -211,6 +286,26 @@ class ModelRelationship<L> {
     return relationship.manyToOne(left, right, on);
   }
 
+  /// Represents a many-to-many association.
+  ///
+  /// Let's suppose you have two models: `School`, `Professor` and `Teaching`.
+  /// Since a `Professor` can teach on more than one `School`, this is a M-to-N
+  /// relationship through `Teaching`:
+  ///
+  /// ```dart
+  /// final Relationship<Teaching> relationship /* = ... */;
+  /// final Repository<SchoolData, School> schools /* = ... */;
+  /// final Repository<StudentData, Student> students /* = ... */;
+  ///
+  /// final ManyToManyAssociation<Teaching, School, Student> association = relationship.manyToMany(
+  ///   left: students,
+  ///   onLeft: (teaching) => teaching.studentId,
+  ///   right: schools,
+  ///   onRight: (teaching) => teaching.schoolId,
+  /// );
+  /// final Stream<List<Join<Teaching, (School?, Student?)>>> result = association
+  ///     .pullAll(Filter.value(true, key: 'active'));
+  /// ```
   ManyToManyAssociation<L, RL, RR> manyToMany<RL, RR>({
     required Readable<RL> left,
     required String Function(L) onLeft,
@@ -220,4 +315,3 @@ class ModelRelationship<L> {
     return relationship.manyToMany(this.left, left, onLeft, right, onRight);
   }
 }
-
