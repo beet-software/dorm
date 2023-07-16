@@ -1,0 +1,28 @@
+name: Dart
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        pkg: [dorm_framework, dorm_annotations, dorm_generator, dorm_firebase_database, dorm_bloc_database]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: subosito/flutter-action@v2
+      
+      - name: Install dependencies
+        working-directory: ./${{ matrix.pkg }}
+        run: dart pub get
+      - name: Build models
+        if: ${{ matrix.pkg == 'dorm_framework' }}
+        working-directory: ./${{ matrix.pkg }}
+        run: dart run build_runner build test
+      - name: Analyze project source
+        working-directory: ./${{ matrix.pkg }}
+        run: dart analyze
