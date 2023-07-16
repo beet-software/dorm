@@ -36,7 +36,9 @@ enum PubspecSection { dependencies }
 Future<bool> execute(Directory tempDir) async {
   final Glob dartGlob = Glob('**.dart');
 
-  final Directory rootDir = Directory.current.parent;
+  final int pathLength = Platform.script.pathSegments.length;
+  final Directory rootDir = Directory(
+      p.joinAll(Platform.script.pathSegments.sublist(0, pathLength - 3)));
   final File expectedLicenseFile = File(p.join(rootDir.path, 'LICENSE'));
   final File expectedChangelogFile = File(p.join(rootDir.path, 'CHANGELOG.md'));
 
