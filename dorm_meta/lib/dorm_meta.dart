@@ -57,7 +57,7 @@ Future<bool> execute(Directory tempDir) async {
 
     final Changelog changelog =
         parseChangelog(await actualChangelogFile.readAsString());
-    final Release release = changelog.history().first;
+    final Release release = changelog.history().last;
 
     final File newPubspecFile = File(p.join(tempDir.path, 'pubspec.yaml'));
     final File actualPubspecFile = File(p.join(dir.path, 'pubspec.yaml'));
