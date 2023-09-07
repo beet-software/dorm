@@ -9,6 +9,8 @@ false_secrets:
   - example/lib/main.dart
 
 dependencies:
+  flutter:
+    sdk: flutter
   http: ^0.13.5
   firebase_auth: ^4.4.0
   firebase_core: ^2.9.0
