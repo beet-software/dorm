@@ -14,6 +14,7 @@ Run the following commands inside your project:
 ```shell
 dart pub add dev:dorm_generator
 dart pub add dev:build_runner
+dart pub add dev:json_serializable
 dart pub get
 ```
 
