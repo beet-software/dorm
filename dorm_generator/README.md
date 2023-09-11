@@ -14,6 +14,7 @@ Run the following commands inside your project:
 ```shell
 dart pub add dev:dorm_generator
 dart pub add dev:build_runner
+dart pub add dev:json_serializable
 dart pub get
 ```
 
@@ -49,7 +50,7 @@ This will generate all the files based on the annotated classes.
 
 ### Models
 
-Any class `_Class` annotated with `Model` will create four new classes: `ClassData`, `Class`,
+Any class `_Class` annotated with [`Model`](https://pub.dev/documentation/dorm_annotations/latest/dorm_annotations/Model-class.html) will create four new classes: `ClassData`, `Class`,
 `ClassDependency` and `ClassEntity`.
 
 ```dart
@@ -68,8 +69,12 @@ abstract class _Class {
 
 #### Data
 
-A `ClassData` will contain only the getters annotated with `Field`,
-`PolymorphicField` and `ModelField`. In the above example is defined as:
+A `ClassData` will contain only the getters annotated with 
+[`Field`](https://pub.dev/documentation/dorm_annotations/latest/dorm_annotations/Field-class.html),
+[`PolymorphicField`](https://pub.dev/documentation/dorm_annotations/latest/dorm_annotations/PolymorphicField-class.html)
+and
+[`ModelField`](https://pub.dev/documentation/dorm_annotations/latest/dorm_annotations/ModelField-class.html).
+In the above example is defined as:
 
 ```dart
 @JsonSerializable(anyMap: true, explicitToJson: true)
@@ -94,8 +99,11 @@ class ClassData {
 #### Model
 
 A `Class` extends `ClassData`, implements `_Class`, has an additional `id` field and will
-contain only the getters annotated with `ForeignField` and `QueryField`. In the above example is
-defined as:
+contain only the getters annotated with 
+[`ForeignField`](https://pub.dev/documentation/dorm_annotations/latest/dorm_annotations/ForeignField-class.html)
+and
+[`QueryField`](https://pub.dev/documentation/dorm_annotations/latest/dorm_annotations/QueryField-class.html).
+In the above example is defined as:
 
 ```dart
 @JsonSerializable(anyMap: true, explicitToJson: true)
@@ -135,16 +143,16 @@ repository accessors. In the above example, it is defined as:
 
 ```dart
 class Dorm {
-  final Reference _root;
+  final BaseEngine _engine;
 
-  const Dorm(this._root);
+  const Dorm(this._engine);
 
   DatabaseEntity<ClassData, Class> get classes =>
-      DatabaseEntity(const ClassEntity(), reference: _root);
+      DatabaseEntity(const ClassEntity(), engine: _engine);
 }
 ```
 
-Refer to the `dorm_*_database` packages to read more about how to obtain a `Reference`.
+Refer to the `dorm_*_database` packages to read more about how to obtain a `Engine`.
 With a `Dorm` instance, you can operate on classes using a `Repository`, also exported by
 `dorm_framework`:
 

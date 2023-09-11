@@ -55,6 +55,9 @@ Future<bool> execute(Directory tempDir, int flags) async {
   final int pathLength = Platform.script.pathSegments.length;
   final Directory rootDir = Directory(
       p.joinAll(Platform.script.pathSegments.sublist(0, pathLength - 3)));
+  stdout.writeln('script located at ${Platform.script.path}');
+  stdout.writeln('root set at ${rootDir.path}');
+
   final File expectedLicenseFile = File(p.join(rootDir.path, 'LICENSE'));
   final File expectedChangelogFile = File(p.join(rootDir.path, 'CHANGELOG.md'));
 
