@@ -5,21 +5,22 @@ environment:
   sdk: '>=3.0.5 <4.0.0'
 
 dependencies:
+  args: ^2.4.2
+  dotenv: ^4.1.0
+  mysql_client: ^0.0.27
   dorm_framework:
     path: ../../dorm_framework
   dorm_annotations:
     path: ../../dorm_annotations
   dorm_mysql_database:
-    path: ../../dorm_mysql1_database
-  mysql_client: ^0.0.27
-  args: ^2.4.2
+    path: ../../dorm_mysql_database
 
 dev_dependencies:
   lints: ^2.0.1
   build_runner: ^2.4.3
+  json_serializable: ^6.7.1
   dorm_generator:
     path: ../../dorm_generator
-  json_serializable: ^6.7.1
 
 dependency_overrides:
   dorm_framework:

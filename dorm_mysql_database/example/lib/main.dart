@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:args/args.dart';
 import 'package:dorm_mysql_database/dorm_mysql_database.dart';
+import 'package:dotenv/dotenv.dart';
 import 'package:mysql_client/mysql_client.dart';
 
 import 'models.dart';
@@ -157,14 +158,17 @@ Future<void> run(Dorm dorm) async {
 }
 
 void main() async {
+  final DotEnv env = DotEnv();
+  env.load();
+
   final MySQLConnection connection = await MySQLConnection.createConnection(
-    host: 'localhost',
-    port: 3306,
-    userName: 'root',
-    password: 'root',
-    databaseName: 'dbroot',
+    host: env['MYSQL_HOST']!,
+    port: int.parse(env['MYSQL_PORT']!),
+    userName: env['MYSQL_USERNAME']!,
+    password: env['MYSQL_PASSWORD']!,
   );
   await connection.connect();
+  await connection.execute("USE test;");
   try {
     final Engine engine = Engine(connection);
     final Dorm dorm = Dorm(engine);
