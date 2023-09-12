@@ -139,7 +139,6 @@ class Reference implements BaseReference {
     Entity<Data, Model> entity,
     String id,
   ) {
-    return connection.execute(query).then((result) => result.rowsStream)
     // TODO: implement pull
     throw UnimplementedError();
   }
@@ -155,10 +154,12 @@ class Reference implements BaseReference {
 
   @override
   Future<void> purge<Data, Model extends Data>(
-    Entity<Data, Model> entity,
-  ) {
+    Entity<Data, Model> entity, {
+    MySQLConnection? connection,
+  }) {
+    connection ??= this.connection;
     final StringBuffer buffer = StringBuffer()
-      ..write('DROP TABLE IF EXISTS ')
+      ..write('DELETE FROM ')
       ..write(entity.tableName)
       ..write(';');
 
