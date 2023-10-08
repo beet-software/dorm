@@ -181,12 +181,12 @@ abstract class BaseRelationship {
 }
 
 /// Declares join-oriented reading and relationship assignment.
-class _RelationshipDefinedAssociation<L, R> implements Association<L, R> {
+class RelationshipDefinedAssociation<L, R> implements Association<L, R> {
   final BaseRelationship _relationship;
   final Association<L, R> _association;
 
-  /// Creates a [_RelationshipDefinedAssociation] by its attributes.
-  const _RelationshipDefinedAssociation(
+  /// Creates a [RelationshipDefinedAssociation] by its attributes.
+  const RelationshipDefinedAssociation(
     this._relationship, {
     required Association<L, R> association,
   }) : _association = association;
@@ -221,11 +221,11 @@ class _RelationshipDefinedAssociation<L, R> implements Association<L, R> {
 
   /// Associates the underlying association with a [readable] using a 1:1
   /// relationship given by [on].
-  _RelationshipDefinedAssociation<Join<L, R>, T?> oneToOne<T>(
+  RelationshipDefinedAssociation<Join<L, R>, T?> oneToOne<T>(
     Readable<T> readable, {
     required String Function(Join<L, R>) on,
   }) {
-    return _RelationshipDefinedAssociation(
+    return RelationshipDefinedAssociation(
       _relationship,
       association: _relationship.oneToOne(this, readable, on),
     );
@@ -233,11 +233,11 @@ class _RelationshipDefinedAssociation<L, R> implements Association<L, R> {
 
   /// Associates the underlying association with a [readable] using a 1:N
   /// relationship given by [on].
-  _RelationshipDefinedAssociation<Join<L, R>, List<T>> oneToMany<T>(
+  RelationshipDefinedAssociation<Join<L, R>, List<T>> oneToMany<T>(
     Readable<T> readable, {
     required Filter Function(Join<L, R>) on,
   }) {
-    return _RelationshipDefinedAssociation(
+    return RelationshipDefinedAssociation(
       _relationship,
       association: _relationship.oneToMany(this, readable, on),
     );
@@ -254,13 +254,13 @@ class _RelationshipDefinedAssociation<L, R> implements Association<L, R> {
 
   /// Associates the underlying association with a [readable] through [middle]
   /// using a M:N relationship given by [onJoin] and [on].
-  _RelationshipDefinedAssociation<M, (Join<L, R>?, T?)> manyToMany<M, T>({
+  RelationshipDefinedAssociation<M, (Join<L, R>?, T?)> manyToMany<M, T>({
     required Readable<M> middle,
     required String Function(M p1) onJoin,
     required Readable<T> readable,
     required String Function(M p1) on,
   }) {
-    return _RelationshipDefinedAssociation(
+    return RelationshipDefinedAssociation(
       _relationship,
       association: _relationship.manyToMany(
         middle,
@@ -321,11 +321,11 @@ class ModelRelationship<L> {
   /// final Stream<List<Join<School, Principal?>>> result = association
   ///     .pullAll(const Filter.value(true, key: 'active'));
   /// ```
-  Association<L, R?> oneToOne<R>(
+  RelationshipDefinedAssociation<L, R?> oneToOne<R>(
     Readable<R> right, {
     required String Function(L) on,
   }) {
-    return _RelationshipDefinedAssociation(
+    return RelationshipDefinedAssociation(
       relationship,
       association: relationship.oneToOne(left, right, on),
     );
@@ -348,11 +348,11 @@ class ModelRelationship<L> {
   /// final Stream<List<Join<School, List<Student>>>> result = association
   ///     .pullAll(const Filter.value(true, key: 'active'));
   /// ```
-  Association<L, List<R>> oneToMany<R>(
+  RelationshipDefinedAssociation<L, List<R>> oneToMany<R>(
     Readable<R> right, {
     required Filter Function(L) on,
   }) {
-    return _RelationshipDefinedAssociation(
+    return RelationshipDefinedAssociation(
       relationship,
       association: relationship.oneToMany(left, right, on),
     );
@@ -406,13 +406,13 @@ class ModelRelationship<L> {
   /// final Stream<List<Join<Teaching, (School?, Student?)>>> result = association
   ///     .pullAll(Filter.value(true, key: 'active'));
   /// ```
-  Association<L, (RL?, RR?)> manyToMany<RL, RR>({
+  RelationshipDefinedAssociation<L, (RL?, RR?)> manyToMany<RL, RR>({
     required Readable<RL> left,
     required String Function(L) onLeft,
     required Readable<RR> right,
     required String Function(L) onRight,
   }) {
-    return _RelationshipDefinedAssociation(
+    return RelationshipDefinedAssociation(
       relationship,
       association: relationship.manyToMany(
         this.left,
