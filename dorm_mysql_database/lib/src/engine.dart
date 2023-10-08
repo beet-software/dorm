@@ -22,11 +22,12 @@ import 'reference.dart';
 class _Relationship implements BaseRelationship {
   @override
   ManyToManyAssociation<M, L, R> manyToMany<M, L, R>(
-      Readable<M> middle,
-      Readable<L> left,
-      String Function(M p1) onLeft,
-      Readable<R> right,
-      String Function(M p1) onRight) {
+    Readable<M> middle,
+    Readable<L> left,
+    String Function(M p1) onLeft,
+    Readable<R> right,
+    String Function(M p1) onRight,
+  ) {
     // TODO: implement manyToMany
     throw UnimplementedError();
   }

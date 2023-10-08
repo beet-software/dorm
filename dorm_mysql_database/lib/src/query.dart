@@ -1,5 +1,7 @@
 import 'package:dorm_framework/dorm_framework.dart';
 
+enum _QueryType {  limit, sorted }
+
 class Query implements BaseQuery<Query> {
   final String query;
   final Map<String, Object?> params;
@@ -30,8 +32,11 @@ class Query implements BaseQuery<Query> {
 
   @override
   Query whereRange<R>(String key, FilterRange<R> range) {
-    // TODO: implement whereRange
-    throw UnimplementedError();
+    if (range is DateFilterRange) {
+
+    } else {
+
+    }
   }
 
   @override
