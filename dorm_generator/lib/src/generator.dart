@@ -1174,9 +1174,20 @@ class OrmGenerator extends Generator {
 
       b.body.add(cb.Class((b) {
         b.name = 'Dorm';
+        b.types.add(cb.TypeReference((b) {
+          b.symbol = 'Ref';
+          b.bound = cb.TypeReference((b) {
+            b.symbol = 'BaseReference';
+            b.types.add(cb.Reference('Ref'));
+          });
+        }));
         b.fields.add(cb.Field((b) {
           b.modifier = cb.FieldModifier.final$;
-          b.type = cb.Reference('BaseEngine', '$_dormUrl');
+          b.type = cb.TypeReference((b) {
+            b.symbol = 'BaseEngine';
+            b.url = '$_dormUrl';
+            b.types.add(cb.Reference('Ref'));
+          });
           b.name = '_engine';
         }));
         b.constructors.add(cb.Constructor((b) {
@@ -1197,6 +1208,7 @@ class OrmGenerator extends Generator {
               b.url = '$_dormUrl';
               b.types.add(cb.Reference(naming.dataName));
               b.types.add(cb.Reference(naming.modelName));
+              b.types.add(cb.Reference('Ref'));
             });
             b.type = cb.MethodType.getter;
             b.lambda = true;

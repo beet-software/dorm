@@ -119,29 +119,26 @@ abstract class Entity<Data, Model extends Data> {
 }
 
 /// Represents the bridge between a database engine and a controller.
-class DatabaseEntity<Data, Model extends Data> implements Entity<Data, Model> {
+class DatabaseEntity<Data, Model extends Data, Ref extends BaseReference<Ref>>
+    implements Entity<Data, Model> {
   final Entity<Data, Model> _entity;
-  final BaseReference _reference;
-  final BaseRelationship _relationship;
+  final Ref _reference;
+  final BaseRelationship<Ref> _relationship;
 
   DatabaseEntity(
     Entity<Data, Model> entity, {
-    required BaseEngine engine,
+    required BaseEngine<Ref> engine,
   })  : _entity = entity,
         _reference = engine.createReference(),
         _relationship = engine.createRelationship();
 
-  ModelRelationship<Model> get relationships {
+  ModelRelationship<Model, Ref> get relationships {
     return ModelRelationship(left: repository, relationship: _relationship);
   }
 
   /// The controller of this entity.
-  Repository<Data, Model> get repository {
-    return Repository(
-      entity: _entity,
-      reference: _reference,
-      relationship: _relationship,
-    );
+  Repository<Data, Model, Ref> get repository {
+    return Repository(entity: _entity, reference: _reference);
   }
 
   @override

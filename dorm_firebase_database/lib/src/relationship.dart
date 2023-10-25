@@ -19,44 +19,46 @@ import 'dart:async';
 import 'package:dorm_framework/dorm_framework.dart';
 import 'package:rxdart/rxdart.dart';
 
+import 'filter.dart';
 import 'merge.dart';
+import 'reference.dart';
 
-class Relationship implements BaseRelationship {
+class Relationship implements BaseRelationship<Reference> {
   const Relationship();
 
   @override
-  OneToOneAssociation<L, R> oneToOne<L, R>(
-    Readable<L> left,
-    Readable<R> right,
+  OneToOneAssociation<L, R, Reference> oneToOne<L, R>(
+    Readable<L, Reference> left,
+    Readable<R, Reference> right,
     String Function(L p1) on,
   ) {
     return _OneToOne(left: left, right: right, on: on);
   }
 
   @override
-  OneToManyAssociation<L, R> oneToMany<L, R>(
-    Readable<L> left,
-    Readable<R> right,
+  OneToManyAssociation<L, R, Reference> oneToMany<L, R>(
+    Readable<L, Reference> left,
+    Readable<R, Reference> right,
     Filter Function(L p1) on,
   ) {
     return _OneToMany(left: left, right: right, on: on);
   }
 
   @override
-  ManyToOneAssociation<L, R> manyToOne<L, R>(
-    Readable<L> left,
-    Readable<R> right,
+  ManyToOneAssociation<L, R, Reference> manyToOne<L, R>(
+    Readable<L, Reference> left,
+    Readable<R, Reference> right,
     String Function(L p1) on,
   ) {
     return _ManyToOne(left: left, right: right, on: on);
   }
 
   @override
-  ManyToManyAssociation<M, L, R> manyToMany<M, L, R>(
-    Readable<M> middle,
-    Readable<L> left,
+  ManyToManyAssociation<M, L, R, Reference> manyToMany<M, L, R>(
+    Readable<M, Reference> middle,
+    Readable<L, Reference> left,
     String Function(M p1) onLeft,
-    Readable<R> right,
+    Readable<R, Reference> right,
     String Function(M p1) onRight,
   ) {
     return _ManyToMany(
@@ -69,9 +71,9 @@ class Relationship implements BaseRelationship {
   }
 }
 
-class _OneToOne<L, R> implements OneToOneAssociation<L, R> {
-  final Readable<L> left;
-  final Readable<R> right;
+class _OneToOne<L, R> implements OneToOneAssociation<L, R, Reference> {
+  final Readable<L, Reference> left;
+  final Readable<R, Reference> right;
   final String Function(L) on;
 
   const _OneToOne({
@@ -89,9 +91,7 @@ class _OneToOne<L, R> implements OneToOneAssociation<L, R> {
   }
 
   @override
-  Future<List<Join<L, R?>>> peekAll([
-    Filter filter = const Filter.empty(),
-  ]) async {
+  Future<List<Join<L, R?>>> peekAll([Filter? filter]) async {
     final List<L> leftModels = await left.peekAll(filter);
     final List<Join<L, R?>> joins = [];
     for (L leftModel in leftModels) {
@@ -110,9 +110,7 @@ class _OneToOne<L, R> implements OneToOneAssociation<L, R> {
   }
 
   @override
-  Stream<List<Join<L, R?>>> pullAll([
-    Filter filter = const Filter.empty(),
-  ]) {
+  Stream<List<Join<L, R?>>> pullAll([Filter? filter]) {
     return OneToOneBatchMerge<L, R?>(
       left: left.pullAll(filter),
       map: (leftModel) => right.pull(on(leftModel)),
@@ -120,9 +118,9 @@ class _OneToOne<L, R> implements OneToOneAssociation<L, R> {
   }
 }
 
-class _OneToMany<L, R> implements OneToManyAssociation<L, R> {
-  final Readable<L> left;
-  final Readable<R> right;
+class _OneToMany<L, R> implements OneToManyAssociation<L, R, Reference> {
+  final Readable<L, Reference> left;
+  final Readable<R, Reference> right;
   final Filter Function(L) on;
 
   const _OneToMany({
@@ -140,9 +138,7 @@ class _OneToMany<L, R> implements OneToManyAssociation<L, R> {
   }
 
   @override
-  Future<List<Join<L, List<R>>>> peekAll([
-    Filter filter = const Filter.empty(),
-  ]) async {
+  Future<List<Join<L, List<R>>>> peekAll([Filter? filter]) async {
     final List<L> leftModels = await left.peekAll(filter);
     final List<List<R>> associatedModels = await Future.wait(
         leftModels.map((leftModel) => right.peekAll(on(leftModel))).toList());
@@ -165,9 +161,7 @@ class _OneToMany<L, R> implements OneToManyAssociation<L, R> {
   }
 
   @override
-  Stream<List<Join<L, List<R>>>> pullAll([
-    Filter filter = const Filter.empty(),
-  ]) {
+  Stream<List<Join<L, List<R>>>> pullAll([Filter? filter]) {
     return OneToOneBatchMerge<L, List<R>>(
       left: left.pullAll(filter),
       map: (leftModel) => right.pullAll(on(leftModel)),
@@ -175,9 +169,9 @@ class _OneToMany<L, R> implements OneToManyAssociation<L, R> {
   }
 }
 
-class _ManyToOne<L, R> implements ManyToOneAssociation<L, R> {
-  final Readable<L> left;
-  final Readable<R> right;
+class _ManyToOne<L, R> implements ManyToOneAssociation<L, R, Reference> {
+  final Readable<L, Reference> left;
+  final Readable<R, Reference> right;
   final String Function(L) on;
 
   const _ManyToOne({
@@ -196,9 +190,7 @@ class _ManyToOne<L, R> implements ManyToOneAssociation<L, R> {
   }
 
   @override
-  Future<List<Join<R, List<L>>>> peekAll([
-    Filter filter = const Filter.empty(),
-  ]) async {
+  Future<List<Join<R, List<L>>>> peekAll([Filter? filter]) async {
     final List<L> leftModels = await left.peekAll(filter);
     final Map<String, List<L>> groups = {};
     for (L leftModel in leftModels) {
@@ -228,9 +220,7 @@ class _ManyToOne<L, R> implements ManyToOneAssociation<L, R> {
   }
 
   @override
-  Stream<List<Join<R, List<L>>>> pullAll([
-    Filter filter = const Filter.empty(),
-  ]) {
+  Stream<List<Join<R, List<L>>>> pullAll([Filter? filter]) {
     return ManyToOneBatchMerge<R, L>(
       left: left.pullAll(filter),
       onLeft: (leftModel) => on(leftModel),
@@ -239,10 +229,11 @@ class _ManyToOne<L, R> implements ManyToOneAssociation<L, R> {
   }
 }
 
-class _ManyToMany<M, L, R> implements ManyToManyAssociation<M, L, R> {
-  final Readable<M> middle;
-  final Readable<L> left;
-  final Readable<R> right;
+class _ManyToMany<M, L, R>
+    implements ManyToManyAssociation<M, L, R, Reference> {
+  final Readable<M, Reference> middle;
+  final Readable<L, Reference> left;
+  final Readable<R, Reference> right;
   final String Function(M) onLeft;
   final String Function(M) onRight;
 
@@ -282,9 +273,7 @@ class _ManyToMany<M, L, R> implements ManyToManyAssociation<M, L, R> {
   }
 
   @override
-  Future<List<Join<M, (L?, R?)>>> peekAll([
-    Filter filter = const Filter.empty(),
-  ]) async {
+  Future<List<Join<M, (L?, R?)>>> peekAll([Filter? filter]) async {
     final List<M> middleModels = await middle.peekAll(filter);
     final List<String> leftIds = middleModels.map(onLeft).toSet().toList();
     final List<String> rightIds = middleModels.map(onRight).toSet().toList();
@@ -316,9 +305,7 @@ class _ManyToMany<M, L, R> implements ManyToManyAssociation<M, L, R> {
   }
 
   @override
-  Stream<List<Join<M, (L?, R?)>>> pullAll([
-    Filter filter = const Filter.empty(),
-  ]) {
+  Stream<List<Join<M, (L?, R?)>>> pullAll([Filter? filter]) {
     return ManyToManyBatchMerge<M, L?, R?>(
       left: middle.pullAll(filter),
       onLeft: (model) => left.pull(onLeft(model)),

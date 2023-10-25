@@ -21,12 +21,12 @@ import 'package:firebase_auth/firebase_auth.dart' as fa;
 import 'package:firebase_database/firebase_database.dart' as fd;
 import 'package:http/http.dart' as http;
 
+import 'filter.dart';
 import 'firebase_instance.dart';
 import 'offline.dart';
-import 'query.dart';
 
 /// A [BaseReference] that uses Firebase Realtime Database as engine.
-class Reference implements BaseReference {
+class Reference implements BaseReference<Reference> {
   final FirebaseInstance instance;
   final fd.DatabaseReference _ref;
 
@@ -61,8 +61,8 @@ class Reference implements BaseReference {
     Entity<Data, Model> entity,
     Filter filter,
   ) {
-    final Query query = filter.accept(Query(_refOf(entity)));
-    return query.query.get().then((snapshot) {
+    final fd.Query query = filter.accept(_refOf(entity));
+    return query.get().then((snapshot) {
       return {
         for (fd.DataSnapshot child in snapshot.children)
           child.key as String: child.value as Object,
@@ -158,8 +158,8 @@ class Reference implements BaseReference {
     Entity<Data, Model> entity,
     Filter filter,
   ) {
-    final Query query = filter.accept(Query(_refOf(entity)));
-    return _onValueOf(query.query).map((snapshot) {
+    final fd.Query query = filter.accept(_refOf(entity));
+    return _onValueOf(query).map((snapshot) {
       return {
         for (fd.DataSnapshot child in snapshot.children)
           child.key as String: child.value as Object,

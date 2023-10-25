@@ -19,7 +19,7 @@ import 'entity.dart';
 import 'filter.dart';
 
 /// Represents how to operate rows within a given database engine.
-abstract class BaseReference {
+abstract class BaseReference<R extends BaseReference<R>> {
   /// Defines how the database engine reads a single model, given its [id].
   Future<Model?> peek<Data, Model extends Data>(
     Entity<Data, Model> entity,
@@ -36,14 +36,14 @@ abstract class BaseReference {
   /// Defines how the database engine reads multiple models matching a [filter].
   Future<List<Model>> peekAll<Data, Model extends Data>(
     Entity<Data, Model> entity,
-    Filter filter,
+    covariant BaseFilter<R>? filter,
   );
 
   /// Defines how the database engine listen to the changes of multiple models
   /// matching a [filter].
   Stream<List<Model>> pullAll<Data, Model extends Data>(
     Entity<Data, Model> entity,
-    Filter filter,
+    covariant BaseFilter<R>? filter,
   );
 
   /// Defines how the database engine reads all the keys from the table.
@@ -78,7 +78,7 @@ abstract class BaseReference {
   /// Defines how the database engine deletes multiple models matching a [filter].
   Future<void> popAll<Data, Model extends Data>(
     Entity<Data, Model> entity,
-    Filter filter,
+    covariant BaseFilter<R>? filter,
   );
 
   /// Defines how the database engine updates a single model using [update],

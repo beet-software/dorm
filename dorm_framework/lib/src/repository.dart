@@ -51,11 +51,11 @@ abstract class SingleReadOperation<Model> {
 }
 
 /// Represents reading multiple models from the database engine.
-abstract class BatchReadOperation<Model> {
+abstract class BatchReadOperation<Model, Ref extends BaseReference<Ref>> {
   /// Selects all the models matching [filter] in this table.
   ///
   /// If there are no models, this method will return an empty list.
-  Future<List<Model>> peekAll([Filter filter = const Filter.empty()]);
+  Future<List<Model>> peekAll([covariant BaseFilter<Ref>? filter]);
 
   /// Listens for all the models in this table matching [filter] and their changes.
   ///
@@ -64,11 +64,11 @@ abstract class BatchReadOperation<Model> {
   /// whenever a change occurs on the query.
   ///
   /// If there are no models, this method will yield an empty list.
-  Stream<List<Model>> pullAll([Filter filter = const Filter.empty()]);
+  Stream<List<Model>> pullAll([covariant BaseFilter<Ref>? filter]);
 }
 
 /// Represents the operations available for a [Model] in a database.
-abstract class ModelRepository<Model> implements Readable<Model> {
+abstract class ModelRepository<Model, Ref extends BaseReference<Ref>> implements Readable<Model, Ref> {
   /// Selects all the ids from the models of this table.
   ///
   /// This method should retrieve *only* the ids:
@@ -130,7 +130,7 @@ abstract class ModelRepository<Model> implements Readable<Model> {
   ///
   /// If there are no rows matching [filter] in the table, this method will do
   /// nothing.
-  Future<void> popAll(Filter filter);
+  Future<void> popAll(BaseFilter<Ref> filter);
 
   /// Inserts a [model] into its respective table on the database engine.
   ///
@@ -195,8 +195,8 @@ abstract class ModelRepository<Model> implements Readable<Model> {
 }
 
 /// Represents creating models into the database engine.
-abstract class DataRepository<Data, Model extends Data>
-    implements ModelRepository<Model> {
+abstract class DataRepository<Data, Model extends Data, Ref extends BaseReference<Ref>>
+    implements ModelRepository<Model, Ref> {
   /// Convert a [data] into a model and inserts it into its respective table on
   /// the database engine.
   ///
@@ -216,15 +216,14 @@ abstract class DataRepository<Data, Model extends Data>
 }
 
 /// Represents the controller of the underlying database engine.
-class Repository<Data, Model extends Data>
-    implements DataRepository<Data, Model> {
-  final BaseReference _reference;
+class Repository<Data, Model extends Data, Ref extends BaseReference<Ref>>
+    implements DataRepository<Data, Model, Ref> {
+  final BaseReference<Ref> _reference;
   final Entity<Data, Model> _entity;
 
   /// Creates a repository by its attributes.
   const Repository({
-    required BaseReference reference,
-    required BaseRelationship relationship,
+    required BaseReference<Ref> reference,
     required Entity<Data, Model> entity,
   })  : _reference = reference,
         _entity = entity;
@@ -235,7 +234,7 @@ class Repository<Data, Model extends Data>
   }
 
   @override
-  Future<List<Model>> peekAll([Filter filter = const Filter.empty()]) {
+  Future<List<Model>> peekAll([covariant BaseFilter<Ref>? filter]) {
     return _reference.peekAll(_entity, filter);
   }
 
@@ -255,7 +254,7 @@ class Repository<Data, Model extends Data>
   }
 
   @override
-  Future<void> popAll(Filter filter) {
+  Future<void> popAll(covariant BaseFilter<Ref> filter) {
     return _reference.popAll(_entity, filter);
   }
 
@@ -265,7 +264,7 @@ class Repository<Data, Model extends Data>
   }
 
   @override
-  Stream<List<Model>> pullAll([Filter filter = const Filter.empty()]) {
+  Stream<List<Model>> pullAll([covariant BaseFilter<Ref>? filter]) {
     return _reference.pullAll(_entity, filter);
   }
 

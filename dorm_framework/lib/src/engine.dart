@@ -17,8 +17,8 @@
 import 'reference.dart';
 import 'relationship.dart';
 
-abstract class BaseEngine {
-  BaseReference createReference();
+abstract class BaseEngine<Ref extends BaseReference<Ref>> {
+  Ref createReference();
 
-  BaseRelationship createRelationship();
+  BaseRelationship<Ref> createRelationship();
 }

@@ -20,15 +20,15 @@ import 'package:dorm_framework/dorm_framework.dart';
 import 'reference.dart';
 import 'relationship.dart';
 
-class Engine implements BaseEngine {
+class Engine implements BaseEngine<Reference> {
   final FirebaseInstance instance;
   final String? path;
 
   const Engine(this.instance, {this.path});
 
   @override
-  BaseReference createReference() => Reference(instance, path);
+  Reference createReference() => Reference(instance, path);
 
   @override
-  BaseRelationship createRelationship() => const Relationship();
+  BaseRelationship<Reference> createRelationship() => const Relationship();
 }
