@@ -19,12 +19,12 @@ import 'package:dorm_framework/dorm_framework.dart';
 import 'reference.dart';
 import 'relationship.dart';
 
-class Engine implements BaseEngine {
+class Engine implements BaseEngine<Reference> {
   final Reference _reference = Reference();
 
   @override
-  BaseReference createReference() => _reference;
+  Reference createReference() => _reference;
 
   @override
-  BaseRelationship createRelationship() => const Relationship();
+  BaseRelationship<Reference> createRelationship() => const Relationship();
 }

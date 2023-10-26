@@ -20,7 +20,7 @@ import 'package:bloc/bloc.dart';
 import 'package:dorm_framework/dorm_framework.dart';
 import 'package:uuid/uuid.dart';
 
-import 'query.dart';
+import 'filter.dart';
 
 class _State {
   final Map<String, _EntityReference<Object, Object>> references;
@@ -136,7 +136,7 @@ class _EntityReference<Data, Model extends Data>
 }
 
 /// A [BaseReference] implementation backed by a [Bloc].
-class Reference extends Cubit<_State> implements BaseReference {
+class Reference extends Cubit<_State> implements BaseReference<Reference> {
   Reference() : super(const _State({}));
 
   _EntityReference<Data, Model> _access<Data, Model extends Data>(
@@ -167,9 +167,8 @@ class Reference extends Cubit<_State> implements BaseReference {
     Filter filter,
   ) async {
     final _EntityReference<Data, Model> bloc = _access(entity);
-    final Query query = filter.accept(const Query());
-    return query
-        .operator(bloc.state.models
+    final TableOperator operator = filter.accept((rows) => rows);
+    return operator(bloc.state.models
             .map((key, value) => MapEntry(key, entity.toJson(value))))
         .entries
         .map((entry) => entity.fromJson(entry.key, entry.value))
@@ -199,8 +198,8 @@ class Reference extends Cubit<_State> implements BaseReference {
     Filter filter,
   ) async {
     final _EntityReference<Data, Model> bloc = _access(entity);
-    final Query query = filter.accept(const Query());
-    bloc.popAll(query.operator);
+    final TableOperator operator = filter.accept((rows) => rows);
+    bloc.popAll(operator);
   }
 
   @override
@@ -227,9 +226,8 @@ class Reference extends Cubit<_State> implements BaseReference {
     Filter filter,
   ) {
     final _EntityReference<Data, Model> bloc = _access(entity);
-    final Query query = filter.accept(const Query());
-    return bloc.dataStream.map((models) => query
-        .operator(
+    final TableOperator operator = filter.accept((rows) => rows);
+    return bloc.dataStream.map((models) => operator(
             models.map((key, value) => MapEntry(key, entity.toJson(value))))
         .entries
         .map((entry) => entity.fromJson(entry.key, entry.value))

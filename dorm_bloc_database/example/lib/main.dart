@@ -6,6 +6,10 @@ import 'package:provider/provider.dart';
 
 import 'models.dart';
 
+class Dorm extends $Dorm<Reference> {
+  const Dorm(super.engine);
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 

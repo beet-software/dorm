@@ -18,4 +18,6 @@ library dorm_bloc_database;
 
 export 'package:bloc/bloc.dart';
 
+export 'src/filter.dart' show Filter;
 export 'src/engine.dart' show Engine;
+export 'src/reference.dart' show Reference;
