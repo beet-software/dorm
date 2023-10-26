@@ -8,6 +8,10 @@ import 'models.dart';
 
 const bool useDatabaseEmulator = true;
 
+class Dorm extends $Dorm<Reference> {
+  const Dorm(super.engine);
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Required for dORM, replace it with your Firebase Options

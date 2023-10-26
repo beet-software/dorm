@@ -112,12 +112,12 @@ extension UserProperties on User {
   }
 }
 
-class Dorm {
-  const Dorm(this._engine);
+class $Dorm<Ref extends BaseReference<Ref>> {
+  const $Dorm(this._engine);
 
-  final BaseEngine _engine;
+  final BaseEngine<Ref> _engine;
 
-  DatabaseEntity<UserData, User> get users => DatabaseEntity(
+  DatabaseEntity<UserData, User, Ref> get users => DatabaseEntity(
         const UserEntity(),
         engine: _engine,
       );
