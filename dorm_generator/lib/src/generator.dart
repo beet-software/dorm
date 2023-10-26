@@ -1173,7 +1173,7 @@ class OrmGenerator extends Generator {
       }).forEach((arg) => arg.accept(b));
 
       b.body.add(cb.Class((b) {
-        b.name = 'Dorm';
+        b.name = '\$Dorm';
         b.types.add(cb.TypeReference((b) {
           b.symbol = 'Ref';
           b.bound = cb.TypeReference((b) {

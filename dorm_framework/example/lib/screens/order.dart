@@ -6,6 +6,7 @@ import 'package:get_it/get_it.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:provider/provider.dart';
 
+import '../main.dart';
 import '../models.dart';
 import 'product_form.dart';
 

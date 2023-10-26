@@ -870,8 +870,8 @@ class UserReviewContent implements ReviewContent, _UserReviewContent {
   Map<String, Object?> toJson() => _$UserReviewContentToJson(this);
 }
 
-class Dorm<Ref extends BaseReference<Ref>> {
-  const Dorm(this._engine);
+class $Dorm<Ref extends BaseReference<Ref>> {
+  const $Dorm(this._engine);
 
   final BaseEngine<Ref> _engine;
 

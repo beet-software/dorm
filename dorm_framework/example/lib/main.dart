@@ -3,11 +3,11 @@ import 'package:dorm_firebase_database/dorm_firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 
-import 'models.dart' show Dorm;
+import 'models.dart' show $Dorm;
 import 'screens/users.dart';
 
-class $Dorm extends Dorm<Reference> {
-  const $Dorm(super.engine);
+class Dorm extends $Dorm<Reference> {
+  const Dorm(super.engine);
 }
 
 void main() async {
@@ -31,7 +31,7 @@ void main() async {
   FirebaseDatabase.instance.useDatabaseEmulator(host, port);
   const Engine engine = Engine(FirebaseInstance());
 
-  GetIt.instance.registerSingleton<Dorm>(const Dorm<Reference>(engine));
+  GetIt.instance.registerSingleton<Dorm>(const Dorm(engine));
   runApp(DevicePreview(
     defaultDevice: DeviceInfo.genericPhone(
       platform: TargetPlatform.android,

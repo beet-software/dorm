@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
 
+import '../main.dart';
 import '../models.dart';
 
 typedef _OrderView = List<Join<User, List<Join<CartItem, Product?>>>>;
