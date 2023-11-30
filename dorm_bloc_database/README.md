@@ -22,22 +22,37 @@ Using [`dorm_annotations`](https://pub.dev/packages/dorm_annotations) and
 dart run build_runner build
 ```
 
-This will create a `Dorm` class, which you can use to connect to this package.
+This will create a `$Dorm` class, which you can use to connect to this package.
 
 ## Usage
 
-Create a `Reference`:
+Import this package into your code:
 
 ```dart
+import 'package:dorm_bloc_database/dorm_bloc_database.dart';
+```
+
+Create a `Engine` instance:
+
+```dart
+import 'package:dorm_bloc_database/dorm_bloc_database.dart';
+
 void main() {
-  final Reference reference = Reference();
+  final Engine engine = Engine();
 }
 ```
 
-Then pass the reference created above to your generated `Dorm` class:
+Then pass the instance created above to your generated `$Dorm` class:
 
 ```dart
+import 'package:dorm_bloc_database/dorm_bloc_database.dart';
+
+class Dorm extends $Dorm<Reference> {
+  const Dorm(super.engine);
+}
+
 void main() {
-  final Dorm dorm = Dorm(reference);
+  final Engine engine = Engine();
+  final Dorm dorm = Dorm(engine);
 }
 ```
