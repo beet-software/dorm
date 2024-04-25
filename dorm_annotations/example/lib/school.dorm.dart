@@ -113,6 +113,7 @@ class School extends SchoolData implements _School {
 
   @override
   String get _q0 => [$normalizeText(name)].join('_');
+
   @override
   Map<String, Object?> toJson() {
     return {
@@ -152,6 +153,7 @@ class SchoolEntity implements Entity<SchoolData, School> {
     SchoolData data,
   ) =>
       model.copyWith(data);
+
   @override
   School fromJson(
     String id,
@@ -161,8 +163,10 @@ class SchoolEntity implements Entity<SchoolData, School> {
         id,
         json,
       );
+
   @override
   String identify(School model) => model.id;
+
   @override
   Map<String, Object?> toJson(SchoolData data) => data.toJson();
 }
@@ -244,11 +248,13 @@ class Student extends StudentData implements _Student {
 
   @override
   String get _q0 => [$normalizeText(name)].join('_');
+
   @override
   String get _q1 => [
         schoolId,
         $normalizeText(name),
       ].join('_');
+
   @override
   Map<String, Object?> toJson() {
     return {
@@ -293,6 +299,7 @@ class StudentEntity implements Entity<StudentData, Student> {
     StudentData data,
   ) =>
       model.copyWith(data);
+
   @override
   Student fromJson(
     String id,
@@ -302,8 +309,10 @@ class StudentEntity implements Entity<StudentData, Student> {
         id,
         json,
       );
+
   @override
   String identify(Student model) => model.id;
+
   @override
   Map<String, Object?> toJson(StudentData data) => data.toJson();
 }
@@ -398,6 +407,7 @@ class Teacher extends TeacherData implements _Teacher {
 
   @override
   String get _q0 => [ssn ?? ''].join('_');
+
   @override
   Map<String, Object?> toJson() {
     return {
@@ -443,6 +453,7 @@ class TeacherEntity implements Entity<TeacherData, Teacher> {
     TeacherData data,
   ) =>
       model.copyWith(data);
+
   @override
   Teacher fromJson(
     String id,
@@ -452,8 +463,10 @@ class TeacherEntity implements Entity<TeacherData, Teacher> {
         id,
         json,
       );
+
   @override
   String identify(Teacher model) => model.id;
+
   @override
   Map<String, Object?> toJson(TeacherData data) => data.toJson();
 }
@@ -544,6 +557,7 @@ class HistoryEntity implements Entity<HistoryData, History> {
     HistoryData data,
   ) =>
       model;
+
   @override
   History fromJson(
     String id,
@@ -553,8 +567,10 @@ class HistoryEntity implements Entity<HistoryData, History> {
         id,
         json,
       );
+
   @override
   String identify(History model) => model.id;
+
   @override
   Map<String, Object?> toJson(HistoryData data) => data.toJson();
 }
@@ -664,6 +680,7 @@ class TeachingEntity implements Entity<TeachingData, Teaching> {
     TeachingData data,
   ) =>
       model.copyWith(data);
+
   @override
   Teaching fromJson(
     String id,
@@ -673,8 +690,10 @@ class TeachingEntity implements Entity<TeachingData, Teaching> {
         id,
         json,
       );
+
   @override
   String identify(Teaching model) => model.id;
+
   @override
   Map<String, Object?> toJson(TeachingData data) => data.toJson();
 }
@@ -811,6 +830,7 @@ class ClassEntity implements Entity<ClassData, Class> {
     ClassData data,
   ) =>
       model.copyWith(data);
+
   @override
   Class fromJson(
     String id,
@@ -820,8 +840,10 @@ class ClassEntity implements Entity<ClassData, Class> {
         id,
         json,
       );
+
   @override
   String identify(Class model) => model.id;
+
   @override
   Map<String, Object?> toJson(ClassData data) => data.toJson();
 }
@@ -847,22 +869,27 @@ class Dorm {
         const SchoolEntity(),
         engine: _engine,
       );
+
   DatabaseEntity<StudentData, Student> get students => DatabaseEntity(
         const StudentEntity(),
         engine: _engine,
       );
+
   DatabaseEntity<TeacherData, Teacher> get teachers => DatabaseEntity(
         const TeacherEntity(),
         engine: _engine,
       );
+
   DatabaseEntity<HistoryData, History> get histories => DatabaseEntity(
         const HistoryEntity(),
         engine: _engine,
       );
+
   DatabaseEntity<TeachingData, Teaching> get teachings => DatabaseEntity(
         const TeachingEntity(),
         engine: _engine,
       );
+
   DatabaseEntity<ClassData, Class> get classes => DatabaseEntity(
         const ClassEntity(),
         engine: _engine,

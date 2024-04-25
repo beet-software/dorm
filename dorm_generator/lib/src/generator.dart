@@ -103,7 +103,7 @@ class PolymorphicDataNaming extends Naming<PolymorphicDataOrmNode> {
   String get enumFieldName =>
       (node.annotation.as as $Symbol?)?.name ?? _defaultEnumFieldName;
 
-  TagNaming get tag => TagNaming(node.tag);
+  TagNaming get tag => TagNaming(node.tag.value);
 }
 
 class TagNaming {
@@ -517,12 +517,14 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
   }
 }
 
-class PolymorphicArgs extends Args<void, PolymorphicDataOrmNode, TagNaming> {
+class PolymorphicArgs
+    extends Args<PolymorphicDataTag, PolymorphicDataOrmNode, TagNaming> {
   const PolymorphicArgs({
     required super.nodes,
+    required super.annotation,
     required super.fields,
     required super.naming,
-  }) : super(annotation: null);
+  });
 
   cb.Spec get _enumClass {
     return cb.Enum((b) {
@@ -541,7 +543,8 @@ class PolymorphicArgs extends Args<void, PolymorphicDataOrmNode, TagNaming> {
 
   cb.Spec get _baseClass {
     return cb.Class((b) {
-      b.abstract = true;
+      b.abstract = !annotation.isSealed;
+      b.sealed = annotation.isSealed;
       b.name = naming.modelName;
       b.implements.add(cb.Reference(naming.schemaName));
       b.constructors.add(cb.Constructor((b) {
@@ -1142,20 +1145,74 @@ class OrmGenerator extends Generator {
         return null;
       }).forEach((arg) => arg.accept(b));
 
-      final Map<String, Map<String, PolymorphicDataOrmNode>> groups = nodes
-          .filterValues((data) => data.annotation is PolymorphicDataOrmNode)
-          .mapValues(
-              (entry) => entry.value.annotation as PolymorphicDataOrmNode)
-          .entries
-          .groupBy((entry) => entry.value.tag)
-          .mapValues((entry) => Map.fromEntries(entry.value));
+      // Evaluates all classes annotated with `PolymorphicData` on *models.dart*,
+      // then groups by their supertype, then groups by their type.
+      //
+      // Assuming the *models.dart* file has the following contents,
+      //
+      // ```none
+      // abstract class _Shape {}
+      //
+      // @PolymorphicData(name: 'rectangle')
+      // abstract class _Rectangle implements _Shape {/* ... */}
+      //
+      // @PolymorphicData(name: 'circle', as: #circular)
+      // abstract class _Circle implements _Shape {/* ... */}
+      //
+      // sealed class _Brush {}
+      //
+      // @PolymorphicData(name: 'crayon', as: #crayon)
+      // abstract class _Crayon implements _Brush {/* ... */}
+      //
+      // @PolymorphicData(name: 'marker')
+      // abstract class _Marker implements _Brush {/* ... */}
+      // ```
+      //
+      // the following statement will evaluate a map equivalent to
+      //
+      // ```none
+      // {
+      //   '_Shape': {
+      //     '_Rectangle': PolymorphicDataOrmNode(
+      //       annotation: PolymorphicData(name: 'rectangle'),
+      //       tag: PolymorphicDataTag(value: '_Shape', isSealed: false),
+      //     ),
+      //     '_Circle': PolymorphicDataOrmNode(
+      //       annotation: PolymorphicData(name: 'circle', as: #circular),
+      //       tag: PolymorphicDataTag(value: '_Shape', isSealed: false),
+      //     ),
+      //   },
+      //   '_Brush': {
+      //     '_Crayon': PolymorphicDataOrmNode(
+      //       annotation: PolymorphicData(name: 'crayon', as: #crayon),
+      //       tag: PolymorphicDataTag(value: '_Brush', isSealed: true),
+      //     ),
+      //     '_Marker': PolymorphicDataOrmNode(
+      //       annotation: PolymorphicData(name: 'marker'),
+      //       tag: PolymorphicDataTag(value: '_Brush', isSealed: true),
+      //     ),
+      //   },
+      // }
+      // ```
+      final Map<PolymorphicDataTag, Map<String, PolymorphicDataOrmNode>>
+          groups = nodes
+              .filterValues((data) => data.annotation is PolymorphicDataOrmNode)
+              .mapValues(
+                  (entry) => entry.value.annotation as PolymorphicDataOrmNode)
+              .entries
+              .groupBy((entry) => entry.value.tag)
+              .mapValues((entry) => Map.fromEntries(entry.value));
 
-      for (MapEntry<String, Map<String, PolymorphicDataOrmNode>> entry
-          in groups.entries) {
+      for (MapEntry<PolymorphicDataTag,
+          Map<String, PolymorphicDataOrmNode>> entry in groups.entries) {
+        final PolymorphicDataTag tag = entry.key;
+        final Map<String, PolymorphicDataOrmNode> polymorphicNodes =
+            entry.value;
         final PolymorphicArgs args = PolymorphicArgs(
           nodes: nodes,
-          naming: TagNaming(entry.key),
-          fields: entry.value,
+          annotation: tag,
+          naming: TagNaming(tag.value),
+          fields: polymorphicNodes,
         );
         args.accept(b);
       }

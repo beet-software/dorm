@@ -16,7 +16,7 @@ SchoolAddress _$SchoolAddressFromJson(Map json) {
     active: json['ativo'] as bool,
     district: json['bairro'] as String,
     zipCode: json['cep'] as String?,
-    number: json['numero'] as int,
+    number: (json['numero'] as num).toInt(),
   );
 }
 

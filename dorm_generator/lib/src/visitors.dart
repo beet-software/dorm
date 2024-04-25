@@ -37,6 +37,39 @@ const Map<ClassNodeParser<Object>, List<FieldNodeParser<Field>>> _visiting = {
   DataParser(): [ModelFieldParser(), FieldParser()],
 };
 
+/// Calculates the structure of a *models.dart* file.
+///
+/// Assuming the *models.dart* file has the following contents,
+///
+/// ```none
+/// @Model(name: 'user', as: #users)
+/// abstract class _User {/* ... */}
+///
+/// @Model(name: 'post')
+/// abstract class _Post {/* ... */}
+///
+/// @Model(name: 'message', as: #messages)
+/// abstract class _Message {/* ... */}
+/// ```
+///
+/// calling this function will evaluate a map equivalent to
+///
+/// ```none
+/// {
+///   '_User': FieldedOrmNode<Model>(
+///     annotation: ModelOrmNode(annotation: Model(name: 'user', as: #users)),
+///     fields: {/* ... */},
+///   ),
+///   '_Post': FieldedOrmNode<Model>(
+///     annotation: ModelOrmNode(annotation: Model(name: 'post')),
+///     fields: {/* ... */},
+///   ),
+///   '_Message': FieldedOrmNode<Model>(
+///     annotation: ModelOrmNode(annotation: Model(name: 'message', as: #messages)),
+///     fields: {/* ... */},
+///   ),
+/// }
+/// ```
 Map<String, FieldedOrmNode<Object>> parseLibrary(LibraryReader reader) {
   final Map<String, FieldedOrmNode<Object>> nodes = {};
   for (ClassElement classElement in reader.classes) {
