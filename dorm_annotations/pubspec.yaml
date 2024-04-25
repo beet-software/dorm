@@ -7,6 +7,6 @@ environment:
   sdk: '>=3.0.5 <4.0.0'
 
 dependencies:
-  meta: ^1.7.0
-  lints: ^2.0.0
-  json_annotation: ^4.8.1
+  meta: ^1.14.0
+  lints: ^3.0.0
+  json_annotation: ^4.9.0
