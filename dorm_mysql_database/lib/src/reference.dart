@@ -183,8 +183,11 @@ class Reference implements BaseReference {
     Entity<Data, Model> entity,
     List<Model> models,
   ) {
-    // TODO
-    throw UnimplementedError();
+    return connection.transactional((connection) async {
+      for (Model model in models) {
+        await push<Data, Model>(entity, model, connection: connection);
+      }
+    });
   }
 
   @override
