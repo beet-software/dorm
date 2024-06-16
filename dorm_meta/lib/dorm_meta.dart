@@ -73,6 +73,7 @@ class RunConfig {
 
 Future<bool> execute(
   RunConfig config,
+  Directory rootDir,
   String dirName,
 ) async {
   final Directory tempDir;
@@ -84,12 +85,6 @@ Future<bool> execute(
   }
 
   final Glob dartGlob = Glob('**.dart');
-
-  final int pathLength = Platform.script.pathSegments.length;
-  final Directory rootDir = Directory(
-      p.joinAll(Platform.script.pathSegments.sublist(0, pathLength - 3)));
-  stdout.writeln('script located at ${Platform.script.path}');
-  stdout.writeln('root set at ${rootDir.path}');
 
   final File expectedLicenseFile = File(p.join(rootDir.path, 'LICENSE'));
   final File expectedChangelogFile = File(p.join(rootDir.path, 'CHANGELOG.md'));
@@ -210,9 +205,15 @@ void main(List<String> args) async {
     shouldWritePubspecSiblingDependenciesValues: args.contains('--outdated'),
   );
 
+  final int pathLength = Platform.script.pathSegments.length;
+  final Directory rootDir = Directory(
+    p.joinAll(Platform.script.pathSegments.sublist(0, pathLength - 3)),
+  );
+  _logger.info("root directory defined at ${rootDir.path}");
+
   bool hadErrors = false;
   for (String dirName in _packageNames) {
-    final bool ok = await execute(config, dirName);
+    final bool ok = await execute(config, rootDir, dirName);
     if (!ok) {
       hadErrors = true;
       continue;
