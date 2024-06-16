@@ -70,6 +70,17 @@ class RunConfig {
     required this.shouldWritePubspecVersionKey,
     required this.shouldWritePubspecSiblingDependenciesValues,
   });
+
+  @override
+  String toString() {
+    return 'RunConfig{'
+        'shouldWriteChangelogFile: $shouldWriteChangelogFile, '
+        'shouldWriteLicenseFile: $shouldWriteLicenseFile, '
+        'shouldWriteLicenseHeader: $shouldWriteLicenseHeader, '
+        'shouldWritePubspecVersionKey: $shouldWritePubspecVersionKey, '
+        'shouldWritePubspecSiblingDependenciesValues: $shouldWritePubspecSiblingDependenciesValues,'
+        '}';
+  }
 }
 
 Future<bool> execute(
@@ -287,6 +298,7 @@ void main(List<String> args) async {
     shouldWritePubspecSiblingDependenciesValues:
         results["pubspec-dependencies-values"] as bool,
   );
+  _logger.info("running command using $config");
 
   final int pathLength = Platform.script.pathSegments.length;
   final Directory rootDir = Directory(
@@ -295,6 +307,7 @@ void main(List<String> args) async {
   _logger.info("root directory defined at ${rootDir.path}");
 
   final String dirName = results["input"] as String;
+  _logger.info("running command for $dirName");
   final bool ok = await execute(config, rootDir, dirName);
   exit(ok ? 0 : 1);
 }
