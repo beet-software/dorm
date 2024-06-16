@@ -163,6 +163,9 @@ Future<bool> execute(
                   match != null) {
                 final String indent = match.group(1)!;
                 final String packageName = match.group(2)!;
+                _logger.info(
+                  "updating dependency $packageName's version to ${release.version}",
+                );
                 updatedLine = '$indent$packageName: ^${release.version}';
               } else {
                 updatedLine = line;
