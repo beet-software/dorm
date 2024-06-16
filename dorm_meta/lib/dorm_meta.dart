@@ -35,12 +35,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.""";
 
 enum PubspecSection { dependencies }
 
-const int _flagUpdateChangelog = 1;
-const int _flagUpdateLicense = 2;
-const int _flagUpdateLicenseHeader = 4;
-const int _flagUpdateRootVersion = 8;
-const int _flagUpdateDependenciesVersion = 16;
-
 final Logger _logger = Logger('dorm_meta');
 
 class RunConfig {
@@ -310,18 +304,6 @@ void main(List<String> args) async {
   _logger.info("running command for $dirName");
   final bool ok = await execute(config, rootDir, dirName);
   exit(ok ? 0 : 1);
-}
-
-Future<bool> checkLicenseFile(Directory dir) async {
-  final String expectedContents =
-      await File(p.join(dir.parent.path, 'LICENSE')).readAsString();
-  try {
-    final String actualContents =
-        await File(p.join(dir.path, 'LICENSE')).readAsString();
-    return expectedContents == actualContents;
-  } on PathNotFoundException {
-    return false;
-  }
 }
 
 Future<bool> checkLicenseHeader(File file) async {
