@@ -39,17 +39,36 @@ const int _flagUpdateLicenseHeader = 4;
 const int _flagUpdateRootVersion = 8;
 const int _flagUpdateDependenciesVersion = 16;
 
-extension _Flags on int {
-  bool flagAt(int index) => this >> index & 1 == 1;
+class RunConfig {
+  /// Whether to copy the root 'CHANGELOG.md' file to the subdirectory.
+  final bool shouldWriteChangelogFile;
+
+  /// Whether to copy the root 'LICENSE' file to the subdirectory;
+  final bool shouldWriteLicenseFile;
+
+  /// Whether to write the default license header to all the .dart files on the
+  /// subdirectory.
+  final bool shouldWriteLicenseHeader;
+
+  /// Whether to replace the `version` key on the subdirectory's 'pubspec.yaml'
+  /// file with the latest version defined on the root 'CHANGELOG.md' file.
+  final bool shouldWritePubspecVersionKey;
+
+  /// Whether to replace the values inside the `dependencies` section on the
+  /// subdirectory's 'pubspec.yaml' file with the latest version defined on the
+  /// root 'CHANGELOG.md' file, affecting only the dORM packages.
+  final bool shouldWritePubspecSiblingDependenciesValues;
+
+  const RunConfig({
+    required this.shouldWriteChangelogFile,
+    required this.shouldWriteLicenseFile,
+    required this.shouldWriteLicenseHeader,
+    required this.shouldWritePubspecVersionKey,
+    required this.shouldWritePubspecSiblingDependenciesValues,
+  });
 }
 
-Future<bool> execute(Directory tempDir, int flags) async {
-  final bool updateChangelog = flags.flagAt(0);
-  final bool updateLicense = flags.flagAt(1);
-  final bool updateLicenseHeader = flags.flagAt(2);
-  final bool updateRootVersion = flags.flagAt(3);
-  final bool updateChildrenVersion = flags.flagAt(4);
-
+Future<bool> execute(Directory tempDir, RunConfig config) async {
   final Glob dartGlob = Glob('**.dart');
 
   final int pathLength = Platform.script.pathSegments.length;
@@ -70,17 +89,18 @@ Future<bool> execute(Directory tempDir, int flags) async {
       continue;
     }
 
-    if (updateLicense) {
+    if (config.shouldWriteLicenseFile) {
       final File actualLicenseFile = File(p.join(dir.path, 'LICENSE'));
       await expectedLicenseFile.copy(actualLicenseFile.path);
     }
 
     final File actualChangelogFile = File(p.join(dir.path, 'CHANGELOG.md'));
-    if (updateChangelog) {
+    if (config.shouldWriteChangelogFile) {
       await expectedChangelogFile.copy(actualChangelogFile.path);
     }
 
-    if (updateRootVersion || updateChildrenVersion) {
+    if (config.shouldWritePubspecVersionKey ||
+        config.shouldWritePubspecSiblingDependenciesValues) {
       final Changelog changelog =
           parseChangelog(await actualChangelogFile.readAsString());
       final Release release = changelog.history().last;
@@ -102,7 +122,8 @@ Future<bool> execute(Directory tempDir, int flags) async {
                   section = PubspecSection.dependencies;
                 }
 
-                if (updateRootVersion && line.startsWith('version:')) {
+                if (config.shouldWritePubspecVersionKey &&
+                    line.startsWith('version:')) {
                   updatedLine = 'version: ${release.version}';
                 } else {
                   updatedLine = line;
@@ -118,7 +139,8 @@ Future<bool> execute(Directory tempDir, int flags) async {
                     RegExp(r'(\s+)(' + _packageNames.join('|') + '):')
                         .matchAsPrefix(line);
 
-                if (updateChildrenVersion && match != null) {
+                if (config.shouldWritePubspecSiblingDependenciesValues &&
+                    match != null) {
                   final String indent = match.group(1)!;
                   final String packageName = match.group(2)!;
                   updatedLine = '$indent$packageName: ^${release.version}';
@@ -136,7 +158,7 @@ Future<bool> execute(Directory tempDir, int flags) async {
       }
     }
 
-    if (updateLicenseHeader) {
+    if (config.shouldWriteLicenseHeader) {
       final Directory libDir = Directory(p.join(dir.path, 'lib'));
       await for (FileSystemEntity dartFile
           in dartGlob.list(root: libDir.path)) {
@@ -170,19 +192,18 @@ Future<bool> execute(Directory tempDir, int flags) async {
 }
 
 void main(List<String> args) async {
-  int flags = 0;
-  flags |= _flagUpdateChangelog;
-  flags |= _flagUpdateLicense;
-  flags |= _flagUpdateLicenseHeader;
-  flags |= _flagUpdateRootVersion;
-  if (args.contains('--outdated')) {
-    flags |= _flagUpdateDependenciesVersion;
-  }
+  final RunConfig config = RunConfig(
+    shouldWriteChangelogFile: true,
+    shouldWriteLicenseFile: true,
+    shouldWriteLicenseHeader: true,
+    shouldWritePubspecVersionKey: true,
+    shouldWritePubspecSiblingDependenciesValues: args.contains('--outdated'),
+  );
 
   final Directory tempDir = await Directory.systemTemp.createTemp();
   final bool hadErrors;
   try {
-    hadErrors = await execute(tempDir, flags);
+    hadErrors = await execute(tempDir, config);
   } finally {
     await tempDir.delete(recursive: true);
   }
