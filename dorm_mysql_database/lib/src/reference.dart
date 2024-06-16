@@ -121,14 +121,13 @@ class Reference implements BaseReference {
     Entity<Data, Model> entity,
     Iterable<String> ids,
   ) {
-    final StringBuffer buffer = StringBuffer();
     final List<String> keys = ids.toList();
-    for (int i = 0; i < keys.length; i++) {
-      buffer
-        ..write('DELETE FROM ')
-        ..write(entity.tableName)
-        ..writeln(' WHERE id = :id$i;');
-    }
+    final StringBuffer buffer = StringBuffer()
+      ..write('DELETE FROM ')
+      ..write(entity.tableName)
+      ..write(' WHERE id IN (')
+      ..writeAll(List.generate(keys.length, (i) => ':id$i'), ', ')
+      ..write(');');
     return connection.execute('$buffer', {
       for (int i = 0; i < keys.length; i++) 'id$i': keys[i],
     });
