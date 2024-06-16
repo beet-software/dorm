@@ -508,4 +508,52 @@ void main() async {
       expect(model?.value, null);
     });
   });
+  group('filtering', () {
+    group('empty', () {
+      setUp(() async {
+        await reference.pushAll(entity, [
+          Model(id: 'abcdef', value: 2),
+          Model(id: 'ghijkl', value: 4),
+          Model(id: 'mnopqr', value: 8),
+        ]);
+      });
+      test('peekAll', () async {
+        final List<Model> models =
+            await reference.peekAll(entity, Filter.empty());
+        expect(models.length, 3);
+      });
+      test('pullAll', () async {
+        final List<Model> models =
+            await reference.pullAll(entity, Filter.empty()).first;
+        expect(models.length, 3);
+      });
+    });
+    group('value', () {
+      setUp(() async {
+        await reference.pushAll(entity, [
+          Model(id: 'abcdef', value: 2),
+          Model(id: 'ghijkl', value: 4),
+          Model(id: 'mnopqr', value: 8),
+        ]);
+      });
+      test('peekAll', () async {
+        List<Model> models;
+        models = await reference.peekAll(entity, Filter.value(0, key: 'value'));
+        expect(models.length, 0);
+        models = await reference.peekAll(entity, Filter.value(4, key: 'value'));
+        expect(models.length, 1);
+      });
+      test('pullAll', () async {
+        List<Model> models;
+        models = await reference
+            .pullAll(entity, Filter.value(0, key: 'value'))
+            .first;
+        expect(models.length, 0);
+        models = await reference
+            .pullAll(entity, Filter.value(4, key: 'value'))
+            .first;
+        expect(models.length, 1);
+      });
+    });
+  });
 }
