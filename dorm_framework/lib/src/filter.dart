@@ -216,5 +216,7 @@ class _LimitFilter extends Filter {
   const _LimitFilter(this.filter, {required this.count}) : super._();
 
   @override
-  T accept<T>(BaseQuery<T> query) => query.limit(count);
+  T accept<T>(BaseQuery<T> query) {
+    return (filter.accept(query) as BaseQuery<T>).limit(count);
+  }
 }
