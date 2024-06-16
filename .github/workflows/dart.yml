@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        pkg: [dorm_framework, dorm_annotations, dorm_generator, dorm_firebase_database, dorm_bloc_database]
+        pkg: [dorm_framework, dorm_annotations]
     steps:
       - uses: actions/checkout@v3
       - uses: subosito/flutter-action@v2
@@ -29,8 +29,13 @@ jobs:
         working-directory: ./${{ matrix.pkg }}
         run: dart analyze
 
+      - name: Configure dorm_meta
+        run: dart pub get --directory dorm_meta
+
+      - name: Prepare packages for publishing
+        run: dart run dorm_meta/lib/dorm_meta.dart -i ${{ matrix.pkg }}
+
       - name: Publish to pub.dev
-        if: ${{ matrix.pkg == 'dorm_framework' || matrix.pkg == 'dorm_annotations' }}
         uses: k-paxian/dart-package-publisher@v1.6
         with:
           accessToken: ${{ secrets.OAUTH_ACCESS_TOKEN }}
@@ -40,36 +45,25 @@ jobs:
           skipTests: true
           suppressBuildRunner: true
 
-  update-children:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - uses: actions/checkout@v3
-      - uses: subosito/flutter-action@v2
-
-      - name: Install dependencies
-        working-directory: ./dorm_meta
-        run: dart pub get
-
-      - name: Update outdated changes
-        run: dart run dorm_meta/lib/dorm_meta.dart --outdated
-
-      - name: Add and commit outdated changes
-        uses: EndBug/add-and-commit@v9.1.3
-        with:
-          author_name: Enzo Santos
-          author_email: enzosantos29@hotmail.com
-          message: "[skip ci] Update outdated global versioning state"
-          push: true
-
   publish-children:
     runs-on: ubuntu-latest
-    needs: update-children
+    needs: build
     strategy:
       matrix:
         pkg: [dorm_generator, dorm_firebase_database, dorm_bloc_database]
     steps:
       - uses: actions/checkout@v3
+      - uses: subosito/flutter-action@v2
+
+      - name: Install dependencies
+        working-directory: ./${{ matrix.pkg }}
+        run: dart pub get
+
+      - name: Configure dorm_meta
+        run: dart pub get --directory dorm_meta
+
+      - name: Prepare packages for publishing
+        run: dart run dorm_meta/lib/dorm_meta.dart -i ${{ matrix.pkg }} --pubspec-dependencies-values
 
       - name: Dart and Flutter Package Publisher
         uses: k-paxian/dart-package-publisher@v1.6

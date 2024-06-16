@@ -41,13 +41,14 @@ dev_dependencies:
       ref: main
 
   # The dependencies below are not required for dORM to work
-  flutter_lints: ^2.0.0
+  flutter_lints: ^3.0.2
 
 flutter:
   uses-material-design: true
 
 # This section should be removed in production
 dependency_overrides:
+  meta: 1.12.0
   dorm_framework:
     path: ../../dorm_framework
   dorm_generator:
