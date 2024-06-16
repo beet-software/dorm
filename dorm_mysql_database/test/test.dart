@@ -54,6 +54,53 @@ class IntegerEntity implements Entity<IntegerData, Integer> {
   Map<String, Object?> toJson(IntegerData data) => {'value': data.value};
 }
 
+class DateData {
+  final DateTime value;
+
+  const DateData({required this.value});
+}
+
+class Date extends DateData {
+  final String id;
+
+  const Date({required this.id, required super.value});
+}
+
+class DateDependency extends Dependency<DateData> {
+  const DateDependency() : super.strong();
+}
+
+class DateEntity implements Entity<DateData, Date> {
+  const DateEntity();
+
+  @override
+  Date convert(Date model, DateData data) {
+    return Date(id: model.id, value: data.value);
+  }
+
+  @override
+  Date fromData(
+    covariant Dependency<DateData> dependency,
+    String id,
+    DateData data,
+  ) {
+    return Date(id: id, value: data.value);
+  }
+
+  @override
+  Date fromJson(String id, Map data) =>
+      Date(id: id, value: DateTime.parse(data['value']));
+
+  @override
+  String identify(Date model) => model.id;
+
+  @override
+  final String tableName = 'Dates';
+
+  @override
+  Map<String, Object?> toJson(DateData data) => {'value': data.value};
+}
+
 void main() async {
   final DotEnv env = DotEnv();
   env.load();
@@ -63,6 +110,11 @@ void main() async {
   // CREATE TABLE IF NOT EXISTS Models (
   //   id CHAR(36) NOT NULL,
   //   value INTEGER NOT NULL,
+  //   PRIMARY KEY (id)
+  // );
+  // CREATE TABLE IF NOT EXISTS Dates (
+  //   id CHAR(36) NOT NULL,
+  //   value DATETIME NOT NULL,
   //   PRIMARY KEY (id)
   // );
   // ```
@@ -77,10 +129,12 @@ void main() async {
   final Engine engine = Engine(connection);
   final BaseReference reference = engine.createReference();
   const IntegerEntity entity = IntegerEntity();
+  const DateEntity dateEntity = DateEntity();
   final RegExp uuidRegExp = RegExp(
       r'^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$');
   setUp(() async {
     await connection.execute("DELETE FROM Models;");
+    await connection.execute("DELETE FROM Dates;");
   });
 
   group('querying', () {
@@ -651,6 +705,136 @@ void main() async {
         final List<Integer> models =
             await reference.peekAll(entity, Filter.empty());
         expect(models.length, 3);
+      });
+    });
+    group('date', () {
+      setUp(() async {
+        await reference.pushAll(dateEntity, [
+          Date(id: 'abc', value: DateTime(2023, 6, 15)),
+          Date(id: 'def', value: DateTime(2024, 3, 15)),
+          Date(id: 'ghi', value: DateTime(2024, 9, 15)),
+          Date(id: 'jkl', value: DateTime(2024, 9, 30)),
+          Date(id: 'mno', value: DateTime(2024, 9, 30, 15)),
+          Date(id: 'pqr', value: DateTime(2024, 9, 30, 15, 20)),
+          Date(id: 'stu', value: DateTime(2024, 9, 30, 15, 20, 25)),
+          Date(id: 'vwx', value: DateTime(2024, 9, 30, 15, 20, 25, 35)),
+        ]);
+      });
+      test('peekAll', () async {
+        List<Date> models;
+        models = await reference.peekAll(
+          dateEntity,
+          Filter.date(
+            DateTime(2023),
+            key: 'value',
+            unit: DateFilterUnit.year,
+          ),
+        );
+        expect(models.length, 1);
+        models = await reference.peekAll(
+          dateEntity,
+          Filter.date(
+            DateTime(2024),
+            key: 'value',
+            unit: DateFilterUnit.year,
+          ),
+        );
+        expect(models.length, 7);
+
+        models = await reference.peekAll(
+          dateEntity,
+          Filter.date(
+            DateTime(2024, 3),
+            key: 'value',
+            unit: DateFilterUnit.month,
+          ),
+        );
+        expect(models.length, 1);
+        models = await reference.peekAll(
+          dateEntity,
+          Filter.date(
+            DateTime(2024, 9),
+            key: 'value',
+            unit: DateFilterUnit.month,
+          ),
+        );
+        expect(models.length, 6);
+
+        models = await reference.peekAll(
+          dateEntity,
+          Filter.date(
+            DateTime(2024, 9, 15),
+            key: 'value',
+            unit: DateFilterUnit.day,
+          ),
+        );
+        expect(models.length, 1);
+        models = await reference.peekAll(
+          dateEntity,
+          Filter.date(
+            DateTime(2024, 9, 30),
+            key: 'value',
+            unit: DateFilterUnit.day,
+          ),
+        );
+        expect(models.length, 5);
+
+        models = await reference.peekAll(
+          dateEntity,
+          Filter.date(
+            DateTime(2024, 9, 30),
+            key: 'value',
+            unit: DateFilterUnit.hour,
+          ),
+        );
+        expect(models.length, 1);
+        models = await reference.peekAll(
+          dateEntity,
+          Filter.date(
+            DateTime(2024, 9, 30, 15),
+            key: 'value',
+            unit: DateFilterUnit.hour,
+          ),
+        );
+        expect(models.length, 4);
+
+        models = await reference.peekAll(
+          dateEntity,
+          Filter.date(
+            DateTime(2024, 9, 30, 15),
+            key: 'value',
+            unit: DateFilterUnit.minute,
+          ),
+        );
+        expect(models.length, 1);
+        models = await reference.peekAll(
+          dateEntity,
+          Filter.date(
+            DateTime(2024, 9, 30, 15, 20),
+            key: 'value',
+            unit: DateFilterUnit.minute,
+          ),
+        );
+        expect(models.length, 3);
+
+        models = await reference.peekAll(
+          dateEntity,
+          Filter.date(
+            DateTime(2024, 9, 30, 15, 20),
+            key: 'value',
+            unit: DateFilterUnit.second,
+          ),
+        );
+        expect(models.length, 1);
+        models = await reference.peekAll(
+          dateEntity,
+          Filter.date(
+            DateTime(2024, 9, 30, 15, 20, 25),
+            key: 'value',
+            unit: DateFilterUnit.second,
+          ),
+        );
+        expect(models.length, 2);
       });
     });
   });
