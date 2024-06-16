@@ -180,13 +180,23 @@ class PolymorphicDataParser extends ClassNodeParser<PolymorphicData> {
     PolymorphicData annotation,
     ClassElement element,
   ) {
-    final String supertypeName = element.allSupertypes
-        .singleWhere((type) => !type.isDartCoreObject)
-        .getDisplayString(withNullability: false);
+    final InterfaceType supertypeType =
+        element.allSupertypes.singleWhere((type) => !type.isDartCoreObject);
+
+    final bool isSealed;
+    final InterfaceElement superTypeElement = supertypeType.element;
+    if (superTypeElement is ClassElement) {
+      isSealed = superTypeElement.isSealed;
+    } else {
+      isSealed = false;
+    }
 
     return PolymorphicDataOrmNode(
       annotation: annotation,
-      tag: supertypeName,
+      tag: PolymorphicDataTag(
+        value: supertypeType.getDisplayString(withNullability: false),
+        isSealed: isSealed,
+      ),
     );
   }
 }
@@ -238,9 +248,7 @@ class QueryFieldParser extends FieldNodeParser<QueryField> {
         final ConstantReader reader = ConstantReader(obj);
         return QueryToken(
           $Symbol(reader: reader.read('field')),
-          reader.read('type').isNull
-              ? null
-              : reader.read('type').enumValueFrom(QueryType.values),
+          reader.read('type').enumValueFrom(QueryType.values),
         );
       }).toList(),
       joinBy: reader.read('joinBy').stringValue,

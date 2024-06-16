@@ -45,8 +45,29 @@ class ModelOrmNode extends ClassOrmNode<Model> {
   });
 }
 
+class PolymorphicDataTag {
+  final String value;
+  final bool isSealed;
+
+  const PolymorphicDataTag({
+    required this.value,
+    required this.isSealed,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PolymorphicDataTag &&
+          runtimeType == other.runtimeType &&
+          value == other.value &&
+          isSealed == other.isSealed;
+
+  @override
+  int get hashCode => value.hashCode ^ isSealed.hashCode;
+}
+
 class PolymorphicDataOrmNode extends ClassOrmNode<PolymorphicData> {
-  final String tag;
+  final PolymorphicDataTag tag;
 
   const PolymorphicDataOrmNode({
     required super.annotation,

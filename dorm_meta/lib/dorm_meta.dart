@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:args/args.dart';
 import 'package:change/change.dart';
 import 'package:glob/glob.dart';
 import 'package:glob/list_local_fs.dart';
+import 'package:logging/logging.dart';
 import 'package:path/path.dart' as p;
 import 'package:rxdart/rxdart.dart';
 
@@ -33,172 +35,277 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.""";
 
 enum PubspecSection { dependencies }
 
-const int _flagUpdateChangelog = 1;
-const int _flagUpdateLicense = 2;
-const int _flagUpdateLicenseHeader = 4;
-const int _flagUpdateRootVersion = 8;
-const int _flagUpdateDependenciesVersion = 16;
+final Logger _logger = Logger('dorm_meta');
 
-extension _Flags on int {
-  bool flagAt(int index) => this >> index & 1 == 1;
+class RunConfig {
+  /// Whether to copy the root 'CHANGELOG.md' file to the subdirectory.
+  final bool shouldWriteChangelogFile;
+
+  /// Whether to copy the root 'LICENSE' file to the subdirectory;
+  final bool shouldWriteLicenseFile;
+
+  /// Whether to write the default license header to all the .dart files on the
+  /// subdirectory.
+  final bool shouldWriteLicenseHeader;
+
+  /// Whether to replace the `version` key on the subdirectory's 'pubspec.yaml'
+  /// file with the latest version defined on the root 'CHANGELOG.md' file.
+  final bool shouldWritePubspecVersionKey;
+
+  /// Whether to replace the values inside the `dependencies` section on the
+  /// subdirectory's 'pubspec.yaml' file with the latest version defined on the
+  /// root 'CHANGELOG.md' file, affecting only the dORM packages.
+  final bool shouldWritePubspecSiblingDependenciesValues;
+
+  const RunConfig({
+    required this.shouldWriteChangelogFile,
+    required this.shouldWriteLicenseFile,
+    required this.shouldWriteLicenseHeader,
+    required this.shouldWritePubspecVersionKey,
+    required this.shouldWritePubspecSiblingDependenciesValues,
+  });
+
+  @override
+  String toString() {
+    return 'RunConfig{'
+        'shouldWriteChangelogFile: $shouldWriteChangelogFile, '
+        'shouldWriteLicenseFile: $shouldWriteLicenseFile, '
+        'shouldWriteLicenseHeader: $shouldWriteLicenseHeader, '
+        'shouldWritePubspecVersionKey: $shouldWritePubspecVersionKey, '
+        'shouldWritePubspecSiblingDependenciesValues: $shouldWritePubspecSiblingDependenciesValues,'
+        '}';
+  }
 }
 
-Future<bool> execute(Directory tempDir, int flags) async {
-  final bool updateChangelog = flags.flagAt(0);
-  final bool updateLicense = flags.flagAt(1);
-  final bool updateLicenseHeader = flags.flagAt(2);
-  final bool updateRootVersion = flags.flagAt(3);
-  final bool updateChildrenVersion = flags.flagAt(4);
+Future<bool> execute(
+  RunConfig config,
+  Directory rootDir,
+  String dirName,
+) async {
+  final Directory tempDir;
+  try {
+    tempDir = await Directory.systemTemp.createTemp();
+  } catch (e, s) {
+    _logger.severe("could not create temporary directory", e, s);
+    return false;
+  }
 
   final Glob dartGlob = Glob('**.dart');
-
-  final int pathLength = Platform.script.pathSegments.length;
-  final Directory rootDir = Directory(
-      p.joinAll(Platform.script.pathSegments.sublist(0, pathLength - 3)));
-  stdout.writeln('script located at ${Platform.script.path}');
-  stdout.writeln('root set at ${rootDir.path}');
 
   final File expectedLicenseFile = File(p.join(rootDir.path, 'LICENSE'));
   final File expectedChangelogFile = File(p.join(rootDir.path, 'CHANGELOG.md'));
 
-  bool hasErrors = false;
-  for (String dirName in _packageNames) {
-    final Directory dir = Directory(p.join(rootDir.path, dirName));
-    if (!await dir.exists()) {
-      stderr.writeln('package $dirName does not exist');
-      hasErrors = true;
-      continue;
-    }
+  final Directory dir = Directory(p.join(rootDir.path, dirName));
+  if (!await dir.exists()) {
+    _logger.severe("subdirectory ${dir.path} does not exist");
+    return false;
+  }
 
-    if (updateLicense) {
-      final File actualLicenseFile = File(p.join(dir.path, 'LICENSE'));
+  if (config.shouldWriteLicenseFile) {
+    _logger.info("writing license file");
+    final File actualLicenseFile = File(p.join(dir.path, 'LICENSE'));
+    try {
       await expectedLicenseFile.copy(actualLicenseFile.path);
+    } catch (e, s) {
+      _logger.severe("could not create LICENSE file", e, s);
+      return false;
     }
+  }
 
-    final File actualChangelogFile = File(p.join(dir.path, 'CHANGELOG.md'));
-    if (updateChangelog) {
+  final File actualChangelogFile = File(p.join(dir.path, 'CHANGELOG.md'));
+  if (config.shouldWriteChangelogFile) {
+    _logger.info("writing changelog file");
+    try {
       await expectedChangelogFile.copy(actualChangelogFile.path);
+    } catch (e, s) {
+      _logger.severe("could not create LICENSE file", e, s);
+      return false;
     }
+  }
 
-    if (updateRootVersion || updateChildrenVersion) {
-      final Changelog changelog =
-          parseChangelog(await actualChangelogFile.readAsString());
-      final Release release = changelog.history().last;
+  if (config.shouldWritePubspecVersionKey ||
+      config.shouldWritePubspecSiblingDependenciesValues) {
+    _logger.info("updating pubspec file");
+    final Changelog changelog =
+        parseChangelog(await actualChangelogFile.readAsString());
+    final Release release = changelog.history().last;
 
-      final File newPubspecFile = File(p.join(tempDir.path, 'pubspec.yaml'));
-      final File actualPubspecFile = File(p.join(dir.path, 'pubspec.yaml'));
-      try {
-        PubspecSection? section;
-        final IOSink sink = newPubspecFile.openWrite();
-        await for (String line in actualPubspecFile
-            .openRead()
-            .transform(utf8.decoder)
-            .transform(const LineSplitter())) {
-          final String updatedLine;
-          switch (section) {
-            case null:
-              {
-                if (line.startsWith('dependencies:')) {
-                  section = PubspecSection.dependencies;
-                }
-
-                if (updateRootVersion && line.startsWith('version:')) {
-                  updatedLine = 'version: ${release.version}';
-                } else {
-                  updatedLine = line;
-                }
+    final File newPubspecFile = File(p.join(tempDir.path, 'pubspec.yaml'));
+    final File actualPubspecFile = File(p.join(dir.path, 'pubspec.yaml'));
+    try {
+      PubspecSection? section;
+      final IOSink sink = newPubspecFile.openWrite();
+      await for (String line in actualPubspecFile
+          .openRead()
+          .transform(utf8.decoder)
+          .transform(const LineSplitter())) {
+        final String updatedLine;
+        switch (section) {
+          case null:
+            {
+              if (line.startsWith('dependencies:')) {
+                section = PubspecSection.dependencies;
               }
-            case PubspecSection.dependencies:
-              {
-                if (line.startsWith(RegExp(r'[a-z]'))) {
-                  section = null;
-                }
-                final Match? match =
-                    // ignore: prefer_interpolation_to_compose_strings
-                    RegExp(r'(\s+)(' + _packageNames.join('|') + '):')
-                        .matchAsPrefix(line);
 
-                if (updateChildrenVersion && match != null) {
-                  final String indent = match.group(1)!;
-                  final String packageName = match.group(2)!;
-                  updatedLine = '$indent$packageName: ^${release.version}';
-                } else {
-                  updatedLine = line;
-                }
+              if (config.shouldWritePubspecVersionKey &&
+                  line.startsWith('version:')) {
+                _logger.info("updating package version to ${release.version}");
+                updatedLine = 'version: ${release.version}';
+              } else {
+                updatedLine = line;
               }
-          }
-          sink.writeln(updatedLine);
+            }
+          case PubspecSection.dependencies:
+            {
+              if (line.startsWith(RegExp(r'[a-z]'))) {
+                section = null;
+              }
+              final Match? match =
+                  // ignore: prefer_interpolation_to_compose_strings
+                  RegExp(r'(\s+)(' + _packageNames.join('|') + '):')
+                      .matchAsPrefix(line);
+
+              if (config.shouldWritePubspecSiblingDependenciesValues &&
+                  match != null) {
+                final String indent = match.group(1)!;
+                final String packageName = match.group(2)!;
+                _logger.info(
+                  "updating dependency $packageName's version to ${release.version}",
+                );
+                updatedLine = '$indent$packageName: ^${release.version}';
+              } else {
+                updatedLine = line;
+              }
+            }
         }
-        await sink.close();
+        sink.writeln(updatedLine);
+      }
+      await sink.close();
+      try {
         await newPubspecFile.copy(actualPubspecFile.path);
-      } finally {
+      } catch (e, s) {
+        _logger.severe("could not update pubspec file", e, s);
+        return false;
+      }
+    } finally {
+      try {
         await newPubspecFile.delete(recursive: true);
+      } catch (e, s) {
+        _logger.warning("could not delete temporary pubspec file", e, s);
       }
     }
+  }
 
-    if (updateLicenseHeader) {
-      final Directory libDir = Directory(p.join(dir.path, 'lib'));
-      await for (FileSystemEntity dartFile
-          in dartGlob.list(root: libDir.path)) {
-        if (dartFile is! File) continue;
+  if (config.shouldWriteLicenseHeader) {
+    _logger.info("updating license headers");
 
-        final bool hasLicenseHeader = await checkLicenseHeader(dartFile);
-        if (hasLicenseHeader) continue;
+    final Directory libDir = Directory(p.join(dir.path, 'lib'));
+    await for (FileSystemEntity dartFile in dartGlob.list(root: libDir.path)) {
+      if (dartFile is! File) continue;
 
-        final File newDartFile =
-            File(p.join(tempDir.path, p.basename(dartFile.path)));
+      final bool hasLicenseHeader = await checkLicenseHeader(dartFile);
+      if (hasLicenseHeader) {
+        _logger.info("file ${dartFile.path} already has a license header");
+        continue;
+      }
+      _logger.info("updating file ${dartFile.path}'s license header");
+
+      final File newDartFile =
+          File(p.join(tempDir.path, p.basename(dartFile.path)));
+      try {
+        final IOSink sink = newDartFile.openWrite();
+        for (String line in const LineSplitter().convert(_licenseHeader)) {
+          sink.writeln(line.isEmpty ? '//' : '// $line');
+        }
+        sink.writeln();
+        await dartFile
+            .openRead()
+            .transform(utf8.decoder)
+            .transform(LineSplitter())
+            .forEach(sink.writeln);
+        await sink.close();
         try {
-          final IOSink sink = newDartFile.openWrite();
-          for (String line in const LineSplitter().convert(_licenseHeader)) {
-            sink.writeln(line.isEmpty ? '//' : '// $line');
-          }
-          sink.writeln();
-          await dartFile
-              .openRead()
-              .transform(utf8.decoder)
-              .transform(LineSplitter())
-              .forEach(sink.writeln);
-          await sink.close();
           await newDartFile.copy(dartFile.path);
-        } finally {
+        } catch (e, s) {
+          _logger.severe("could not create updated dart file", e, s);
+          return false;
+        }
+      } finally {
+        try {
           await newDartFile.delete(recursive: true);
+        } catch (e, s) {
+          _logger.warning("could not delete temporary dart file", e, s);
         }
       }
     }
   }
-  return !hasErrors;
+  return true;
 }
 
 void main(List<String> args) async {
-  int flags = 0;
-  flags |= _flagUpdateChangelog;
-  flags |= _flagUpdateLicense;
-  flags |= _flagUpdateLicenseHeader;
-  flags |= _flagUpdateRootVersion;
-  if (args.contains('--outdated')) {
-    flags |= _flagUpdateDependenciesVersion;
-  }
+  Logger.root.level = Level.INFO;
+  Logger.root.onRecord.listen((record) {
+    print('[${record.level.name}] ${record.time}: ${record.message}');
+  });
 
-  final Directory tempDir = await Directory.systemTemp.createTemp();
-  final bool hadErrors;
-  try {
-    hadErrors = await execute(tempDir, flags);
-  } finally {
-    await tempDir.delete(recursive: true);
-  }
-  exit(hadErrors ? 1 : 0);
-}
+  final ArgParser parser = ArgParser();
+  parser.addOption(
+    "input",
+    abbr: "i",
+    help: "the subdirectory to act on",
+    valueHelp: "SUBDIR",
+    allowed: _packageNames,
+    mandatory: true,
+  );
+  parser.addFlag(
+    "changelog",
+    help: "whether to create a CHANGELOG.md file from the root directory",
+    defaultsTo: true,
+    negatable: true,
+  );
+  parser.addFlag(
+    "license",
+    help: "whether to create a LICENSE file from the root directory",
+    defaultsTo: true,
+    negatable: true,
+  );
+  parser.addFlag(
+    "dart-licenses",
+    help: "whether to prepend a license header on Dart files",
+    defaultsTo: true,
+    negatable: true,
+  );
+  parser.addFlag(
+    "pubspec-version-key",
+    help: "whether to update the pubspec.yaml's version key",
+    defaultsTo: true,
+    negatable: true,
+  );
+  parser.addFlag(
+    "pubspec-dependencies-values",
+    help: "whether to update the pubspec.yaml's sibling dependencies values",
+    defaultsTo: false,
+    negatable: true,
+  );
 
-Future<bool> checkLicenseFile(Directory dir) async {
-  final String expectedContents =
-      await File(p.join(dir.parent.path, 'LICENSE')).readAsString();
-  try {
-    final String actualContents =
-        await File(p.join(dir.path, 'LICENSE')).readAsString();
-    return expectedContents == actualContents;
-  } on PathNotFoundException {
-    return false;
-  }
+  final ArgResults results = parser.parse(args);
+  final RunConfig config = RunConfig(
+    shouldWriteChangelogFile: results["changelog"] as bool,
+    shouldWriteLicenseFile: results["license"] as bool,
+    shouldWriteLicenseHeader: results["dart-licenses"] as bool,
+    shouldWritePubspecVersionKey: results["pubspec-version-key"],
+    shouldWritePubspecSiblingDependenciesValues:
+        results["pubspec-dependencies-values"] as bool,
+  );
+  _logger.info("running command using $config");
+
+  final Directory rootDir = Directory.current;
+  _logger.info("root directory defined at ${rootDir.path}");
+
+  final String dirName = results["input"] as String;
+  _logger.info("running command for $dirName");
+  final bool ok = await execute(config, rootDir, dirName);
+  exit(ok ? 0 : 1);
 }
 
 Future<bool> checkLicenseHeader(File file) async {
