@@ -42,7 +42,9 @@ class Query implements BaseQuery<Query> {
             ..write(':')
             ..write('${date.minute}'.padLeft(2, '0'))
             ..write(':')
-            ..write('${date.second}'.padLeft(2, '0')))
+            ..write('${date.second}'.padLeft(2, '0'))
+            ..write('.')
+            ..write('${date.millisecond}'.padLeft(3, '0')))
           .toString();
     }
 
