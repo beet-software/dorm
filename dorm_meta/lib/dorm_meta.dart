@@ -182,7 +182,11 @@ Future<bool> execute(
         return false;
       }
     } finally {
-      await newPubspecFile.delete(recursive: true);
+      try {
+        await newPubspecFile.delete(recursive: true);
+      } catch (e, s) {
+        _logger.warning("could not delete temporary pubspec file", e, s);
+      }
     }
   }
 
