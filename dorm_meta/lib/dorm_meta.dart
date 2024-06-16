@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:change/change.dart';
 import 'package:glob/glob.dart';
 import 'package:glob/list_local_fs.dart';
+import 'package:logging/logging.dart';
 import 'package:path/path.dart' as p;
 import 'package:rxdart/rxdart.dart';
 
@@ -39,6 +40,8 @@ const int _flagUpdateLicenseHeader = 4;
 const int _flagUpdateRootVersion = 8;
 const int _flagUpdateDependenciesVersion = 16;
 
+final Logger _logger = Logger('dorm_meta');
+
 class RunConfig {
   /// Whether to copy the root 'CHANGELOG.md' file to the subdirectory.
   final bool shouldWriteChangelogFile;
@@ -69,10 +72,17 @@ class RunConfig {
 }
 
 Future<bool> execute(
-  Directory tempDir,
   RunConfig config,
   String dirName,
 ) async {
+  final Directory tempDir;
+  try {
+    tempDir = await Directory.systemTemp.createTemp();
+  } catch (e, s) {
+    _logger.severe("could not create temporary directory", e, s);
+    return false;
+  }
+
   final Glob dartGlob = Glob('**.dart');
 
   final int pathLength = Platform.script.pathSegments.length;
@@ -200,18 +210,13 @@ void main(List<String> args) async {
     shouldWritePubspecSiblingDependenciesValues: args.contains('--outdated'),
   );
 
-  final Directory tempDir = await Directory.systemTemp.createTemp();
   bool hadErrors = false;
-  try {
-    for (String dirName in _packageNames) {
-      final bool ok = await execute(tempDir, config, dirName);
-      if (!ok) {
-        hadErrors = true;
-        continue;
-      }
+  for (String dirName in _packageNames) {
+    final bool ok = await execute(config, dirName);
+    if (!ok) {
+      hadErrors = true;
+      continue;
     }
-  } finally {
-    await tempDir.delete(recursive: true);
   }
   exit(hadErrors ? 1 : 0);
 }
