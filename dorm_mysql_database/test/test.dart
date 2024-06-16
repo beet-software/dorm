@@ -333,6 +333,37 @@ void main() async {
         expect(models[2].id, 'mnopqr');
       });
     });
+    test('popAll', () async {
+      await reference.popAll(entity, const Filter.empty());
+    });
+    group('popAll (post)', () {
+      setUp(() async {
+        await reference.push(entity, Model(id: 'abcdef', value: 1));
+        await reference.popAll(entity, const Filter.empty());
+      });
+      test('peek', () async {
+        final Model? model = await reference.peek(entity, 'abcdef');
+        expect(model, isNull);
+      });
+      test('peekAll', () async {
+        final List<Model> models =
+            await reference.peekAll(entity, Filter.empty());
+        expect(models, isEmpty);
+      });
+      test('peekAllKeys', () async {
+        final List<String> keys = await reference.peekAllKeys(entity);
+        expect(keys, isEmpty);
+      });
+      test('pull', () async {
+        final Model? model = await reference.pull(entity, 'abcdef').first;
+        expect(model, isNull);
+      });
+      test('pullAll', () async {
+        final List<Model> models =
+            await reference.pullAll(entity, Filter.empty()).first;
+        expect(models, isEmpty);
+      });
+    });
     test('pop: non-existing', () async {
       await reference.pop(entity, 'abcdef');
     });
@@ -527,6 +558,12 @@ void main() async {
             await reference.pullAll(entity, Filter.empty()).first;
         expect(models.length, 3);
       });
+      test('popAll', () async {
+        await reference.popAll(entity, Filter.empty());
+        final List<Model> models =
+            await reference.peekAll(entity, Filter.empty());
+        expect(models.length, 0);
+      });
     });
     group('value', () {
       setUp(() async {
@@ -553,6 +590,18 @@ void main() async {
             .pullAll(entity, Filter.value(4, key: 'value'))
             .first;
         expect(models.length, 1);
+      });
+      test('popAll: non-existing', () async {
+        await reference.popAll(entity, Filter.value(0, key: 'value'));
+        final List<Model> models =
+            await reference.peekAll(entity, Filter.empty());
+        expect(models.length, 3);
+      });
+      test('popAll: existing', () async {
+        await reference.popAll(entity, Filter.value(4, key: 'value'));
+        final List<Model> models =
+            await reference.peekAll(entity, Filter.empty());
+        expect(models.length, 2);
       });
     });
   });
