@@ -68,7 +68,11 @@ class RunConfig {
   });
 }
 
-Future<bool> execute(Directory tempDir, RunConfig config) async {
+Future<bool> execute(
+  Directory tempDir,
+  RunConfig config,
+  String dirName,
+) async {
   final Glob dartGlob = Glob('**.dart');
 
   final int pathLength = Platform.script.pathSegments.length;
@@ -81,114 +85,110 @@ Future<bool> execute(Directory tempDir, RunConfig config) async {
   final File expectedChangelogFile = File(p.join(rootDir.path, 'CHANGELOG.md'));
 
   bool hasErrors = false;
-  for (String dirName in _packageNames) {
-    final Directory dir = Directory(p.join(rootDir.path, dirName));
-    if (!await dir.exists()) {
-      stderr.writeln('package $dirName does not exist');
-      hasErrors = true;
-      continue;
+  final Directory dir = Directory(p.join(rootDir.path, dirName));
+  if (!await dir.exists()) {
+    stderr.writeln('package $dirName does not exist');
+    return false;
+  }
+
+  if (config.shouldWriteLicenseFile) {
+    final File actualLicenseFile = File(p.join(dir.path, 'LICENSE'));
+    await expectedLicenseFile.copy(actualLicenseFile.path);
+  }
+
+  final File actualChangelogFile = File(p.join(dir.path, 'CHANGELOG.md'));
+  if (config.shouldWriteChangelogFile) {
+    await expectedChangelogFile.copy(actualChangelogFile.path);
+  }
+
+  if (config.shouldWritePubspecVersionKey ||
+      config.shouldWritePubspecSiblingDependenciesValues) {
+    final Changelog changelog =
+        parseChangelog(await actualChangelogFile.readAsString());
+    final Release release = changelog.history().last;
+
+    final File newPubspecFile = File(p.join(tempDir.path, 'pubspec.yaml'));
+    final File actualPubspecFile = File(p.join(dir.path, 'pubspec.yaml'));
+    try {
+      PubspecSection? section;
+      final IOSink sink = newPubspecFile.openWrite();
+      await for (String line in actualPubspecFile
+          .openRead()
+          .transform(utf8.decoder)
+          .transform(const LineSplitter())) {
+        final String updatedLine;
+        switch (section) {
+          case null:
+            {
+              if (line.startsWith('dependencies:')) {
+                section = PubspecSection.dependencies;
+              }
+
+              if (config.shouldWritePubspecVersionKey &&
+                  line.startsWith('version:')) {
+                updatedLine = 'version: ${release.version}';
+              } else {
+                updatedLine = line;
+              }
+            }
+          case PubspecSection.dependencies:
+            {
+              if (line.startsWith(RegExp(r'[a-z]'))) {
+                section = null;
+              }
+              final Match? match =
+                  // ignore: prefer_interpolation_to_compose_strings
+                  RegExp(r'(\s+)(' + _packageNames.join('|') + '):')
+                      .matchAsPrefix(line);
+
+              if (config.shouldWritePubspecSiblingDependenciesValues &&
+                  match != null) {
+                final String indent = match.group(1)!;
+                final String packageName = match.group(2)!;
+                updatedLine = '$indent$packageName: ^${release.version}';
+              } else {
+                updatedLine = line;
+              }
+            }
+        }
+        sink.writeln(updatedLine);
+      }
+      await sink.close();
+      await newPubspecFile.copy(actualPubspecFile.path);
+    } finally {
+      await newPubspecFile.delete(recursive: true);
     }
+  }
 
-    if (config.shouldWriteLicenseFile) {
-      final File actualLicenseFile = File(p.join(dir.path, 'LICENSE'));
-      await expectedLicenseFile.copy(actualLicenseFile.path);
-    }
+  if (config.shouldWriteLicenseHeader) {
+    final Directory libDir = Directory(p.join(dir.path, 'lib'));
+    await for (FileSystemEntity dartFile in dartGlob.list(root: libDir.path)) {
+      if (dartFile is! File) continue;
 
-    final File actualChangelogFile = File(p.join(dir.path, 'CHANGELOG.md'));
-    if (config.shouldWriteChangelogFile) {
-      await expectedChangelogFile.copy(actualChangelogFile.path);
-    }
+      final bool hasLicenseHeader = await checkLicenseHeader(dartFile);
+      if (hasLicenseHeader) continue;
 
-    if (config.shouldWritePubspecVersionKey ||
-        config.shouldWritePubspecSiblingDependenciesValues) {
-      final Changelog changelog =
-          parseChangelog(await actualChangelogFile.readAsString());
-      final Release release = changelog.history().last;
-
-      final File newPubspecFile = File(p.join(tempDir.path, 'pubspec.yaml'));
-      final File actualPubspecFile = File(p.join(dir.path, 'pubspec.yaml'));
+      final File newDartFile =
+          File(p.join(tempDir.path, p.basename(dartFile.path)));
       try {
-        PubspecSection? section;
-        final IOSink sink = newPubspecFile.openWrite();
-        await for (String line in actualPubspecFile
+        final IOSink sink = newDartFile.openWrite();
+        for (String line in const LineSplitter().convert(_licenseHeader)) {
+          sink.writeln(line.isEmpty ? '//' : '// $line');
+        }
+        sink.writeln();
+        await dartFile
             .openRead()
             .transform(utf8.decoder)
-            .transform(const LineSplitter())) {
-          final String updatedLine;
-          switch (section) {
-            case null:
-              {
-                if (line.startsWith('dependencies:')) {
-                  section = PubspecSection.dependencies;
-                }
-
-                if (config.shouldWritePubspecVersionKey &&
-                    line.startsWith('version:')) {
-                  updatedLine = 'version: ${release.version}';
-                } else {
-                  updatedLine = line;
-                }
-              }
-            case PubspecSection.dependencies:
-              {
-                if (line.startsWith(RegExp(r'[a-z]'))) {
-                  section = null;
-                }
-                final Match? match =
-                    // ignore: prefer_interpolation_to_compose_strings
-                    RegExp(r'(\s+)(' + _packageNames.join('|') + '):')
-                        .matchAsPrefix(line);
-
-                if (config.shouldWritePubspecSiblingDependenciesValues &&
-                    match != null) {
-                  final String indent = match.group(1)!;
-                  final String packageName = match.group(2)!;
-                  updatedLine = '$indent$packageName: ^${release.version}';
-                } else {
-                  updatedLine = line;
-                }
-              }
-          }
-          sink.writeln(updatedLine);
-        }
+            .transform(LineSplitter())
+            .forEach(sink.writeln);
         await sink.close();
-        await newPubspecFile.copy(actualPubspecFile.path);
+        await newDartFile.copy(dartFile.path);
       } finally {
-        await newPubspecFile.delete(recursive: true);
-      }
-    }
-
-    if (config.shouldWriteLicenseHeader) {
-      final Directory libDir = Directory(p.join(dir.path, 'lib'));
-      await for (FileSystemEntity dartFile
-          in dartGlob.list(root: libDir.path)) {
-        if (dartFile is! File) continue;
-
-        final bool hasLicenseHeader = await checkLicenseHeader(dartFile);
-        if (hasLicenseHeader) continue;
-
-        final File newDartFile =
-            File(p.join(tempDir.path, p.basename(dartFile.path)));
-        try {
-          final IOSink sink = newDartFile.openWrite();
-          for (String line in const LineSplitter().convert(_licenseHeader)) {
-            sink.writeln(line.isEmpty ? '//' : '// $line');
-          }
-          sink.writeln();
-          await dartFile
-              .openRead()
-              .transform(utf8.decoder)
-              .transform(LineSplitter())
-              .forEach(sink.writeln);
-          await sink.close();
-          await newDartFile.copy(dartFile.path);
-        } finally {
-          await newDartFile.delete(recursive: true);
-        }
+        await newDartFile.delete(recursive: true);
       }
     }
   }
-  return !hasErrors;
+  return true;
 }
 
 void main(List<String> args) async {
@@ -201,9 +201,15 @@ void main(List<String> args) async {
   );
 
   final Directory tempDir = await Directory.systemTemp.createTemp();
-  final bool hadErrors;
+  bool hadErrors = false;
   try {
-    hadErrors = await execute(tempDir, config);
+    for (String dirName in _packageNames) {
+      final bool ok = await execute(tempDir, config, dirName);
+      if (!ok) {
+        hadErrors = true;
+        continue;
+      }
+    }
   } finally {
     await tempDir.delete(recursive: true);
   }
