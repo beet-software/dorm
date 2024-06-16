@@ -7,11 +7,11 @@ environment:
 
 dependencies:
   glob: ^2.1.2
-  path: ^1.8.3
-  cider: ^0.2.3
-  change: ^0.7.1
-  rxdart: ^0.27.7
+  path: ^1.9.0
+  cider: ^0.2.8
+  change: ^0.7.3
+  rxdart: ^0.28.0
   logging: ^1.2.0
 
 dev_dependencies:
-  lints: ^2.0.0
+  lints: ^4.0.0
