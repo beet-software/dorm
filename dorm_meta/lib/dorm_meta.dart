@@ -143,6 +143,7 @@ Future<bool> execute(
 
               if (config.shouldWritePubspecVersionKey &&
                   line.startsWith('version:')) {
+                _logger.info("updating package version to ${release.version}");
                 updatedLine = 'version: ${release.version}';
               } else {
                 updatedLine = line;
