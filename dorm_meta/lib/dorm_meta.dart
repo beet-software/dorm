@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:args/args.dart';
 import 'package:change/change.dart';
 import 'package:glob/glob.dart';
 import 'package:glob/list_local_fs.dart';
@@ -237,12 +238,46 @@ Future<bool> execute(
 }
 
 void main(List<String> args) async {
+  final ArgParser parser = ArgParser();
+  parser.addFlag(
+    "changelog",
+    help: "whether to create a CHANGELOG.md file from the root directory",
+    defaultsTo: true,
+    negatable: true,
+  );
+  parser.addFlag(
+    "license",
+    help: "whether to create a LICENSE file from the root directory",
+    defaultsTo: true,
+    negatable: true,
+  );
+  parser.addFlag(
+    "dart-licenses",
+    help: "whether to prepend a license header on Dart files",
+    defaultsTo: true,
+    negatable: true,
+  );
+  parser.addFlag(
+    "pubspec-version-key",
+    help: "whether to update the pubspec.yaml's version key",
+    defaultsTo: true,
+    negatable: true,
+  );
+  parser.addFlag(
+    "pubspec-dependencies-values",
+    help: "whether to update the pubspec.yaml's sibling dependencies values",
+    defaultsTo: false,
+    negatable: true,
+  );
+
+  final ArgResults results = parser.parse(args);
   final RunConfig config = RunConfig(
-    shouldWriteChangelogFile: true,
-    shouldWriteLicenseFile: true,
-    shouldWriteLicenseHeader: true,
-    shouldWritePubspecVersionKey: true,
-    shouldWritePubspecSiblingDependenciesValues: args.contains('--outdated'),
+    shouldWriteChangelogFile: results["changelog"] as bool,
+    shouldWriteLicenseFile: results["license"] as bool,
+    shouldWriteLicenseHeader: results["dart-licenses"] as bool,
+    shouldWritePubspecVersionKey: results["pubspec-version-key"],
+    shouldWritePubspecSiblingDependenciesValues:
+        results["pubspec-dependencies-values"] as bool,
   );
 
   final int pathLength = Platform.script.pathSegments.length;
