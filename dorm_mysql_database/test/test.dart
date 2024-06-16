@@ -854,6 +854,169 @@ void main() async {
         );
         expect(models.length, 1);
       });
+      test('pullAll', () async {
+        List<Date> models;
+        models = await reference
+            .pullAll(
+              dateEntity,
+              Filter.date(
+                DateTime(2023),
+                key: 'value',
+                unit: DateFilterUnit.year,
+              ),
+            )
+            .first;
+        expect(models.length, 1);
+        models = await reference
+            .pullAll(
+              dateEntity,
+              Filter.date(
+                DateTime(2024),
+                key: 'value',
+                unit: DateFilterUnit.year,
+              ),
+            )
+            .first;
+        expect(models.length, 7);
+
+        models = await reference
+            .pullAll(
+              dateEntity,
+              Filter.date(
+                DateTime(2024, 3),
+                key: 'value',
+                unit: DateFilterUnit.month,
+              ),
+            )
+            .first;
+        expect(models.length, 1);
+        models = await reference
+            .pullAll(
+              dateEntity,
+              Filter.date(
+                DateTime(2024, 9),
+                key: 'value',
+                unit: DateFilterUnit.month,
+              ),
+            )
+            .first;
+        expect(models.length, 6);
+
+        models = await reference
+            .pullAll(
+              dateEntity,
+              Filter.date(
+                DateTime(2024, 9, 15),
+                key: 'value',
+                unit: DateFilterUnit.day,
+              ),
+            )
+            .first;
+        expect(models.length, 1);
+        models = await reference
+            .pullAll(
+              dateEntity,
+              Filter.date(
+                DateTime(2024, 9, 30),
+                key: 'value',
+                unit: DateFilterUnit.day,
+              ),
+            )
+            .first;
+        expect(models.length, 5);
+
+        models = await reference
+            .pullAll(
+              dateEntity,
+              Filter.date(
+                DateTime(2024, 9, 30),
+                key: 'value',
+                unit: DateFilterUnit.hour,
+              ),
+            )
+            .first;
+        expect(models.length, 1);
+        models = await reference
+            .pullAll(
+              dateEntity,
+              Filter.date(
+                DateTime(2024, 9, 30, 15),
+                key: 'value',
+                unit: DateFilterUnit.hour,
+              ),
+            )
+            .first;
+        expect(models.length, 4);
+
+        models = await reference
+            .pullAll(
+              dateEntity,
+              Filter.date(
+                DateTime(2024, 9, 30, 15),
+                key: 'value',
+                unit: DateFilterUnit.minute,
+              ),
+            )
+            .first;
+        expect(models.length, 1);
+        models = await reference
+            .pullAll(
+              dateEntity,
+              Filter.date(
+                DateTime(2024, 9, 30, 15, 20),
+                key: 'value',
+                unit: DateFilterUnit.minute,
+              ),
+            )
+            .first;
+        expect(models.length, 3);
+
+        models = await reference
+            .pullAll(
+              dateEntity,
+              Filter.date(
+                DateTime(2024, 9, 30, 15, 20),
+                key: 'value',
+                unit: DateFilterUnit.second,
+              ),
+            )
+            .first;
+        expect(models.length, 1);
+        models = await reference
+            .pullAll(
+              dateEntity,
+              Filter.date(
+                DateTime(2024, 9, 30, 15, 20, 25),
+                key: 'value',
+                unit: DateFilterUnit.second,
+              ),
+            )
+            .first;
+        expect(models.length, 2);
+
+        models = await reference
+            .pullAll(
+              dateEntity,
+              Filter.date(
+                DateTime(2024, 9, 30, 15, 20, 25),
+                key: 'value',
+                unit: DateFilterUnit.milliseconds,
+              ),
+            )
+            .first;
+        expect(models.length, 1);
+        models = await reference
+            .pullAll(
+              dateEntity,
+              Filter.date(
+                DateTime(2024, 9, 30, 15, 20, 25, 35),
+                key: 'value',
+                unit: DateFilterUnit.milliseconds,
+              ),
+            )
+            .first;
+        expect(models.length, 1);
+      });
     });
   });
 }
