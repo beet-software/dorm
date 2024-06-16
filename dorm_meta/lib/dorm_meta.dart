@@ -89,10 +89,9 @@ Future<bool> execute(
   final File expectedLicenseFile = File(p.join(rootDir.path, 'LICENSE'));
   final File expectedChangelogFile = File(p.join(rootDir.path, 'CHANGELOG.md'));
 
-  bool hasErrors = false;
   final Directory dir = Directory(p.join(rootDir.path, dirName));
   if (!await dir.exists()) {
-    stderr.writeln('package $dirName does not exist');
+    _logger.warning("subdirectory does not exist");
     return false;
   }
 
