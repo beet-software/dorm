@@ -213,9 +213,14 @@ class Reference implements BaseReference {
     Entity<Data, Model> entity,
     Dependency<Data> dependency,
     List<Data> datum,
-  ) {
-    // TODO: implement putAll
-    throw UnimplementedError();
+  ) async {
+    final List<Model> models = [];
+    await connection.transactional((connection) async {
+      for (Data data in datum) {
+        models.add(await put(entity, dependency, data));
+      }
+    });
+    return models;
   }
 }
 
