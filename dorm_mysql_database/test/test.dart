@@ -48,7 +48,7 @@ class IntegerEntity implements Entity<IntegerData, Integer> {
   String identify(Integer model) => model.id;
 
   @override
-  final String tableName = 'Models';
+  final String tableName = 'Integers';
 
   @override
   Map<String, Object?> toJson(IntegerData data) => {'value': data.value};
@@ -107,7 +107,7 @@ void main() async {
 
   // Shall run
   // ```sql
-  // CREATE TABLE IF NOT EXISTS Models (
+  // CREATE TABLE IF NOT EXISTS Integers (
   //   id CHAR(36) NOT NULL,
   //   value INTEGER NOT NULL,
   //   PRIMARY KEY (id)
@@ -133,7 +133,7 @@ void main() async {
   final RegExp uuidRegExp = RegExp(
       r'^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$');
   setUp(() async {
-    await connection.execute("DELETE FROM Models;");
+    await connection.execute("DELETE FROM Integers;");
     await connection.execute("DELETE FROM Dates;");
   });
 
