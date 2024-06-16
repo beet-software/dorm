@@ -239,6 +239,14 @@ Future<bool> execute(
 
 void main(List<String> args) async {
   final ArgParser parser = ArgParser();
+  parser.addOption(
+    "input",
+    abbr: "i",
+    help: "the subdirectory to act on",
+    valueHelp: "SUBDIR",
+    allowed: _packageNames,
+    mandatory: true,
+  );
   parser.addFlag(
     "changelog",
     help: "whether to create a CHANGELOG.md file from the root directory",
@@ -286,15 +294,9 @@ void main(List<String> args) async {
   );
   _logger.info("root directory defined at ${rootDir.path}");
 
-  bool hadErrors = false;
-  for (String dirName in _packageNames) {
-    final bool ok = await execute(config, rootDir, dirName);
-    if (!ok) {
-      hadErrors = true;
-      continue;
-    }
-  }
-  exit(hadErrors ? 1 : 0);
+  final String dirName = results["input"] as String;
+  final bool ok = await execute(config, rootDir, dirName);
+  exit(ok ? 0 : 1);
 }
 
 Future<bool> checkLicenseFile(Directory dir) async {
