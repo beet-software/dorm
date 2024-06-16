@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'dart:async';
+
 import 'package:dorm_framework/dorm_framework.dart';
 import 'package:mysql_client/mysql_client.dart';
 import 'package:uuid/uuid.dart';
@@ -138,8 +140,10 @@ class Reference implements BaseReference {
     Entity<Data, Model> entity,
     String id,
   ) {
-    // TODO: implement pull
-    throw UnimplementedError();
+    // TODO: make pull realtime somehow
+    final StreamController<Model?> controller = StreamController.broadcast();
+    peek(entity, id).then(controller.add);
+    return controller.stream;
   }
 
   @override
