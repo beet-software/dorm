@@ -20,6 +20,8 @@ import 'package:dorm_framework/dorm_framework.dart';
 import 'package:mysql_client/mysql_client.dart';
 import 'package:uuid/uuid.dart';
 
+import 'query.dart';
+
 /// A [BaseReference] that uses MySQL as engine.
 class Reference implements BaseReference {
   final MySQLConnection connection;
@@ -69,12 +71,17 @@ class Reference implements BaseReference {
     Entity<Data, Model> entity,
     Filter filter,
   ) {
-    final StringBuffer buffer = StringBuffer()
+    final StringBuffer preBuffer = StringBuffer()
       ..write('SELECT * FROM ')
-      ..write(entity.tableName)
+      ..write(entity.tableName);
+
+    final Query query = filter.accept(Query('$preBuffer'));
+    final StringBuffer buffer = StringBuffer()
+      ..write(query.query)
       ..write(';');
 
-    return connection.execute('$buffer').then((result) => result.rows
+    return connection.execute('$buffer', query.params).then((result) => result
+        .rows
         .map((row) => row.typedAssoc())
         .map((json) => entity.fromJson(json['id'], json))
         .toList());
