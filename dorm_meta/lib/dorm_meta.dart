@@ -175,7 +175,12 @@ Future<bool> execute(
         sink.writeln(updatedLine);
       }
       await sink.close();
-      await newPubspecFile.copy(actualPubspecFile.path);
+      try {
+        await newPubspecFile.copy(actualPubspecFile.path);
+      } catch (e, s) {
+        _logger.severe("could not update pubspec file", e, s);
+        return false;
+      }
     } finally {
       await newPubspecFile.delete(recursive: true);
     }
