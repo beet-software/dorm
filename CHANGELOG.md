@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - List support to `ModelField`s
+- Add support to sealed classes on polymorphic models
 
 
 ## 1.0.0-alpha.5 - 2023-07-16
