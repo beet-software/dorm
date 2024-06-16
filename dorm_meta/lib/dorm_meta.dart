@@ -108,7 +108,13 @@ Future<bool> execute(
 
   final File actualChangelogFile = File(p.join(dir.path, 'CHANGELOG.md'));
   if (config.shouldWriteChangelogFile) {
-    await expectedChangelogFile.copy(actualChangelogFile.path);
+    _logger.info("writing changelog file");
+    try {
+      await expectedChangelogFile.copy(actualChangelogFile.path);
+    } catch (e, s) {
+      _logger.severe("could not create LICENSE file", e, s);
+      return false;
+    }
   }
 
   if (config.shouldWritePubspecVersionKey ||
