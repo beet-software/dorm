@@ -151,8 +151,11 @@ class Reference implements BaseReference {
     Entity<Data, Model> entity,
     Filter filter,
   ) {
-    // TODO: implement pullAll
-    throw UnimplementedError();
+    // TODO: make pullAll realtime somehow
+    final StreamController<List<Model>> controller =
+        StreamController.broadcast();
+    peekAll(entity, filter).then(controller.add);
+    return controller.stream;
   }
 
   @override
