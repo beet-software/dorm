@@ -604,5 +604,52 @@ void main() async {
         expect(models.length, 2);
       });
     });
+    group('limit', () {
+      setUp(() async {
+        await reference.pushAll(entity, [
+          Model(id: 'abcdef', value: 2),
+          Model(id: 'ghijkl', value: 2),
+          Model(id: 'mnopqr', value: 4),
+          Model(id: 'stuvwx', value: 6),
+        ]);
+      });
+      test('peekAll', () async {
+        List<Model> models;
+        const Filter filter = Filter.value(2, key: 'value');
+        models = await reference.peekAll(entity, filter);
+        expect(models.length, 2);
+        models = await reference.peekAll(entity, filter.limit(1));
+        expect(models.length, 1);
+        models = await reference.peekAll(entity, filter.limit(2));
+        expect(models.length, 2);
+        models = await reference.peekAll(entity, filter.limit(3));
+        print(models.map(entity.toJson).toList());
+        expect(models.length, 2);
+      });
+      test('pullAll', () async {
+        List<Model> models;
+        const Filter filter = Filter.value(2, key: 'value');
+        models = await reference.pullAll(entity, filter).first;
+        expect(models.length, 2);
+        models = await reference.pullAll(entity, filter.limit(1)).first;
+        expect(models.length, 1);
+        models = await reference.pullAll(entity, filter.limit(2)).first;
+        expect(models.length, 2);
+        models = await reference.pullAll(entity, filter.limit(3)).first;
+        expect(models.length, 2);
+      });
+      test('popAll: non-existing', () async {
+        await reference.popAll(entity, Filter.value(0, key: 'value').limit(1));
+        final List<Model> models =
+            await reference.peekAll(entity, Filter.empty());
+        expect(models.length, 4);
+      });
+      test('popAll: existing', () async {
+        await reference.popAll(entity, Filter.value(2, key: 'value').limit(1));
+        final List<Model> models =
+            await reference.peekAll(entity, Filter.empty());
+        expect(models.length, 3);
+      });
+    });
   });
 }
