@@ -12,6 +12,7 @@ dependencies:
   change: ^0.7.3
   rxdart: ^0.28.0
   logging: ^1.2.0
+  args: ^2.5.0
 
 dev_dependencies:
   lints: ^4.0.0
