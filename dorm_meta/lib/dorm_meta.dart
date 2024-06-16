@@ -97,7 +97,7 @@ Future<bool> execute(
 
   final Directory dir = Directory(p.join(rootDir.path, dirName));
   if (!await dir.exists()) {
-    _logger.warning("subdirectory does not exist");
+    _logger.severe("subdirectory ${dir.path} does not exist");
     return false;
   }
 
@@ -299,10 +299,7 @@ void main(List<String> args) async {
   );
   _logger.info("running command using $config");
 
-  final int pathLength = Platform.script.pathSegments.length;
-  final Directory rootDir = Directory(
-    p.joinAll(Platform.script.pathSegments.sublist(0, pathLength - 3)),
-  );
+  final Directory rootDir = Directory.current;
   _logger.info("root directory defined at ${rootDir.path}");
 
   final String dirName = results["input"] as String;
