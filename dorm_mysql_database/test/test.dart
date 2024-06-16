@@ -132,7 +132,11 @@ void main() async {
   const DateEntity dateEntity = DateEntity();
   final RegExp uuidRegExp = RegExp(
       r'^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$');
-  setUp(() async {
+  setUpAll(() async {
+    await connection.execute("DELETE FROM Integers;");
+    await connection.execute("DELETE FROM Dates;");
+  });
+  tearDown(() async {
     await connection.execute("DELETE FROM Integers;");
     await connection.execute("DELETE FROM Dates;");
   });
