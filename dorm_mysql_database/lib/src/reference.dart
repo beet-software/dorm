@@ -121,8 +121,20 @@ class Reference implements BaseReference {
     Entity<Data, Model> entity,
     Filter filter,
   ) {
-    // TODO: implement popAll
-    throw UnimplementedError();
+    final StringBuffer preBuffer = StringBuffer()
+      ..write('DELETE FROM ')
+      ..write(entity.tableName);
+
+    final Query query = filter.accept(Query('$preBuffer'));
+    final StringBuffer buffer = StringBuffer()
+      ..write(query.query)
+      ..write(';');
+
+    return connection.execute('$buffer', query.params).then((result) => result
+        .rows
+        .map((row) => row.typedAssoc())
+        .map((json) => entity.fromJson(json['id'], json))
+        .toList());
   }
 
   @override
