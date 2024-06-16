@@ -243,6 +243,11 @@ Future<bool> execute(
 }
 
 void main(List<String> args) async {
+  Logger.root.level = Level.INFO;
+  Logger.root.onRecord.listen((record) {
+    print('[${record.level.name}] ${record.time}: ${record.message}');
+  });
+
   final ArgParser parser = ArgParser();
   parser.addOption(
     "input",
