@@ -191,12 +191,18 @@ Future<bool> execute(
   }
 
   if (config.shouldWriteLicenseHeader) {
+    _logger.info("updating license headers");
+
     final Directory libDir = Directory(p.join(dir.path, 'lib'));
     await for (FileSystemEntity dartFile in dartGlob.list(root: libDir.path)) {
       if (dartFile is! File) continue;
 
       final bool hasLicenseHeader = await checkLicenseHeader(dartFile);
-      if (hasLicenseHeader) continue;
+      if (hasLicenseHeader) {
+        _logger.info("file ${dartFile.path} already has a license header");
+        continue;
+      }
+      _logger.info("updating file ${dartFile.path}'s license header");
 
       final File newDartFile =
           File(p.join(tempDir.path, p.basename(dartFile.path)));
@@ -212,9 +218,18 @@ Future<bool> execute(
             .transform(LineSplitter())
             .forEach(sink.writeln);
         await sink.close();
-        await newDartFile.copy(dartFile.path);
+        try {
+          await newDartFile.copy(dartFile.path);
+        } catch (e, s) {
+          _logger.severe("could not create updated dart file", e, s);
+          return false;
+        }
       } finally {
-        await newDartFile.delete(recursive: true);
+        try {
+          await newDartFile.delete(recursive: true);
+        } catch (e, s) {
+          _logger.warning("could not delete temporary dart file", e, s);
+        }
       }
     }
   }
