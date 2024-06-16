@@ -96,8 +96,14 @@ Future<bool> execute(
   }
 
   if (config.shouldWriteLicenseFile) {
+    _logger.info("writing license file");
     final File actualLicenseFile = File(p.join(dir.path, 'LICENSE'));
-    await expectedLicenseFile.copy(actualLicenseFile.path);
+    try {
+      await expectedLicenseFile.copy(actualLicenseFile.path);
+    } catch (e, s) {
+      _logger.severe("could not create LICENSE file", e, s);
+      return false;
+    }
   }
 
   final File actualChangelogFile = File(p.join(dir.path, 'CHANGELOG.md'));
