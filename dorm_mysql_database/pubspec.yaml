@@ -12,7 +12,7 @@ dependencies:
   dorm_framework: ^1.0.0-alpha.3
   mysql_client: ^0.0.27
   dorm_annotations: ^1.0.0-alpha.5
-  analyzer: ^5.3.1
+  analyzer: ^6.4.1
   dartx: ^1.2.0
   uuid: ^3.0.7
 dev_dependencies:
