@@ -114,7 +114,7 @@ void main() async {
   // );
   // CREATE TABLE IF NOT EXISTS Dates (
   //   id CHAR(36) NOT NULL,
-  //   value DATETIME NOT NULL,
+  //   value DATETIME(3) NOT NULL,
   //   PRIMARY KEY (id)
   // );
   // ```
@@ -679,7 +679,6 @@ void main() async {
         models = await reference.peekAll(entity, filter.limit(2));
         expect(models.length, 2);
         models = await reference.peekAll(entity, filter.limit(3));
-        print(models.map(entity.toJson).toList());
         expect(models.length, 2);
       });
       test('pullAll', () async {
@@ -835,6 +834,25 @@ void main() async {
           ),
         );
         expect(models.length, 2);
+
+        models = await reference.peekAll(
+          dateEntity,
+          Filter.date(
+            DateTime(2024, 9, 30, 15, 20, 25),
+            key: 'value',
+            unit: DateFilterUnit.milliseconds,
+          ),
+        );
+        expect(models.length, 1);
+        models = await reference.peekAll(
+          dateEntity,
+          Filter.date(
+            DateTime(2024, 9, 30, 15, 20, 25, 35),
+            key: 'value',
+            unit: DateFilterUnit.milliseconds,
+          ),
+        );
+        expect(models.length, 1);
       });
     });
   });
