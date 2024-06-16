@@ -16,7 +16,9 @@ dependencies:
   dartx: ^1.2.0
   uuid: ^3.0.7
 dev_dependencies:
+  test: ^1.25.2
   lints: ^2.0.1
+  dotenv: ^4.2.0
 
 dependency_overrides:
   dorm_framework:
