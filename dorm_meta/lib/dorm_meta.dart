@@ -119,6 +119,7 @@ Future<bool> execute(
 
   if (config.shouldWritePubspecVersionKey ||
       config.shouldWritePubspecSiblingDependenciesValues) {
+    _logger.info("updating pubspec file");
     final Changelog changelog =
         parseChangelog(await actualChangelogFile.readAsString());
     final Release release = changelog.history().last;
