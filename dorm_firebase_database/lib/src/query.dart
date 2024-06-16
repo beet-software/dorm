@@ -83,11 +83,25 @@ class Query implements BaseQuery<Query> {
   Query whereRange<T>(String key, FilterRange<T> range) {
     final T? from = range.from;
     final T? to = range.to;
+    final DateFilterUnit? unit =
+        range is DateFilterRange ? (range as DateFilterRange).unit : null;
 
     if (from == null && to == null) return this;
     fd.Query ref = query.orderByChild(key);
-    if (from != null) ref = ref.startAt(from);
-    if (to != null) ref = ref.endAt(to);
+    if (from != null) {
+      if (from is DateTime && unit != null) {
+        ref = ref.startAt(_dateAsPrefixQuery(from, unit: unit));
+      } else {
+        ref = ref.startAt(from);
+      }
+    }
+    if (to != null) {
+      if (to is DateTime && unit != null) {
+        ref = ref.endAt(_dateAsPrefixQuery(to, unit: unit));
+      } else {
+        ref = ref.endAt(to);
+      }
+    }
     return Query(ref);
   }
 

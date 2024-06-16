@@ -9,7 +9,7 @@ false_secrets:
   - example/lib/main.dart
 
 dev_dependencies:
-  test: ^1.24.4
-  lints: ^2.0.0
-  mockito: ^5.4.2
-  build_runner: ^2.4.6
+  test: ^1.25.4
+  lints: ^3.0.0
+  mockito: ^5.4.4
+  build_runner: ^2.4.9

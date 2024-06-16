@@ -113,6 +113,7 @@ class UserEntity implements Entity<UserData, User> {
     UserData data,
   ) =>
       model.copyWith(data);
+
   @override
   User fromJson(
     String id,
@@ -122,8 +123,10 @@ class UserEntity implements Entity<UserData, User> {
         id,
         json,
       );
+
   @override
   String identify(User model) => model.id;
+
   @override
   Map<String, Object?> toJson(UserData data) => data.toJson();
 }
@@ -243,6 +246,7 @@ class PostEntity implements Entity<PostData, Post> {
     PostData data,
   ) =>
       model.copyWith(data);
+
   @override
   Post fromJson(
     String id,
@@ -252,8 +256,10 @@ class PostEntity implements Entity<PostData, Post> {
         id,
         json,
       );
+
   @override
   String identify(Post model) => model.id;
+
   @override
   Map<String, Object?> toJson(PostData data) => data.toJson();
 }
@@ -390,6 +396,7 @@ class MessageEntity implements Entity<MessageData, Message> {
     MessageData data,
   ) =>
       model.copyWith(data);
+
   @override
   Message fromJson(
     String id,
@@ -399,8 +406,10 @@ class MessageEntity implements Entity<MessageData, Message> {
         id,
         json,
       );
+
   @override
   String identify(Message model) => model.id;
+
   @override
   Map<String, Object?> toJson(MessageData data) => data.toJson();
 }
@@ -426,10 +435,12 @@ class Dorm {
         const UserEntity(),
         engine: _engine,
       );
+
   DatabaseEntity<PostData, Post> get post => DatabaseEntity(
         const PostEntity(),
         engine: _engine,
       );
+
   DatabaseEntity<MessageData, Message> get messages => DatabaseEntity(
         const MessageEntity(),
         engine: _engine,

@@ -18,18 +18,18 @@ dependencies:
   dorm_bloc_database:
     path: ../../dorm_bloc_database
 
-  intl: ^0.17.0
-  get_it: ^7.6.0
-  decimal: ^2.3.2
-  provider: ^6.0.5
+  intl: ^0.19.0
+  get_it: ^7.7.0
+  decimal: ^2.3.3
+  provider: ^6.1.2
   device_preview: ^1.1.0
   flutter_spinbox: ^0.13.1
-  flutter_form_bloc: ^0.30.1
+  flutter_form_bloc: ^0.31.0
   flutter_rating_bar: ^4.0.1
 
 dev_dependencies:
-  flutter_lints: ^2.0.0
-  build_runner: ^2.4.3
+  flutter_lints: ^3.0.2
+  build_runner: ^2.4.9
   dorm_generator:
     path: ../../dorm_generator
 
@@ -45,4 +45,6 @@ dependency_overrides:
     path: ../../dorm_bloc_database
   dorm_generator:
     path: ../../dorm_generator
-  intl: 0.17.0
+  uuid: 3.0.4
+  intl: 0.19.0
+  meta: 1.11.0
