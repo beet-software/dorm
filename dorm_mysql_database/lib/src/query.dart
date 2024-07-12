@@ -103,8 +103,8 @@ class Query implements BaseQuery<Query> {
         ? fromArgParameterPrefix
         : '$fromArgParameterPrefix${fromArgParameterCount + 1}';
 
-    final String? fromArg;
-    final String? toArg;
+    final Object? fromArg;
+    final Object? toArg;
     if (range is DateFilterRange) {
       final DateFilterRange r = range as DateFilterRange;
       final DateTime? from = r.from;
@@ -118,10 +118,8 @@ class Query implements BaseQuery<Query> {
     } else if (range is FilterRange<int> ||
         range is FilterRange<double> ||
         range is FilterRange<String>) {
-      final Object? from = range.from;
-      final Object? to = range.to;
-      fromArg = from == null ? null : '$from';
-      toArg = to == null ? null : '$to';
+      fromArg = range.from;
+      toArg = range.to;
     } else {
       throw UnimplementedError('invalid range type: $R');
     }
