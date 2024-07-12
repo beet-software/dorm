@@ -96,13 +96,9 @@ class Query implements BaseQuery<Query> {
       toArg = to == null
           ? null
           : _toSqlDateFormat(to, unit: r.unit, type: _BoundType.end);
-    } else if (range is FilterRange<int> ||
-        range is FilterRange<double> ||
-        range is FilterRange<String>) {
+    } else {
       fromArg = range.from;
       toArg = range.to;
-    } else {
-      throw UnimplementedError('invalid range type: $R');
     }
     if (fromArg == null) {
       if (toArg == null) {
