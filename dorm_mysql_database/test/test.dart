@@ -1022,5 +1022,81 @@ void main() async {
         expect(models.length, 1);
       });
     });
+    group('range', () {
+      group('numeric', () {
+        setUp(() async {
+          await reference.pushAll(entity, [
+            Integer(id: 'abc', value: 1),
+            Integer(id: 'def', value: 2),
+            Integer(id: 'ghi', value: 3),
+            Integer(id: 'jkl', value: 4),
+            Integer(id: 'mno', value: 5),
+            Integer(id: 'pqr', value: 6),
+            Integer(id: 'stu', value: 7),
+            Integer(id: 'vwx', value: 8),
+          ]);
+        });
+        test('peekAll', () async {
+          List<Integer> models;
+          models = await reference.peekAll(
+            entity,
+            Filter.numericRange(
+              FilterRange(from: 3, to: 6),
+              key: 'value',
+            ),
+          );
+          expect(models.length, 4);
+          models = await reference.peekAll(
+            entity,
+            Filter.numericRange(
+              FilterRange(to: 3),
+              key: 'value',
+            ),
+          );
+          expect(models.length, 3);
+          models = await reference.peekAll(
+            entity,
+            Filter.numericRange(
+              FilterRange(from: 7),
+              key: 'value',
+            ),
+          );
+          expect(models.length, 2);
+        });
+        test('pullAll', () async {
+          List<Integer> models;
+          models = await reference
+              .pullAll(
+                entity,
+                Filter.numericRange(
+                  FilterRange(from: 3, to: 6),
+                  key: 'value',
+                ),
+              )
+              .first;
+          expect(models.length, 4);
+          models = await reference
+              .pullAll(
+                entity,
+                Filter.numericRange(
+                  FilterRange(to: 3),
+                  key: 'value',
+                ),
+              )
+              .first;
+          expect(models.length, 3);
+          models = await reference
+              .pullAll(
+                entity,
+                Filter.numericRange(
+                  FilterRange(from: 7),
+                  key: 'value',
+                ),
+              )
+              .first;
+          expect(models.length, 2);
+        });
+      });
+    });
   });
 }
