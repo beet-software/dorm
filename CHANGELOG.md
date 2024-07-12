@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `sort` extension method to `Filter`
+
 ### Changed
 
 - `Filter` is now `BaseFilter<Q extends BaseQuery<Q>>` and has better API
