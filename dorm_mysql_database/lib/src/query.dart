@@ -82,6 +82,27 @@ class Query implements BaseQuery<Query> {
 
   @override
   Query whereRange<R>(String key, FilterRange<R> range) {
+    const String toArgParameterPrefix = 'toArg';
+    const String fromArgParameterPrefix = 'fromArg';
+
+    // Avoid clashes with previous filters
+    int toArgParameterCount = 0;
+    int fromArgParameterCount = 0;
+    for (String alreadyUsedParameterKey in params.keys) {
+      if (alreadyUsedParameterKey.startsWith(toArgParameterPrefix)) {
+        toArgParameterCount++;
+      }
+      if (alreadyUsedParameterKey.startsWith(fromArgParameterPrefix)) {
+        fromArgParameterCount++;
+      }
+    }
+    final String toArgParameterName = toArgParameterCount == 0
+        ? toArgParameterPrefix
+        : '$toArgParameterPrefix${toArgParameterCount + 1}';
+    final String fromArgParameterName = fromArgParameterCount == 0
+        ? fromArgParameterPrefix
+        : '$fromArgParameterPrefix${fromArgParameterCount + 1}';
+
     final String? fromArg;
     final String? toArg;
     if (range is DateFilterRange) {
@@ -108,14 +129,32 @@ class Query implements BaseQuery<Query> {
       if (toArg == null) {
         return this;
       }
-      return Query('$query WHERE $key <= $toArg', params: {...params});
+      return Query(
+        '$query WHERE $key <= :$toArgParameterName',
+        params: {
+          ...params,
+          toArgParameterName: toArg,
+        },
+      );
     }
     if (toArg == null) {
-      return Query('$query WHERE $key >= $fromArg', params: {...params});
+      return Query(
+        '$query WHERE $key >= :$fromArgParameterName',
+        params: {
+          ...params,
+          fromArgParameterName: fromArg,
+        },
+      );
     }
     return Query(
-      '$query WHERE $key BETWEEN $fromArg AND $toArg',
-      params: {...params},
+      '$query WHERE $key '
+      'BETWEEN :$fromArgParameterName '
+      'AND :$toArgParameterName',
+      params: {
+        ...params,
+        fromArgParameterName: fromArg,
+        toArgParameterName: toArg,
+      },
     );
   }
 
