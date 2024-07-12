@@ -1341,6 +1341,139 @@ void main() async {
           expect(models.length, 2);
         });
       });
+      group('date', () {
+        setUp(() async {
+          await reference.pushAll(dateEntity, [
+            Date(id: 'abc', value: DateTime(2021)),
+            Date(id: 'def', value: DateTime(2022)),
+            Date(id: 'ghi', value: DateTime(2023)),
+          ]);
+        });
+        test('peekAll', () async {
+          List<Date> models;
+          models = await reference.peekAll(
+            dateEntity,
+            Filter.dateRange(
+              DateFilterRange(from: DateTime(2020)),
+              key: 'value',
+            ),
+          );
+          expect(models.length, 3);
+          models = await reference.peekAll(
+            dateEntity,
+            Filter.dateRange(
+              DateFilterRange(to: DateTime(2024)),
+              key: 'value',
+            ),
+          );
+          expect(models.length, 3);
+
+          models = await reference.peekAll(
+            dateEntity,
+            Filter.dateRange(
+              DateFilterRange(from: DateTime(2020)),
+              key: 'value',
+            ),
+          );
+          expect(models.length, 3);
+          models = await reference.peekAll(
+            dateEntity,
+            Filter.dateRange(
+              DateFilterRange(from: DateTime(2020), to: DateTime(2024)),
+              key: 'value',
+            ),
+          );
+          expect(models.length, 3);
+
+          models = await reference.peekAll(
+            dateEntity,
+            Filter.dateRange(
+              DateFilterRange(from: DateTime(2022)),
+              key: 'value',
+            ),
+          );
+          expect(models.length, 2);
+          models = await reference.peekAll(
+            dateEntity,
+            Filter.dateRange(
+              DateFilterRange(to: DateTime(2022)),
+              key: 'value',
+            ),
+          );
+          expect(models.length, 2);
+
+          models = await reference.peekAll(
+            dateEntity,
+            Filter.dateRange(
+              DateFilterRange(from: DateTime(2022), to: DateTime(2022)),
+              key: 'value',
+            ),
+          );
+          expect(models.length, 1);
+        });
+        test('pullAll', () async {
+          List<Date> models;
+          models = await reference.pullAll(
+            dateEntity,
+            Filter.dateRange(
+              DateFilterRange(from: DateTime(2020)),
+              key: 'value',
+            ),
+          ).first;
+          expect(models.length, 3);
+          models = await reference.pullAll(
+            dateEntity,
+            Filter.dateRange(
+              DateFilterRange(to: DateTime(2024)),
+              key: 'value',
+            ),
+          ).first;
+          expect(models.length, 3);
+
+          models = await reference.pullAll(
+            dateEntity,
+            Filter.dateRange(
+              DateFilterRange(from: DateTime(2020)),
+              key: 'value',
+            ),
+          ).first;
+          expect(models.length, 3);
+          models = await reference.pullAll(
+            dateEntity,
+            Filter.dateRange(
+              DateFilterRange(from: DateTime(2020), to: DateTime(2024)),
+              key: 'value',
+            ),
+          ).first;
+          expect(models.length, 3);
+
+          models = await reference.pullAll(
+            dateEntity,
+            Filter.dateRange(
+              DateFilterRange(from: DateTime(2022)),
+              key: 'value',
+            ),
+          ).first;
+          expect(models.length, 2);
+          models = await reference.pullAll(
+            dateEntity,
+            Filter.dateRange(
+              DateFilterRange(to: DateTime(2022)),
+              key: 'value',
+            ),
+          ).first;
+          expect(models.length, 2);
+
+          models = await reference.pullAll(
+            dateEntity,
+            Filter.dateRange(
+              DateFilterRange(from: DateTime(2022), to: DateTime(2022)),
+              key: 'value',
+            ),
+          ).first;
+          expect(models.length, 1);
+        });
+      });
     });
     test('sorted', () async {
       await reference.pushAll(entity, [
@@ -1362,3 +1495,5 @@ void main() async {
     });
   });
 }
+
+class _CustomFilterRange extends FilterRange<bool> {}
