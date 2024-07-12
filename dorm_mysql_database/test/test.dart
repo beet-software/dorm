@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:dorm_framework/dorm_framework.dart';
 import 'package:dorm_mysql_database/src/engine.dart';
 import 'package:dorm_mysql_database/src/filter.dart';
-import 'package:dorm_mysql_database/src/query.dart';
 import 'package:dotenv/dotenv.dart';
 import 'package:mysql_client/mysql_client.dart';
 import 'package:test/expect.dart';
@@ -1225,6 +1224,24 @@ void main() async {
           expect(models.length, 2);
         });
       });
+    });
+    test('sorted', () async {
+      await reference.pushAll(entity, [
+        Integer(id: 'abc', value: 8),
+        Integer(id: 'def', value: 2),
+        Integer(id: 'ghi', value: 7),
+        Integer(id: 'jkl', value: 1),
+        Integer(id: 'mno', value: 5),
+        Integer(id: 'pqr', value: 6),
+        Integer(id: 'stu', value: 3),
+        Integer(id: 'vwx', value: 4),
+      ]);
+      List<Integer> models;
+      models = await reference.peekAll(entity, const Filter.empty());
+      expect(models.map((m) => m.value).toList(), [8, 2, 7, 1, 5, 6, 3, 4]);
+      models = await reference.peekAll(
+          entity, const Filter.empty().sort(key: 'value'));
+      expect(models.map((m) => m.value).toList(), [1, 2, 3, 4, 5, 6, 7, 8]);
     });
   });
 }
