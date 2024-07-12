@@ -82,8 +82,41 @@ class Query implements BaseQuery<Query> {
 
   @override
   Query whereRange<R>(String key, FilterRange<R> range) {
-    // TODO: implement whereDate
-    throw UnimplementedError();
+    final String? fromArg;
+    final String? toArg;
+    if (range is DateFilterRange) {
+      final DateFilterRange r = range as DateFilterRange;
+      final DateTime? from = r.from;
+      final DateTime? to = r.to;
+      fromArg = from == null
+          ? null
+          : _toSqlDateFormat(from, unit: r.unit, type: _BoundType.start);
+      toArg = to == null
+          ? null
+          : _toSqlDateFormat(to, unit: r.unit, type: _BoundType.end);
+    } else if (range is FilterRange<int> ||
+        range is FilterRange<double> ||
+        range is FilterRange<String>) {
+      final Object? from = range.from;
+      final Object? to = range.to;
+      fromArg = from == null ? null : '$from';
+      toArg = to == null ? null : '$to';
+    } else {
+      throw UnimplementedError('invalid range type: $R');
+    }
+    if (fromArg == null) {
+      if (toArg == null) {
+        return this;
+      }
+      return Query('$query WHERE $key <= $toArg', params: {...params});
+    }
+    if (toArg == null) {
+      return Query('$query WHERE $key >= $fromArg', params: {...params});
+    }
+    return Query(
+      '$query WHERE $key BETWEEN $fromArg AND $toArg',
+      params: {...params},
+    );
   }
 
   @override
