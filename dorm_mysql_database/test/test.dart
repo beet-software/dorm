@@ -188,10 +188,12 @@ void main() async {
   setUpAll(() async {
     await connection.execute("DELETE FROM Integers;");
     await connection.execute("DELETE FROM Dates;");
+    await connection.execute("DELETE FROM Texts;");
   });
   tearDown(() async {
     await connection.execute("DELETE FROM Integers;");
     await connection.execute("DELETE FROM Dates;");
+    await connection.execute("DELETE FROM Texts;");
   });
 
   group('querying', () {
@@ -715,6 +717,121 @@ void main() async {
         final List<Integer> models =
             await reference.peekAll(entity, Filter.empty());
         expect(models.length, 2);
+      });
+    });
+    group('text', () {
+      setUp(() async {
+        await reference.pushAll(textEntity, [
+          Text(id: 'abc', value: 'anna'),
+          Text(id: 'def', value: 'alpha'),
+          Text(id: 'ghi', value: 'alphabet'),
+          Text(id: 'jkl', value: 'beta'),
+          Text(id: 'mno', value: 'bravo'),
+          Text(id: 'pqr', value: 'beet'),
+        ]);
+      });
+      test('peekAll', () async {
+        List<Text> models;
+        models = await reference.peekAll(
+          textEntity,
+          Filter.text('a', key: 'value'),
+        );
+        expect(models.length, 3);
+        models = await reference.peekAll(
+          textEntity,
+          Filter.text('alpha', key: 'value'),
+        );
+        expect(models.length, 2);
+        models = await reference.peekAll(
+          textEntity,
+          Filter.text('alphab', key: 'value'),
+        );
+        expect(models.length, 1);
+        models = await reference.peekAll(
+          textEntity,
+          Filter.text('b', key: 'value'),
+        );
+        expect(models.length, 3);
+        models = await reference.peekAll(
+          textEntity,
+          Filter.text('be', key: 'value'),
+        );
+        expect(models.length, 2);
+        models = await reference.peekAll(
+          textEntity,
+          Filter.text('bet', key: 'value'),
+        );
+        expect(models.length, 1);
+        models = await reference.peekAll(
+          textEntity,
+          Filter.text('charlie', key: 'value'),
+        );
+        expect(models.length, 0);
+      });
+      test('pullAll', () async {
+        List<Text> models;
+        models = await reference
+            .pullAll(
+              textEntity,
+              Filter.text('a', key: 'value'),
+            )
+            .first;
+        expect(models.length, 3);
+        models = await reference
+            .pullAll(
+              textEntity,
+              Filter.text('alpha', key: 'value'),
+            )
+            .first;
+        expect(models.length, 2);
+        models = await reference
+            .pullAll(
+              textEntity,
+              Filter.text('alphab', key: 'value'),
+            )
+            .first;
+        expect(models.length, 1);
+        models = await reference
+            .pullAll(
+              textEntity,
+              Filter.text('b', key: 'value'),
+            )
+            .first;
+        expect(models.length, 3);
+        models = await reference
+            .pullAll(
+              textEntity,
+              Filter.text('be', key: 'value'),
+            )
+            .first;
+        expect(models.length, 2);
+        models = await reference
+            .pullAll(
+              textEntity,
+              Filter.text('bet', key: 'value'),
+            )
+            .first;
+        expect(models.length, 1);
+        models = await reference
+            .pullAll(
+              textEntity,
+              Filter.text('charlie', key: 'value'),
+            )
+            .first;
+        expect(models.length, 0);
+      });
+      test('popAll: non-existing', () async {
+        await reference.popAll(
+            textEntity, Filter.text('charlie', key: 'value'));
+        final List<Text> models =
+            await reference.peekAll(textEntity, Filter.empty());
+        expect(models.length, 6);
+      });
+      test('popAll: existing', () async {
+        await reference.popAll(textEntity, Filter.text('al', key: 'value'));
+        final List<Text> models =
+            await reference.peekAll(textEntity, Filter.empty());
+        expect(models.length, 4);
       });
     });
     group('limit', () {
