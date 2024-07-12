@@ -101,6 +101,52 @@ class DateEntity implements Entity<DateData, Date> {
   Map<String, Object?> toJson(DateData data) => {'value': data.value};
 }
 
+class TextData {
+  final String value;
+
+  const TextData({required this.value});
+}
+
+class Text extends TextData {
+  final String id;
+
+  const Text({required this.id, required super.value});
+}
+
+class TextDependency extends Dependency<TextData> {
+  const TextDependency() : super.strong();
+}
+
+class TextEntity implements Entity<TextData, Text> {
+  const TextEntity();
+
+  @override
+  Text convert(Text model, TextData data) {
+    return Text(id: model.id, value: data.value);
+  }
+
+  @override
+  Text fromData(
+    covariant Dependency<TextData> dependency,
+    String id,
+    TextData data,
+  ) {
+    return Text(id: id, value: data.value);
+  }
+
+  @override
+  Text fromJson(String id, Map data) => Text(id: id, value: data['value']);
+
+  @override
+  String identify(Text model) => model.id;
+
+  @override
+  final String tableName = 'Texts';
+
+  @override
+  Map<String, Object?> toJson(TextData data) => {'value': data.value};
+}
+
 void main() async {
   final DotEnv env = DotEnv();
   env.load();
@@ -117,6 +163,11 @@ void main() async {
   //   value DATETIME(3) NOT NULL,
   //   PRIMARY KEY (id)
   // );
+  // CREATE TABLE IF NOT EXISTS Texts (
+  //   id CHAR(36) NOT NULL,
+  //   value VARCHAR(100) NOT NULL,
+  //   PRIMARY KEY (id)
+  // );
   // ```
   final MySQLConnection connection = await MySQLConnection.createConnection(
     host: env['MYSQL_HOST']!,
@@ -130,6 +181,7 @@ void main() async {
   final BaseReference reference = engine.createReference();
   const IntegerEntity entity = IntegerEntity();
   const DateEntity dateEntity = DateEntity();
+  const TextEntity textEntity = TextEntity();
   final RegExp uuidRegExp = RegExp(
       r'^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$');
   setUpAll(() async {
@@ -1090,6 +1142,80 @@ void main() async {
                 entity,
                 Filter.numericRange(
                   FilterRange(from: 7),
+                  key: 'value',
+                ),
+              )
+              .first;
+          expect(models.length, 2);
+        });
+      });
+      group('text', () {
+        setUp(() async {
+          await reference.pushAll(textEntity, [
+            Text(id: 'abc', value: 'alpha'),
+            Text(id: 'def', value: 'bravo'),
+            Text(id: 'ghi', value: 'charlie'),
+            Text(id: 'jkl', value: 'delta'),
+            Text(id: 'mno', value: 'echo'),
+            Text(id: 'pqr', value: 'foxtrot'),
+            Text(id: 'stu', value: 'golf'),
+            Text(id: 'vwx', value: 'hotel'),
+          ]);
+        });
+        test('peekAll', () async {
+          List<Text> models;
+          models = await reference.peekAll(
+            textEntity,
+            Filter.textRange(
+              FilterRange(from: 'c', to: 'g'),
+              key: 'value',
+            ),
+          );
+          expect(models.length, 4);
+          models = await reference.peekAll(
+            textEntity,
+            Filter.textRange(
+              FilterRange(to: 'd'),
+              key: 'value',
+            ),
+          );
+          expect(models.length, 3);
+          models = await reference.peekAll(
+            textEntity,
+            Filter.textRange(
+              FilterRange(from: 'g'),
+              key: 'value',
+            ),
+          );
+          expect(models.length, 2);
+        });
+        test('pullAll', () async {
+          List<Text> models;
+          models = await reference
+              .pullAll(
+                textEntity,
+                Filter.textRange(
+                  FilterRange(from: 'c', to: 'g'),
+                  key: 'value',
+                ),
+              )
+              .first;
+          expect(models.length, 4);
+          models = await reference
+              .pullAll(
+                textEntity,
+                Filter.textRange(
+                  FilterRange(to: 'd'),
+                  key: 'value',
+                ),
+              )
+              .first;
+          expect(models.length, 3);
+          models = await reference
+              .pullAll(
+                textEntity,
+                Filter.textRange(
+                  FilterRange(from: 'g'),
                   key: 'value',
                 ),
               )
