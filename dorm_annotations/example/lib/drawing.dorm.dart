@@ -174,7 +174,7 @@ extension DrawingProperties on Drawing {
 
 enum ShapeType { rectangle, circular }
 
-sealed class Shape implements _Shape {
+abstract class Shape implements _Shape {
   factory Shape.fromType(
     ShapeType type,
     Map json,
