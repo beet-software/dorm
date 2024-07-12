@@ -103,6 +103,7 @@ class UserEntity implements Entity<UserData, User> {
     UserData data,
   ) =>
       model.copyWith(data);
+
   @override
   User fromJson(
     String id,
@@ -112,8 +113,10 @@ class UserEntity implements Entity<UserData, User> {
         id,
         json,
       );
+
   @override
   String identify(User model) => model.id;
+
   @override
   Map<String, Object?> toJson(UserData data) => data.toJson();
 }
@@ -132,9 +135,9 @@ extension UserProperties on User {
 class Dorm {
   const Dorm(this._engine);
 
-  final BaseEngine _engine;
+  final BaseEngine<Query> _engine;
 
-  DatabaseEntity<UserData, User> get users => DatabaseEntity(
+  DatabaseEntity<UserData, User, Query> get users => DatabaseEntity(
         const UserEntity(),
         engine: _engine,
       );

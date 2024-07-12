@@ -65,7 +65,7 @@ class Query implements BaseQuery<Query> {
   @override
   Query sorted(String key, {bool ascending = true}) {
     return Query(
-      '$query SORT BY $key ${ascending ? '' : 'DESC'}',
+      '$query ORDER BY $key ${ascending ? '' : 'DESC'}',
       params: {...params},
     );
   }

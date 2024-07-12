@@ -17,17 +17,18 @@
 import 'package:dorm_framework/dorm_framework.dart';
 import 'package:mysql_client/mysql_client.dart';
 
+import 'query.dart';
 import 'reference.dart';
 import 'relationship.dart';
 
-class Engine implements BaseEngine {
+class Engine implements BaseEngine<Query> {
   final MySQLConnection connection;
 
   const Engine(this.connection);
 
   @override
-  BaseReference createReference() => Reference(connection);
+  BaseReference<Query> createReference() => Reference(connection);
 
   @override
-  BaseRelationship createRelationship() => Relationship();
+  BaseRelationship<Query> createRelationship() => Relationship();
 }

@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:dorm_framework/dorm_framework.dart';
 import 'package:dorm_mysql_database/src/engine.dart';
+import 'package:dorm_mysql_database/src/filter.dart';
+import 'package:dorm_mysql_database/src/query.dart';
 import 'package:dotenv/dotenv.dart';
 import 'package:mysql_client/mysql_client.dart';
 import 'package:test/expect.dart';
@@ -727,7 +729,7 @@ void main() async {
       });
       test('peekAll', () async {
         List<Integer> models;
-        const Filter filter = Filter.value(2, key: 'value');
+        final Filter filter = Filter.value(2, key: 'value');
         models = await reference.peekAll(entity, filter);
         expect(models.length, 2);
         models = await reference.peekAll(entity, filter.limit(1));
@@ -739,7 +741,7 @@ void main() async {
       });
       test('pullAll', () async {
         List<Integer> models;
-        const Filter filter = Filter.value(2, key: 'value');
+        final Filter filter = Filter.value(2, key: 'value');
         models = await reference.pullAll(entity, filter).first;
         expect(models.length, 2);
         models = await reference.pullAll(entity, filter.limit(1)).first;

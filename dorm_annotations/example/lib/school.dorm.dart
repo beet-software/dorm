@@ -863,34 +863,34 @@ extension ClassProperties on Class {
 class Dorm {
   const Dorm(this._engine);
 
-  final BaseEngine _engine;
+  final BaseEngine<Query> _engine;
 
-  DatabaseEntity<SchoolData, School> get schools => DatabaseEntity(
+  DatabaseEntity<SchoolData, School, Query> get schools => DatabaseEntity(
         const SchoolEntity(),
         engine: _engine,
       );
 
-  DatabaseEntity<StudentData, Student> get students => DatabaseEntity(
+  DatabaseEntity<StudentData, Student, Query> get students => DatabaseEntity(
         const StudentEntity(),
         engine: _engine,
       );
 
-  DatabaseEntity<TeacherData, Teacher> get teachers => DatabaseEntity(
+  DatabaseEntity<TeacherData, Teacher, Query> get teachers => DatabaseEntity(
         const TeacherEntity(),
         engine: _engine,
       );
 
-  DatabaseEntity<HistoryData, History> get histories => DatabaseEntity(
+  DatabaseEntity<HistoryData, History, Query> get histories => DatabaseEntity(
         const HistoryEntity(),
         engine: _engine,
       );
 
-  DatabaseEntity<TeachingData, Teaching> get teachings => DatabaseEntity(
+  DatabaseEntity<TeachingData, Teaching, Query> get teachings => DatabaseEntity(
         const TeachingEntity(),
         engine: _engine,
       );
 
-  DatabaseEntity<ClassData, Class> get classes => DatabaseEntity(
+  DatabaseEntity<ClassData, Class, Query> get classes => DatabaseEntity(
         const ClassEntity(),
         engine: _engine,
       );

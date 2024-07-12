@@ -1,8 +1,9 @@
-import 'package:dorm_framework/dorm_framework.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
+import 'package:dorm_framework/dorm_framework.dart';
+
+import 'query.dart';
 
 part 'school.dorm.dart';
-
 part 'school.g.dart';
 
 @Data()

@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'package:dorm_framework/dorm_framework.dart';
+
 import 'dependency.dart';
 import 'entity.dart';
 import 'filter.dart';
@@ -51,11 +53,13 @@ abstract class SingleReadOperation<Model> {
 }
 
 /// Represents reading multiple models from the database engine.
-abstract class BatchReadOperation<Model> {
+abstract class BatchReadOperation<Model, Q extends BaseQuery<Q>> {
   /// Selects all the models matching [filter] in this table.
   ///
   /// If there are no models, this method will return an empty list.
-  Future<List<Model>> peekAll([Filter filter = const Filter.empty()]);
+  Future<List<Model>> peekAll([
+    BaseFilter<Q> filter = const BaseFilter.empty(),
+  ]);
 
   /// Listens for all the models in this table matching [filter] and their changes.
   ///
@@ -64,11 +68,14 @@ abstract class BatchReadOperation<Model> {
   /// whenever a change occurs on the query.
   ///
   /// If there are no models, this method will yield an empty list.
-  Stream<List<Model>> pullAll([Filter filter = const Filter.empty()]);
+  Stream<List<Model>> pullAll([
+    BaseFilter<Q> filter = const BaseFilter.empty(),
+  ]);
 }
 
 /// Represents the operations available for a [Model] in a database.
-abstract class ModelRepository<Model> implements Readable<Model> {
+abstract class ModelRepository<Model, Q extends BaseQuery<Q>>
+    implements Readable<Model, Q> {
   /// Selects all the ids from the models of this table.
   ///
   /// This method should retrieve *only* the ids:
@@ -130,7 +137,7 @@ abstract class ModelRepository<Model> implements Readable<Model> {
   ///
   /// If there are no rows matching [filter] in the table, this method will do
   /// nothing.
-  Future<void> popAll(Filter filter);
+  Future<void> popAll(BaseFilter<Q> filter);
 
   /// Inserts a [model] into its respective table on the database engine.
   ///
@@ -195,8 +202,8 @@ abstract class ModelRepository<Model> implements Readable<Model> {
 }
 
 /// Represents creating models into the database engine.
-abstract class DataRepository<Data, Model extends Data>
-    implements ModelRepository<Model> {
+abstract class DataRepository<Data, Model extends Data, Q extends BaseQuery<Q>>
+    implements ModelRepository<Model, Q> {
   /// Convert a [data] into a model and inserts it into its respective table on
   /// the database engine.
   ///
@@ -216,8 +223,8 @@ abstract class DataRepository<Data, Model extends Data>
 }
 
 /// Represents the controller of the underlying database engine.
-class Repository<Data, Model extends Data>
-    implements DataRepository<Data, Model> {
+class Repository<Data, Model extends Data, Q extends BaseQuery<Q>>
+    implements DataRepository<Data, Model, Q> {
   final BaseReference _reference;
   final Entity<Data, Model> _entity;
 
@@ -235,7 +242,9 @@ class Repository<Data, Model extends Data>
   }
 
   @override
-  Future<List<Model>> peekAll([Filter filter = const Filter.empty()]) {
+  Future<List<Model>> peekAll([
+    BaseFilter<Q> filter = const BaseFilter.empty(),
+  ]) {
     return _reference.peekAll(_entity, filter);
   }
 
@@ -255,7 +264,7 @@ class Repository<Data, Model extends Data>
   }
 
   @override
-  Future<void> popAll(Filter filter) {
+  Future<void> popAll(BaseFilter<Q> filter) {
     return _reference.popAll(_entity, filter);
   }
 
@@ -265,7 +274,9 @@ class Repository<Data, Model extends Data>
   }
 
   @override
-  Stream<List<Model>> pullAll([Filter filter = const Filter.empty()]) {
+  Stream<List<Model>> pullAll([
+    BaseFilter<Q> filter = const BaseFilter.empty(),
+  ]) {
     return _reference.pullAll(_entity, filter);
   }
 

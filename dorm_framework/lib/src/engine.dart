@@ -14,11 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import 'reference.dart';
-import 'relationship.dart';
+import 'package:dorm_framework/dorm_framework.dart';
 
-abstract class BaseEngine {
-  BaseReference createReference();
+abstract class BaseEngine<Q extends BaseQuery<Q>> {
+  BaseReference<Q> createReference();
 
-  BaseRelationship createRelationship();
+  BaseRelationship<Q> createRelationship();
 }

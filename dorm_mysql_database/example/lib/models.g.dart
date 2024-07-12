@@ -15,7 +15,7 @@ UserData _$UserDataFromJson(Map json) {
   return UserData(
     name: json['name'] as String,
     active: json['active'] as bool,
-    age: json['age'] as int?,
+    age: (json['age'] as num?)?.toInt(),
   );
 }
 
@@ -35,7 +35,7 @@ User _$UserFromJson(Map json) {
     id: json['_id'] as String,
     name: json['name'] as String,
     active: json['active'] as bool,
-    age: json['age'] as int?,
+    age: (json['age'] as num?)?.toInt(),
   );
 }
 

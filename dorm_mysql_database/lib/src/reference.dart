@@ -23,7 +23,7 @@ import 'package:uuid/uuid.dart';
 import 'query.dart';
 
 /// A [BaseReference] that uses MySQL as engine.
-class Reference implements BaseReference {
+class Reference implements BaseReference<Query> {
   final MySQLConnection connection;
 
   const Reference(this.connection);
@@ -69,7 +69,7 @@ class Reference implements BaseReference {
   @override
   Future<List<Model>> peekAll<Data, Model extends Data>(
     Entity<Data, Model> entity,
-    Filter filter,
+    BaseFilter<Query> filter,
   ) {
     final StringBuffer preBuffer = StringBuffer()
       ..write('SELECT * FROM ')
@@ -119,7 +119,7 @@ class Reference implements BaseReference {
   @override
   Future<void> popAll<Data, Model extends Data>(
     Entity<Data, Model> entity,
-    Filter filter,
+    BaseFilter<Query> filter,
   ) {
     final StringBuffer preBuffer = StringBuffer()
       ..write('DELETE FROM ')
@@ -168,7 +168,7 @@ class Reference implements BaseReference {
   @override
   Stream<List<Model>> pullAll<Data, Model extends Data>(
     Entity<Data, Model> entity,
-    Filter filter,
+    BaseFilter<Query> filter,
   ) {
     // TODO: make pullAll realtime somehow
     final StreamController<List<Model>> controller =

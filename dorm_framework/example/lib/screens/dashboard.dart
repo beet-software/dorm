@@ -1,3 +1,4 @@
+import 'package:dorm_bloc_database/dorm_bloc_database.dart';
 import 'package:dorm_framework/dorm_framework.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';

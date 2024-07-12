@@ -1,12 +1,13 @@
 import 'package:dorm_framework/dorm_framework.dart';
+import 'package:dorm_mysql_database/src/query.dart';
 
-class Relationship implements BaseRelationship {
+class Relationship implements BaseRelationship<Query> {
   @override
-  ManyToManyAssociation<M, L, R> manyToMany<M, L, R>(
-    Readable<M> middle,
-    Readable<L> left,
+  ManyToManyAssociation<M, L, R, Query> manyToMany<M, L, R>(
+    Readable<M, Query> middle,
+    Readable<L, Query> left,
     String Function(M p1) onLeft,
-    Readable<R> right,
+    Readable<R, Query> right,
     String Function(M p1) onRight,
   ) {
     // TODO: implement manyToMany
@@ -14,9 +15,9 @@ class Relationship implements BaseRelationship {
   }
 
   @override
-  ManyToOneAssociation<L, R> manyToOne<L, R>(
-    Readable<L> left,
-    Readable<R> right,
+  ManyToOneAssociation<L, R, Query> manyToOne<L, R>(
+    Readable<L, Query> left,
+    Readable<R, Query> right,
     String Function(L p1) on,
   ) {
     // TODO: implement manyToOne
@@ -24,18 +25,21 @@ class Relationship implements BaseRelationship {
   }
 
   @override
-  OneToManyAssociation<L, R> oneToMany<L, R>(
-    Readable<L> left,
-    Readable<R> right,
-    Filter Function(L p1) on,
+  OneToManyAssociation<L, R, Query> oneToMany<L, R>(
+    Readable<L, Query> left,
+    Readable<R, Query> right,
+    BaseFilter<Query> Function(L p1) on,
   ) {
     // TODO: implement oneToMany
     throw UnimplementedError();
   }
 
   @override
-  OneToOneAssociation<L, R> oneToOne<L, R>(
-      Readable<L> left, Readable<R> right, String Function(L p1) on) {
+  OneToOneAssociation<L, R, Query> oneToOne<L, R>(
+    Readable<L, Query> left,
+    Readable<R, Query> right,
+    String Function(L p1) on,
+  ) {
     // TODO: implement oneToOne
     throw UnimplementedError();
   }

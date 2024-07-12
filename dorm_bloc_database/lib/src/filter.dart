@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-library dorm_mysql_database;
+import 'package:dorm_framework/dorm_framework.dart';
 
-export 'src/engine.dart' show Engine;
-export 'src/filter.dart' show Filter;
-export 'src/query.dart' show Query;
+import 'query.dart';
+
+typedef Filter = BaseFilter<Query>;
