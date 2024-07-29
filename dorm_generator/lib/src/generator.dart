@@ -50,9 +50,6 @@ class Naming<N extends ClassOrmNode> {
 class DataNaming extends Naming<DataOrmNode> {
   const DataNaming({required super.name, required super.node});
 
-  /// _User
-  String get schemaName => name;
-
   /// User
   String get modelName => name.removePrefix('_');
 }
