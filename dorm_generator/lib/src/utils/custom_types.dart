@@ -49,9 +49,6 @@ class $Type implements Type {
     if (!reader.isType) return null;
     return reader.typeValue.getDisplayString(withNullability: false);
   }
-
-  @override
-  String toString() => '\$Type($name);';
 }
 
 class $Symbol implements Symbol {
@@ -64,9 +61,6 @@ class $Symbol implements Symbol {
     if (!reader.isSymbol) return null;
     return reader.objectValue.toSymbolValue();
   }
-
-  @override
-  String toString() => '\$Symbol($name);';
 }
 
 abstract class FieldFilter {
