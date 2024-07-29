@@ -1111,6 +1111,8 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
 
 /// Code generator.
 class OrmGenerator extends Generator {
+  const OrmGenerator();
+
   @override
   String? generate(LibraryReader library, BuildStep buildStep) {
     final Set<Uri> partUris = library.element.parts
