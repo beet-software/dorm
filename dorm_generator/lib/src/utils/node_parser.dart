@@ -18,15 +18,13 @@ import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
-import 'package:analyzer/dart/element/visitor.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
 import 'package:source_gen/source_gen.dart';
 
 import 'custom_types.dart';
 import 'orm_node.dart';
 
-abstract class NodeParser<A, T, E extends Element>
-    extends SimpleElementVisitor<T?> {
+abstract class NodeParser<A, T, E extends Element> {
   const NodeParser();
 
   Type get annotation => A;
@@ -62,11 +60,6 @@ abstract class ClassNodeParser<A>
 
   @override
   Element? _childOf(ClassElement element) => element;
-
-  @override
-  ClassOrmNode<A>? visitClassElement(ClassElement element) {
-    return parseElement(element);
-  }
 }
 
 abstract class FieldNodeParser<A extends Field>
@@ -75,11 +68,6 @@ abstract class FieldNodeParser<A extends Field>
 
   @override
   Element? _childOf(FieldElement element) => element.getter;
-
-  @override
-  FieldOrmNode? visitFieldElement(FieldElement element) {
-    return parseElement(element);
-  }
 
   @override
   FieldOrmNode _convert(Field annotation, FieldElement element) {
