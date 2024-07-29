@@ -1052,13 +1052,7 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
             .literalList(field.referTo.map((token) {
               final QueryType? type = token.type;
 
-              final String? symbolName = (token.field as $Symbol).name;
-              if (symbolName == null) {
-                throw StateError(
-                  'field ${field.name} must have a symbol for all its tokens',
-                );
-              }
-
+              final String symbolName = (token.field as $Symbol).name!;
               final FieldOrmNode? referredField = this[symbolName] ??
                   where(FieldFilter.isA<PolymorphicField>)
                       .values
