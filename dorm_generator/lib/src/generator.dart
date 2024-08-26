@@ -749,6 +749,8 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
                 b.symbol = 'List';
                 b.types.add(cb.Reference(name));
               });
+            } else if (fieldType.endsWith('?')) {
+              type = cb.Reference('$name?');
             } else {
               type = cb.Reference(name);
             }
