@@ -746,7 +746,16 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
             } else {
               name = '${value.name!.substring(1)}Data';
             }
-            type = cb.Reference(baseField.output.apply(name));
+            if (fieldType.startsWith('List<')) {
+              type = cb.TypeReference((b) {
+                b.symbol = 'List';
+                b.types.add(cb.Reference(name));
+              });
+            } else if (fieldType.endsWith('?')) {
+              type = cb.Reference('$name?');
+            } else {
+              type = cb.Reference(name);
+            }
           } else {
             type = cb.Reference(fieldType);
           }
