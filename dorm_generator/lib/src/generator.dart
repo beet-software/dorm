@@ -834,6 +834,32 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
                 b.type = cb.Reference('Map');
                 b.name = fieldName;
               });
+            } else if (baseField is ModelField) {
+              final $Type value = baseField.referTo as $Type;
+              final ClassOrmNode<Object>? node = nodes[value.name]?.annotation;
+              final String name;
+              if (node is DataOrmNode) {
+                name = value.name!.substring(1);
+              } else {
+                name = '${value.name!.substring(1)}Data';
+              }
+              final cb.Reference type;
+              if (fieldType.startsWith('List<')) {
+                type = cb.TypeReference((b) {
+                  b.symbol = 'List';
+                  b.types.add(cb.Reference(name));
+                });
+              } else if (fieldType.endsWith('?')) {
+                type = cb.Reference('$name?');
+              } else {
+                type = cb.Reference(name);
+              }
+              yield cb.Parameter((b) {
+                b.required = true;
+                b.named = true;
+                b.type = type;
+                b.name = fieldName;
+              });
             } else {
               yield cb.Parameter((b) {
                 b.required = true;
