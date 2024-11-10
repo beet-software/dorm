@@ -47,6 +47,36 @@ class SchoolAddress {
   Map<String, Object?> toJson() => _$SchoolAddressToJson(this);
 }
 
+class _$School implements _School {
+  factory _$School.fromData(
+    SchoolDependency dependency,
+    SchoolData data,
+  ) =>
+      _$School(
+        name: data.name,
+        address: data.address,
+        phoneNumbers: data.phoneNumbers,
+      );
+
+  const _$School({
+    required this.name,
+    required this.address,
+    required this.phoneNumbers,
+  });
+
+  @override
+  final String name;
+
+  @override
+  final dynamic address;
+
+  @override
+  final List<String> phoneNumbers;
+
+  @override
+  String get _q0 => [$normalizeText(name)].join(r'_');
+}
+
 @JsonSerializable(
   anyMap: true,
   explicitToJson: true,
@@ -112,7 +142,7 @@ class School extends SchoolData implements _School {
   final String id;
 
   @override
-  String get _q0 => [$normalizeText(name)].join('_');
+  String get _q0 => [$normalizeText(name)].join(r'_');
 
   @override
   Map<String, Object?> toJson() {
@@ -140,7 +170,13 @@ class SchoolEntity implements Entity<SchoolData, School> {
     SchoolData data,
   ) {
     return School(
-      id: id,
+      id: _School._generate(
+        _$School.fromData(
+          dependency,
+          data,
+        ),
+        id,
+      ),
       name: data.name,
       address: data.address,
       phoneNumbers: data.phoneNumbers,
@@ -247,13 +283,13 @@ class Student extends StudentData implements _Student {
   final String schoolId;
 
   @override
-  String get _q0 => [$normalizeText(name)].join('_');
+  String get _q0 => [$normalizeText(name)].join(r'_');
 
   @override
   String get _q1 => [
         schoolId,
         $normalizeText(name),
-      ].join('_');
+      ].join(r'_');
 
   @override
   Map<String, Object?> toJson() {
@@ -286,7 +322,7 @@ class StudentEntity implements Entity<StudentData, Student> {
     StudentData data,
   ) {
     return Student(
-      id: dependency.key(id),
+      id: id,
       name: data.name,
       hasDisabilities: data.hasDisabilities,
       schoolId: dependency.schoolId,
@@ -326,31 +362,6 @@ extension StudentProperties on Student {
       schoolId: schoolId,
     );
   }
-}
-
-class _$Teacher implements _Teacher {
-  factory _$Teacher.fromData(
-    TeacherDependency dependency,
-    TeacherData data,
-  ) =>
-      _$Teacher(
-        name: data.name,
-        ssn: data.ssn,
-      );
-
-  const _$Teacher({
-    required this.name,
-    required this.ssn,
-  });
-
-  @override
-  final String name;
-
-  @override
-  final String? ssn;
-
-  @override
-  String get _q0 => [ssn ?? ''].join('_');
 }
 
 @JsonSerializable(
@@ -406,7 +417,7 @@ class Teacher extends TeacherData implements _Teacher {
   final String id;
 
   @override
-  String get _q0 => [ssn ?? ''].join('_');
+  String get _q0 => [ssn ?? ''].join(r'_');
 
   @override
   Map<String, Object?> toJson() {
@@ -434,14 +445,7 @@ class TeacherEntity implements Entity<TeacherData, Teacher> {
     TeacherData data,
   ) {
     return Teacher(
-      id: _Teacher._id(_$Teacher.fromData(
-        dependency,
-        data,
-      )).when(
-        caseSimple: () => id,
-        caseComposite: () => dependency.key(id),
-        caseValue: (id) => id,
-      ),
+      id: id,
       name: data.name,
       ssn: data.ssn,
     );
@@ -546,7 +550,7 @@ class HistoryEntity implements Entity<HistoryData, History> {
     HistoryData data,
   ) {
     return History(
-      id: dependency.studentId,
+      id: id,
       studentId: dependency.studentId,
     );
   }
@@ -816,7 +820,7 @@ class ClassEntity implements Entity<ClassData, Class> {
     ClassData data,
   ) {
     return Class(
-      id: dependency.key(id),
+      id: id,
       patron: data.patron,
       teacherId: dependency.teacherId,
       studentId: dependency.studentId,

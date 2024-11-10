@@ -16,8 +16,6 @@
 
 import 'package:meta/meta_meta.dart';
 
-import 'uid_type.dart';
-
 /// Allows a class to be serialized.
 @Target({TargetKind.classType})
 class Data {
@@ -35,12 +33,15 @@ class Model {
   final Symbol? as;
 
   /// Unique identification type for this model.
-  final UidType uidType;
+  ///
+  /// Should have the signature String Function(_AnnotatedClass, String), where
+  /// `_AnnotatedClass` is the class annotated by this [Model] instance.
+  final Function? primaryKeyGenerator;
 
   /// Creates a [Model] by its attributes.
   const Model({
     required this.name,
     this.as,
-    this.uidType = const UidType.simple(),
+    this.primaryKeyGenerator,
   });
 }

@@ -1,8 +1,7 @@
-import 'package:dorm_framework/dorm_framework.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
+import 'package:dorm_framework/dorm_framework.dart';
 
 part 'school.dorm.dart';
-
 part 'school.g.dart';
 
 @Data()
@@ -20,8 +19,14 @@ abstract class _SchoolAddress {
   int get number;
 }
 
-@Model(name: 'escola', as: #schools, uidType: UidType.simple())
+@Model(
+  name: 'escola',
+  as: #schools,
+  primaryKeyGenerator: _School._generate,
+)
 abstract class _School {
+  static String _generate(_School school, String id) => school.name;
+
   @Field(name: 'nome')
   String get name;
 
@@ -39,7 +44,7 @@ abstract class _School {
   String get _q0;
 }
 
-@Model(name: 'aluno', as: #students, uidType: UidType.composite())
+@Model(name: 'aluno', as: #students)
 abstract class _Student {
   @Field(name: 'nome')
   String get name;
@@ -65,15 +70,8 @@ abstract class _Student {
   String get _q1;
 }
 
-@Model(name: 'professor', as: #teachers, uidType: UidType.custom(_Teacher._id))
+@Model(name: 'professor', as: #teachers)
 abstract class _Teacher {
-  static CustomUidValue _id(Object data) {
-    data as _Teacher;
-    final String? ssn = data.ssn;
-    if (ssn == null) return const CustomUidValue.composite();
-    return CustomUidValue.value(ssn.replaceAll(RegExp(r'\D'), ''));
-  }
-
   @Field(name: 'nome')
   String get name;
 
@@ -85,7 +83,7 @@ abstract class _Teacher {
   String get _q0;
 }
 
-@Model(name: 'historico', as: #histories, uidType: UidType.sameAs(_Student))
+@Model(name: 'historico', as: #histories)
 abstract class _History {
   @ForeignField(name: 'id-aluno', referTo: _Student)
   String get studentId;
@@ -103,7 +101,7 @@ abstract class _Teaching {
   String get code;
 }
 
-@Model(name: 'aula', as: #classes, uidType: UidType.composite())
+@Model(name: 'aula', as: #classes)
 abstract class _Class {
   @ModelField(name: 'paraninfo', referTo: _Teacher)
   get patron;
