@@ -119,6 +119,57 @@ abstract class FieldNodeParser<DormAnnotation extends Field>
   }
 }
 
+class PolymorphicDataParser extends ClassNodeParser<PolymorphicData> {
+  const PolymorphicDataParser();
+
+  @override
+  final List<FieldNodeParser<Field>> _fieldParsers = const [
+    ModelFieldParser(),
+    ForeignFieldParser(),
+    FieldParser(),
+  ];
+
+  @override
+  bool _validate(ClassElement element) {
+    final List<InterfaceType> supertypes = element.allSupertypes;
+    if (supertypes.length == 2) return true;
+
+    final String suffix;
+    if (supertypes.length < 2) {
+      suffix = 'none';
+    } else {
+      suffix = supertypes
+          .where((type) => !type.isDartCoreObject)
+          .map((type) => type.getDisplayString(withNullability: false))
+          .join(', ');
+    }
+    throw StateError(
+      'the ${element.name} class annotated with PolymorphicData should '
+          'contain a single supertype, found $suffix',
+    );
+  }
+
+  @override
+  PolymorphicData _parse(ConstantReader reader) {
+    return PolymorphicData(
+      name: reader.read('name').stringValue,
+      as: $Symbol(reader: reader.read('as')),
+    );
+  }
+
+  @override
+  PolymorphicDataOrmNode _convertWithFields(
+      PolymorphicData annotation,
+      ClassElement element,
+      Map<String, FieldOrmNode> fields,
+      ) {
+    return PolymorphicDataOrmNode(
+      annotation: annotation,
+      fields: fields,
+    );
+  }
+}
+
 class DataParser extends ClassNodeParser<Data> {
   const DataParser();
 
@@ -193,72 +244,6 @@ class ModelParser extends ClassNodeParser<Model> {
   ) {
     return ModelOrmNode(
       annotation: annotation,
-      fields: fields,
-    );
-  }
-}
-
-class PolymorphicDataParser extends ClassNodeParser<PolymorphicData> {
-  const PolymorphicDataParser();
-
-  @override
-  final List<FieldNodeParser<Field>> _fieldParsers = const [
-    ModelFieldParser(),
-    ForeignFieldParser(),
-    FieldParser(),
-  ];
-
-  @override
-  bool _validate(ClassElement element) {
-    final List<InterfaceType> supertypes = element.allSupertypes;
-    if (supertypes.length == 2) return true;
-
-    final String suffix;
-    if (supertypes.length < 2) {
-      suffix = 'none';
-    } else {
-      suffix = supertypes
-          .where((type) => !type.isDartCoreObject)
-          .map((type) => type.getDisplayString(withNullability: false))
-          .join(', ');
-    }
-    throw StateError(
-      'the ${element.name} class annotated with PolymorphicData should '
-      'contain a single supertype, found $suffix',
-    );
-  }
-
-  @override
-  PolymorphicData _parse(ConstantReader reader) {
-    return PolymorphicData(
-      name: reader.read('name').stringValue,
-      as: $Symbol(reader: reader.read('as')),
-    );
-  }
-
-  @override
-  PolymorphicDataOrmNode _convertWithFields(
-    PolymorphicData annotation,
-    ClassElement element,
-    Map<String, FieldOrmNode> fields,
-  ) {
-    final InterfaceType supertypeType =
-        element.allSupertypes.singleWhere((type) => !type.isDartCoreObject);
-
-    final bool isSealed;
-    final InterfaceElement superTypeElement = supertypeType.element;
-    if (superTypeElement is ClassElement) {
-      isSealed = superTypeElement.isSealed;
-    } else {
-      isSealed = false;
-    }
-
-    return PolymorphicDataOrmNode(
-      annotation: annotation,
-      tag: PolymorphicDataTag(
-        value: supertypeType.getDisplayString(withNullability: false),
-        isSealed: isSealed,
-      ),
       fields: fields,
     );
   }

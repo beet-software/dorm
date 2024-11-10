@@ -104,8 +104,6 @@ class PolymorphicDataNaming extends Naming<PolymorphicDataOrmNode> {
   /// circular
   String get enumFieldName =>
       (node.annotation.as as $Symbol?)?.name ?? _defaultEnumFieldName;
-
-  TagNaming get tag => TagNaming(node.tag.value);
 }
 
 class TagNaming {
@@ -121,33 +119,38 @@ class TagNaming {
   String get enumName => '${modelName}Type';
 }
 
-/// Arguments of code generation.
-abstract class Args<Annotation, Field, Naming> {
-  final Map<String, ClassOrmNode<Object>> nodes;
-  final Annotation annotation;
-  final Map<String, Field> fields;
+abstract class Args<Naming> {
+  final ParsingContext context;
   final Naming naming;
 
   const Args({
-    required this.nodes,
-    required this.annotation,
-    required this.fields,
+    required this.context,
     required this.naming,
   });
 
   void accept(cb.LibraryBuilder b);
 }
 
-class DataArgs extends Args<Data, FieldOrmNode, DataNaming> {
+/// Arguments of code generation.
+abstract class AnnotatedArgs<DormAnnotation, Naming> extends Args {
+  final ClassOrmNode<DormAnnotation> node;
+
+  const AnnotatedArgs({
+    required super.context,
+    required super.naming,
+    required this.node,
+  });
+}
+
+class DataArgs extends AnnotatedArgs<Data, DataNaming> {
   const DataArgs({
-    required super.nodes,
-    required super.annotation,
-    required super.fields,
+    required super.context,
+    required super.node,
     required super.naming,
   });
 
   cb.Spec get _class {
-    return fields.baseClassOf(nodes, name: naming.modelName);
+    return node.baseClassOf(context, name: naming.modelName);
   }
 
   @override
@@ -156,11 +159,10 @@ class DataArgs extends Args<Data, FieldOrmNode, DataNaming> {
   }
 }
 
-class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
+class ModelArgs extends AnnotatedArgs<Model, ModelNaming> {
   const ModelArgs({
-    required super.nodes,
-    required super.annotation,
-    required super.fields,
+    required super.context,
+    required super.node,
     required super.naming,
   });
 
@@ -172,7 +174,7 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
       caseSameAs: (type) {
         type as $Type;
         for (MapEntry<String, FieldOrmNode> entry
-            in fields.where(FieldFilter.belongsToModel).entries) {
+            in node.fields.where(FieldFilter.belongsToModel).entries) {
           final $Type currentType =
               (entry.value.annotation as ForeignField).referTo as $Type;
           if (currentType.name != type.name) continue;
@@ -209,7 +211,7 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
       b.name = className;
       b.implements.add(cb.Reference(naming.schemaName));
       b.fields.addAll(
-          fields.where(FieldFilter.belongsToSchema).entries.map((entry) {
+          node.fields.where(FieldFilter.belongsToSchema).entries.map((entry) {
         return cb.Field((b) {
           b.annotations.add(expressionOf('override'));
           b.modifier = cb.FieldModifier.final$;
@@ -232,7 +234,7 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
           cb.InvokeExpression.newOf(
             expressionOf(className),
             [],
-            fields.where(FieldFilter.belongsToSchema).map((name, field) {
+            node.fields.where(FieldFilter.belongsToSchema).map((name, field) {
               final cb.Expression expression = expressionOf(
                   field.annotation is ForeignField ? 'dependency' : 'data');
               return MapEntry(name, expression.property(name));
@@ -242,8 +244,8 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
       }));
       b.constructors.add(cb.Constructor((b) {
         b.constant = true;
-        b.optionalParameters
-            .addAll(fields.where(FieldFilter.belongsToSchema).keys.map((name) {
+        b.optionalParameters.addAll(
+            node.fields.where(FieldFilter.belongsToSchema).keys.map((name) {
           return cb.Parameter((b) {
             b.required = true;
             b.named = true;
@@ -252,20 +254,20 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
           });
         }));
       }));
-      b.methods.addAll(fields.queryGetters);
+      b.methods.addAll(node.queryGetters);
     });
   }
 
   cb.Spec get _dataClass {
-    return fields.baseClassOf(
-      nodes,
+    return node.baseClassOf(
+      context,
       name: naming.dataName,
     );
   }
 
   cb.Spec get _modelClass {
-    return fields.baseClassOf(
-      nodes,
+    return node.baseClassOf(
+      context,
       name: naming.modelName,
       baseName: naming.dataName,
     );
@@ -279,15 +281,15 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
         b.url = '$_dormUrl';
         b.types.add(cb.Reference(naming.dataName));
       });
-      b.fields
-          .addAll(fields.where(FieldFilter.belongsToModel).entries.map((entry) {
+      b.fields.addAll(
+          node.fields.where(FieldFilter.belongsToModel).entries.map((entry) {
         return cb.Field((b) {
           b.modifier = cb.FieldModifier.final$;
           b.type = cb.Reference(entry.value.type);
           b.name = entry.key;
         });
       }));
-      if (fields.where(FieldFilter.belongsToModel).isEmpty) {
+      if (node.fields.where(FieldFilter.belongsToModel).isEmpty) {
         b.constructors.add(cb.Constructor((b) {
           b.constant = true;
           b.initializers.add(cb.ToCodeExpression(
@@ -297,8 +299,8 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
       } else {
         b.constructors.add(cb.Constructor((b) {
           b.constant = false;
-          b.optionalParameters
-              .addAll(fields.where(FieldFilter.belongsToModel).keys.map((name) {
+          b.optionalParameters.addAll(
+              node.fields.where(FieldFilter.belongsToModel).keys.map((name) {
             return cb.Parameter((b) {
               b.required = true;
               b.named = true;
@@ -308,8 +310,10 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
           }));
           b.initializers.add(cb.ToCodeExpression(
             expressionOf('super').property('weak').call([
-              cb.literalList(
-                  fields.where(FieldFilter.belongsToModel).entries.map((entry) {
+              cb.literalList(node.fields
+                  .where(FieldFilter.belongsToModel)
+                  .entries
+                  .map((entry) {
                 cb.Expression expression = expressionOf(entry.key);
                 if (!entry.value.required) {
                   expression = expression.ifNullThen(cb.literalString(''));
@@ -340,7 +344,8 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
         b.modifier = cb.FieldModifier.final$;
         b.type = cb.Reference('String');
         b.name = 'tableName';
-        b.assignment = cb.ToCodeExpression(cb.literalString(annotation.name));
+        b.assignment =
+            cb.ToCodeExpression(cb.literalString(node.annotation.name));
       }));
       b.methods.add(cb.Method((b) {
         b.annotations.add(expressionOf('override'));
@@ -363,8 +368,8 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
           cb.Reference(naming.modelName),
           [],
           {
-            'id': _uidTypeExpressionOf(annotation.uidType),
-            ...Map.fromEntries(fields
+            'id': _uidTypeExpressionOf(node.annotation.uidType),
+            ...Map.fromEntries(node.fields
                 .where(FieldFilter.belongsToSchema)
                 .entries
                 .expand((entry) sync* {
@@ -402,7 +407,7 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
         b.lambda = true;
 
         cb.Expression baseExpression = expressionOf('model');
-        if (fields.where(FieldFilter.belongsToData).isNotEmpty) {
+        if (node.fields.where(FieldFilter.belongsToData).isNotEmpty) {
           baseExpression =
               baseExpression.property('copyWith').call([expressionOf('data')]);
         }
@@ -476,7 +481,7 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
           [],
           {
             'id': expressionOf('id'),
-            ...Map.fromEntries(fields
+            ...Map.fromEntries(node.fields
                 .where(FieldFilter.belongsToSchema)
                 .entries
                 .expand((entry) sync* {
@@ -503,7 +508,7 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
 
   @override
   void accept(cb.LibraryBuilder b) {
-    annotation.uidType.when(
+    node.annotation.uidType.when(
       caseSimple: () {},
       caseComposite: () {},
       caseSameAs: (_) {},
@@ -513,25 +518,25 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
     b.body.add(_modelClass);
     b.body.add(_dependencyClass);
     b.body.add(_entityClass);
-    if (fields.where(FieldFilter.belongsToData).isNotEmpty) {
+    if (node.fields.where(FieldFilter.belongsToData).isNotEmpty) {
       b.body.add(_extension);
     }
   }
 }
 
-class PolymorphicArgs
-    extends Args<PolymorphicDataTag, PolymorphicDataOrmNode, TagNaming> {
+class PolymorphicArgs extends Args<TagNaming> {
+  final PolymorphicGroupOrmNode node;
+
   const PolymorphicArgs({
-    required super.nodes,
-    required super.annotation,
-    required super.fields,
+    required super.context,
     required super.naming,
+    required this.node,
   });
 
   cb.Spec get _enumClass {
     return cb.Enum((b) {
       b.name = naming.enumName;
-      b.values.addAll(fields.entries.map((entry) {
+      b.values.addAll(node.children.entries.map((entry) {
         final PolymorphicDataNaming naming = PolymorphicDataNaming(
           name: entry.key,
           node: entry.value,
@@ -545,8 +550,8 @@ class PolymorphicArgs
 
   cb.Spec get _baseClass {
     return cb.Class((b) {
-      b.abstract = !annotation.isSealed;
-      b.sealed = annotation.isSealed;
+      b.abstract = !node.isSealed;
+      b.sealed = node.isSealed;
       b.name = naming.modelName;
       b.implements.add(cb.Reference(naming.schemaName));
       b.constructors.add(cb.Constructor((b) {
@@ -564,7 +569,7 @@ class PolymorphicArgs
         b.body = cb.Block((b) {
           b.statements.add(cb.Code('switch (type) {'));
           for (MapEntry<String, PolymorphicDataOrmNode> entry
-              in fields.entries) {
+              in node.children.entries) {
             final PolymorphicDataNaming naming =
                 PolymorphicDataNaming(name: entry.key, node: entry.value);
             b.statements.add(cb.Code(
@@ -604,18 +609,21 @@ class PolymorphicArgs
 }
 
 class PolymorphicModelArgs
-    extends Args<void, FieldOrmNode, PolymorphicDataNaming> {
+    extends AnnotatedArgs<PolymorphicData, PolymorphicDataNaming> {
+  final String parentName;
+
   const PolymorphicModelArgs({
-    required super.nodes,
-    required super.fields,
+    required super.context,
     required super.naming,
-  }) : super(annotation: null);
+    required super.node,
+    required this.parentName,
+  });
 
   cb.Spec get _class {
-    return fields.baseClassOf(
-      nodes,
+    return node.baseClassOf(
+      context,
       name: naming.modelName,
-      baseName: naming.tag.modelName,
+      baseName: TagNaming(parentName).modelName,
       polymorphicName: naming.enumFieldName,
     );
   }
@@ -627,21 +635,19 @@ class PolymorphicModelArgs
 }
 
 /// Base of code generation.
-extension _BaseWriting on Map<String, FieldOrmNode> {
+extension _BaseWriting on ClassOrmNode<Object> {
   cb.Spec baseClassOf(
-    Map<String, ClassOrmNode<Object>> nodes, {
+    ParsingContext context, {
     required String name,
     String? baseName,
     String? polymorphicName,
   }) {
     final bool base = polymorphicName != null || baseName == null;
     final bool serializable =
-        !base || where(FieldFilter.belongsToData).isNotEmpty;
+        !base || fields.where(FieldFilter.belongsToData).isNotEmpty;
 
-    final bool hasPolymorphism = values
-        .map((field) => field.annotation)
-        .whereType<PolymorphicField>()
-        .isNotEmpty;
+    final bool hasPolymorphism =
+        fields.values.any((field) => field.annotation is PolymorphicField);
 
     return cb.Class((b) {
       if (serializable) {
@@ -680,7 +686,7 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
           b.name = 'id';
         }));
       }
-      b.fields.addAll(entries.expand((entry) sync* {
+      b.fields.addAll(fields.entries.expand((entry) sync* {
         final String fieldName = entry.key;
         final FieldOrmNode data = entry.value;
         final String fieldType = data.type;
@@ -739,7 +745,8 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
             type = cb.Reference(fieldType.substring(1));
           } else if (baseField is ModelField) {
             final $Type value = baseField.referTo as $Type;
-            final ClassOrmNode<Object>? node = nodes[value.name];
+            final ClassOrmNode<Object>? node =
+                context.monomorphicNodes[value.name];
             final String name;
             if (node is DataOrmNode) {
               name = value.name!.substring(1);
@@ -812,7 +819,8 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
               b.name = 'id';
             }));
           }
-          b.optionalParameters.addAll(where(baseName == null
+          b.optionalParameters.addAll(fields
+              .where(baseName == null
                   ? FieldFilter.belongsToData
                   : FieldFilter.belongsToSchema)
               .entries
@@ -836,7 +844,8 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
               });
             } else if (baseField is ModelField) {
               final $Type value = baseField.referTo as $Type;
-              final ClassOrmNode<Object>? node = nodes[value.name];
+              final ClassOrmNode<Object>? node =
+                  context.monomorphicNodes[value.name];
               final String name;
               if (node is DataOrmNode) {
                 name = value.name!.substring(1);
@@ -879,7 +888,8 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
                       cb.InvokeExpression.newOf(
                         cb.Reference(baseName),
                         [],
-                        Map.fromEntries(where(FieldFilter.belongsToData)
+                        Map.fromEntries(fields
+                            .where(FieldFilter.belongsToData)
                             .entries
                             .expand((entry) sync* {
                           final String fieldName = entry.key;
@@ -902,7 +912,8 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
                 [],
                 {
                   if (!base) 'id': expressionOf('id'),
-                  ...Map.fromEntries(where(FieldFilter.belongsToSchema)
+                  ...Map.fromEntries(fields
+                      .where(FieldFilter.belongsToSchema)
                       .entries
                       .expand((entry) sync* {
                     final String fieldName = entry.key;
@@ -967,7 +978,7 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
             b.name = 'id';
           }));
         }
-        b.optionalParameters.addAll(entries.expand((entry) sync* {
+        b.optionalParameters.addAll(fields.entries.expand((entry) sync* {
           final String fieldName = entry.key;
           final Field baseField = entry.value.annotation;
           if (!FieldFilter.belongsToSchema(baseField)) return;
@@ -1023,7 +1034,7 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
             queryObject = {};
             final Map<String, Map<String, Object>> queries = {};
             for (MapEntry<String, FieldOrmNode> entry
-                in where(FieldFilter.isA<QueryField>).entries) {
+                in fields.where(FieldFilter.isA<QueryField>).entries) {
               final String? name = (entry.value.annotation as QueryField).name;
               if (name == null) continue;
               final List<String> segments = name.split('/');
@@ -1069,7 +1080,7 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
 
   Iterable<cb.Method> get queryGetters sync* {
     for (MapEntry<String, FieldOrmNode> entry
-        in where(FieldFilter.isA<QueryField>).entries) {
+        in fields.where(FieldFilter.isA<QueryField>).entries) {
       final QueryField field = entry.value.annotation as QueryField;
       if (field.referTo.isEmpty) continue;
 
@@ -1090,8 +1101,9 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
                 );
               }
 
-              final FieldOrmNode? referredField = this[symbolName] ??
-                  where(FieldFilter.isA<PolymorphicField>)
+              final FieldOrmNode? referredField = fields[symbolName] ??
+                  fields
+                      .where(FieldFilter.isA<PolymorphicField>)
                       .values
                       .firstOrNullWhere((node) {
                     final PolymorphicField field =
@@ -1150,28 +1162,23 @@ class OrmGenerator extends Generator {
         partUris.any((uri) => uri.path.endsWith('.dorm.dart'));
     if (!hasDormDirective) return null;
 
-    final Map<String, ClassOrmNode<Object>> nodes = parseLibrary(library);
+    final ParsingContext context = parseLibrary(library);
     final cb.Spec spec = cb.Library((b) {
-      nodes.entries.mapNotNull<Args>((entry) {
+      context.monomorphicNodes.entries.mapNotNull<Args>((entry) {
         final String name = entry.key;
-        final ClassOrmNode<Object> node = entry.value;
-        if (node is ModelOrmNode) {
-          return ModelArgs(
-            nodes: nodes,
-            naming: ModelNaming(name: name, node: node),
-            annotation: node.annotation,
-            fields: node.fields,
-          );
-        }
-        if (node is DataOrmNode) {
-          return DataArgs(
-            nodes: nodes,
-            naming: DataNaming(name: name, node: node),
-            annotation: node.annotation,
-            fields: node.fields,
-          );
-        }
-        return null;
+        final MonomorphicOrmNode<Object> node = entry.value;
+        return switch (node) {
+          DataOrmNode() => DataArgs(
+              context: context,
+              node: node,
+              naming: DataNaming(name: name, node: node),
+            ),
+          ModelOrmNode() => ModelArgs(
+              context: context,
+              node: node,
+              naming: ModelNaming(name: name, node: node),
+            ),
+        };
       }).forEach((arg) => arg.accept(b));
 
       // Evaluates all classes annotated with `PolymorphicData` on *models.dart*,
@@ -1223,37 +1230,26 @@ class OrmGenerator extends Generator {
       //   },
       // }
       // ```
-      final Map<PolymorphicDataTag, Map<String, PolymorphicDataOrmNode>>
-          groups = nodes
-              .filterValues((data) => data.annotation is PolymorphicDataOrmNode)
-              .mapValues(
-                  (entry) => entry.value.annotation as PolymorphicDataOrmNode)
-              .entries
-              .groupBy((entry) => entry.value.tag)
-              .mapValues((entry) => Map.fromEntries(entry.value));
-
-      for (MapEntry<PolymorphicDataTag,
-          Map<String, PolymorphicDataOrmNode>> entry in groups.entries) {
-        final PolymorphicDataTag tag = entry.key;
-        final Map<String, PolymorphicDataOrmNode> polymorphicNodes =
-            entry.value;
+      for (MapEntry<String, PolymorphicGroupOrmNode> entry
+          in context.polymorphicGroups.entries) {
         final PolymorphicArgs args = PolymorphicArgs(
-          nodes: nodes,
-          annotation: tag,
-          naming: TagNaming(tag.value),
-          fields: polymorphicNodes,
+          context: context,
+          node: entry.value,
+          naming: TagNaming(entry.key),
         );
         args.accept(b);
       }
 
-      nodes.entries.mapNotNull((entry) {
-        final String name = entry.key;
-        final ClassOrmNode<Object> classNode = entry.value;
-        if (classNode is! PolymorphicDataOrmNode) return null;
+      context.polymorphicGroups.entries
+          .expand((contextEntry) => contextEntry.value.children.entries
+              .map((entry) => (contextEntry.key, entry.key, entry.value)))
+          .mapNotNull((t) {
+        final (String parentName, String name, PolymorphicDataOrmNode node) = t;
         return PolymorphicModelArgs(
-          nodes: nodes,
-          naming: PolymorphicDataNaming(name: name, node: classNode),
-          fields: classNode.fields,
+          context: context,
+          parentName: parentName,
+          node: node,
+          naming: PolymorphicDataNaming(name: name, node: node),
         );
       }).forEach((arg) => arg.accept(b));
 
@@ -1271,7 +1267,7 @@ class OrmGenerator extends Generator {
             b.name = '_engine';
           }));
         }));
-        b.methods.addAll(nodes.entries.mapNotNull((entry) {
+        b.methods.addAll(context.monomorphicNodes.entries.mapNotNull((entry) {
           final ClassOrmNode<Object> node = entry.value;
           if (node is! ModelOrmNode) return null;
 

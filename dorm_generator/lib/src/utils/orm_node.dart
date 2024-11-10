@@ -16,6 +16,18 @@
 
 import 'package:dorm_annotations/dorm_annotations.dart';
 
+sealed class OrmNode {}
+
+class PolymorphicGroupOrmNode implements OrmNode {
+  final bool isSealed;
+  final Map<String, PolymorphicDataOrmNode> children;
+
+  const PolymorphicGroupOrmNode({
+    required this.isSealed,
+    required this.children,
+  });
+}
+
 /// Represents a Dart element annotated with a object of type [DormAnnotation],
 /// where [DormAnnotation] is a type exported by `dorm_annotations`.
 ///
@@ -23,15 +35,16 @@ import 'package:dorm_annotations/dorm_annotations.dart';
 ///
 /// - a [ClassOrmNode], which is a Dart class annotated with a type [DormAnnotation]
 /// - a [FieldOrmNode], which is a Dart getter annotated with a type [Field]
-sealed class OrmNode<DormAnnotation> {
+sealed class AnnotatedOrmNode<DormAnnotation> implements OrmNode {
   final DormAnnotation annotation;
 
-  const OrmNode({required this.annotation});
+  const AnnotatedOrmNode({required this.annotation});
 }
 
 /// Represents a Dart class annotated with a type [DormAnnotation], where [DormAnnotation] is a type
 /// exported by `dorm_annotations`.
-sealed class ClassOrmNode<DormAnnotation> extends OrmNode<DormAnnotation> {
+sealed class ClassOrmNode<DormAnnotation>
+    extends AnnotatedOrmNode<DormAnnotation> {
   final Map<String, FieldOrmNode> fields;
 
   const ClassOrmNode({
@@ -40,8 +53,16 @@ sealed class ClassOrmNode<DormAnnotation> extends OrmNode<DormAnnotation> {
   });
 }
 
+sealed class MonomorphicOrmNode<DormAnnotation>
+    extends ClassOrmNode<DormAnnotation> {
+  const MonomorphicOrmNode({
+    required super.annotation,
+    required super.fields,
+  });
+}
+
 /// Represents a Dart class annotated with [Data].
-class DataOrmNode extends ClassOrmNode<Data> {
+class DataOrmNode extends MonomorphicOrmNode<Data> {
   const DataOrmNode({
     required super.annotation,
     required super.fields,
@@ -49,7 +70,7 @@ class DataOrmNode extends ClassOrmNode<Data> {
 }
 
 /// Represents a Dart class annotated with [Model].
-class ModelOrmNode extends ClassOrmNode<Model> {
+class ModelOrmNode extends MonomorphicOrmNode<Model> {
   const ModelOrmNode({
     required super.annotation,
     required super.fields,
@@ -58,18 +79,15 @@ class ModelOrmNode extends ClassOrmNode<Model> {
 
 /// Represents a Dart class annotated with [PolymorphicData].
 class PolymorphicDataOrmNode extends ClassOrmNode<PolymorphicData> {
-  final PolymorphicDataTag tag;
-
   const PolymorphicDataOrmNode({
     required super.annotation,
     required super.fields,
-    required this.tag,
   });
 }
 
 /// Represents a Dart getter annotated with [Field] or its subclasses
 /// ([ModelField], [ForeignField], [QueryField]).
-class FieldOrmNode extends OrmNode<Field> {
+class FieldOrmNode extends AnnotatedOrmNode<Field> {
   final String type;
   final bool required;
 
@@ -78,25 +96,4 @@ class FieldOrmNode extends OrmNode<Field> {
     required this.type,
     required this.required,
   });
-}
-
-class PolymorphicDataTag {
-  final String value;
-  final bool isSealed;
-
-  const PolymorphicDataTag({
-    required this.value,
-    required this.isSealed,
-  });
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is PolymorphicDataTag &&
-          runtimeType == other.runtimeType &&
-          value == other.value &&
-          isSealed == other.isSealed;
-
-  @override
-  int get hashCode => value.hashCode ^ isSealed.hashCode;
 }
