@@ -188,7 +188,7 @@ class SchoolEntity implements Entity<SchoolData, School> {
     School model,
     SchoolData data,
   ) =>
-      model.copyWith(data);
+      model.updateWith(data);
 
   @override
   School fromJson(
@@ -208,7 +208,7 @@ class SchoolEntity implements Entity<SchoolData, School> {
 }
 
 extension SchoolProperties on School {
-  School copyWith(SchoolData data) {
+  School updateWith(SchoolData data) {
     return School(
       id: id,
       name: data.name,
@@ -334,7 +334,7 @@ class StudentEntity implements Entity<StudentData, Student> {
     Student model,
     StudentData data,
   ) =>
-      model.copyWith(data);
+      model.updateWith(data);
 
   @override
   Student fromJson(
@@ -354,7 +354,7 @@ class StudentEntity implements Entity<StudentData, Student> {
 }
 
 extension StudentProperties on Student {
-  Student copyWith(StudentData data) {
+  Student updateWith(StudentData data) {
     return Student(
       id: id,
       name: data.name,
@@ -456,7 +456,7 @@ class TeacherEntity implements Entity<TeacherData, Teacher> {
     Teacher model,
     TeacherData data,
   ) =>
-      model.copyWith(data);
+      model.updateWith(data);
 
   @override
   Teacher fromJson(
@@ -476,7 +476,7 @@ class TeacherEntity implements Entity<TeacherData, Teacher> {
 }
 
 extension TeacherProperties on Teacher {
-  Teacher copyWith(TeacherData data) {
+  Teacher updateWith(TeacherData data) {
     return Teacher(
       id: id,
       name: data.name,
@@ -683,7 +683,7 @@ class TeachingEntity implements Entity<TeachingData, Teaching> {
     Teaching model,
     TeachingData data,
   ) =>
-      model.copyWith(data);
+      model.updateWith(data);
 
   @override
   Teaching fromJson(
@@ -703,7 +703,7 @@ class TeachingEntity implements Entity<TeachingData, Teaching> {
 }
 
 extension TeachingProperties on Teaching {
-  Teaching copyWith(TeachingData data) {
+  Teaching updateWith(TeachingData data) {
     return Teaching(
       id: id,
       teacherId: teacherId,
@@ -833,7 +833,7 @@ class ClassEntity implements Entity<ClassData, Class> {
     Class model,
     ClassData data,
   ) =>
-      model.copyWith(data);
+      model.updateWith(data);
 
   @override
   Class fromJson(
@@ -853,7 +853,7 @@ class ClassEntity implements Entity<ClassData, Class> {
 }
 
 extension ClassProperties on Class {
-  Class copyWith(ClassData data) {
+  Class updateWith(ClassData data) {
     return Class(
       id: id,
       patron: data.patron,

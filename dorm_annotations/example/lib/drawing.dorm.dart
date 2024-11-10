@@ -142,7 +142,7 @@ class DrawingEntity implements Entity<DrawingData, Drawing> {
     Drawing model,
     DrawingData data,
   ) =>
-      model.copyWith(data);
+      model.updateWith(data);
 
   @override
   Drawing fromJson(
@@ -162,7 +162,7 @@ class DrawingEntity implements Entity<DrawingData, Drawing> {
 }
 
 extension DrawingProperties on Drawing {
-  Drawing copyWith(DrawingData data) {
+  Drawing updateWith(DrawingData data) {
     return Drawing(
       id: id,
       color: data.color,

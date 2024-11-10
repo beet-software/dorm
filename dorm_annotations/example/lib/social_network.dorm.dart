@@ -112,7 +112,7 @@ class UserEntity implements Entity<UserData, User> {
     User model,
     UserData data,
   ) =>
-      model.copyWith(data);
+      model.updateWith(data);
 
   @override
   User fromJson(
@@ -132,7 +132,7 @@ class UserEntity implements Entity<UserData, User> {
 }
 
 extension UserProperties on User {
-  User copyWith(UserData data) {
+  User updateWith(UserData data) {
     return User(
       id: id,
       name: data.name,
@@ -245,7 +245,7 @@ class PostEntity implements Entity<PostData, Post> {
     Post model,
     PostData data,
   ) =>
-      model.copyWith(data);
+      model.updateWith(data);
 
   @override
   Post fromJson(
@@ -265,7 +265,7 @@ class PostEntity implements Entity<PostData, Post> {
 }
 
 extension PostProperties on Post {
-  Post copyWith(PostData data) {
+  Post updateWith(PostData data) {
     return Post(
       id: id,
       contents: data.contents,
@@ -395,7 +395,7 @@ class MessageEntity implements Entity<MessageData, Message> {
     Message model,
     MessageData data,
   ) =>
-      model.copyWith(data);
+      model.updateWith(data);
 
   @override
   Message fromJson(
@@ -415,7 +415,7 @@ class MessageEntity implements Entity<MessageData, Message> {
 }
 
 extension MessageProperties on Message {
-  Message copyWith(MessageData data) {
+  Message updateWith(MessageData data) {
     return Message(
       id: id,
       contents: data.contents,
