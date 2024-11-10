@@ -22,6 +22,7 @@ import 'package:code_builder/code_builder.dart' as cb;
 import 'package:dart_style/dart_style.dart';
 import 'package:dartx/dartx.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
+import 'package:meta/meta.dart';
 import 'package:source_gen/source_gen.dart';
 
 import 'utils/custom_types.dart';
@@ -1151,6 +1152,8 @@ extension _BaseWriting on ClassOrmNode<Object> {
 
 /// Code generator.
 class OrmGenerator extends Generator {
+  const OrmGenerator();
+
   @override
   String? generate(LibraryReader library, BuildStep buildStep) {
     final Set<Uri> partUris = library.element.parts
@@ -1163,6 +1166,15 @@ class OrmGenerator extends Generator {
     if (!hasDormDirective) return null;
 
     final ParsingContext context = parseLibrary(library);
+    return const OrmCodeProvider().provide(context);
+  }
+}
+
+@visibleForTesting
+class OrmCodeProvider {
+  const OrmCodeProvider();
+
+  String provide(ParsingContext context) {
     final cb.Spec spec = cb.Library((b) {
       context.monomorphicNodes.entries.mapNotNull<Args>((entry) {
         final String name = entry.key;
