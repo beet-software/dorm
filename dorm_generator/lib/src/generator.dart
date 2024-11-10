@@ -437,8 +437,9 @@ class ModelArgs extends AnnotatedArgs<Model, ModelNaming> {
 
         cb.Expression baseExpression = expressionOf('model');
         if (node.fields.where(FieldFilter.belongsToData).isNotEmpty) {
-          baseExpression =
-              baseExpression.property('copyWith').call([expressionOf('data')]);
+          baseExpression = baseExpression
+              .property('updateWith')
+              .call([expressionOf('data')]);
         }
         b.body = cb.ToCodeExpression(baseExpression);
       }));
@@ -500,7 +501,7 @@ class ModelArgs extends AnnotatedArgs<Model, ModelNaming> {
       b.on = cb.Reference(naming.modelName);
       b.methods.add(cb.Method((b) {
         b.returns = cb.Reference(naming.modelName);
-        b.name = 'copyWith';
+        b.name = 'updateWith';
         b.requiredParameters.add(cb.Parameter((b) {
           b.type = cb.Reference(naming.dataName);
           b.name = 'data';
