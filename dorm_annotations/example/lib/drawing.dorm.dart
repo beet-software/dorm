@@ -11,6 +11,7 @@ part of 'drawing.dart';
   explicitToJson: true,
   constructor: '_',
 )
+@CopyWith(skipFields: true)
 class DrawingData {
   factory DrawingData.fromJson(Map json) => _$DrawingDataFromJson(json);
 
@@ -64,6 +65,7 @@ class DrawingData {
   explicitToJson: true,
   constructor: '_',
 )
+@CopyWith(skipFields: true)
 class Drawing extends DrawingData implements _Drawing {
   factory Drawing.fromJson(
     String id,
@@ -195,6 +197,7 @@ abstract class Shape implements _Shape {
   anyMap: true,
   explicitToJson: true,
 )
+@CopyWith(skipFields: true)
 class Rectangle implements Shape, _Rectangle {
   factory Rectangle.fromJson(Map json) => _$RectangleFromJson(json);
 
@@ -230,6 +233,7 @@ class Rectangle implements Shape, _Rectangle {
   anyMap: true,
   explicitToJson: true,
 )
+@CopyWith(skipFields: true)
 class Circle implements Shape, _Circle {
   factory Circle.fromJson(Map json) => _$CircleFromJson(json);
 

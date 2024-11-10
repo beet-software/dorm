@@ -10,3 +10,4 @@ dependencies:
   meta: ^1.14.0
   lints: ^3.0.0
   json_annotation: ^4.9.0
+  copy_with_extension: ^5.0.4

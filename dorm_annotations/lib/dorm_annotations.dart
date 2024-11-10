@@ -16,6 +16,7 @@
 
 library dorm_annotations;
 
+export 'package:copy_with_extension/copy_with_extension.dart';
 export 'package:json_annotation/json_annotation.dart';
 
 export 'src/field.dart';

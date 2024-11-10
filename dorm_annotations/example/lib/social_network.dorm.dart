@@ -10,6 +10,7 @@ part of 'social_network.dart';
   anyMap: true,
   explicitToJson: true,
 )
+@CopyWith(skipFields: true)
 class UserData {
   factory UserData.fromJson(Map json) => _$UserDataFromJson(json);
 
@@ -51,6 +52,7 @@ class UserData {
   anyMap: true,
   explicitToJson: true,
 )
+@CopyWith(skipFields: true)
 class User extends UserData implements _User {
   factory User.fromJson(
     String id,
@@ -147,6 +149,7 @@ extension UserProperties on User {
   anyMap: true,
   explicitToJson: true,
 )
+@CopyWith(skipFields: true)
 class PostData {
   factory PostData.fromJson(Map json) => _$PostDataFromJson(json);
 
@@ -176,6 +179,7 @@ class PostData {
   anyMap: true,
   explicitToJson: true,
 )
+@CopyWith(skipFields: true)
 class Post extends PostData implements _Post {
   factory Post.fromJson(
     String id,
@@ -279,6 +283,7 @@ extension PostProperties on Post {
   anyMap: true,
   explicitToJson: true,
 )
+@CopyWith(skipFields: true)
 class MessageData {
   factory MessageData.fromJson(Map json) => _$MessageDataFromJson(json);
 
@@ -308,6 +313,7 @@ class MessageData {
   anyMap: true,
   explicitToJson: true,
 )
+@CopyWith(skipFields: true)
 class Message extends MessageData implements _Message {
   factory Message.fromJson(
     String id,

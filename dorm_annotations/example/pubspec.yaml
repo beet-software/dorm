@@ -29,3 +29,4 @@ dev_dependencies:
   dorm_generator:
     path: ../../dorm_generator
   lints: ^3.0.0
+  copy_with_extension_gen: ^5.0.4

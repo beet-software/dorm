@@ -10,6 +10,7 @@ part of 'school.dart';
   anyMap: true,
   explicitToJson: true,
 )
+@CopyWith(skipFields: true)
 class SchoolAddress {
   factory SchoolAddress.fromJson(Map json) => _$SchoolAddressFromJson(json);
 
@@ -81,6 +82,7 @@ class _$School implements _School {
   anyMap: true,
   explicitToJson: true,
 )
+@CopyWith(skipFields: true)
 class SchoolData {
   factory SchoolData.fromJson(Map json) => _$SchoolDataFromJson(json);
 
@@ -117,6 +119,7 @@ class SchoolData {
   anyMap: true,
   explicitToJson: true,
 )
+@CopyWith(skipFields: true)
 class School extends SchoolData implements _School {
   factory School.fromJson(
     String id,
@@ -222,6 +225,7 @@ extension SchoolProperties on School {
   anyMap: true,
   explicitToJson: true,
 )
+@CopyWith(skipFields: true)
 class StudentData {
   factory StudentData.fromJson(Map json) => _$StudentDataFromJson(json);
 
@@ -250,6 +254,7 @@ class StudentData {
   anyMap: true,
   explicitToJson: true,
 )
+@CopyWith(skipFields: true)
 class Student extends StudentData implements _Student {
   factory Student.fromJson(
     String id,
@@ -368,6 +373,7 @@ extension StudentProperties on Student {
   anyMap: true,
   explicitToJson: true,
 )
+@CopyWith(skipFields: true)
 class TeacherData {
   factory TeacherData.fromJson(Map json) => _$TeacherDataFromJson(json);
 
@@ -393,6 +399,7 @@ class TeacherData {
   anyMap: true,
   explicitToJson: true,
 )
+@CopyWith(skipFields: true)
 class Teacher extends TeacherData implements _Teacher {
   factory Teacher.fromJson(
     String id,
@@ -495,6 +502,7 @@ class HistoryData {
   anyMap: true,
   explicitToJson: true,
 )
+@CopyWith(skipFields: true)
 class History extends HistoryData implements _History {
   factory History.fromJson(
     String id,
@@ -583,6 +591,7 @@ class HistoryEntity implements Entity<HistoryData, History> {
   anyMap: true,
   explicitToJson: true,
 )
+@CopyWith(skipFields: true)
 class TeachingData {
   factory TeachingData.fromJson(Map json) => _$TeachingDataFromJson(json);
 
@@ -602,6 +611,7 @@ class TeachingData {
   anyMap: true,
   explicitToJson: true,
 )
+@CopyWith(skipFields: true)
 class Teaching extends TeachingData implements _Teaching {
   factory Teaching.fromJson(
     String id,
@@ -717,6 +727,7 @@ extension TeachingProperties on Teaching {
   anyMap: true,
   explicitToJson: true,
 )
+@CopyWith(skipFields: true)
 class ClassData {
   factory ClassData.fromJson(Map json) => _$ClassDataFromJson(json);
 
@@ -746,6 +757,7 @@ class ClassData {
   anyMap: true,
   explicitToJson: true,
 )
+@CopyWith(skipFields: true)
 class Class extends ClassData implements _Class {
   factory Class.fromJson(
     String id,
