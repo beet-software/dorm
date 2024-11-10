@@ -15,27 +15,10 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import 'package:analyzer/dart/element/element.dart';
-import 'package:dorm_annotations/dorm_annotations.dart';
 import 'package:source_gen/source_gen.dart';
 
 import 'utils/node_parser.dart';
 import 'utils/orm_node.dart';
-
-const Map<ClassNodeParser<Object>, List<FieldNodeParser<Field>>> _visiting = {
-  ModelParser(): [
-    ModelFieldParser(),
-    ForeignFieldParser(),
-    PolymorphicFieldParser(),
-    QueryFieldParser(),
-    FieldParser(),
-  ],
-  PolymorphicDataParser(): [
-    ModelFieldParser(),
-    ForeignFieldParser(),
-    FieldParser(),
-  ],
-  DataParser(): [ModelFieldParser(), FieldParser()],
-};
 
 /// Calculates the structure of a *models.dart* file.
 ///
@@ -56,44 +39,34 @@ const Map<ClassNodeParser<Object>, List<FieldNodeParser<Field>>> _visiting = {
 ///
 /// ```none
 /// {
-///   '_User': FieldedOrmNode<Model>(
-///     annotation: ModelOrmNode(annotation: Model(name: 'user', as: #users)),
+///   '_User': ModelOrmNode(
+///     annotation: Model(name: 'user', as: #users),
 ///     fields: {/* ... */},
 ///   ),
-///   '_Post': FieldedOrmNode<Model>(
-///     annotation: ModelOrmNode(annotation: Model(name: 'post')),
+///   '_Post': ModelOrmNode(
+///     annotation: Model(name: 'post'),
 ///     fields: {/* ... */},
 ///   ),
-///   '_Message': FieldedOrmNode<Model>(
-///     annotation: ModelOrmNode(annotation: Model(name: 'message', as: #messages)),
+///   '_Message': ModelOrmNode(
+///     annotation: Model(name: 'message', as: #messages),
 ///     fields: {/* ... */},
 ///   ),
 /// }
 /// ```
-Map<String, FieldedOrmNode<Object>> parseLibrary(LibraryReader reader) {
-  final Map<String, FieldedOrmNode<Object>> nodes = {};
+Map<String, ClassOrmNode<Object>> parseLibrary(LibraryReader reader) {
+  const List<ClassNodeParser<Object>> classParsers = [
+    ModelParser(),
+    PolymorphicDataParser(),
+    DataParser(),
+  ];
+
+  final Map<String, ClassOrmNode<Object>> nodes = {};
   for (ClassElement classElement in reader.classes) {
-    for (MapEntry<ClassNodeParser<Object>, List<FieldNodeParser<Field>>> entry
-        in _visiting.entries) {
-      final ClassNodeParser<Object> classParser = entry.key;
+    for (ClassNodeParser<Object> classParser in classParsers) {
       final ClassOrmNode<Object>? classNode =
           classParser.parseElement(classElement);
       if (classNode == null) continue;
-
-      final Map<String, FieldOrmNode> fields = {};
-      for (FieldElement fieldElement in classElement.fields) {
-        for (FieldNodeParser<Field> fieldParser in entry.value) {
-          final FieldOrmNode? fieldNode =
-              fieldParser.parseElement(fieldElement);
-          if (fieldNode == null) continue;
-          fields[fieldElement.name] = fieldNode;
-          break;
-        }
-      }
-      nodes[classElement.name] = FieldedOrmNode(
-        annotation: classNode,
-        fields: fields,
-      );
+      nodes[classElement.name] = classNode;
     }
   }
   return nodes;

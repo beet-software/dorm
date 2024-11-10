@@ -123,7 +123,7 @@ class TagNaming {
 
 /// Arguments of code generation.
 abstract class Args<Annotation, Field, Naming> {
-  final Map<String, FieldedOrmNode<Object>> nodes;
+  final Map<String, ClassOrmNode<Object>> nodes;
   final Annotation annotation;
   final Map<String, Field> fields;
   final Naming naming;
@@ -629,7 +629,7 @@ class PolymorphicModelArgs
 /// Base of code generation.
 extension _BaseWriting on Map<String, FieldOrmNode> {
   cb.Spec baseClassOf(
-    Map<String, FieldedOrmNode<Object>> nodes, {
+    Map<String, ClassOrmNode<Object>> nodes, {
     required String name,
     String? baseName,
     String? polymorphicName,
@@ -739,7 +739,7 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
             type = cb.Reference(fieldType.substring(1));
           } else if (baseField is ModelField) {
             final $Type value = baseField.referTo as $Type;
-            final ClassOrmNode<Object>? node = nodes[value.name]?.annotation;
+            final ClassOrmNode<Object>? node = nodes[value.name];
             final String name;
             if (node is DataOrmNode) {
               name = value.name!.substring(1);
@@ -836,7 +836,7 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
               });
             } else if (baseField is ModelField) {
               final $Type value = baseField.referTo as $Type;
-              final ClassOrmNode<Object>? node = nodes[value.name]?.annotation;
+              final ClassOrmNode<Object>? node = nodes[value.name];
               final String name;
               if (node is DataOrmNode) {
                 name = value.name!.substring(1);
@@ -1150,25 +1150,24 @@ class OrmGenerator extends Generator {
         partUris.any((uri) => uri.path.endsWith('.dorm.dart'));
     if (!hasDormDirective) return null;
 
-    final Map<String, FieldedOrmNode<Object>> nodes = parseLibrary(library);
+    final Map<String, ClassOrmNode<Object>> nodes = parseLibrary(library);
     final cb.Spec spec = cb.Library((b) {
       nodes.entries.mapNotNull<Args>((entry) {
         final String name = entry.key;
-        final FieldedOrmNode<Object> node = entry.value;
-        final ClassOrmNode<Object> classNode = node.annotation;
-        if (classNode is ModelOrmNode) {
+        final ClassOrmNode<Object> node = entry.value;
+        if (node is ModelOrmNode) {
           return ModelArgs(
             nodes: nodes,
-            naming: ModelNaming(name: name, node: classNode),
-            annotation: classNode.annotation,
+            naming: ModelNaming(name: name, node: node),
+            annotation: node.annotation,
             fields: node.fields,
           );
         }
-        if (classNode is DataOrmNode) {
+        if (node is DataOrmNode) {
           return DataArgs(
             nodes: nodes,
-            naming: DataNaming(name: name, node: classNode),
-            annotation: classNode.annotation,
+            naming: DataNaming(name: name, node: node),
+            annotation: node.annotation,
             fields: node.fields,
           );
         }
@@ -1249,13 +1248,12 @@ class OrmGenerator extends Generator {
 
       nodes.entries.mapNotNull((entry) {
         final String name = entry.key;
-        final FieldedOrmNode<Object> node = entry.value;
-        final ClassOrmNode<Object> classNode = node.annotation;
+        final ClassOrmNode<Object> classNode = entry.value;
         if (classNode is! PolymorphicDataOrmNode) return null;
         return PolymorphicModelArgs(
           nodes: nodes,
           naming: PolymorphicDataNaming(name: name, node: classNode),
-          fields: node.fields,
+          fields: classNode.fields,
         );
       }).forEach((arg) => arg.accept(b));
 
@@ -1274,7 +1272,7 @@ class OrmGenerator extends Generator {
           }));
         }));
         b.methods.addAll(nodes.entries.mapNotNull((entry) {
-          final ClassOrmNode<Object> node = entry.value.annotation;
+          final ClassOrmNode<Object> node = entry.value;
           if (node is! ModelOrmNode) return null;
 
           final ModelNaming naming = ModelNaming(name: entry.key, node: node);

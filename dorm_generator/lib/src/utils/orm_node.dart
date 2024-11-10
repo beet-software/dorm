@@ -16,32 +16,67 @@
 
 import 'package:dorm_annotations/dorm_annotations.dart';
 
-abstract class OrmNode<T> {
-  final T annotation;
+/// Represents a Dart element annotated with a object of type [DormAnnotation],
+/// where [DormAnnotation] is a type exported by `dorm_annotations`.
+///
+/// There are two direct implementations of this class:
+///
+/// - a [ClassOrmNode], which is a Dart class annotated with a type [DormAnnotation]
+/// - a [FieldOrmNode], which is a Dart getter annotated with a type [Field]
+sealed class OrmNode<DormAnnotation> {
+  final DormAnnotation annotation;
 
   const OrmNode({required this.annotation});
 }
 
-abstract class ClassOrmNode<T> extends OrmNode<T> {
-  const ClassOrmNode({required super.annotation});
-}
-
-class FieldedOrmNode<T> extends ClassOrmNode<ClassOrmNode<T>> {
+/// Represents a Dart class annotated with a type [DormAnnotation], where [DormAnnotation] is a type
+/// exported by `dorm_annotations`.
+sealed class ClassOrmNode<DormAnnotation> extends OrmNode<DormAnnotation> {
   final Map<String, FieldOrmNode> fields;
 
-  const FieldedOrmNode({
+  const ClassOrmNode({
     required super.annotation,
     required this.fields,
   });
 }
 
+/// Represents a Dart class annotated with [Data].
 class DataOrmNode extends ClassOrmNode<Data> {
-  const DataOrmNode({required super.annotation});
+  const DataOrmNode({
+    required super.annotation,
+    required super.fields,
+  });
 }
 
+/// Represents a Dart class annotated with [Model].
 class ModelOrmNode extends ClassOrmNode<Model> {
   const ModelOrmNode({
     required super.annotation,
+    required super.fields,
+  });
+}
+
+/// Represents a Dart class annotated with [PolymorphicData].
+class PolymorphicDataOrmNode extends ClassOrmNode<PolymorphicData> {
+  final PolymorphicDataTag tag;
+
+  const PolymorphicDataOrmNode({
+    required super.annotation,
+    required super.fields,
+    required this.tag,
+  });
+}
+
+/// Represents a Dart getter annotated with [Field] or its subclasses
+/// ([ModelField], [ForeignField], [QueryField]).
+class FieldOrmNode extends OrmNode<Field> {
+  final String type;
+  final bool required;
+
+  const FieldOrmNode({
+    required super.annotation,
+    required this.type,
+    required this.required,
   });
 }
 
@@ -64,24 +99,4 @@ class PolymorphicDataTag {
 
   @override
   int get hashCode => value.hashCode ^ isSealed.hashCode;
-}
-
-class PolymorphicDataOrmNode extends ClassOrmNode<PolymorphicData> {
-  final PolymorphicDataTag tag;
-
-  const PolymorphicDataOrmNode({
-    required super.annotation,
-    required this.tag,
-  });
-}
-
-class FieldOrmNode extends OrmNode<Field> {
-  final String type;
-  final bool required;
-
-  const FieldOrmNode({
-    required super.annotation,
-    required this.type,
-    required this.required,
-  });
 }

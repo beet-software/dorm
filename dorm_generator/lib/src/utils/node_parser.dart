@@ -20,24 +20,26 @@ import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/dart/element/visitor.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
+import 'package:meta/meta.dart';
 import 'package:source_gen/source_gen.dart';
 
 import 'custom_types.dart';
 import 'orm_node.dart';
 
-abstract class NodeParser<A, T, E extends Element>
-    extends SimpleElementVisitor<T?> {
+abstract class NodeParser<DormAnnotation, Node, DartElement extends Element>
+    extends SimpleElementVisitor<Node?> {
   const NodeParser();
 
-  Type get annotation => A;
+  @nonVirtual
+  Type get annotation => DormAnnotation;
 
-  T? parseElement(Element element) {
-    if (element is! E) return null;
+  Node? parseElement(Element element) {
+    if (element is! DartElement) return null;
     final TypeChecker checker = TypeChecker.fromRuntime(annotation);
     final DartObject? object = () {
       final DartObject? fieldAnnotation = checker.firstAnnotationOf(element);
       if (fieldAnnotation != null) return fieldAnnotation;
-      final Element? child = _childOf(element);
+      final Element? child = _annotateFrom(element);
       if (child == null) return null;
       return checker.firstAnnotationOf(child);
     }();
@@ -47,34 +49,60 @@ abstract class NodeParser<A, T, E extends Element>
     return _convert(_parse(reader), element);
   }
 
-  bool _validate(E element) => true;
+  bool _validate(DartElement element) => true;
 
-  A _parse(ConstantReader reader);
+  DormAnnotation _parse(ConstantReader reader);
 
-  T _convert(A annotation, E element);
+  Node _convert(DormAnnotation annotation, DartElement element);
 
-  Element? _childOf(E element);
+  Element? _annotateFrom(DartElement element);
 }
 
-abstract class ClassNodeParser<A>
-    extends NodeParser<A, ClassOrmNode<A>, ClassElement> {
+abstract class ClassNodeParser<DormAnnotation> extends NodeParser<
+    DormAnnotation, ClassOrmNode<DormAnnotation>, ClassElement> {
   const ClassNodeParser();
 
-  @override
-  Element? _childOf(ClassElement element) => element;
+  List<FieldNodeParser<Field>> get _fieldParsers;
 
   @override
-  ClassOrmNode<A>? visitClassElement(ClassElement element) {
+  Element _annotateFrom(ClassElement element) => element;
+
+  @override
+  ClassOrmNode<DormAnnotation>? visitClassElement(ClassElement element) {
     return parseElement(element);
   }
+
+  @override
+  @nonVirtual
+  ClassOrmNode<DormAnnotation> _convert(
+    DormAnnotation annotation,
+    ClassElement element,
+  ) {
+    final Map<String, FieldOrmNode> fields = {};
+    for (FieldElement fieldElement in element.fields) {
+      for (FieldNodeParser<Field> fieldParser in _fieldParsers) {
+        final FieldOrmNode? fieldNode = fieldParser.parseElement(fieldElement);
+        if (fieldNode == null) continue;
+        fields[fieldElement.name] = fieldNode;
+        break;
+      }
+    }
+    return _convertWithFields(annotation, element, fields);
+  }
+
+  ClassOrmNode<DormAnnotation> _convertWithFields(
+    DormAnnotation annotation,
+    ClassElement element,
+    Map<String, FieldOrmNode> fields,
+  );
 }
 
-abstract class FieldNodeParser<A extends Field>
-    extends NodeParser<A, FieldOrmNode, FieldElement> {
+abstract class FieldNodeParser<DormAnnotation extends Field>
+    extends NodeParser<DormAnnotation, FieldOrmNode, FieldElement> {
   const FieldNodeParser();
 
   @override
-  Element? _childOf(FieldElement element) => element.getter;
+  Element? _annotateFrom(FieldElement element) => element.getter;
 
   @override
   FieldOrmNode? visitFieldElement(FieldElement element) {
@@ -95,8 +123,21 @@ class DataParser extends ClassNodeParser<Data> {
   const DataParser();
 
   @override
-  DataOrmNode _convert(Data annotation, ClassElement element) {
-    return DataOrmNode(annotation: annotation);
+  final List<FieldNodeParser<Field>> _fieldParsers = const [
+    ModelFieldParser(),
+    FieldParser(),
+  ];
+
+  @override
+  DataOrmNode _convertWithFields(
+    Data annotation,
+    ClassElement element,
+    Map<String, FieldOrmNode> fields,
+  ) {
+    return DataOrmNode(
+      annotation: annotation,
+      fields: fields,
+    );
   }
 
   @override
@@ -105,6 +146,15 @@ class DataParser extends ClassNodeParser<Data> {
 
 class ModelParser extends ClassNodeParser<Model> {
   const ModelParser();
+
+  @override
+  final List<FieldNodeParser<Field>> _fieldParsers = const [
+    ModelFieldParser(),
+    ForeignFieldParser(),
+    PolymorphicFieldParser(),
+    QueryFieldParser(),
+    FieldParser(),
+  ];
 
   UidType? _decodeUidType(ConstantReader reader) {
     if (reader.isNull) return null;
@@ -136,8 +186,15 @@ class ModelParser extends ClassNodeParser<Model> {
   }
 
   @override
-  ModelOrmNode _convert(Model annotation, ClassElement element) {
-    return ModelOrmNode(annotation: annotation);
+  ModelOrmNode _convertWithFields(
+    Model annotation,
+    ClassElement element,
+    Map<String, FieldOrmNode> fields,
+  ) {
+    return ModelOrmNode(
+      annotation: annotation,
+      fields: fields,
+    );
   }
 }
 
@@ -145,7 +202,11 @@ class PolymorphicDataParser extends ClassNodeParser<PolymorphicData> {
   const PolymorphicDataParser();
 
   @override
-  final Type annotation = PolymorphicData;
+  final List<FieldNodeParser<Field>> _fieldParsers = const [
+    ModelFieldParser(),
+    ForeignFieldParser(),
+    FieldParser(),
+  ];
 
   @override
   bool _validate(ClassElement element) {
@@ -176,9 +237,10 @@ class PolymorphicDataParser extends ClassNodeParser<PolymorphicData> {
   }
 
   @override
-  PolymorphicDataOrmNode _convert(
+  PolymorphicDataOrmNode _convertWithFields(
     PolymorphicData annotation,
     ClassElement element,
+    Map<String, FieldOrmNode> fields,
   ) {
     final InterfaceType supertypeType =
         element.allSupertypes.singleWhere((type) => !type.isDartCoreObject);
@@ -197,6 +259,7 @@ class PolymorphicDataParser extends ClassNodeParser<PolymorphicData> {
         value: supertypeType.getDisplayString(withNullability: false),
         isSealed: isSealed,
       ),
+      fields: fields,
     );
   }
 }
