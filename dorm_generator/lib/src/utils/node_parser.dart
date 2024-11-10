@@ -46,12 +46,12 @@ abstract class NodeParser<DormAnnotation, Node, DartElement extends Element>
     if (object == null) return null;
     if (!_validate(element)) return null;
     final ConstantReader reader = ConstantReader(object);
-    return _convert(_parse(reader), element);
+    return _convert(_parse(element, reader), element);
   }
 
   bool _validate(DartElement element) => true;
 
-  DormAnnotation _parse(ConstantReader reader);
+  DormAnnotation _parse(DartElement element, ConstantReader reader);
 
   Node _convert(DormAnnotation annotation, DartElement element);
 
@@ -145,12 +145,12 @@ class PolymorphicDataParser extends ClassNodeParser<PolymorphicData> {
     }
     throw StateError(
       'the ${element.name} class annotated with PolymorphicData should '
-          'contain a single supertype, found $suffix',
+      'contain a single supertype, found $suffix',
     );
   }
 
   @override
-  PolymorphicData _parse(ConstantReader reader) {
+  PolymorphicData _parse(ClassElement element, ConstantReader reader) {
     return PolymorphicData(
       name: reader.read('name').stringValue,
       as: $Symbol(reader: reader.read('as')),
@@ -159,10 +159,10 @@ class PolymorphicDataParser extends ClassNodeParser<PolymorphicData> {
 
   @override
   PolymorphicDataOrmNode _convertWithFields(
-      PolymorphicData annotation,
-      ClassElement element,
-      Map<String, FieldOrmNode> fields,
-      ) {
+    PolymorphicData annotation,
+    ClassElement element,
+    Map<String, FieldOrmNode> fields,
+  ) {
     return PolymorphicDataOrmNode(
       annotation: annotation,
       fields: fields,
@@ -192,7 +192,7 @@ class DataParser extends ClassNodeParser<Data> {
   }
 
   @override
-  Data _parse(ConstantReader reader) => const Data();
+  Data _parse(ClassElement element, ConstantReader reader) => const Data();
 }
 
 class ModelParser extends ClassNodeParser<Model> {
@@ -207,32 +207,15 @@ class ModelParser extends ClassNodeParser<Model> {
     FieldParser(),
   ];
 
-  UidType? _decodeUidType(ConstantReader reader) {
-    if (reader.isNull) return null;
-    final String? uidTypeName =
-        reader.objectValue.type?.getDisplayString(withNullability: false);
-    if (uidTypeName == null) return null;
-
-    switch (uidTypeName) {
-      case '_SimpleUidType':
-        return const UidType.simple();
-      case '_CompositeUidType':
-        return const UidType.composite();
-      case '_SameAsUidType':
-        final Type type = $Type(reader: reader.read('type'));
-        return UidType.sameAs(type);
-      case '_CustomUidType':
-        return UidType.custom((_) => $CustomUidValue(reader.read('builder')));
-    }
-    return null;
-  }
-
   @override
-  Model _parse(ConstantReader reader) {
+  Model _parse(ClassElement element, ConstantReader reader) {
     return Model(
       name: reader.read('name').stringValue,
       as: $Symbol(reader: reader.read('as')),
-      uidType: _decodeUidType(reader.read('uidType')) ?? UidType.simple(),
+      primaryKeyGenerator: switch (reader.read('primaryKeyGenerator')) {
+        ConstantReader(isNull: true) => null,
+        ConstantReader reader => (_, __) => reader.functionName,
+      },
     );
   }
 
@@ -253,7 +236,7 @@ class FieldParser extends FieldNodeParser<Field> {
   const FieldParser();
 
   @override
-  Field _parse(ConstantReader reader) {
+  Field _parse(FieldElement element, ConstantReader reader) {
     return Field(
       name: reader.read('name').stringValue,
       defaultValue: reader.read('defaultValue').literalValue,
@@ -265,7 +248,7 @@ class ForeignFieldParser extends FieldNodeParser<ForeignField> {
   const ForeignFieldParser();
 
   @override
-  ForeignField _parse(ConstantReader reader) {
+  ForeignField _parse(FieldElement element, ConstantReader reader) {
     return ForeignField(
       name: reader.read('name').stringValue,
       referTo: $Type(reader: reader.read('referTo')),
@@ -277,7 +260,7 @@ class ModelFieldParser extends FieldNodeParser<ModelField> {
   const ModelFieldParser();
 
   @override
-  ModelField _parse(ConstantReader reader) {
+  ModelField _parse(FieldElement element, ConstantReader reader) {
     return ModelField(
       name: reader.read('name').stringValue,
       referTo: $Type(reader: reader.read('referTo')),
@@ -289,7 +272,7 @@ class QueryFieldParser extends FieldNodeParser<QueryField> {
   const QueryFieldParser();
 
   @override
-  QueryField _parse(ConstantReader reader) {
+  QueryField _parse(FieldElement element, ConstantReader reader) {
     return QueryField(
       name: reader.read('name').stringValue,
       referTo: reader.read('referTo').listValue.map((obj) {
@@ -308,7 +291,7 @@ class PolymorphicFieldParser extends FieldNodeParser<PolymorphicField> {
   const PolymorphicFieldParser();
 
   @override
-  PolymorphicField _parse(ConstantReader reader) {
+  PolymorphicField _parse(FieldElement element, ConstantReader reader) {
     return PolymorphicField(
       name: reader.read('name').stringValue,
       pivotName: reader.read('pivotName').stringValue,

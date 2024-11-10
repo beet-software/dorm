@@ -39,11 +39,20 @@ extension AdditionalReads on ConstantReader {
   }
 }
 
-class $Type implements Type {
+abstract class $Type implements Type {
+  const factory $Type({required ConstantReader reader}) = _$ReaderType;
+
+  const factory $Type.of(String name) = _$StringType;
+
+  String? get name;
+}
+
+class _$ReaderType implements $Type {
   final ConstantReader reader;
 
-  const $Type({required this.reader});
+  const _$ReaderType({required this.reader});
 
+  @override
   String? get name {
     if (reader.isNull) return null;
     if (!reader.isType) return null;
@@ -54,11 +63,32 @@ class $Type implements Type {
   String toString() => '\$Type($name);';
 }
 
-class $Symbol implements Symbol {
+class _$StringType implements $Type {
+  final String value;
+
+  const _$StringType(this.value);
+
+  @override
+  String get name => value;
+
+  @override
+  String toString() => '\$Type($name);';
+}
+
+abstract class $Symbol implements Symbol {
+  const factory $Symbol({required ConstantReader reader}) = _$ReaderSymbol;
+
+  const factory $Symbol.of(String name) = _$StringSymbol;
+
+  String? get name;
+}
+
+class _$ReaderSymbol implements $Symbol {
   final ConstantReader reader;
 
-  const $Symbol({required this.reader});
+  const _$ReaderSymbol({required this.reader});
 
+  @override
   String? get name {
     if (reader.isNull) return null;
     if (!reader.isSymbol) return null;
@@ -67,6 +97,18 @@ class $Symbol implements Symbol {
 
   @override
   String toString() => '\$Symbol($name);';
+}
+
+class _$StringSymbol implements $Symbol {
+  final String value;
+
+  const _$StringSymbol(this.value);
+
+  @override
+  String get name => value;
+
+  @override
+  String toString() => '\$Type($name);';
 }
 
 abstract class FieldFilter {
@@ -90,20 +132,5 @@ extension FieldFiltering on Map<String, FieldOrmNode> {
       for (MapEntry<String, FieldOrmNode> entry in entries)
         if (filter(entry.value.annotation)) entry.key: entry.value,
     };
-  }
-}
-
-class $CustomUidValue implements CustomUidValue {
-  final ConstantReader reader;
-
-  const $CustomUidValue(this.reader);
-
-  @override
-  T when<T>({
-    required T Function() caseSimple,
-    required T Function() caseComposite,
-    required T Function(String id) caseValue,
-  }) {
-    throw UnimplementedError();
   }
 }

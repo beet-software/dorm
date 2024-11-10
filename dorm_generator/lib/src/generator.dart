@@ -29,6 +29,40 @@ import 'utils/custom_types.dart';
 import 'utils/orm_node.dart';
 import 'visitors.dart';
 
+class DormError {
+  final String summary;
+  final String description;
+  final String hint;
+  final List<String> exampleCode;
+
+  const DormError({
+    required this.summary,
+    required this.description,
+    required this.hint,
+    this.exampleCode = const [],
+  });
+
+  @override
+  String toString() {
+    final StringBuffer buffer = StringBuffer();
+    buffer.writeln('============= ERROR =============');
+    buffer.writeln(summary);
+    buffer.writeln('---------------------------------');
+    buffer.writeln(description);
+    buffer.writeln('---------------------------------');
+    buffer.writeln(hint);
+    if (exampleCode.isNotEmpty) {
+      buffer.writeln('=========== [EXAMPLE] ===========');
+      for (String exampleCodeLine in exampleCode) {
+        buffer.write('   ');
+        buffer.writeln(exampleCodeLine);
+      }
+    }
+    buffer.writeln('=================================');
+    return '$buffer';
+  }
+}
+
 final Uri _jsonAnnotationUrl = Uri(
   scheme: 'package',
   pathSegments: ['json_annotation', 'json_annotation.dart'],
@@ -133,7 +167,7 @@ abstract class Args<Naming> {
 }
 
 /// Arguments of code generation.
-abstract class AnnotatedArgs<DormAnnotation, Naming> extends Args {
+abstract class AnnotatedArgs<DormAnnotation, Naming> extends Args<Naming> {
   final ClassOrmNode<DormAnnotation> node;
 
   const AnnotatedArgs({
@@ -166,45 +200,6 @@ class ModelArgs extends AnnotatedArgs<Model, ModelNaming> {
     required super.node,
     required super.naming,
   });
-
-  cb.Expression _uidTypeExpressionOf(UidType value) {
-    return value.when(
-      caseSimple: () => expressionOf('id'),
-      caseComposite: () =>
-          expressionOf('dependency').property('key').call([expressionOf('id')]),
-      caseSameAs: (type) {
-        type as $Type;
-        for (MapEntry<String, FieldOrmNode> entry
-            in node.fields.where(FieldFilter.belongsToModel).entries) {
-          final $Type currentType =
-              (entry.value.annotation as ForeignField).referTo as $Type;
-          if (currentType.name != type.name) continue;
-          return expressionOf('dependency').property(entry.key);
-        }
-        throw StateError('invalid reference on UidType.sameAs: ${type.name}');
-      },
-      caseCustom: (builder) {
-        final $CustomUidValue value = builder(0) as $CustomUidValue;
-        final String name = value.reader.functionName;
-        return cb.InvokeExpression.newOf(cb.Reference(name), [
-          cb.InvokeExpression.newOf(
-            cb.Reference(naming.dummyName),
-            [
-              expressionOf('dependency'),
-              expressionOf('data'),
-            ],
-            {},
-            [],
-            'fromData',
-          ),
-        ]).property('when').call([], {
-          'caseSimple': expressionOf('() => id'),
-          'caseComposite': expressionOf('() => dependency.key(id)'),
-          'caseValue': expressionOf('(id) => id'),
-        });
-      },
-    );
-  }
 
   cb.Spec get _dummyClass {
     final String className = naming.dummyName;
@@ -369,7 +364,40 @@ class ModelArgs extends AnnotatedArgs<Model, ModelNaming> {
           cb.Reference(naming.modelName),
           [],
           {
-            'id': _uidTypeExpressionOf(node.annotation.uidType),
+            'id': switch (node.annotation.primaryKeyGenerator) {
+              null => expressionOf('id'),
+              String Function(Object?, String) generator =>
+                cb.InvokeExpression.newOf(cb.Reference(generator(null, '')), [
+                  cb.InvokeExpression.newOf(
+                    cb.Reference(naming.dummyName),
+                    [
+                      expressionOf('dependency'),
+                      expressionOf('data'),
+                    ],
+                    {},
+                    [],
+                    'fromData',
+                  ),
+                  expressionOf('id'),
+                ]),
+              Function f => throw DormError(
+                  summary: 'Invalid primary key generator function signature.',
+                  description: 'The class ${naming.schemaName} annotated with '
+                      '@Model() references a function with an incorrect signature: $f. '
+                      'The primary key generator function must accept exactly '
+                      'two parameters: the abstract class being annotated '
+                      '(${naming.schemaName}) and a String with a fresh ID, and it '
+                      'should return a String representing the generated primary '
+                      'key.',
+                  hint: 'Update the function signature to match the required '
+                      'format.',
+                  exampleCode: [
+                    'static String _yourFunction(${naming.schemaName} model, String id) {',
+                    '  // TODO Implementation here',
+                    '}',
+                  ],
+                ),
+            },
             ...Map.fromEntries(node.fields
                 .where(FieldFilter.belongsToSchema)
                 .entries
@@ -509,12 +537,9 @@ class ModelArgs extends AnnotatedArgs<Model, ModelNaming> {
 
   @override
   void accept(cb.LibraryBuilder b) {
-    node.annotation.uidType.when(
-      caseSimple: () {},
-      caseComposite: () {},
-      caseSameAs: (_) {},
-      caseCustom: (_) => b.body.add(_dummyClass),
-    );
+    if (node.annotation.primaryKeyGenerator != null) {
+      b.body.add(_dummyClass);
+    }
     b.body.add(_dataClass);
     b.body.add(_modelClass);
     b.body.add(_dependencyClass);
@@ -1144,7 +1169,7 @@ extension _BaseWriting on ClassOrmNode<Object> {
               return expression;
             }))
             .property('join')
-            .call([cb.literalString(field.joinBy)]));
+            .call([cb.literalString(field.joinBy, raw: true)]));
       });
     }
   }
@@ -1176,21 +1201,23 @@ class OrmCodeProvider {
 
   String provide(ParsingContext context) {
     final cb.Spec spec = cb.Library((b) {
-      context.monomorphicNodes.entries.mapNotNull<Args>((entry) {
+      context.monomorphicNodes.entries.mapNotNull<Args<Object>>((entry) {
         final String name = entry.key;
         final MonomorphicOrmNode<Object> node = entry.value;
-        return switch (node) {
-          DataOrmNode() => DataArgs(
+        switch (node) {
+          case DataOrmNode():
+            return DataArgs(
               context: context,
               node: node,
               naming: DataNaming(name: name, node: node),
-            ),
-          ModelOrmNode() => ModelArgs(
+            );
+          case ModelOrmNode():
+            return ModelArgs(
               context: context,
               node: node,
               naming: ModelNaming(name: name, node: node),
-            ),
-        };
+            );
+        }
       }).forEach((arg) => arg.accept(b));
 
       // Evaluates all classes annotated with `PolymorphicData` on *models.dart*,
