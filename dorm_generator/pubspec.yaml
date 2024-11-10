@@ -22,6 +22,7 @@ dev_dependencies:
   test: ^1.25.8
   lints: ^3.0.0
   build_runner: ^2.4.13
+  copy_with_extension_gen: ^5.0.4
 
 dependency_overrides:
   dorm_annotations:

@@ -67,6 +67,10 @@ final Uri _jsonAnnotationUrl = Uri(
   scheme: 'package',
   pathSegments: ['json_annotation', 'json_annotation.dart'],
 );
+final Uri _copyWithAnnotationUrl = Uri(
+  scheme: 'package',
+  pathSegments: ['copy_with_extension', 'copy_with_extension.dart'],
+);
 final Uri _dormUrl = Uri(
   scheme: 'package',
   pathSegments: ['dorm', 'dorm.dart'],
@@ -685,6 +689,17 @@ extension _BaseWriting on ClassOrmNode<Object> {
             'anyMap': cb.literalTrue,
             'explicitToJson': cb.literalTrue,
             if (hasPolymorphism) 'constructor': cb.literalString('_'),
+          },
+        ));
+      }
+      if (!base ||
+          polymorphicName != null ||
+          fields.where(FieldFilter.belongsToData).isNotEmpty) {
+        b.annotations.add(cb.InvokeExpression.newOf(
+          cb.Reference('CopyWith', '$_copyWithAnnotationUrl'),
+          [],
+          {
+            'skipFields': cb.literalTrue,
           },
         ));
       }

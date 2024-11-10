@@ -9,5 +9,6 @@ builders:
     build_to: source
     runs_before:
       - json_serializable|json_serializable
+      - copy_with_annotation_gen|copy_with_annotation_gen
     builder_factories:
       - generateOrm
