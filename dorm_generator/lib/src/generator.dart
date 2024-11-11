@@ -81,9 +81,10 @@ class ModelNaming extends Naming<ModelOrmNode> {
   /// user
   String get _defaultRepositoryName => modelName.decapitalize();
 
-  /// users
   String get repositoryName =>
       (node.annotation.as as $Symbol?)?.name ?? _defaultRepositoryName;
+
+  String get tableName => node.annotation.name ?? modelName.decapitalize();
 
   /// UserProperties
   String get extensionName => '${modelName}Properties';
@@ -767,7 +768,7 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
         b.modifier = cb.FieldModifier.final$;
         b.type = cb.Reference('String');
         b.name = 'tableName';
-        b.assignment = cb.ToCodeExpression(cb.literalString(annotation.name));
+        b.assignment = cb.ToCodeExpression(cb.literalString(naming.tableName));
       }));
       b.methods.add(cb.Method((b) {
         b.annotations.add(expressionOf('override'));
