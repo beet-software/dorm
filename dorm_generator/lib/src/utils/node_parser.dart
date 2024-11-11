@@ -237,9 +237,15 @@ class FieldParser extends FieldNodeParser<Field> {
 
   @override
   Field _parse(FieldElement element, ConstantReader reader) {
+    late final ConstantReader? defaultValueReader;
+    try {
+      defaultValueReader = reader.read('defaultValue');
+    } on FormatException {
+      defaultValueReader = null;
+    }
     return Field(
       name: reader.read('name').stringValue,
-      defaultValue: reader.read('defaultValue').literalValue,
+      defaultValue: defaultValueReader,
     );
   }
 }

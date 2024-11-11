@@ -750,8 +750,11 @@ extension _BaseWriting on ClassOrmNode<Object> {
         }
 
         final String? key = baseField.name;
-        final Object? defaultValue = baseField.defaultValue;
-        final bool required = defaultValue == null && data.required;
+        final ConstantReader? defaultValueReader =
+            baseField.defaultValue as ConstantReader?;
+        final bool required =
+            (defaultValueReader == null || defaultValueReader.isNull) &&
+                data.required;
 
         if (baseName == null && baseField is PolymorphicField) {
           final String pivotKey = baseField.pivotName;
@@ -776,6 +779,20 @@ extension _BaseWriting on ClassOrmNode<Object> {
           if (polymorphicName != null || shouldImplementAnnotatedClass) {
             b.annotations.add(expressionOf('override'));
           }
+          final cb.Expression? defaultValueExpression;
+          if (defaultValueReader == null || defaultValueReader.isNull) {
+            defaultValueExpression = null;
+          } else if (defaultValueReader.isLiteral) {
+            defaultValueExpression =
+                cb.literal(defaultValueReader.literalValue);
+          } else {
+            final Revivable revivable = defaultValueReader.revive();
+            if (revivable.accessor.isNotEmpty) {
+              defaultValueExpression = expressionOf(revivable.accessor);
+            } else {
+              defaultValueExpression = expressionOf('$revivable');
+            }
+          }
           b.annotations.add(cb.InvokeExpression.newOf(
             cb.Reference('JsonKey', '$_jsonAnnotationUrl'),
             [],
@@ -783,8 +800,8 @@ extension _BaseWriting on ClassOrmNode<Object> {
               if (key != null) 'name': cb.literalString(key),
               if (required) 'required': cb.literalTrue,
               if (required) 'disallowNullValue': cb.literalTrue,
-              if (defaultValue != null)
-                'defaultValue': cb.literal(defaultValue),
+              if (defaultValueExpression != null)
+                'defaultValue': defaultValueExpression,
             },
           ));
           b.modifier = cb.FieldModifier.final$;
