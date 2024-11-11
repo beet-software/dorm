@@ -27,7 +27,7 @@ class Data {
 @Target({TargetKind.classType})
 class Model {
   /// Name of the table in the underlying database.
-  final String name;
+  final String? name;
 
   /// Name for the Dart repository accessor of this model.
   final Symbol? as;
@@ -40,7 +40,7 @@ class Model {
 
   /// Creates a [Model] by its attributes.
   const Model({
-    required this.name,
+    this.name,
     this.as,
     this.primaryKeyGenerator,
   });
