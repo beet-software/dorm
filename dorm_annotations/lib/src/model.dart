@@ -29,7 +29,7 @@ class Data {
 @Target({TargetKind.classType})
 class Model {
   /// Name of the table in the underlying database.
-  final String name;
+  final String? name;
 
   /// Type of the model's identifier.
   final Type idType;
@@ -42,7 +42,7 @@ class Model {
 
   /// Creates a [Model] by its attributes.
   const Model({
-    required this.name,
+    this.name,
     this.idType = String,
     this.as,
     this.uidType = const UidType.simple(),
