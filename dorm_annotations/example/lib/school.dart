@@ -39,13 +39,19 @@ abstract class _School {
   String get _q0;
 }
 
+<<<<<<< HEAD
 @Model(name: 'aluno', as: #students, uidType: UidType.composite())
+=======
+enum StudentType { regular, special }
+
+@Model(name: 'aluno', as: #students)
+>>>>>>> 0431819 ([dorm_annotations] chore: update examples to include enum as Field's default values)
 abstract class _Student {
   @Field(name: 'nome')
   String get name;
 
-  @Field(name: 'possui-deficiencias', defaultValue: false)
-  bool get hasDisabilities;
+  @Field(name: 'possui-deficiencias', defaultValue: StudentType.regular)
+  StudentType get hasDisabilities;
 
   @ForeignField(name: 'id-escola', referTo: _School)
   String get schoolId;
