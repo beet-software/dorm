@@ -189,7 +189,11 @@ class DataArgs extends AnnotatedArgs<Data, DataNaming> {
   });
 
   cb.Spec get _class {
-    return node.baseClassOf(context, name: naming.modelName);
+    return node.baseClassOf(
+      context,
+      name: naming.modelName,
+      shouldImplementAnnotatedClass: true,
+    );
   }
 
   @override
@@ -270,6 +274,7 @@ class ModelArgs extends AnnotatedArgs<Model, ModelNaming> {
       context,
       name: naming.modelName,
       baseName: naming.dataName,
+      shouldImplementAnnotatedClass: true,
     );
   }
 
@@ -655,6 +660,7 @@ class PolymorphicModelArgs
       context,
       name: naming.modelName,
       baseName: TagNaming(parentName).modelName,
+      shouldImplementAnnotatedClass: true,
       polymorphicName: naming.enumFieldName,
     );
   }
@@ -672,6 +678,7 @@ extension _BaseWriting on ClassOrmNode<Object> {
     required String name,
     String? baseName,
     String? polymorphicName,
+    bool shouldImplementAnnotatedClass = false,
   }) {
     final bool base = polymorphicName != null || baseName == null;
     final bool serializable =
@@ -710,6 +717,8 @@ extension _BaseWriting on ClassOrmNode<Object> {
         } else {
           b.implements.add(cb.Reference(baseName));
         }
+      }
+      if (shouldImplementAnnotatedClass) {
         b.implements.add(cb.Reference('_$name'));
       }
       if (!base) {
@@ -764,7 +773,7 @@ extension _BaseWriting on ClassOrmNode<Object> {
         }
 
         yield cb.Field((b) {
-          if (polymorphicName != null || baseName != null) {
+          if (polymorphicName != null || shouldImplementAnnotatedClass) {
             b.annotations.add(expressionOf('override'));
           }
           b.annotations.add(cb.InvokeExpression.newOf(
