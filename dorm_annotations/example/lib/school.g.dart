@@ -197,7 +197,7 @@ abstract class _$StudentDataCWProxy {
   /// ````
   StudentData call({
     String? name,
-    bool? hasDisabilities,
+    StudentType? hasDisabilities,
   });
 }
 
@@ -228,7 +228,7 @@ class _$StudentDataCWProxyImpl implements _$StudentDataCWProxy {
               hasDisabilities == null
           ? _value.hasDisabilities
           // ignore: cast_nullable_to_non_nullable
-          : hasDisabilities as bool,
+          : hasDisabilities as StudentType,
     );
   }
 }
@@ -249,7 +249,7 @@ abstract class _$StudentCWProxy {
   Student call({
     String? id,
     String? name,
-    bool? hasDisabilities,
+    StudentType? hasDisabilities,
     String? schoolId,
   });
 }
@@ -287,7 +287,7 @@ class _$StudentCWProxyImpl implements _$StudentCWProxy {
               hasDisabilities == null
           ? _value.hasDisabilities
           // ignore: cast_nullable_to_non_nullable
-          : hasDisabilities as bool,
+          : hasDisabilities as StudentType,
       schoolId: schoolId == const $CopyWithPlaceholder() || schoolId == null
           ? _value.schoolId
           // ignore: cast_nullable_to_non_nullable
@@ -763,15 +763,22 @@ StudentData _$StudentDataFromJson(Map json) {
   );
   return StudentData(
     name: json['nome'] as String,
-    hasDisabilities: json['possui-deficiencias'] as bool? ?? false,
+    hasDisabilities: $enumDecodeNullable(
+            _$StudentTypeEnumMap, json['possui-deficiencias']) ??
+        StudentType.regular,
   );
 }
 
 Map<String, dynamic> _$StudentDataToJson(StudentData instance) =>
     <String, dynamic>{
       'nome': instance.name,
-      'possui-deficiencias': instance.hasDisabilities,
+      'possui-deficiencias': _$StudentTypeEnumMap[instance.hasDisabilities]!,
     };
+
+const _$StudentTypeEnumMap = {
+  StudentType.regular: 'regular',
+  StudentType.special: 'special',
+};
 
 Student _$StudentFromJson(Map json) {
   $checkKeys(
@@ -782,14 +789,16 @@ Student _$StudentFromJson(Map json) {
   return Student(
     id: json['_id'] as String,
     name: json['nome'] as String,
-    hasDisabilities: json['possui-deficiencias'] as bool? ?? false,
+    hasDisabilities: $enumDecodeNullable(
+            _$StudentTypeEnumMap, json['possui-deficiencias']) ??
+        StudentType.regular,
     schoolId: json['id-escola'] as String,
   );
 }
 
 Map<String, dynamic> _$StudentToJson(Student instance) => <String, dynamic>{
       'nome': instance.name,
-      'possui-deficiencias': instance.hasDisabilities,
+      'possui-deficiencias': _$StudentTypeEnumMap[instance.hasDisabilities]!,
       '_id': instance.id,
       'id-escola': instance.schoolId,
     };

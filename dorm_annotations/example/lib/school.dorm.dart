@@ -247,9 +247,9 @@ class StudentData {
 
   @JsonKey(
     name: 'possui-deficiencias',
-    defaultValue: false,
+    defaultValue: StudentType.regular,
   )
-  final bool hasDisabilities;
+  final StudentType hasDisabilities;
 
   Map<String, Object?> toJson() => _$StudentDataToJson(this);
 }

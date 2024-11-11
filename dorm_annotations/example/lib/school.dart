@@ -44,13 +44,15 @@ abstract class _School {
   String get _q0;
 }
 
+enum StudentType { regular, special }
+
 @Model(name: 'aluno', as: #students)
 abstract class _Student {
   @Field(name: 'nome')
   String get name;
 
-  @Field(name: 'possui-deficiencias', defaultValue: false)
-  bool get hasDisabilities;
+  @Field(name: 'possui-deficiencias', defaultValue: StudentType.regular)
+  StudentType get hasDisabilities;
 
   @ForeignField(name: 'id-escola', referTo: _School)
   String get schoolId;
