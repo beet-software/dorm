@@ -42,7 +42,7 @@ class UserEntity implements Entity<UserData, User> {
   const UserEntity();
 
   @override
-  final String tableName = 'user';
+  final String tableName = '___user';
 
   @override
   User fromData(

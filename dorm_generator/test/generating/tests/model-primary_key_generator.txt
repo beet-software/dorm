@@ -1,3 +1,13 @@
+class _$User implements _User {
+  factory _$User.fromData(
+    UserDependency dependency,
+    UserData data,
+  ) =>
+      _$User();
+
+  const _$User();
+}
+
 class UserData {
   const UserData();
 
@@ -50,7 +60,14 @@ class UserEntity implements Entity<UserData, User> {
     String id,
     UserData data,
   ) {
-    return User(id: id);
+    return User(
+        id: _onGenerateUid(
+      _$User.fromData(
+        dependency,
+        data,
+      ),
+      id,
+    ));
   }
 
   @override

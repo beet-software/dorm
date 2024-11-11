@@ -1,13 +1,3 @@
-class _$User implements _User {
-  factory _$User.fromData(
-    UserDependency dependency,
-    UserData data,
-  ) =>
-      _$User();
-
-  const _$User();
-}
-
 class UserData {
   const UserData();
 
@@ -18,6 +8,7 @@ class UserData {
   anyMap: true,
   explicitToJson: true,
 )
+@CopyWith(skipFields: true)
 class User extends UserData implements _User {
   factory User.fromJson(
     String id,
@@ -51,7 +42,7 @@ class UserEntity implements Entity<UserData, User> {
   const UserEntity();
 
   @override
-  final String tableName = '___user';
+  final String tableName = 'user';
 
   @override
   User fromData(
@@ -59,14 +50,7 @@ class UserEntity implements Entity<UserData, User> {
     String id,
     UserData data,
   ) {
-    return User(
-        id: _onGenerateUid(
-      _$User.fromData(
-        dependency,
-        data,
-      ),
-      id,
-    ));
+    return User(id: id);
   }
 
   @override
@@ -98,7 +82,7 @@ class Dorm {
 
   final BaseEngine _engine;
 
-  DatabaseEntity<UserData, User> get user => DatabaseEntity(
+  DatabaseEntity<UserData, User> get ___users => DatabaseEntity(
         const UserEntity(),
         engine: _engine,
       );
