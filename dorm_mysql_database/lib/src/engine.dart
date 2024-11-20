@@ -15,17 +15,20 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import 'package:dorm_framework/dorm_framework.dart';
+import 'package:mysql_client/mysql_client.dart';
 
-import 'reference.dart';
 import 'query.dart';
+import 'reference.dart';
 import 'relationship.dart';
 
 class Engine implements BaseEngine<Query> {
-  final Reference _reference = Reference();
+  final MySQLConnection connection;
+
+  const Engine(this.connection);
 
   @override
-  BaseReference<Query> createReference() => _reference;
+  BaseReference<Query> createReference() => Reference(connection);
 
   @override
-  BaseRelationship<Query> createRelationship() => const Relationship();
+  BaseRelationship<Query> createRelationship() => Relationship();
 }

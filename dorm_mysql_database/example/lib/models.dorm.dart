@@ -13,7 +13,11 @@ part of 'models.dart';
 class UserData {
   factory UserData.fromJson(Map json) => _$UserDataFromJson(json);
 
-  const UserData({required this.name});
+  const UserData({
+    required this.name,
+    required this.active,
+    required this.age,
+  });
 
   @JsonKey(
     name: 'name',
@@ -21,6 +25,16 @@ class UserData {
     disallowNullValue: true,
   )
   final String name;
+
+  @JsonKey(
+    name: 'active',
+    required: true,
+    disallowNullValue: true,
+  )
+  final bool active;
+
+  @JsonKey(name: 'age')
+  final int? age;
 
   Map<String, Object?> toJson() => _$UserDataToJson(this);
 }
@@ -42,6 +56,8 @@ class User extends UserData implements _User {
   const User({
     required this.id,
     required super.name,
+    required super.active,
+    required super.age,
   });
 
   @JsonKey(
@@ -65,7 +81,7 @@ class UserEntity implements Entity<UserData, User> {
   const UserEntity();
 
   @override
-  final String tableName = 'users';
+  final String tableName = 'Users';
 
   @override
   User fromData(
@@ -76,6 +92,8 @@ class UserEntity implements Entity<UserData, User> {
     return User(
       id: id,
       name: data.name,
+      active: data.active,
+      age: data.age,
     );
   }
 
@@ -108,6 +126,8 @@ extension UserProperties on User {
     return User(
       id: id,
       name: data.name,
+      active: data.active,
+      age: data.age,
     );
   }
 }

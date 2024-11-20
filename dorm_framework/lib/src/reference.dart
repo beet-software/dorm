@@ -14,12 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import 'dependency.dart';
-import 'entity.dart';
-import 'filter.dart';
+import 'package:dorm_framework/dorm_framework.dart';
 
 /// Represents how to operate rows within a given database engine.
-abstract class BaseReference {
+abstract class BaseReference<Q extends BaseQuery<Q>> {
   /// Defines how the database engine reads a single model, given its [id].
   Future<Model?> peek<Data, Model extends Data>(
     Entity<Data, Model> entity,
@@ -36,14 +34,14 @@ abstract class BaseReference {
   /// Defines how the database engine reads multiple models matching a [filter].
   Future<List<Model>> peekAll<Data, Model extends Data>(
     Entity<Data, Model> entity,
-    Filter filter,
+    BaseFilter<Q> filter,
   );
 
   /// Defines how the database engine listen to the changes of multiple models
   /// matching a [filter].
   Stream<List<Model>> pullAll<Data, Model extends Data>(
     Entity<Data, Model> entity,
-    Filter filter,
+    BaseFilter<Q> filter,
   );
 
   /// Defines how the database engine reads all the keys from the table.
@@ -78,7 +76,7 @@ abstract class BaseReference {
   /// Defines how the database engine deletes multiple models matching a [filter].
   Future<void> popAll<Data, Model extends Data>(
     Entity<Data, Model> entity,
-    Filter filter,
+    BaseFilter<Q> filter,
   );
 
   /// Defines how the database engine updates a single model using [update],

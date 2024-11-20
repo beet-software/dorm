@@ -257,9 +257,9 @@ class Circle implements Shape, _Circle {
 class Dorm {
   const Dorm(this._engine);
 
-  final BaseEngine _engine;
+  final BaseEngine<Query> _engine;
 
-  DatabaseEntity<DrawingData, Drawing> get drawings => DatabaseEntity(
+  DatabaseEntity<DrawingData, Drawing, Query> get drawings => DatabaseEntity(
         const DrawingEntity(),
         engine: _engine,
       );

@@ -115,9 +115,9 @@ extension UserProperties on User {
 class Dorm {
   const Dorm(this._engine);
 
-  final BaseEngine _engine;
+  final BaseEngine<Query> _engine;
 
-  DatabaseEntity<UserData, User> get users => DatabaseEntity(
+  DatabaseEntity<UserData, User, Query> get users => DatabaseEntity(
         const UserEntity(),
         engine: _engine,
       );

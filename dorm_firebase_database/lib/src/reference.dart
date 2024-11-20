@@ -26,7 +26,7 @@ import 'offline.dart';
 import 'query.dart';
 
 /// A [BaseReference] that uses Firebase Realtime Database as engine.
-class Reference implements BaseReference {
+class Reference implements BaseReference<Query> {
   final FirebaseInstance instance;
   final fd.DatabaseReference _ref;
 
@@ -59,7 +59,7 @@ class Reference implements BaseReference {
   @override
   Future<List<Model>> peekAll<Data, Model extends Data>(
     Entity<Data, Model> entity,
-    Filter filter,
+    BaseFilter<Query> filter,
   ) {
     final Query query = filter.accept(Query(_refOf(entity)));
     return query.query.get().then((snapshot) {
@@ -96,7 +96,7 @@ class Reference implements BaseReference {
   @override
   Future<void> popAll<Data, Model extends Data>(
     Entity<Data, Model> entity,
-    Filter filter,
+    BaseFilter<Query> filter,
   ) async {
     // TODO Refactor this operation as atomic.
     // Firebase does not have `runTransaction` as a method of fd.Query.
@@ -156,7 +156,7 @@ class Reference implements BaseReference {
   @override
   Stream<List<Model>> pullAll<Data, Model extends Data>(
     Entity<Data, Model> entity,
-    Filter filter,
+    BaseFilter<Query> filter,
   ) {
     final Query query = filter.accept(Query(_refOf(entity)));
     return _onValueOf(query.query).map((snapshot) {

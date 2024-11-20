@@ -14,18 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'package:dorm_firebase_database/src/query.dart';
 import 'package:dorm_framework/dorm_framework.dart';
 
-import 'reference.dart';
-import 'query.dart';
-import 'relationship.dart';
-
-class Engine implements BaseEngine<Query> {
-  final Reference _reference = Reference();
-
-  @override
-  BaseReference<Query> createReference() => _reference;
-
-  @override
-  BaseRelationship<Query> createRelationship() => const Relationship();
-}
+typedef Filter = BaseFilter<Query>;

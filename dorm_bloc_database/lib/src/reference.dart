@@ -136,7 +136,7 @@ class _EntityReference<Data, Model extends Data>
 }
 
 /// A [BaseReference] implementation backed by a [Bloc].
-class Reference extends Cubit<_State> implements BaseReference {
+class Reference extends Cubit<_State> implements BaseReference<Query> {
   Reference() : super(const _State({}));
 
   _EntityReference<Data, Model> _access<Data, Model extends Data>(
@@ -164,7 +164,7 @@ class Reference extends Cubit<_State> implements BaseReference {
   @override
   Future<List<Model>> peekAll<Data, Model extends Data>(
     Entity<Data, Model> entity,
-    Filter filter,
+    BaseFilter<Query> filter,
   ) async {
     final _EntityReference<Data, Model> bloc = _access(entity);
     final Query query = filter.accept(const Query());
@@ -196,7 +196,7 @@ class Reference extends Cubit<_State> implements BaseReference {
   @override
   Future<void> popAll<Data, Model extends Data>(
     Entity<Data, Model> entity,
-    Filter filter,
+    BaseFilter<Query> filter,
   ) async {
     final _EntityReference<Data, Model> bloc = _access(entity);
     final Query query = filter.accept(const Query());
@@ -224,7 +224,7 @@ class Reference extends Cubit<_State> implements BaseReference {
   @override
   Stream<List<Model>> pullAll<Data, Model extends Data>(
     Entity<Data, Model> entity,
-    Filter filter,
+    BaseFilter<Query> filter,
   ) {
     final _EntityReference<Data, Model> bloc = _access(entity);
     final Query query = filter.accept(const Query());

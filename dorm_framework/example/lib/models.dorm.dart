@@ -106,6 +106,7 @@ class User extends UserData implements _User {
 
   @override
   String get _qUsername => [$normalizeText(username)].join('_');
+
   @override
   Map<String, Object?> toJson() {
     return {
@@ -145,6 +146,7 @@ class UserEntity implements Entity<UserData, User> {
     UserData data,
   ) =>
       model.copyWith(data);
+
   @override
   User fromJson(
     String id,
@@ -154,8 +156,10 @@ class UserEntity implements Entity<UserData, User> {
         id,
         json,
       );
+
   @override
   String identify(User model) => model.id;
+
   @override
   Map<String, Object?> toJson(UserData data) => data.toJson();
 }
@@ -238,6 +242,7 @@ class Product extends ProductData implements _Product {
 
   @override
   String get _qName => [$normalizeText(name)].join('_');
+
   @override
   Map<String, Object?> toJson() {
     return {
@@ -277,6 +282,7 @@ class ProductEntity implements Entity<ProductData, Product> {
     ProductData data,
   ) =>
       model.copyWith(data);
+
   @override
   Product fromJson(
     String id,
@@ -286,8 +292,10 @@ class ProductEntity implements Entity<ProductData, Product> {
         id,
         json,
       );
+
   @override
   String identify(Product model) => model.id;
+
   @override
   Map<String, Object?> toJson(ProductData data) => data.toJson();
 }
@@ -394,6 +402,7 @@ class CartEntity implements Entity<CartData, Cart> {
     CartData data,
   ) =>
       model.copyWith(data);
+
   @override
   Cart fromJson(
     String id,
@@ -403,8 +412,10 @@ class CartEntity implements Entity<CartData, Cart> {
         id,
         json,
       );
+
   @override
   String identify(Cart model) => model.id;
+
   @override
   Map<String, Object?> toJson(CartData data) => data.toJson();
 }
@@ -528,6 +539,7 @@ class CartItemEntity implements Entity<CartItemData, CartItem> {
     CartItemData data,
   ) =>
       model.copyWith(data);
+
   @override
   CartItem fromJson(
     String id,
@@ -537,8 +549,10 @@ class CartItemEntity implements Entity<CartItemData, CartItem> {
         id,
         json,
       );
+
   @override
   String identify(CartItem model) => model.id;
+
   @override
   Map<String, Object?> toJson(CartItemData data) => data.toJson();
 }
@@ -685,6 +699,7 @@ class Review extends ReviewData implements _Review {
         userId,
         $normalizeEnum(type),
       ].join('_');
+
   @override
   Map<String, Object?> toJson() {
     return {
@@ -728,6 +743,7 @@ class ReviewEntity implements Entity<ReviewData, Review> {
     ReviewData data,
   ) =>
       model.copyWith(data);
+
   @override
   Review fromJson(
     String id,
@@ -737,8 +753,10 @@ class ReviewEntity implements Entity<ReviewData, Review> {
         id,
         json,
       );
+
   @override
   String identify(Review model) => model.id;
+
   @override
   Map<String, Object?> toJson(ReviewData data) => data.toJson();
 }
@@ -855,25 +873,29 @@ class UserReviewContent implements ReviewContent, _UserReviewContent {
 class Dorm {
   const Dorm(this._engine);
 
-  final BaseEngine _engine;
+  final BaseEngine<Query> _engine;
 
-  DatabaseEntity<UserData, User> get users => DatabaseEntity(
+  DatabaseEntity<UserData, User, Query> get users => DatabaseEntity(
         const UserEntity(),
         engine: _engine,
       );
-  DatabaseEntity<ProductData, Product> get products => DatabaseEntity(
+
+  DatabaseEntity<ProductData, Product, Query> get products => DatabaseEntity(
         const ProductEntity(),
         engine: _engine,
       );
-  DatabaseEntity<CartData, Cart> get carts => DatabaseEntity(
+
+  DatabaseEntity<CartData, Cart, Query> get carts => DatabaseEntity(
         const CartEntity(),
         engine: _engine,
       );
-  DatabaseEntity<CartItemData, CartItem> get cartItems => DatabaseEntity(
+
+  DatabaseEntity<CartItemData, CartItem, Query> get cartItems => DatabaseEntity(
         const CartItemEntity(),
         engine: _engine,
       );
-  DatabaseEntity<ReviewData, Review> get reviews => DatabaseEntity(
+
+  DatabaseEntity<ReviewData, Review, Query> get reviews => DatabaseEntity(
         const ReviewEntity(),
         engine: _engine,
       );

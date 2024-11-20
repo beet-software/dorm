@@ -435,19 +435,19 @@ extension MessageProperties on Message {
 class Dorm {
   const Dorm(this._engine);
 
-  final BaseEngine _engine;
+  final BaseEngine<Query> _engine;
 
-  DatabaseEntity<UserData, User> get users => DatabaseEntity(
+  DatabaseEntity<UserData, User, Query> get users => DatabaseEntity(
         const UserEntity(),
         engine: _engine,
       );
 
-  DatabaseEntity<PostData, Post> get post => DatabaseEntity(
+  DatabaseEntity<PostData, Post, Query> get post => DatabaseEntity(
         const PostEntity(),
         engine: _engine,
       );
 
-  DatabaseEntity<MessageData, Message> get messages => DatabaseEntity(
+  DatabaseEntity<MessageData, Message, Query> get messages => DatabaseEntity(
         const MessageEntity(),
         engine: _engine,
       );

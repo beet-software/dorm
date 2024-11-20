@@ -48,19 +48,22 @@ class ModelDependency extends Dependency<ModelData> {
   const ModelDependency() : super.strong();
 }
 
+class Query extends MockBaseQuery<Query> {}
+
 @GenerateNiceMocks([
   MockSpec<BaseReference>(),
   MockSpec<BaseRelationship>(),
+  MockSpec<BaseQuery>(),
   MockSpec<Dependency>(),
   MockSpec<Entity>(),
 ])
 void main() {
   const Dependency<ModelData> dependency = ModelDependency();
 
-  late MockBaseReference referenceMock;
-  late MockBaseRelationship relationshipMock;
+  late MockBaseReference<Query> referenceMock;
+  late MockBaseRelationship<Query> relationshipMock;
   late MockEntity<ModelData, Model> entityMock;
-  late Repository<ModelData, Model> repository;
+  late Repository<ModelData, Model, Query> repository;
 
   setUp(() {
     referenceMock = MockBaseReference();
