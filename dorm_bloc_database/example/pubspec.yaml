@@ -49,6 +49,7 @@ flutter:
 # This section should be removed in production
 dependency_overrides:
   meta: 1.11.0
+  collection: 1.18.0
   dorm_framework:
     path: ../../dorm_framework
   dorm_generator:
