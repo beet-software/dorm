@@ -11,7 +11,7 @@ false_secrets:
 dependencies:
   flutter:
     sdk: flutter
-  http: ^0.13.5
+  http: ^1.2.2
   firebase_auth: ^4.4.0
   firebase_core: ^2.9.0
   firebase_database: ^10.1.0
