@@ -264,7 +264,10 @@ class PolymorphicFieldParser extends FieldNodeParser<PolymorphicField> {
     return PolymorphicField(
       name: reader.read('name').stringValue,
       pivotName: reader.read('pivotName').stringValue,
-      pivotAs: $Symbol(reader: reader.read('pivotAs')),
+      pivotAs: $ConcreteSymbol(
+        reader: reader.read('pivotAs'),
+        defaultName: 'type',
+      ),
     );
   }
 }
