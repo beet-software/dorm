@@ -24,7 +24,11 @@ dependencies:
   provider: ^6.1.2
   device_preview: ^1.1.0
   flutter_spinbox: ^0.13.1
-  flutter_form_bloc: ^0.31.0
+  flutter_form_bloc:
+    git:
+      url: https://github.com/enzo-santos/form_bloc
+      path: packages/flutter_form_bloc
+      ref: master
   flutter_rating_bar: ^4.0.1
 
 dev_dependencies:
