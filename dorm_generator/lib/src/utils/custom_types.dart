@@ -63,6 +63,18 @@ class $Symbol implements Symbol {
   }
 }
 
+class $ConcreteSymbol extends $Symbol {
+  final String _defaultName;
+
+  const $ConcreteSymbol({
+    required super.reader,
+    required String defaultName,
+  }) : _defaultName = defaultName;
+
+  @override
+  String get name => super.name ?? _defaultName;
+}
+
 abstract class FieldFilter {
   static bool isA<F extends Field>(Field field) => field is F;
 

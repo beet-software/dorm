@@ -368,9 +368,11 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
               final String fieldName = entry.key;
               final Field baseField = entry.value.annotation;
               if (baseField is PolymorphicField) {
+                final $ConcreteSymbol pivotSymbol =
+                    baseField.pivotAs as $ConcreteSymbol;
                 yield MapEntry(
-                  'type',
-                  expressionOf('data').property('type'),
+                  pivotSymbol.name,
+                  expressionOf('data').property(pivotSymbol.name),
                 );
               }
               final cb.Expression prefixExpression;
@@ -480,9 +482,11 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
               final String fieldName = entry.key;
               final Field baseField = entry.value.annotation;
               if (baseField is PolymorphicField) {
+                final $ConcreteSymbol pivotSymbol =
+                    baseField.pivotAs as $ConcreteSymbol;
                 yield MapEntry(
-                  'type',
-                  expressionOf('data').property('type'),
+                  pivotSymbol.name,
+                  expressionOf('data').property(pivotSymbol.name),
                 );
               }
               yield MapEntry(
@@ -635,10 +639,10 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
     final bool serializable =
         !base || where(FieldFilter.belongsToData).isNotEmpty;
 
-    final bool hasPolymorphism = values
+    final List<PolymorphicField> polymorphicFields = values
         .map((field) => field.annotation)
         .whereType<PolymorphicField>()
-        .isNotEmpty;
+        .toList();
 
     return cb.Class((b) {
       if (serializable) {
@@ -648,7 +652,8 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
           {
             'anyMap': cb.literalTrue,
             'explicitToJson': cb.literalTrue,
-            if (hasPolymorphism) 'constructor': cb.literalString('_'),
+            if (polymorphicFields.isNotEmpty)
+              'constructor': cb.literalString('_'),
           },
         ));
       }
@@ -695,7 +700,8 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
 
         if (baseName == null && baseField is PolymorphicField) {
           final String pivotKey = baseField.pivotName;
-          final String? pivotName = (baseField.pivotAs as $Symbol?)?.name;
+          final $ConcreteSymbol pivotSymbol =
+              baseField.pivotAs as $ConcreteSymbol;
           yield cb.Field((b) {
             b.annotations.add(cb.InvokeExpression.newOf(
               cb.Reference('JsonKey', '$_jsonAnnotationUrl'),
@@ -708,7 +714,7 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
             ));
             b.modifier = cb.FieldModifier.final$;
             b.type = cb.Reference('${fieldType.substring(1)}Type');
-            b.name = pivotName ?? 'type';
+            b.name = pivotSymbol.name;
           });
         }
 
@@ -748,6 +754,8 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
                 b.symbol = 'List';
                 b.types.add(cb.Reference(name));
               });
+            } else if (fieldType.endsWith('?')) {
+              type = cb.Reference('$name?');
             } else {
               type = cb.Reference(name);
             }
@@ -795,7 +803,7 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
         }));
       }
       // Polymorphic constructor
-      if (hasPolymorphism) {
+      if (polymorphicFields.isNotEmpty) {
         b.constructors.add(cb.Constructor((b) {
           b.factory = true;
           b.name = '_';
@@ -817,16 +825,44 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
 
             final Field baseField = entry.value.annotation;
             if (baseField is PolymorphicField) {
+              final $ConcreteSymbol pivotSymbol =
+                  baseField.pivotAs as $ConcreteSymbol;
               yield cb.Parameter((b) {
                 b.required = true;
                 b.named = true;
                 b.type = cb.Reference('${fieldType.substring(1)}Type');
-                b.name = 'type';
+                b.name = pivotSymbol.name;
               });
               yield cb.Parameter((b) {
                 b.required = true;
                 b.named = true;
                 b.type = cb.Reference('Map');
+                b.name = fieldName;
+              });
+            } else if (baseField is ModelField) {
+              final $Type value = baseField.referTo as $Type;
+              final ClassOrmNode<Object>? node = nodes[value.name]?.annotation;
+              final String name;
+              if (node is DataOrmNode) {
+                name = value.name!.substring(1);
+              } else {
+                name = '${value.name!.substring(1)}Data';
+              }
+              final cb.Reference type;
+              if (fieldType.startsWith('List<')) {
+                type = cb.TypeReference((b) {
+                  b.symbol = 'List';
+                  b.types.add(cb.Reference(name));
+                });
+              } else if (fieldType.endsWith('?')) {
+                type = cb.Reference('$name?');
+              } else {
+                type = cb.Reference(name);
+              }
+              yield cb.Parameter((b) {
+                b.required = true;
+                b.named = true;
+                b.type = type;
                 b.name = fieldName;
               });
             } else {
@@ -854,7 +890,12 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
                           final String fieldName = entry.key;
                           final Field baseField = entry.value.annotation;
                           if (baseField is PolymorphicField) {
-                            yield MapEntry('type', expressionOf('type'));
+                            final $ConcreteSymbol pivotSymbol =
+                                baseField.pivotAs as $ConcreteSymbol;
+                            yield MapEntry(
+                              pivotSymbol.name,
+                              expressionOf(pivotSymbol.name),
+                            );
                           }
                           yield MapEntry(fieldName, expressionOf(fieldName));
                         })),
@@ -895,18 +936,23 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
                     }
 
                     if (baseField is PolymorphicField) {
+                      final $ConcreteSymbol pivotSymbol =
+                          baseField.pivotAs as $ConcreteSymbol;
                       yield MapEntry(
-                        'type',
+                        pivotSymbol.name,
                         rootExpression == null
-                            ? expressionOf('type')
-                            : rootExpression.property('type'),
+                            ? expressionOf(pivotSymbol.name)
+                            : rootExpression.property(pivotSymbol.name),
                       );
                       if (baseName == null) {
                         yield MapEntry(
                           fieldName,
                           cb.InvokeExpression.newOf(
                             cb.Reference(fieldType.substring(1)),
-                            [expressionOf('type'), expressionOf(fieldName)],
+                            [
+                              expressionOf(pivotSymbol.name),
+                              expressionOf(fieldName),
+                            ],
                             {},
                             [],
                             'fromType',
@@ -943,11 +989,13 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
           if (baseName == null && !FieldFilter.belongsToData(baseField)) return;
 
           if (baseName != null && baseField is PolymorphicField) {
+            final $ConcreteSymbol pivotSymbol =
+                baseField.pivotAs as $ConcreteSymbol;
             yield cb.Parameter((b) {
               b.required = true;
               b.named = true;
               b.toSuper = true;
-              b.name = 'type';
+              b.name = pivotSymbol.name;
             });
           }
           yield cb.Parameter((b) {
@@ -959,12 +1007,16 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
             b.name = fieldName;
           });
         }));
-        if (baseName == null && hasPolymorphism) {
-          b.optionalParameters.add(cb.Parameter((b) {
-            b.required = true;
-            b.named = true;
-            b.toThis = true;
-            b.name = 'type';
+        if (baseName == null) {
+          b.optionalParameters.addAll(polymorphicFields.map((field) {
+            final $ConcreteSymbol pivotSymbol =
+                field.pivotAs as $ConcreteSymbol;
+            return cb.Parameter((b) {
+              b.required = true;
+              b.named = true;
+              b.toThis = true;
+              b.name = pivotSymbol.name;
+            });
           }));
         }
       }));
@@ -1059,9 +1111,9 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
                       .firstOrNullWhere((node) {
                     final PolymorphicField field =
                         node.annotation as PolymorphicField;
-                    final $Symbol? pivotSymbol = field.pivotAs as $Symbol?;
-                    if (pivotSymbol == null) return false;
-                    return (pivotSymbol.name ?? 'type') == symbolName;
+                    final $ConcreteSymbol pivotSymbol =
+                        field.pivotAs as $ConcreteSymbol;
+                    return pivotSymbol.name == symbolName;
                   });
 
               if (referredField == null ||
