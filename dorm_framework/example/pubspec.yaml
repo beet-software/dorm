@@ -28,7 +28,7 @@ dependencies:
   flutter_rating_bar: ^4.0.1
 
 dev_dependencies:
-  flutter_lints: ^3.0.2
+  flutter_lints: ^5.0.0
   build_runner: ^2.4.9
   dorm_generator:
     path: ../../dorm_generator
