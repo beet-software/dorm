@@ -41,7 +41,7 @@ dev_dependencies:
       ref: main
 
   # The dependencies below are not required for dORM to work
-  flutter_lints: ^3.0.2
+  flutter_lints: ^5.0.0
 
 flutter:
   uses-material-design: true
