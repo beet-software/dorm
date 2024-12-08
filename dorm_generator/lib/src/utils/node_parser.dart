@@ -73,7 +73,7 @@ abstract class FieldNodeParser<A extends Field>
   FieldOrmNode _convert(Field annotation, FieldElement element) {
     return FieldOrmNode(
       annotation: annotation,
-      type: element.type.getDisplayString(withNullability: true),
+      type: element.type.getDisplayString(),
       required: element.type.nullabilitySuffix == NullabilitySuffix.none,
     );
   }
@@ -96,8 +96,7 @@ class ModelParser extends ClassNodeParser<Model> {
 
   UidType? _decodeUidType(ConstantReader reader) {
     if (reader.isNull) return null;
-    final String? uidTypeName =
-        reader.objectValue.type?.getDisplayString(withNullability: false);
+    final String? uidTypeName = reader.objectValue.type?.getDisplayString();
     if (uidTypeName == null) return null;
 
     switch (uidTypeName) {
@@ -119,7 +118,7 @@ class ModelParser extends ClassNodeParser<Model> {
     return Model(
       name: reader.read('name').stringValue,
       as: $Symbol(reader: reader.read('as')),
-      uidType: _decodeUidType(reader.read('uidType')) ?? UidType.simple(),
+      uidType: _decodeUidType(reader.read('uidType')) ?? const UidType.simple(),
     );
   }
 
@@ -146,7 +145,7 @@ class PolymorphicDataParser extends ClassNodeParser<PolymorphicData> {
     } else {
       suffix = supertypes
           .where((type) => !type.isDartCoreObject)
-          .map((type) => type.getDisplayString(withNullability: false))
+          .map((type) => type.getDisplayString())
           .join(', ');
     }
     throw StateError(
@@ -182,7 +181,7 @@ class PolymorphicDataParser extends ClassNodeParser<PolymorphicData> {
     return PolymorphicDataOrmNode(
       annotation: annotation,
       tag: PolymorphicDataTag(
-        value: supertypeType.getDisplayString(withNullability: false),
+        value: supertypeType.getDisplayString(),
         isSealed: isSealed,
       ),
     );

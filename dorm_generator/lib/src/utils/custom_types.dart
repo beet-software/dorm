@@ -47,7 +47,7 @@ class $Type implements Type {
   String? get name {
     if (reader.isNull) return null;
     if (!reader.isType) return null;
-    return reader.typeValue.getDisplayString(withNullability: false);
+    return reader.typeValue.getDisplayString();
   }
 }
 

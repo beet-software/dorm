@@ -55,7 +55,7 @@ class TypeToken implements CodeToken {
   const TypeToken({required this.value});
 
   @override
-  String? get name => value.getDisplayString(withNullability: true);
+  String? get name => value.getDisplayString();
 
   @override
   final List<ElementAnnotation> annotations = const [];
@@ -70,10 +70,7 @@ class AnnotationToken implements CodeToken {
   const AnnotationToken({required this.value});
 
   @override
-  String? get name => value
-      .computeConstantValue()
-      ?.type
-      ?.getDisplayString(withNullability: true);
+  String? get name => value.computeConstantValue()?.type?.getDisplayString();
 
   @override
   final List<ElementAnnotation> annotations = const [];

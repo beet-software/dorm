@@ -335,7 +335,7 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
       b.fields.add(cb.Field((b) {
         b.annotations.add(expressionOf('override'));
         b.modifier = cb.FieldModifier.final$;
-        b.type = cb.Reference('String');
+        b.type = const cb.Reference('String');
         b.name = 'tableName';
         b.assignment = cb.ToCodeExpression(cb.literalString(annotation.name));
       }));
@@ -348,7 +348,7 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
           b.name = 'dependency';
         }));
         b.requiredParameters.add(cb.Parameter((b) {
-          b.type = cb.Reference('String');
+          b.type = const cb.Reference('String');
           b.name = 'id';
         }));
         b.requiredParameters.add(cb.Parameter((b) {
@@ -412,11 +412,11 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
         b.returns = cb.Reference(naming.modelName);
         b.name = 'fromJson';
         b.requiredParameters.add(cb.Parameter((b) {
-          b.type = cb.Reference('String');
+          b.type = const cb.Reference('String');
           b.name = 'id';
         }));
         b.requiredParameters.add(cb.Parameter((b) {
-          b.type = cb.Reference('Map');
+          b.type = const cb.Reference('Map');
           b.name = 'json';
         }));
         b.lambda = true;
@@ -430,7 +430,7 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
       }));
       b.methods.add(cb.Method((b) {
         b.annotations.add(expressionOf('override'));
-        b.returns = cb.Reference('String');
+        b.returns = const cb.Reference('String');
         b.name = 'identify';
         b.requiredParameters.add(cb.Parameter((b) {
           b.type = cb.Reference(naming.modelName);
@@ -443,8 +443,8 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
         b.annotations.add(expressionOf('override'));
         b.returns = cb.TypeReference((b) {
           b.symbol = 'Map';
-          b.types.add(cb.Reference('String'));
-          b.types.add(cb.Reference('Object?'));
+          b.types.add(const cb.Reference('String'));
+          b.types.add(const cb.Reference('Object?'));
         });
         b.name = 'toJson';
         b.requiredParameters.add(cb.Parameter((b) {
@@ -558,12 +558,12 @@ class PolymorphicArgs
           b.name = 'type';
         }));
         b.requiredParameters.add(cb.Parameter((b) {
-          b.type = cb.Reference('Map');
+          b.type = const cb.Reference('Map');
           b.name = 'json';
         }));
         b.lambda = false;
         b.body = cb.Block((b) {
-          b.statements.add(cb.Code('switch (type) {'));
+          b.statements.add(const cb.Code('switch (type) {'));
           for (MapEntry<String, PolymorphicDataOrmNode> entry
               in fields.entries) {
             final PolymorphicDataNaming naming =
@@ -578,7 +578,7 @@ class PolymorphicArgs
               'fromJson',
             ).returned.statement);
           }
-          b.statements.add(cb.Code('}'));
+          b.statements.add(const cb.Code('}'));
         });
       }));
       b.methods.add(cb.Method((b) {
@@ -589,8 +589,8 @@ class PolymorphicArgs
       b.methods.add(cb.Method((b) {
         b.returns = cb.TypeReference((b) {
           b.symbol = 'Map';
-          b.types.add(cb.Reference('String'));
-          b.types.add(cb.Reference('Object?'));
+          b.types.add(const cb.Reference('String'));
+          b.types.add(const cb.Reference('Object?'));
         });
         b.name = 'toJson';
       }));
@@ -678,7 +678,7 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
             },
           ));
           b.modifier = cb.FieldModifier.final$;
-          b.type = cb.Reference('String');
+          b.type = const cb.Reference('String');
           b.name = 'id';
         }));
       }
@@ -783,12 +783,12 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
           b.name = 'fromJson';
           if (!base) {
             b.requiredParameters.add(cb.Parameter((b) {
-              b.type = cb.Reference('String');
+              b.type = const cb.Reference('String');
               b.name = 'id';
             }));
           }
           b.requiredParameters.add(cb.Parameter((b) {
-            b.type = cb.Reference('Map');
+            b.type = const cb.Reference('Map');
             b.name = 'json';
           }));
           b.lambda = true;
@@ -811,7 +811,7 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
             b.optionalParameters.add(cb.Parameter((b) {
               b.required = true;
               b.named = true;
-              b.type = cb.Reference('String');
+              b.type = const cb.Reference('String');
               b.name = 'id';
             }));
           }
@@ -836,7 +836,7 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
               yield cb.Parameter((b) {
                 b.required = true;
                 b.named = true;
-                b.type = cb.Reference('Map');
+                b.type = const cb.Reference('Map');
                 b.name = fieldName;
               });
             } else if (baseField is ModelField) {
@@ -1027,8 +1027,8 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
         }
         b.returns = cb.TypeReference((b) {
           b.symbol = 'Map';
-          b.types.add(cb.Reference('String'));
-          b.types.add(cb.Reference('Object?'));
+          b.types.add(const cb.Reference('String'));
+          b.types.add(const cb.Reference('Object?'));
         });
         b.name = 'toJson';
 

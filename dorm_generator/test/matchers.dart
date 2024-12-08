@@ -202,7 +202,7 @@ class HasType extends FieldMatcher<String> {
       TypeToken(value: var t) => t,
       AnnotationToken() => throw InvalidElement(value),
     };
-    return type.getDisplayString(withNullability: true);
+    return type.getDisplayString();
   }
 }
 
@@ -223,11 +223,15 @@ class HasBody extends FieldMatcher<String?> {
         for (CompilationUnitMember declaration in result.unit.declarations) {
           final List<ClassMember>? members;
           switch (declaration) {
-            case ExtensionDeclaration(extendedType: TypeAnnotation type):
+            case ExtensionDeclaration(
+                onClause: ExtensionOnClause(
+                  extendedType: TypeAnnotation type,
+                ),
+              ):
               if (parentElement is! ExtensionElement) continue;
               final String actualParentName = type.beginToken.value() as String;
-              final String expectedParentName = parentElement.extendedType
-                  .getDisplayString(withNullability: false);
+              final String expectedParentName =
+                  parentElement.extendedType.getDisplayString();
               if (actualParentName != expectedParentName) continue;
               members = declaration.members;
             case ClassDeclaration(name: Token token):
