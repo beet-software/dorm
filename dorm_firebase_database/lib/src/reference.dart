@@ -52,8 +52,12 @@ class Reference implements BaseReference {
         .child(id)
         .get()
         .then((snapshot) => snapshot.value)
-        .then((value) =>
-            value == null ? null : entity.fromJson(id, value as Map));
+        .then((value) => value == null
+            ? null
+            : switch (value) {
+                Map() => entity.fromJson(id, value),
+                _ => null,
+              });
   }
 
   @override
@@ -69,11 +73,16 @@ class Reference implements BaseReference {
       };
     }).then((values) {
       if (values.isEmpty) return [];
-      return values.entries.map((entry) {
-        final String key = entry.key;
-        final Map value = entry.value as Map;
-        return entity.fromJson(key, value);
-      }).toList();
+      return values.entries
+          .map((entry) {
+            final String key = entry.key;
+            return switch (entry.value) {
+              Map value => entity.fromJson(key, value),
+              _ => null,
+            };
+          })
+          .whereType<Model>()
+          .toList();
     });
   }
 
@@ -116,7 +125,10 @@ class Reference implements BaseReference {
       if (value == null) {
         model = null;
       } else {
-        model = entity.fromJson(id, value as Map);
+        model = switch (value) {
+          Map() => entity.fromJson(id, value),
+          _ => null,
+        };
       }
 
       final Model? updatedModel;
@@ -140,8 +152,12 @@ class Reference implements BaseReference {
   ) {
     return _onValueOf(_refOf(entity).child(id))
         .map((snapshot) => snapshot.value)
-        .map((value) =>
-            value == null ? null : entity.fromJson(id, value as Map));
+        .map((value) => value == null
+            ? null
+            : switch (value) {
+                Map() => entity.fromJson(id, value),
+                _ => null,
+              });
   }
 
   Stream<fd.DataSnapshot> _onValueOf(fd.Query query) {
@@ -166,11 +182,16 @@ class Reference implements BaseReference {
       };
     }).map((values) {
       if (values.isEmpty) return [];
-      return values.entries.map((entry) {
-        final String key = entry.key;
-        final Map value = entry.value as Map;
-        return entity.fromJson(key, value);
-      }).toList();
+      return values.entries
+          .map((entry) {
+            final String key = entry.key;
+            return switch (entry.value) {
+              Map value => entity.fromJson(key, value),
+              _ => null,
+            };
+          })
+          .whereType<Model>()
+          .toList();
     });
   }
 
@@ -241,8 +262,9 @@ class Reference implements BaseReference {
         'shallow': 'true',
       },
     ));
-    final Map? data = json.decode(response.body) as Map?;
-    if (data == null) return [];
-    return data.keys.cast<String>().toList();
+    return switch (json.decode(response.body)) {
+      Map<String, Object?> data => data.keys.toList(),
+      _ => [],
+    };
   }
 }
