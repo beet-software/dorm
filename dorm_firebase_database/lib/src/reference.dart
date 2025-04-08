@@ -43,6 +43,30 @@ class Reference implements BaseReference {
     return _ref.child(entity.tableName);
   }
 
+  List<Model> _parseModels<Data, Model extends Data>(
+    Entity<Data, Model> entity,
+    Map<String, Object> data,
+  ) {
+    if (data.isEmpty) return [];
+    final List<Model> models = [];
+    for (MapEntry<String, Object> entry in data.entries) {
+      final String key = entry.key;
+      final Model model;
+      switch (entry.value) {
+        case Map modelData:
+          try {
+            model = entity.fromJson(key, modelData);
+          } catch (_) {
+            continue;
+          }
+        default:
+          continue;
+      }
+      models.add(model);
+    }
+    return models;
+  }
+
   @override
   Future<Model?> peek<Data, Model extends Data>(
     Entity<Data, Model> entity,
@@ -71,19 +95,7 @@ class Reference implements BaseReference {
         for (fd.DataSnapshot child in snapshot.children)
           child.key as String: child.value as Object,
       };
-    }).then((values) {
-      if (values.isEmpty) return [];
-      return values.entries
-          .map((entry) {
-            final String key = entry.key;
-            return switch (entry.value) {
-              Map value => entity.fromJson(key, value),
-              _ => null,
-            };
-          })
-          .whereType<Model>()
-          .toList();
-    });
+    }).then((values) => _parseModels(entity, values));
   }
 
   @override
@@ -180,19 +192,7 @@ class Reference implements BaseReference {
         for (fd.DataSnapshot child in snapshot.children)
           child.key as String: child.value as Object,
       };
-    }).map((values) {
-      if (values.isEmpty) return [];
-      return values.entries
-          .map((entry) {
-            final String key = entry.key;
-            return switch (entry.value) {
-              Map value => entity.fromJson(key, value),
-              _ => null,
-            };
-          })
-          .whereType<Model>()
-          .toList();
-    });
+    }).map((values) => _parseModels(entity, values));
   }
 
   @override
