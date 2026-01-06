@@ -150,7 +150,7 @@ class DataArgs extends Args<Data, FieldOrmNode, DataNaming> {
     return fields.baseClassOf(
       nodes,
       name: naming.modelName,
-      baseName: naming.schemaName,
+      baseName: '',
     );
   }
 
@@ -666,10 +666,12 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
       }
       b.name = name;
       if (baseName != null) {
-        if (polymorphicName == null) {
-          b.extend = cb.Reference(baseName);
-        } else {
-          b.implements.add(cb.Reference(baseName));
+        if (baseName.isNotEmpty) {
+          if (polymorphicName == null) {
+            b.extend = cb.Reference(baseName);
+          } else {
+            b.implements.add(cb.Reference(baseName));
+          } 
         }
         b.implements.add(cb.Reference('_$name'));
       }
