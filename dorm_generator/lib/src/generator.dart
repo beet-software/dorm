@@ -150,7 +150,7 @@ class DataArgs extends Args<Data, FieldOrmNode, DataNaming> {
     return fields.baseClassOf(
       nodes,
       name: naming.modelName,
-      baseName: naming.schemaNaming,
+      baseName: naming.schemaName,
     );
   }
 
