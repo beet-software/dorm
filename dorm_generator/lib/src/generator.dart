@@ -147,7 +147,11 @@ class DataArgs extends Args<Data, FieldOrmNode, DataNaming> {
   });
 
   cb.Spec get _class {
-    return fields.baseClassOf(nodes, name: naming.modelName);
+    return fields.baseClassOf(
+      nodes,
+      name: naming.modelName,
+      baseName: naming.schemaNaming,
+    );
   }
 
   @override
