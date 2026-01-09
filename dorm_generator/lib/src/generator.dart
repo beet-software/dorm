@@ -1187,6 +1187,7 @@ extension on Spec {
           declaredTypeLabel: declaredTypeLabel.substring(1),
         );
       case ModelField():
+        print((field.template as $ModelFieldTemplate).name!);
         return IndirectSpecTypeResolution(
           declaredTypeLabel: declaredTypeLabel,
           originalType: field.referTo as $Type,

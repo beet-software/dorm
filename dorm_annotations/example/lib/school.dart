@@ -25,7 +25,11 @@ abstract class _School {
   @Field(name: 'nome')
   String get name;
 
-  @ModelField(name: 'endereco', referTo: _SchoolAddress)
+  @ModelField(
+    name: 'endereco',
+    referTo: _SchoolAddress,
+    template: ModelFieldTemplate<Map<int, ModelFieldType>>(),
+  )
   get address;
 
   @Field(name: 'contatos', defaultValue: [])

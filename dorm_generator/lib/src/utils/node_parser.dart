@@ -233,6 +233,7 @@ class ModelFieldParser extends FieldNodeParser<ModelField> {
     return ModelField(
       name: reader.read('name').stringValue,
       referTo: $Type(reader: reader.read('referTo')),
+      template: $ModelFieldTemplate(reader: reader.read('template')),
     );
   }
 }
