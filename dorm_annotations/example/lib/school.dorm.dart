@@ -10,7 +10,7 @@ part of 'school.dart';
   anyMap: true,
   explicitToJson: true,
 )
-class SchoolAddress {
+class SchoolAddress implements _SchoolAddress {
   factory SchoolAddress.fromJson(Map json) => _$SchoolAddressFromJson(json);
 
   const SchoolAddress({
@@ -20,6 +20,7 @@ class SchoolAddress {
     required this.number,
   });
 
+  @override
   @JsonKey(
     name: 'ativo',
     required: true,
@@ -27,6 +28,7 @@ class SchoolAddress {
   )
   final bool active;
 
+  @override
   @JsonKey(
     name: 'bairro',
     required: true,
@@ -34,9 +36,11 @@ class SchoolAddress {
   )
   final String district;
 
+  @override
   @JsonKey(name: 'cep')
   final String? zipCode;
 
+  @override
   @JsonKey(
     name: 'numero',
     required: true,

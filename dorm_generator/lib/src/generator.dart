@@ -199,7 +199,9 @@ abstract class FieldedArgs<A, N> extends Args<A, FieldOrmNode, N> {
               defaultValue == null && declaredPropertyInfo.required;
 
           yield cb.Field((b) {
-            if (extendsReference != null || implementsReferences.isNotEmpty) {
+            b.name = declaredPropertyName;
+            if (!spec.ignoreOverrideFor.contains(declaredPropertyName) &&
+                (extendsReference != null || implementsReferences.isNotEmpty)) {
               b.annotations.add(expressionOf('override'));
             }
             if (spec.supportsSerialization) {
@@ -223,7 +225,6 @@ abstract class FieldedArgs<A, N> extends Args<A, FieldOrmNode, N> {
                   (referredType) => nodes[referredType.name]?.annotation,
                 ),
             };
-            b.name = declaredPropertyName;
           });
         }),
         if (spec.discriminatorSpec
@@ -457,7 +458,8 @@ abstract class FieldedArgs<A, N> extends Args<A, FieldOrmNode, N> {
         if (spec.includesQueryGetters) ...fields.queryGetters,
         // toJson method
         cb.Method((b) {
-          if (extendsReference != null || implementsReferences.isNotEmpty) {
+          if (!spec.ignoreOverrideFor.contains('toJson') &&
+              (extendsReference != null || implementsReferences.isNotEmpty)) {
             b.annotations.add(expressionOf('override'));
           }
           b.returns = cb.TypeReference((b) {
@@ -544,8 +546,9 @@ class DataArgs extends FieldedArgs<Data, DataNaming> {
         includesPrimaryKey: false,
         supportsSerialization: true,
         extendsReference: null,
-        implementsReferences: [],
+        implementsReferences: [cb.Reference(naming.schemaName)],
         includesQueryGetters: false,
+        ignoreOverrideFor: {'toJson'},
         discriminatorSpec: null,
         shouldDeclareField: (field) => field.isNative,
       ),
@@ -917,6 +920,7 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
         extendsReference: null,
         implementsReferences: [],
         includesQueryGetters: false,
+        ignoreOverrideFor: {},
         discriminatorSpec: null,
         shouldDeclareField: (field) => field.isNative,
       ),
@@ -929,6 +933,7 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
         extendsReference: cb.Reference(naming.dataName),
         implementsReferences: [cb.Reference(naming.schemaName)],
         includesQueryGetters: true,
+        ignoreOverrideFor: {},
         discriminatorSpec: null,
         shouldDeclareField: (field) => field.isForeign,
       ),
@@ -1044,6 +1049,7 @@ class PolymorphicModelArgs extends FieldedArgs<void, PolymorphicDataNaming> {
           cb.Reference(naming.tag.modelName),
           cb.Reference(naming.schemaName),
         ],
+        ignoreOverrideFor: {},
         includesQueryGetters: false,
         discriminatorSpec: (
           cb.Reference(naming.tag.enumName),
@@ -1061,6 +1067,7 @@ class Spec {
   final cb.Reference? extendsReference;
   final List<cb.Reference> implementsReferences;
   final bool includesQueryGetters;
+  final Set<String> ignoreOverrideFor;
   final (cb.Reference, String)? discriminatorSpec;
   final bool Function(Field field) shouldDeclareField;
 
@@ -1070,6 +1077,7 @@ class Spec {
     required this.extendsReference,
     required this.implementsReferences,
     required this.includesQueryGetters,
+    required this.ignoreOverrideFor,
     required this.discriminatorSpec,
     required this.shouldDeclareField,
   });
