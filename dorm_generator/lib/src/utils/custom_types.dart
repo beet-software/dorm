@@ -81,19 +81,17 @@ class $ConcreteSymbol extends $Symbol {
   String get name => super.name ?? _defaultName;
 }
 
-abstract class FieldFilter {
-  static bool isA<F extends Field>(Field field) => field is F;
+extension FieldFilter on Field {
+  bool isA<F extends Field>() => this is F;
 
   /// If a field belongs to a schema.
-  static bool belongsToSchema(Field field) => field is! QueryField;
+  bool get isConcrete => this is! QueryField;
 
   // If a field belongs exclusively to a dORM model class.
-  static bool belongsToModel(Field field) => field is ForeignField;
+  bool get isForeign => this is ForeignField;
 
   /// If a field belongs exclusively to a dORM data class.
-  static bool belongsToData(Field field) {
-    return belongsToSchema(field) && !belongsToModel(field);
-  }
+  bool get isNative => isConcrete && !isForeign;
 }
 
 extension FieldFiltering on Map<String, FieldOrmNode> {

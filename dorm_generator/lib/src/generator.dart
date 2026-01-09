@@ -122,11 +122,11 @@ class TagNaming {
 }
 
 /// Arguments of code generation.
-abstract class Args<Annotation, Field, Naming> {
+abstract class Args<A, F, N> {
   final Map<String, FieldedOrmNode<Object>> nodes;
-  final Annotation annotation;
-  final Map<String, Field> fields;
-  final Naming naming;
+  final A annotation;
+  final Map<String, F> fields;
+  final N naming;
 
   const Args({
     required this.nodes,
@@ -138,7 +138,397 @@ abstract class Args<Annotation, Field, Naming> {
   void accept(cb.LibraryBuilder b);
 }
 
-class DataArgs extends Args<Data, FieldOrmNode, DataNaming> {
+abstract class FieldedArgs<A, N> extends Args<A, FieldOrmNode, N> {
+  const FieldedArgs({
+    required super.nodes,
+    required super.annotation,
+    required super.fields,
+    required super.naming,
+  });
+
+  cb.Class newClass({
+    required String name,
+    required Spec spec,
+  }) {
+    final bool supportsSerialization = spec.supportsSerialization ||
+        fields.where((field) => field.isNative).isNotEmpty;
+
+    final List<PolymorphicField> polymorphicFields = fields.values
+        .map((field) => field.annotation)
+        .whereType<PolymorphicField>()
+        .toList();
+
+    return cb.Class((b) {
+      b.name = name;
+      final cb.Reference? extendsReference = spec.extendsReference;
+      if (extendsReference != null) {
+        b.extend = extendsReference;
+      }
+      final List<cb.Reference> implementsReferences = spec.implementsReferences;
+      if (implementsReferences.isNotEmpty) {
+        b.implements.addAll(implementsReferences);
+      }
+      b.fields.addAll([
+        if (spec.includesPrimaryKey)
+          cb.Field((b) {
+            if (spec.supportsSerialization) {
+              b.annotations.add(cb.InvokeExpression.newOf(
+                cb.Reference('JsonKey', '$_jsonAnnotationUrl'),
+                [],
+                {
+                  'name': cb.literalString('_id'),
+                  'required': cb.literalTrue,
+                  'disallowNullValue': cb.literalTrue,
+                },
+              ));
+            }
+            b.modifier = cb.FieldModifier.final$;
+            b.type = cb.Reference('String');
+            b.name = 'id';
+          }),
+        ...fields.entries.expand((entry) sync* {
+          final String declaredPropertyName = entry.key;
+          final FieldOrmNode declaredPropertyInfo = entry.value;
+          final String declaredPropertyTypeLabel = declaredPropertyInfo.type;
+          final Field field = declaredPropertyInfo.annotation;
+          if (!spec.shouldDeclareField(field)) return;
+
+          final String? key = field.name;
+          final Object? defaultValue = field.defaultValue;
+          final bool required =
+              defaultValue == null && declaredPropertyInfo.required;
+
+          yield cb.Field((b) {
+            if (extendsReference != null || implementsReferences.isNotEmpty) {
+              b.annotations.add(expressionOf('override'));
+            }
+            if (spec.supportsSerialization) {
+              b.annotations.add(cb.InvokeExpression.newOf(
+                cb.Reference('JsonKey', '$_jsonAnnotationUrl'),
+                [],
+                {
+                  if (key != null) 'name': cb.literalString(key),
+                  if (required) 'required': cb.literalTrue,
+                  if (required) 'disallowNullValue': cb.literalTrue,
+                  if (defaultValue != null)
+                    'defaultValue': cb.literal(defaultValue),
+                },
+              ));
+            }
+            b.modifier = cb.FieldModifier.final$;
+            b.type = switch (
+                spec.resolveTypeFromField(field, declaredPropertyTypeLabel)) {
+              DirectSpecTypeResolution resolution => resolution.reference,
+              IndirectSpecTypeResolution resolution => resolution.referenceBy(
+                  (referredType) => nodes[referredType.name]?.annotation,
+                ),
+            };
+            b.name = declaredPropertyName;
+          });
+        }),
+        if (spec.discriminatorSpec
+            case (
+              cb.Reference enumReference,
+              String enumEntryName,
+            ))
+          cb.Field((b) {
+            b.annotations.add(expressionOf('override'));
+            b.modifier = cb.FieldModifier.final$;
+            b.type = enumReference;
+            b.name = 'type';
+            b.assignment = enumReference.property(enumEntryName).code;
+          }),
+      ]);
+      final bool hasFields = b.fields.isNotEmpty;
+      if (hasFields && supportsSerialization) {
+        b.annotations.add(cb.InvokeExpression.newOf(
+          cb.Reference('JsonSerializable', '$_jsonAnnotationUrl'),
+          [],
+          {
+            'anyMap': cb.literalTrue,
+            'explicitToJson': cb.literalTrue,
+            if (polymorphicFields.isNotEmpty)
+              'constructor': cb.literalString('_'),
+          },
+        ));
+      }
+      b.constructors.addAll([
+        // `fromJson` factory method
+        if (hasFields && supportsSerialization)
+          cb.Constructor((b) {
+            b.factory = true;
+            b.name = 'fromJson';
+            if (spec.includesPrimaryKey) {
+              b.requiredParameters.add(cb.Parameter((b) {
+                b.type = cb.Reference('String');
+                b.name = 'id';
+              }));
+            }
+            b.requiredParameters.add(cb.Parameter((b) {
+              b.type = cb.Reference('Map');
+              b.name = 'json';
+            }));
+            b.lambda = true;
+            b.body =
+                cb.ToCodeExpression(expressionOf('_\$${name}FromJson').call([
+              spec.includesPrimaryKey
+                  ? cb.literalMap({
+                      cb.literalSpread(): expressionOf('json'),
+                      cb.literalString('_id'): expressionOf('id'),
+                    })
+                  : expressionOf('json'),
+            ]));
+          }),
+        // Polymorphic constructor
+        if (polymorphicFields.isNotEmpty)
+          cb.Constructor((b) {
+            b.factory = true;
+            b.name = '_';
+            if (spec.includesPrimaryKey) {
+              b.optionalParameters.add(cb.Parameter((b) {
+                b.required = true;
+                b.named = true;
+                b.type = cb.Reference('String');
+                b.name = 'id';
+              }));
+            }
+            b.optionalParameters.addAll(fields
+                .where((field) =>
+                    spec.shouldDeclareField(field) || extendsReference != null)
+                .entries
+                .expand((entry) sync* {
+              final String fieldName = entry.key;
+              final String fieldType = entry.value.type;
+
+              final Field field = entry.value.annotation;
+              if (field is PolymorphicField) {
+                yield cb.Parameter((b) {
+                  b.required = true;
+                  b.named = true;
+                  b.type = cb.Reference('Map');
+                  b.name = fieldName;
+                });
+              } else if (field is ModelField) {
+                final $Type value = field.referTo as $Type;
+                final cb.Reference type =
+                    switch (spec.resolveTypeFromField(field, value.name!)) {
+                  DirectSpecTypeResolution resolution => resolution.reference,
+                  IndirectSpecTypeResolution resolution =>
+                    resolution.referenceBy(
+                      (referredType) => nodes[referredType.name]?.annotation,
+                    ),
+                };
+                yield cb.Parameter((b) {
+                  b.required = true;
+                  b.named = true;
+                  b.type = type;
+                  b.name = fieldName;
+                });
+              } else {
+                yield cb.Parameter((b) {
+                  b.required = true;
+                  b.named = true;
+                  b.type = cb.Reference(fieldType);
+                  b.name = fieldName;
+                });
+              }
+            }));
+            b.lambda = false;
+            b.body = cb.Block((b) {
+              if (extendsReference != null) {
+                b.statements.add(cb
+                    .declareFinal('data', type: extendsReference)
+                    .assign(
+                      cb.InvokeExpression.newOf(
+                        extendsReference,
+                        [],
+                        Map.fromEntries(fields
+                            .where((field) => field.isNative)
+                            .entries
+                            .expand((entry) sync* {
+                          final String fieldName = entry.key;
+                          yield MapEntry(fieldName, expressionOf(fieldName));
+                        })),
+                        [],
+                        '_',
+                      ),
+                    )
+                    .statement);
+              }
+              b.statements.add(
+                cb.InvokeExpression.newOf(
+                  cb.Reference(name),
+                  [],
+                  {
+                    if (spec.includesPrimaryKey) 'id': expressionOf('id'),
+                    ...Map.fromEntries(fields
+                        .where((field) => field.isConcrete)
+                        .entries
+                        .expand((entry) sync* {
+                      final String fieldName = entry.key;
+                      final String fieldType = entry.value.type;
+
+                      final Field field = entry.value.annotation;
+                      if (!(spec.shouldDeclareField(field) ||
+                          extendsReference != null)) {
+                        return;
+                      }
+
+                      final cb.Expression? rootExpression =
+                          extendsReference == null
+                              ? null
+                              : expressionOf('data');
+
+                      final cb.Expression fieldExpression;
+                      if (rootExpression == null ||
+                          entry.value.annotation is ForeignField) {
+                        fieldExpression = expressionOf(fieldName);
+                      } else {
+                        fieldExpression = rootExpression.property(fieldName);
+                      }
+
+                      if (field is PolymorphicField) {
+                        final $ConcreteSymbol pivotSymbol =
+                            field.pivotAs as $ConcreteSymbol;
+                        yield MapEntry(
+                          pivotSymbol.name,
+                          rootExpression == null
+                              ? expressionOf(pivotSymbol.name)
+                              : rootExpression.property(pivotSymbol.name),
+                        );
+                        if (extendsReference == null) {
+                          yield MapEntry(
+                            fieldName,
+                            cb.InvokeExpression.newOf(
+                              cb.Reference(fieldType.substring(1)),
+                              [
+                                expressionOf(pivotSymbol.name),
+                                expressionOf(fieldName),
+                              ],
+                              {},
+                              [],
+                              'fromType',
+                            ),
+                          );
+                        } else {
+                          yield MapEntry(fieldName, fieldExpression);
+                        }
+                      } else {
+                        yield MapEntry(fieldName, fieldExpression);
+                      }
+                    }))
+                  },
+                ).returned.statement,
+              );
+            });
+          }),
+        // Default constructor
+        cb.Constructor((b) {
+          b.constant = true;
+          if (spec.includesPrimaryKey) {
+            b.optionalParameters.add(cb.Parameter((b) {
+              b.required = true;
+              b.named = true;
+              b.toThis = true;
+              b.name = 'id';
+            }));
+          }
+          b.optionalParameters.addAll(fields.entries.expand((entry) sync* {
+            final String fieldName = entry.key;
+            final Field field = entry.value.annotation;
+            // Only concrete fields should be considered on the constructor
+            // Virtual fields will be added as overridden getters
+            if (!field.isConcrete) return;
+
+            final bool declaresField = spec.shouldDeclareField(field);
+            if (!declaresField && extendsReference == null) return;
+            yield cb.Parameter((b) {
+              b.required = true;
+              b.named = true;
+              final bool toThis = declaresField;
+              b.toThis = toThis;
+              b.toSuper = !toThis;
+              b.name = fieldName;
+            });
+          }));
+        }),
+      ]);
+      b.methods.addAll([
+        if (spec.includesQueryGetters) ...fields.queryGetters,
+        // toJson method
+        cb.Method((b) {
+          if (extendsReference != null || implementsReferences.isNotEmpty) {
+            b.annotations.add(expressionOf('override'));
+          }
+          b.returns = cb.TypeReference((b) {
+            b.symbol = 'Map';
+            b.types.add(cb.Reference('String'));
+            b.types.add(cb.Reference('Object?'));
+          });
+          b.name = 'toJson';
+
+          final bool lambda = !(hasFields && supportsSerialization) ||
+              !spec.includesQueryGetters;
+          b.lambda = lambda;
+
+          final cb.Code body;
+          if (supportsSerialization && hasFields) {
+            final Map<String, cb.Expression>? queryObject;
+            if (lambda) {
+              queryObject = null;
+            } else {
+              queryObject = {};
+              final Map<String, Map<String, Object>> queries = {};
+              for (MapEntry<String, FieldOrmNode> entry
+                  in fields.where((field) => field.isA<QueryField>()).entries) {
+                final String? name =
+                    (entry.value.annotation as QueryField).name;
+                if (name == null) continue;
+                final List<String> segments = name.split('/');
+                final cb.Expression child = expressionOf(entry.key);
+                if (segments.length == 1) {
+                  queryObject[name] = child;
+                } else {
+                  queries.putIfAbsent(segments[0], () => {})[segments[1]] =
+                      child;
+                }
+              }
+              if (queries.isNotEmpty) {
+                for (MapEntry<String, Map<String, Object>> entry
+                    in queries.entries) {
+                  queryObject[entry.key] = cb.literalMap(entry.value);
+                }
+              }
+            }
+
+            final cb.Expression baseExpression = cb.InvokeExpression.newOf(
+              cb.Reference('_\$${name}ToJson'),
+              [expressionOf('this')],
+            );
+            if (queryObject == null) {
+              body = cb.ToCodeExpression(baseExpression);
+            } else {
+              body = cb
+                  .literalMap({
+                    cb.literalSpread(): baseExpression
+                        .cascade('remove')
+                        .call([cb.literalString('_id')]),
+                    ...queryObject,
+                  })
+                  .returned
+                  .statement;
+            }
+          } else {
+            body = cb.ToCodeExpression(cb.literalConstMap({}));
+          }
+          b.body = body;
+        }),
+      ]);
+    });
+  }
+}
+
+class DataArgs extends FieldedArgs<Data, DataNaming> {
   const DataArgs({
     required super.nodes,
     required super.annotation,
@@ -146,21 +536,24 @@ class DataArgs extends Args<Data, FieldOrmNode, DataNaming> {
     required super.naming,
   });
 
-  cb.Spec get _class {
-    return fields.baseClassOf(
-      nodes,
-      name: naming.modelName,
-      baseName: '',
-    );
-  }
-
   @override
   void accept(cb.LibraryBuilder b) {
-    b.body.add(_class);
+    b.body.add(newClass(
+      name: naming.modelName,
+      spec: Spec(
+        includesPrimaryKey: false,
+        supportsSerialization: true,
+        extendsReference: null,
+        implementsReferences: [],
+        includesQueryGetters: false,
+        discriminatorSpec: null,
+        shouldDeclareField: (field) => field.isNative,
+      ),
+    ));
   }
 }
 
-class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
+class ModelArgs extends FieldedArgs<Model, ModelNaming> {
   const ModelArgs({
     required super.nodes,
     required super.annotation,
@@ -176,7 +569,7 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
       caseSameAs: (type) {
         type as $Type;
         for (MapEntry<String, FieldOrmNode> entry
-            in fields.where(FieldFilter.belongsToModel).entries) {
+            in fields.where((field) => field.isForeign).entries) {
           final $Type currentType =
               (entry.value.annotation as ForeignField).referTo as $Type;
           if (currentType.name != type.name) continue;
@@ -213,7 +606,7 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
       b.name = className;
       b.implements.add(cb.Reference(naming.schemaName));
       b.fields.addAll(
-          fields.where(FieldFilter.belongsToSchema).entries.map((entry) {
+          fields.where((field) => field.isConcrete).entries.map((entry) {
         return cb.Field((b) {
           b.annotations.add(expressionOf('override'));
           b.modifier = cb.FieldModifier.final$;
@@ -236,7 +629,7 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
           cb.InvokeExpression.newOf(
             expressionOf(className),
             [],
-            fields.where(FieldFilter.belongsToSchema).map((name, field) {
+            fields.where((field) => field.isConcrete).map((name, field) {
               final cb.Expression expression = expressionOf(
                   field.annotation is ForeignField ? 'dependency' : 'data');
               return MapEntry(name, expression.property(name));
@@ -247,7 +640,7 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
       b.constructors.add(cb.Constructor((b) {
         b.constant = true;
         b.optionalParameters
-            .addAll(fields.where(FieldFilter.belongsToSchema).keys.map((name) {
+            .addAll(fields.where((field) => field.isConcrete).keys.map((name) {
           return cb.Parameter((b) {
             b.required = true;
             b.named = true;
@@ -260,21 +653,6 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
     });
   }
 
-  cb.Spec get _dataClass {
-    return fields.baseClassOf(
-      nodes,
-      name: naming.dataName,
-    );
-  }
-
-  cb.Spec get _modelClass {
-    return fields.baseClassOf(
-      nodes,
-      name: naming.modelName,
-      baseName: naming.dataName,
-    );
-  }
-
   cb.Spec get _dependencyClass {
     return cb.Class((b) {
       b.name = naming.dependencyName;
@@ -284,14 +662,14 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
         b.types.add(cb.Reference(naming.dataName));
       });
       b.fields
-          .addAll(fields.where(FieldFilter.belongsToModel).entries.map((entry) {
+          .addAll(fields.where((field) => field.isForeign).entries.map((entry) {
         return cb.Field((b) {
           b.modifier = cb.FieldModifier.final$;
           b.type = cb.Reference(entry.value.type);
           b.name = entry.key;
         });
       }));
-      if (fields.where(FieldFilter.belongsToModel).isEmpty) {
+      if (fields.where((field) => field.isForeign).isEmpty) {
         b.constructors.add(cb.Constructor((b) {
           b.constant = true;
           b.initializers.add(cb.ToCodeExpression(
@@ -302,7 +680,7 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
         b.constructors.add(cb.Constructor((b) {
           b.constant = false;
           b.optionalParameters
-              .addAll(fields.where(FieldFilter.belongsToModel).keys.map((name) {
+              .addAll(fields.where((field) => field.isForeign).keys.map((name) {
             return cb.Parameter((b) {
               b.required = true;
               b.named = true;
@@ -313,7 +691,7 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
           b.initializers.add(cb.ToCodeExpression(
             expressionOf('super').property('weak').call([
               cb.literalList(
-                  fields.where(FieldFilter.belongsToModel).entries.map((entry) {
+                  fields.where((field) => field.isForeign).entries.map((entry) {
                 cb.Expression expression = expressionOf(entry.key);
                 if (!entry.value.required) {
                   expression = expression.ifNullThen(cb.literalString(''));
@@ -369,7 +747,7 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
           {
             'id': _uidTypeExpressionOf(annotation.uidType),
             ...Map.fromEntries(fields
-                .where(FieldFilter.belongsToSchema)
+                .where((field) => field.isConcrete)
                 .entries
                 .expand((entry) sync* {
               final String fieldName = entry.key;
@@ -408,7 +786,7 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
         b.lambda = true;
 
         cb.Expression baseExpression = expressionOf('model');
-        if (fields.where(FieldFilter.belongsToData).isNotEmpty) {
+        if (fields.where((field) => field.isNative).isNotEmpty) {
           baseExpression =
               baseExpression.property('copyWith').call([expressionOf('data')]);
         }
@@ -483,7 +861,7 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
           {
             'id': expressionOf('id'),
             ...Map.fromEntries(fields
-                .where(FieldFilter.belongsToSchema)
+                .where((field) => field.isConcrete)
                 .entries
                 .expand((entry) sync* {
               final String fieldName = entry.key;
@@ -517,11 +895,33 @@ class ModelArgs extends Args<Model, FieldOrmNode, ModelNaming> {
       caseSameAs: (_) {},
       caseCustom: (_) => b.body.add(_dummyClass),
     );
-    b.body.add(_dataClass);
-    b.body.add(_modelClass);
+    b.body.add(newClass(
+      name: naming.dataName,
+      spec: Spec(
+        includesPrimaryKey: false,
+        supportsSerialization: true,
+        extendsReference: null,
+        implementsReferences: [],
+        includesQueryGetters: false,
+        discriminatorSpec: null,
+        shouldDeclareField: (field) => field.isNative,
+      ),
+    ));
+    b.body.add(newClass(
+      name: naming.modelName,
+      spec: Spec(
+        includesPrimaryKey: true,
+        supportsSerialization: true,
+        extendsReference: cb.Reference(naming.dataName),
+        implementsReferences: [cb.Reference(naming.schemaName)],
+        includesQueryGetters: true,
+        discriminatorSpec: null,
+        shouldDeclareField: (field) => field.isForeign,
+      ),
+    ));
     b.body.add(_dependencyClass);
     b.body.add(_entityClass);
-    if (fields.where(FieldFilter.belongsToData).isNotEmpty) {
+    if (fields.where((field) => field.isNative).isNotEmpty) {
       b.body.add(_extension);
     }
   }
@@ -611,495 +1011,176 @@ class PolymorphicArgs
   }
 }
 
-class PolymorphicModelArgs
-    extends Args<void, FieldOrmNode, PolymorphicDataNaming> {
+class PolymorphicModelArgs extends FieldedArgs<void, PolymorphicDataNaming> {
   const PolymorphicModelArgs({
     required super.nodes,
     required super.fields,
     required super.naming,
   }) : super(annotation: null);
 
-  cb.Spec get _class {
-    return fields.baseClassOf(
-      nodes,
-      name: naming.modelName,
-      baseName: naming.tag.modelName,
-      polymorphicName: naming.enumFieldName,
-    );
-  }
-
   @override
   void accept(cb.LibraryBuilder b) {
-    b.body.add(_class);
+    b.body.add(newClass(
+      name: naming.modelName,
+      spec: Spec(
+        includesPrimaryKey: false,
+        supportsSerialization: true,
+        extendsReference: null,
+        implementsReferences: [
+          cb.Reference(naming.tag.modelName),
+          cb.Reference(naming.schemaName),
+        ],
+        includesQueryGetters: false,
+        discriminatorSpec: (
+          cb.Reference(naming.tag.enumName),
+          naming.enumFieldName,
+        ),
+        shouldDeclareField: (field) => field.isConcrete,
+      ),
+    ));
   }
 }
 
-/// Base of code generation.
-extension _BaseWriting on Map<String, FieldOrmNode> {
-  cb.Spec baseClassOf(
-    Map<String, FieldedOrmNode<Object>> nodes, {
-    required String name,
-    String? baseName,
-    String? polymorphicName,
-  }) {
-    final bool base = polymorphicName != null || baseName == null;
-    final bool serializable =
-        !base || where(FieldFilter.belongsToData).isNotEmpty;
+class Spec {
+  final bool includesPrimaryKey;
+  final bool supportsSerialization;
+  final cb.Reference? extendsReference;
+  final List<cb.Reference> implementsReferences;
+  final bool includesQueryGetters;
+  final (cb.Reference, String)? discriminatorSpec;
+  final bool Function(Field field) shouldDeclareField;
 
-    final List<PolymorphicField> polymorphicFields = values
-        .map((field) => field.annotation)
-        .whereType<PolymorphicField>()
-        .toList();
+  const Spec({
+    required this.includesPrimaryKey,
+    required this.supportsSerialization,
+    required this.extendsReference,
+    required this.implementsReferences,
+    required this.includesQueryGetters,
+    required this.discriminatorSpec,
+    required this.shouldDeclareField,
+  });
+}
 
-    return cb.Class((b) {
-      if (serializable) {
-        b.annotations.add(cb.InvokeExpression.newOf(
-          cb.Reference('JsonSerializable', '$_jsonAnnotationUrl'),
-          [],
-          {
-            'anyMap': cb.literalTrue,
-            'explicitToJson': cb.literalTrue,
-            if (polymorphicFields.isNotEmpty)
-              'constructor': cb.literalString('_'),
-          },
-        ));
-      }
-      b.name = name;
-      if (baseName != null) {
-        if (baseName.isNotEmpty) {
-          if (polymorphicName == null) {
-            b.extend = cb.Reference(baseName);
-          } else {
-            b.implements.add(cb.Reference(baseName));
-          } 
-        }
-        b.implements.add(cb.Reference('_$name'));
-      }
-      if (!base) {
-        b.fields.add(cb.Field((b) {
-          b.annotations.add(cb.InvokeExpression.newOf(
-            cb.Reference('JsonKey', '$_jsonAnnotationUrl'),
-            [],
-            {
-              'name': cb.literalString('_id'),
-              'required': cb.literalTrue,
-              'disallowNullValue': cb.literalTrue,
-            },
-          ));
-          b.modifier = cb.FieldModifier.final$;
-          b.type = cb.Reference('String');
-          b.name = 'id';
-        }));
-      }
-      b.fields.addAll(entries.expand((entry) sync* {
-        final String fieldName = entry.key;
-        final FieldOrmNode data = entry.value;
-        final String fieldType = data.type;
+sealed class SpecTypeResolution {
+  final String declaredTypeLabel;
+  const SpecTypeResolution({
+    required this.declaredTypeLabel,
+  });
+}
 
-        final Field baseField = data.annotation;
-        if (base) {
-          if (!FieldFilter.belongsToData(baseField)) return;
-        } else {
-          if (!FieldFilter.belongsToModel(baseField)) return;
-        }
+class DirectSpecTypeResolution extends SpecTypeResolution {
+  const DirectSpecTypeResolution({
+    required super.declaredTypeLabel,
+  });
 
-        final String? key = baseField.name;
-        final Object? defaultValue = baseField.defaultValue;
-        final bool required = defaultValue == null && data.required;
+  cb.Reference get reference => cb.Reference(declaredTypeLabel);
+}
 
-        if (baseName == null && baseField is PolymorphicField) {
-          final String pivotKey = baseField.pivotName;
-          final $ConcreteSymbol pivotSymbol =
-              baseField.pivotAs as $ConcreteSymbol;
-          yield cb.Field((b) {
-            b.annotations.add(cb.InvokeExpression.newOf(
-              cb.Reference('JsonKey', '$_jsonAnnotationUrl'),
-              [],
-              {
-                'name': cb.literalString(pivotKey),
-                'required': cb.literalTrue,
-                'disallowNullValue': cb.literalTrue,
-              },
-            ));
-            b.modifier = cb.FieldModifier.final$;
-            b.type = cb.Reference('${fieldType.substring(1)}Type');
-            b.name = pivotSymbol.name;
-          });
-        }
+class IndirectSpecTypeResolution extends SpecTypeResolution {
+  final $Type originalType;
 
-        yield cb.Field((b) {
-          if (polymorphicName != null || baseName != null) {
-            b.annotations.add(expressionOf('override'));
-          }
-          b.annotations.add(cb.InvokeExpression.newOf(
-            cb.Reference('JsonKey', '$_jsonAnnotationUrl'),
-            [],
-            {
-              if (key != null) 'name': cb.literalString(key),
-              if (required) 'required': cb.literalTrue,
-              if (required) 'disallowNullValue': cb.literalTrue,
-              if (defaultValue != null)
-                'defaultValue': cb.literal(defaultValue),
-            },
-          ));
-          b.modifier = cb.FieldModifier.final$;
+  const IndirectSpecTypeResolution({
+    required super.declaredTypeLabel,
+    required this.originalType,
+  });
 
-          final cb.Reference type;
-          if (!base) {
-            type = cb.Reference(fieldType);
-          } else if (baseField is PolymorphicField) {
-            type = cb.Reference(fieldType.substring(1));
-          } else if (baseField is ModelField) {
-            final $Type value = baseField.referTo as $Type;
-            final ClassOrmNode<Object>? node = nodes[value.name]?.annotation;
-            final String name;
-            if (node is DataOrmNode) {
-              name = value.name!.substring(1);
-            } else {
-              name = '${value.name!.substring(1)}Data';
-            }
-            if (fieldType.startsWith('List<')) {
-              type = cb.TypeReference((b) {
-                b.symbol = 'List';
-                b.types.add(cb.Reference(name));
-              });
-            } else if (fieldType.endsWith('?')) {
-              type = cb.Reference('$name?');
-            } else {
-              type = cb.Reference(name);
-            }
-          } else {
-            type = cb.Reference(fieldType);
-          }
-          b.type = type;
-          b.name = fieldName;
-        });
-      }));
-      if (polymorphicName != null) {
-        b.fields.add(cb.Field((b) {
-          b.annotations.add(expressionOf('override'));
-          b.modifier = cb.FieldModifier.final$;
-          b.type = cb.Reference('${baseName}Type');
-          b.name = 'type';
-          b.assignment =
-              expressionOf('${baseName}Type').property(polymorphicName).code;
-        }));
-      }
-      // `fromJson` factory method
-      if (serializable) {
-        b.constructors.add(cb.Constructor((b) {
-          b.factory = true;
-          b.name = 'fromJson';
-          if (!base) {
-            b.requiredParameters.add(cb.Parameter((b) {
-              b.type = cb.Reference('String');
-              b.name = 'id';
-            }));
-          }
-          b.requiredParameters.add(cb.Parameter((b) {
-            b.type = cb.Reference('Map');
-            b.name = 'json';
-          }));
-          b.lambda = true;
-          b.body = cb.ToCodeExpression(expressionOf('_\$${name}FromJson').call([
-            base
-                ? expressionOf('json')
-                : cb.literalMap({
-                    cb.literalSpread(): expressionOf('json'),
-                    cb.literalString('_id'): expressionOf('id'),
-                  }),
-          ]));
-        }));
-      }
-      // Polymorphic constructor
-      if (polymorphicFields.isNotEmpty) {
-        b.constructors.add(cb.Constructor((b) {
-          b.factory = true;
-          b.name = '_';
-          if (!base) {
-            b.optionalParameters.add(cb.Parameter((b) {
-              b.required = true;
-              b.named = true;
-              b.type = cb.Reference('String');
-              b.name = 'id';
-            }));
-          }
-          b.optionalParameters.addAll(where(baseName == null
-                  ? FieldFilter.belongsToData
-                  : FieldFilter.belongsToSchema)
-              .entries
-              .expand((entry) sync* {
-            final String fieldName = entry.key;
-            final String fieldType = entry.value.type;
-
-            final Field baseField = entry.value.annotation;
-            if (baseField is PolymorphicField) {
-              final $ConcreteSymbol pivotSymbol =
-                  baseField.pivotAs as $ConcreteSymbol;
-              yield cb.Parameter((b) {
-                b.required = true;
-                b.named = true;
-                b.type = cb.Reference('${fieldType.substring(1)}Type');
-                b.name = pivotSymbol.name;
-              });
-              yield cb.Parameter((b) {
-                b.required = true;
-                b.named = true;
-                b.type = cb.Reference('Map');
-                b.name = fieldName;
-              });
-            } else if (baseField is ModelField) {
-              final $Type value = baseField.referTo as $Type;
-              final ClassOrmNode<Object>? node = nodes[value.name]?.annotation;
-              final String name;
-              if (node is DataOrmNode) {
-                name = value.name!.substring(1);
-              } else {
-                name = '${value.name!.substring(1)}Data';
-              }
-              final cb.Reference type;
-              if (fieldType.startsWith('List<')) {
-                type = cb.TypeReference((b) {
-                  b.symbol = 'List';
-                  b.types.add(cb.Reference(name));
-                });
-              } else if (fieldType.endsWith('?')) {
-                type = cb.Reference('$name?');
-              } else {
-                type = cb.Reference(name);
-              }
-              yield cb.Parameter((b) {
-                b.required = true;
-                b.named = true;
-                b.type = type;
-                b.name = fieldName;
-              });
-            } else {
-              yield cb.Parameter((b) {
-                b.required = true;
-                b.named = true;
-                b.type = cb.Reference(fieldType);
-                b.name = fieldName;
-              });
-            }
-          }));
-          b.lambda = false;
-          b.body = cb.Block((b) {
-            if (baseName != null) {
-              b.statements.add(
-                cb
-                    .declareFinal('data', type: cb.Reference(baseName))
-                    .assign(
-                      cb.InvokeExpression.newOf(
-                        cb.Reference(baseName),
-                        [],
-                        Map.fromEntries(where(FieldFilter.belongsToData)
-                            .entries
-                            .expand((entry) sync* {
-                          final String fieldName = entry.key;
-                          final Field baseField = entry.value.annotation;
-                          if (baseField is PolymorphicField) {
-                            final $ConcreteSymbol pivotSymbol =
-                                baseField.pivotAs as $ConcreteSymbol;
-                            yield MapEntry(
-                              pivotSymbol.name,
-                              expressionOf(pivotSymbol.name),
-                            );
-                          }
-                          yield MapEntry(fieldName, expressionOf(fieldName));
-                        })),
-                        [],
-                        '_',
-                      ),
-                    )
-                    .statement,
-              );
-            }
-            b.statements.add(
-              cb.InvokeExpression.newOf(
-                cb.Reference(name),
-                [],
-                {
-                  if (!base) 'id': expressionOf('id'),
-                  ...Map.fromEntries(where(FieldFilter.belongsToSchema)
-                      .entries
-                      .expand((entry) sync* {
-                    final String fieldName = entry.key;
-                    final String fieldType = entry.value.type;
-
-                    final Field baseField = entry.value.annotation;
-                    if (baseName == null &&
-                        !FieldFilter.belongsToData(baseField)) {
-                      return;
-                    }
-
-                    final cb.Expression? rootExpression =
-                        baseName == null ? null : expressionOf('data');
-
-                    final cb.Expression fieldExpression;
-                    if (rootExpression == null ||
-                        entry.value.annotation is ForeignField) {
-                      fieldExpression = expressionOf(fieldName);
-                    } else {
-                      fieldExpression = rootExpression.property(fieldName);
-                    }
-
-                    if (baseField is PolymorphicField) {
-                      final $ConcreteSymbol pivotSymbol =
-                          baseField.pivotAs as $ConcreteSymbol;
-                      yield MapEntry(
-                        pivotSymbol.name,
-                        rootExpression == null
-                            ? expressionOf(pivotSymbol.name)
-                            : rootExpression.property(pivotSymbol.name),
-                      );
-                      if (baseName == null) {
-                        yield MapEntry(
-                          fieldName,
-                          cb.InvokeExpression.newOf(
-                            cb.Reference(fieldType.substring(1)),
-                            [
-                              expressionOf(pivotSymbol.name),
-                              expressionOf(fieldName),
-                            ],
-                            {},
-                            [],
-                            'fromType',
-                          ),
-                        );
-                      } else {
-                        yield MapEntry(fieldName, fieldExpression);
-                      }
-                    } else {
-                      yield MapEntry(fieldName, fieldExpression);
-                    }
-                  }))
-                },
-              ).returned.statement,
-            );
-          });
-        }));
-      }
-      // Default constructor
-      b.constructors.add(cb.Constructor((b) {
-        b.constant = true;
-        if (!base) {
-          b.optionalParameters.add(cb.Parameter((b) {
-            b.required = true;
-            b.named = true;
-            b.toThis = true;
-            b.name = 'id';
-          }));
-        }
-        b.optionalParameters.addAll(entries.expand((entry) sync* {
-          final String fieldName = entry.key;
-          final Field baseField = entry.value.annotation;
-          if (!FieldFilter.belongsToSchema(baseField)) return;
-          if (baseName == null && !FieldFilter.belongsToData(baseField)) return;
-
-          if (baseName != null && baseField is PolymorphicField) {
-            final $ConcreteSymbol pivotSymbol =
-                baseField.pivotAs as $ConcreteSymbol;
-            yield cb.Parameter((b) {
-              b.required = true;
-              b.named = true;
-              b.toSuper = true;
-              b.name = pivotSymbol.name;
-            });
-          }
-          yield cb.Parameter((b) {
-            b.required = true;
-            b.named = true;
-            final bool toThis = base || baseField is ForeignField;
-            b.toThis = toThis;
-            b.toSuper = !toThis;
-            b.name = fieldName;
-          });
-        }));
-        if (baseName == null) {
-          b.optionalParameters.addAll(polymorphicFields.map((field) {
-            final $ConcreteSymbol pivotSymbol =
-                field.pivotAs as $ConcreteSymbol;
-            return cb.Parameter((b) {
-              b.required = true;
-              b.named = true;
-              b.toThis = true;
-              b.name = pivotSymbol.name;
-            });
-          }));
-        }
-      }));
-      if (baseName != null) b.methods.addAll(queryGetters);
-      b.methods.add(cb.Method((b) {
-        if (baseName != null) {
-          b.annotations.add(expressionOf('override'));
-        }
-        b.returns = cb.TypeReference((b) {
-          b.symbol = 'Map';
-          b.types.add(cb.Reference('String'));
-          b.types.add(cb.Reference('Object?'));
-        });
-        b.name = 'toJson';
-
-        final bool lambda = base;
-        b.lambda = lambda;
-
-        final cb.Code body;
-        if (serializable) {
-          final Map<String, cb.Expression>? queryObject;
-          if (lambda) {
-            queryObject = null;
-          } else {
-            queryObject = {};
-            final Map<String, Map<String, Object>> queries = {};
-            for (MapEntry<String, FieldOrmNode> entry
-                in where(FieldFilter.isA<QueryField>).entries) {
-              final String? name = (entry.value.annotation as QueryField).name;
-              if (name == null) continue;
-              final List<String> segments = name.split('/');
-              final cb.Expression child = expressionOf(entry.key);
-              if (segments.length == 1) {
-                queryObject[name] = child;
-              } else {
-                queries.putIfAbsent(segments[0], () => {})[segments[1]] = child;
-              }
-            }
-            if (queries.isNotEmpty) {
-              for (MapEntry<String, Map<String, Object>> entry
-                  in queries.entries) {
-                queryObject[entry.key] = cb.literalMap(entry.value);
-              }
-            }
-          }
-
-          final cb.Expression baseExpression = cb.InvokeExpression.newOf(
-            cb.Reference('_\$${name}ToJson'),
-            [expressionOf('this')],
-          );
-          if (queryObject == null) {
-            body = cb.ToCodeExpression(baseExpression);
-          } else {
-            body = cb
-                .literalMap({
-                  cb.literalSpread(): baseExpression
-                      .cascade('remove')
-                      .call([cb.literalString('_id')]),
-                  ...queryObject,
-                })
-                .returned
-                .statement;
-          }
-        } else {
-          body = cb.ToCodeExpression(cb.literalConstMap({}));
-        }
-        b.body = body;
-      }));
-    });
+  cb.Reference referenceBy(
+    ClassOrmNode<Object>? Function($Type) accessor,
+  ) {
+    final derivedClassNode = accessor(originalType);
+    final String derivedTypeName = switch (derivedClassNode) {
+      DataOrmNode() => originalType.name!.substring(1),
+      _ => '${originalType.name!.substring(1)}Data',
+    };
+    if (declaredTypeLabel.startsWith('List<')) {
+      return cb.TypeReference((b) {
+        b.symbol = 'List';
+        b.types.add(cb.Reference(derivedTypeName));
+      });
+    }
+    if (declaredTypeLabel.endsWith('?')) {
+      return cb.Reference('$derivedTypeName?');
+    }
+    return cb.Reference(derivedTypeName);
   }
+}
 
+extension on Spec {
+  /// Converts a template type into its respective result type as a
+  /// [cb.Reference], according to the rules below.
+  ///
+  /// ## Definitions
+  ///
+  /// The **argument type** should correspond to a class annotated with a
+  /// [Model], [Data] or [PolymorphicData].
+  ///
+  /// The **derived type** is calculated from the _argument_ type. For example,
+  /// if the argument type is `_User` and it's annotated with
+  /// - [Model], the derived type is `UserData` ([ModelNaming.dataName])
+  /// - [Data], the derived type is `User` ([DataNaming.modelName])
+  /// - [PolymorphicData], the derived type is `User`
+  ///   (PolymorphicDataNaming.modelName])
+  ///
+  /// The **template type** tells the generator to apply a transformation to the
+  /// _derived_ type. It can be
+  /// - an `Object`, which tells the generator to keep the derived type
+  ///   untouched
+  /// - an `Object?`, which tells the generator to make the derived type
+  ///   nullable
+  /// - a `List<dynamic>`, which tells the generator to wrap the derived type
+  ///   into a list
+  ///
+  /// Finally, the **result type** is the transformation declared by the
+  /// _template_ type applied to the _derived_ type.
+  ///
+  /// In practice, if a user writes:
+  ///
+  /// ```dart
+  /// @Model(name: 'tbl_students', as: #students)
+  /// abstract class _Student {}
+  ///
+  /// @Data(name: 'schools')
+  /// abstract class _School {
+  ///   @ModelField(name: 'col_students', referTo: _Student)
+  ///   List get students;
+  /// }
+  /// ```
+  ///
+  /// in the context of the `students` getter on the `_School` schema:
+  ///
+  /// - the argument type is `_Student`
+  /// - the derived type is `Student`
+  /// - the template type is `List<dynamic>`
+  /// - the result type is `List<Student>`
+  ///
+  /// The [field] argument here would contain the [ModelField] object, while the
+  /// [declaredTypeLabel] would contain the.
+  SpecTypeResolution resolveTypeFromField(
+    Field field,
+    String declaredTypeLabel,
+  ) {
+    switch (field) {
+      case PolymorphicField():
+        return DirectSpecTypeResolution(
+          declaredTypeLabel: declaredTypeLabel.substring(1),
+        );
+      case ModelField():
+        return IndirectSpecTypeResolution(
+          declaredTypeLabel: declaredTypeLabel,
+          originalType: field.referTo as $Type,
+        );
+      default:
+        return DirectSpecTypeResolution(
+          declaredTypeLabel: declaredTypeLabel,
+        );
+    }
+  }
+}
+
+extension _BaseWriting on Map<String, FieldOrmNode> {
   Iterable<cb.Method> get queryGetters sync* {
     for (MapEntry<String, FieldOrmNode> entry
-        in where(FieldFilter.isA<QueryField>).entries) {
+        in where((field) => field.isA<QueryField>()).entries) {
       final QueryField field = entry.value.annotation as QueryField;
       if (field.referTo.isEmpty) continue;
 
@@ -1121,7 +1202,7 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
               }
 
               final FieldOrmNode? referredField = this[symbolName] ??
-                  where(FieldFilter.isA<PolymorphicField>)
+                  where((field) => field.isA<PolymorphicField>())
                       .values
                       .firstOrNullWhere((node) {
                     final PolymorphicField field =

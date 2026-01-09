@@ -31,8 +31,8 @@ class DrawingData {
 
   const DrawingData({
     required this.color,
-    required this.shape,
     required this.type,
+    required this.shape,
   });
 
   @JsonKey(

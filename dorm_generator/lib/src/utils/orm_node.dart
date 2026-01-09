@@ -16,6 +16,8 @@
 
 import 'package:dorm_annotations/dorm_annotations.dart';
 
+import 'custom_types.dart';
+
 abstract class OrmNode<T> {
   final T annotation;
 
@@ -27,12 +29,30 @@ abstract class ClassOrmNode<T> extends OrmNode<T> {
 }
 
 class FieldedOrmNode<T> extends ClassOrmNode<ClassOrmNode<T>> {
-  final Map<String, FieldOrmNode> fields;
+  final Map<String, FieldOrmNode> _fields;
 
   const FieldedOrmNode({
     required super.annotation,
-    required this.fields,
-  });
+    required Map<String, FieldOrmNode> fields,
+  }) : _fields = fields;
+
+  Map<String, FieldOrmNode> get fields =>
+      Map.fromEntries(_fields.entries.expand((entry) sync* {
+        final Field field = entry.value.annotation;
+        if (field is PolymorphicField) {
+          final $ConcreteSymbol pivotSymbol = field.pivotAs as $ConcreteSymbol;
+          final String pivotKey = field.pivotName;
+          yield MapEntry(
+            pivotSymbol.name,
+            FieldOrmNode(
+              annotation: Field(name: pivotKey),
+              required: true,
+              type: '${entry.value.type.substring(1)}Type',
+            ),
+          );
+        }
+        yield entry;
+      }));
 }
 
 class DataOrmNode extends ClassOrmNode<Data> {
