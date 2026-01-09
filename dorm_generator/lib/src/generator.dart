@@ -649,7 +649,21 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
           });
         }));
       }));
-      b.methods.addAll(fields.queryGetters);
+      final Iterable<cb.Method> queryGetters = fields.queryGetters;
+      b.methods.addAll(queryGetters);
+      final List<String> privateQueryGettersNames = queryGetters
+          .mapNotNull((method) => method.name)
+          .where((methodName) => methodName.startsWith('_'))
+          .toList();
+      if (privateQueryGettersNames.isNotEmpty) {
+        b.methods.add(cb.Method.returnsVoid((b) {
+          b.type = cb.MethodType.getter;
+          b.name = '\$dorm\$privateFields';
+          b.lambda = true;
+          b.body =
+              cb.literalList(privateQueryGettersNames.map(expressionOf)).code;
+        }));
+      }
     });
   }
 

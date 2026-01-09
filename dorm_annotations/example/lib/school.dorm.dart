@@ -351,6 +351,8 @@ class _$Teacher implements _Teacher {
 
   @override
   String get _q0 => [ssn ?? ''].join('_');
+
+  void get $dorm$privateFields => [_q0];
 }
 
 @JsonSerializable(
