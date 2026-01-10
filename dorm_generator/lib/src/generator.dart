@@ -1385,52 +1385,55 @@ class OrmGenerator extends Generator {
         );
       }).forEach((arg) => arg.accept(b));
 
-      b.body.add(cb.Class((b) {
-        b.name = 'Dorm';
-        b.fields.add(cb.Field((b) {
-          b.modifier = cb.FieldModifier.final$;
-          b.type = cb.Reference('BaseEngine', '$_dormUrl');
-          b.name = '_engine';
-        }));
-        b.constructors.add(cb.Constructor((b) {
-          b.constant = true;
-          b.requiredParameters.add(cb.Parameter((b) {
-            b.toThis = true;
+      final List<ModelNaming> modelsNamings = [
+        for (MapEntry<String, FieldedOrmNode<Object>> entry in nodes.entries)
+          if (entry.value.annotation case ModelOrmNode node)
+            ModelNaming(name: entry.key, node: node),
+      ];
+      if (modelsNamings.isNotEmpty) {
+        b.body.add(cb.Class((b) {
+          b.name = 'Dorm';
+          b.fields.add(cb.Field((b) {
+            b.modifier = cb.FieldModifier.final$;
+            b.type = cb.Reference('BaseEngine', '$_dormUrl');
             b.name = '_engine';
           }));
-        }));
-        b.methods.addAll(nodes.entries.mapNotNull((entry) {
-          final ClassOrmNode<Object> node = entry.value.annotation;
-          if (node is! ModelOrmNode) return null;
-
-          final ModelNaming naming = ModelNaming(name: entry.key, node: node);
-          return cb.Method((b) {
-            b.returns = cb.TypeReference((b) {
-              b.symbol = 'DatabaseEntity';
-              b.url = '$_dormUrl';
-              b.types.add(cb.Reference(naming.dataName));
-              b.types.add(cb.Reference(naming.modelName));
+          b.constructors.add(cb.Constructor((b) {
+            b.constant = true;
+            b.requiredParameters.add(cb.Parameter((b) {
+              b.toThis = true;
+              b.name = '_engine';
+            }));
+          }));
+          b.methods.addAll(modelsNamings.map((naming) {
+            return cb.Method((b) {
+              b.returns = cb.TypeReference((b) {
+                b.symbol = 'DatabaseEntity';
+                b.url = '$_dormUrl';
+                b.types.add(cb.Reference(naming.dataName));
+                b.types.add(cb.Reference(naming.modelName));
+              });
+              b.type = cb.MethodType.getter;
+              b.lambda = true;
+              b.name = naming.repositoryName;
+              b.body = cb.ToCodeExpression(
+                cb.InvokeExpression.newOf(
+                  cb.Reference('DatabaseEntity', '$_dormUrl'),
+                  [
+                    cb.InvokeExpression.constOf(
+                      cb.Reference(naming.entityName),
+                      [],
+                    ),
+                  ],
+                  {
+                    'engine': expressionOf('_engine'),
+                  },
+                ),
+              );
             });
-            b.type = cb.MethodType.getter;
-            b.lambda = true;
-            b.name = naming.repositoryName;
-            b.body = cb.ToCodeExpression(
-              cb.InvokeExpression.newOf(
-                cb.Reference('DatabaseEntity', '$_dormUrl'),
-                [
-                  cb.InvokeExpression.constOf(
-                    cb.Reference(naming.entityName),
-                    [],
-                  ),
-                ],
-                {
-                  'engine': expressionOf('_engine'),
-                },
-              ),
-            );
-          });
+          }));
         }));
-      }));
+      }
     });
 
     final cb.DartEmitter emitter = cb.DartEmitter(useNullSafetySyntax: true);
