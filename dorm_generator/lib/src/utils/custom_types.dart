@@ -31,9 +31,9 @@ extension AdditionalReads on ConstantReader {
     final DartObject obj = objectValue;
     final ExecutableElement element = obj.toFunctionValue()!;
 
-    final String name = element.name;
+    final String name = element.name!;
     assert(element.isStatic);
-    final String? className = element.enclosingElement.name;
+    final String? className = element.enclosingElement?.name;
     final String prefix = className == null ? '' : '$className.';
     return '$prefix$name';
   }
@@ -47,7 +47,7 @@ class $Type implements Type {
   String? get name {
     if (reader.isNull) return null;
     if (!reader.isType) return null;
-    return reader.typeValue.getDisplayString(withNullability: false);
+    return reader.typeValue.getDisplayString();
   }
 
   @override
@@ -61,8 +61,7 @@ class $ModelFieldTemplate implements ModelFieldTemplate {
 
   String? get name {
     if (reader.isNull) return null;
-    final String? typeLabel =
-        reader.objectValue.type?.getDisplayString(withNullability: true);
+    final String? typeLabel = reader.objectValue.type?.getDisplayString();
     if (typeLabel == null) return null;
     final Match? match =
         RegExp('ModelFieldTemplate<(.*)>').matchAsPrefix(typeLabel);

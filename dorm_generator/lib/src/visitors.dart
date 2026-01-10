@@ -86,11 +86,11 @@ Map<String, FieldedOrmNode<Object>> parseLibrary(LibraryReader reader) {
           final FieldOrmNode? fieldNode =
               fieldParser.parseElement(fieldElement);
           if (fieldNode == null) continue;
-          fields[fieldElement.name] = fieldNode;
+          fields[fieldElement.name!] = fieldNode;
           break;
         }
       }
-      nodes[classElement.name] = FieldedOrmNode(
+      nodes[classElement.name!] = FieldedOrmNode(
         annotation: classNode,
         fields: fields,
       );

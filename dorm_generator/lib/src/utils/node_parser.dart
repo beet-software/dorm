@@ -18,7 +18,6 @@ import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
-import 'package:analyzer/dart/element/visitor.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
 import 'package:source_gen/source_gen.dart';
 
@@ -26,14 +25,14 @@ import 'custom_types.dart';
 import 'orm_node.dart';
 
 abstract class NodeParser<A, T, E extends Element>
-    extends SimpleElementVisitor<T?> {
+    implements ElementVisitor2<T?> {
   const NodeParser();
 
   Type get annotation => A;
 
   T? parseElement(Element element) {
     if (element is! E) return null;
-    final TypeChecker checker = TypeChecker.fromRuntime(annotation);
+    final TypeChecker checker = TypeChecker.typeNamed(annotation);
     final DartObject? object = () {
       final DartObject? fieldAnnotation = checker.firstAnnotationOf(element);
       if (fieldAnnotation != null) return fieldAnnotation;
@@ -54,6 +53,81 @@ abstract class NodeParser<A, T, E extends Element>
   T _convert(A annotation, E element);
 
   Element? _childOf(E element);
+
+  @override
+  T? visitClassElement(ClassElement element) => null;
+
+  @override
+  T? visitConstructorElement(ConstructorElement element) => null;
+
+  @override
+  T? visitEnumElement(EnumElement element) => null;
+
+  @override
+  T? visitExtensionElement(ExtensionElement element) => null;
+
+  @override
+  T? visitExtensionTypeElement(ExtensionTypeElement element) => null;
+
+  @override
+  T? visitFieldElement(FieldElement element) => null;
+
+  @override
+  T? visitFieldFormalParameterElement(FieldFormalParameterElement element) =>
+      null;
+
+  @override
+  T? visitFormalParameterElement(FormalParameterElement element) => null;
+
+  @override
+  T? visitGenericFunctionTypeElement(GenericFunctionTypeElement element) =>
+      null;
+
+  @override
+  T? visitGetterElement(GetterElement element) => null;
+
+  @override
+  T? visitLabelElement(LabelElement element) => null;
+
+  @override
+  T? visitLibraryElement(LibraryElement element) => null;
+
+  @override
+  T? visitLocalFunctionElement(LocalFunctionElement element) => null;
+
+  @override
+  T? visitLocalVariableElement(LocalVariableElement element) => null;
+
+  @override
+  T? visitMethodElement(MethodElement element) => null;
+
+  @override
+  T? visitMixinElement(MixinElement element) => null;
+
+  @override
+  T? visitMultiplyDefinedElement(MultiplyDefinedElement element) => null;
+
+  @override
+  T? visitPrefixElement(PrefixElement element) => null;
+
+  @override
+  T? visitSetterElement(SetterElement element) => null;
+
+  @override
+  T? visitSuperFormalParameterElement(SuperFormalParameterElement element) =>
+      null;
+
+  @override
+  T? visitTopLevelFunctionElement(TopLevelFunctionElement element) => null;
+
+  @override
+  T? visitTopLevelVariableElement(TopLevelVariableElement element) => null;
+
+  @override
+  T? visitTypeAliasElement(TypeAliasElement element) => null;
+
+  @override
+  T? visitTypeParameterElement(TypeParameterElement element) => null;
 }
 
 abstract class ClassNodeParser<A>
@@ -85,7 +159,7 @@ abstract class FieldNodeParser<A extends Field>
   FieldOrmNode _convert(Field annotation, FieldElement element) {
     return FieldOrmNode(
       annotation: annotation,
-      type: element.type.getDisplayString(withNullability: true),
+      type: element.type.getDisplayString(),
       required: element.type.nullabilitySuffix == NullabilitySuffix.none,
     );
   }
@@ -108,8 +182,7 @@ class ModelParser extends ClassNodeParser<Model> {
 
   UidType? _decodeUidType(ConstantReader reader) {
     if (reader.isNull) return null;
-    final String? uidTypeName =
-        reader.objectValue.type?.getDisplayString(withNullability: false);
+    final String? uidTypeName = reader.objectValue.type?.getDisplayString();
     if (uidTypeName == null) return null;
 
     switch (uidTypeName) {
@@ -158,7 +231,7 @@ class PolymorphicDataParser extends ClassNodeParser<PolymorphicData> {
     } else {
       suffix = supertypes
           .where((type) => !type.isDartCoreObject)
-          .map((type) => type.getDisplayString(withNullability: false))
+          .map((type) => type.getDisplayString())
           .join(', ');
     }
     throw StateError(
@@ -194,7 +267,7 @@ class PolymorphicDataParser extends ClassNodeParser<PolymorphicData> {
     return PolymorphicDataOrmNode(
       annotation: annotation,
       tag: PolymorphicDataTag(
-        value: supertypeType.getDisplayString(withNullability: false),
+        value: supertypeType.getDisplayString(),
         isSealed: isSealed,
       ),
     );

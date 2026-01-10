@@ -1269,7 +1269,8 @@ class OrmGenerator extends Generator {
 
   @override
   String? generate(LibraryReader library, BuildStep buildStep) {
-    final Set<Uri> partUris = library.element.parts
+    final Set<Uri> partUris = library.element.fragments
+        .expand((fragment) => fragment.partIncludes)
         .map((element) => element.uri)
         .whereType<DirectiveUriWithSource>()
         .map((directive) => directive.relativeUri)
@@ -1439,6 +1440,8 @@ class OrmGenerator extends Generator {
     });
 
     final cb.DartEmitter emitter = cb.DartEmitter(useNullSafetySyntax: true);
-    return DartFormatter().format(spec.accept(emitter).toString());
+    return DartFormatter(
+      languageVersion: library.element.languageVersion.effective,
+    ).format(spec.accept(emitter).toString());
   }
 }
