@@ -62,7 +62,7 @@ class $ModelFieldTemplate implements ModelFieldTemplate {
   String? get name {
     if (reader.isNull) return null;
     final String? typeLabel =
-        reader.objectValue.type?.getDisplayString(withNullability: false);
+        reader.objectValue.type?.getDisplayString(withNullability: true);
     if (typeLabel == null) return null;
     final Match? match =
         RegExp('ModelFieldTemplate<(.*)>').matchAsPrefix(typeLabel);

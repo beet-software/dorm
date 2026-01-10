@@ -1114,16 +1114,9 @@ class IndirectSpecTypeResolution extends SpecTypeResolution {
       DataOrmNode() => originalType.name!.substring(1),
       _ => '${originalType.name!.substring(1)}Data',
     };
-    if (declaredTypeLabel.startsWith('List<')) {
-      return cb.TypeReference((b) {
-        b.symbol = 'List';
-        b.types.add(cb.Reference(derivedTypeName));
-      });
-    }
-    if (declaredTypeLabel.endsWith('?')) {
-      return cb.Reference('$derivedTypeName?');
-    }
-    return cb.Reference(derivedTypeName);
+    return cb.Reference(
+      declaredTypeLabel.replaceAll('$ModelFieldType', derivedTypeName),
+    );
   }
 }
 
@@ -1187,9 +1180,8 @@ extension on Spec {
           declaredTypeLabel: declaredTypeLabel.substring(1),
         );
       case ModelField():
-        print((field.template as $ModelFieldTemplate).name!);
         return IndirectSpecTypeResolution(
-          declaredTypeLabel: declaredTypeLabel,
+          declaredTypeLabel: (field.template as $ModelFieldTemplate).name!,
           originalType: field.referTo as $Type,
         );
       default:
