@@ -51,7 +51,27 @@ class $Type implements Type {
   }
 
   @override
-  String toString() => '\$Type($name);';
+  String toString() => '\$Type($name)';
+}
+
+class $ModelFieldTemplate implements ModelFieldTemplate {
+  final ConstantReader reader;
+
+  const $ModelFieldTemplate({required this.reader});
+
+  String? get name {
+    if (reader.isNull) return null;
+    final String? typeLabel =
+        reader.objectValue.type?.getDisplayString(withNullability: true);
+    if (typeLabel == null) return null;
+    final Match? match =
+        RegExp('ModelFieldTemplate<(.*)>').matchAsPrefix(typeLabel);
+    if (match == null) return null;
+    return match.group(1);
+  }
+
+  @override
+  String toString() => '\$ModelFieldTemplate($name)';
 }
 
 class $Symbol implements Symbol {
