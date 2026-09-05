@@ -31,6 +31,9 @@ class Model {
   /// Name of the table in the underlying database.
   final String name;
 
+  /// Type of the model's identifier.
+  final Type idType;
+
   /// Name for the Dart repository accessor of this model.
   final Symbol? as;
 
@@ -40,6 +43,7 @@ class Model {
   /// Creates a [Model] by its attributes.
   const Model({
     required this.name,
+    this.idType = String,
     this.as,
     this.uidType = const UidType.simple(),
   });
