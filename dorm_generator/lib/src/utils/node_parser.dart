@@ -203,6 +203,7 @@ class ModelParser extends ClassNodeParser<Model> {
   Model _parse(ConstantReader reader) {
     return Model(
       name: reader.read('name').stringValue,
+      idType: $Type(reader: reader.read('idType')),
       as: $Symbol(reader: reader.read('as')),
       uidType: _decodeUidType(reader.read('uidType')) ?? UidType.simple(),
     );

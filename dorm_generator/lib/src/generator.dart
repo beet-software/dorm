@@ -87,6 +87,13 @@ class ModelNaming extends Naming<ModelOrmNode> {
 
   /// UserProperties
   String get extensionName => '${modelName}Properties';
+
+  cb.Reference get idReference {
+    final $Type type = node.annotation.idType as $Type;
+    return cb.Reference(type.name ?? 'String');
+  }
+
+  String get idTypeName => (node.annotation.idType as $Type).name ?? 'String';
 }
 
 class PolymorphicDataNaming extends Naming<PolymorphicDataOrmNode> {
@@ -183,7 +190,7 @@ abstract class FieldedArgs<A, N> extends Args<A, FieldOrmNode, N> {
               ));
             }
             b.modifier = cb.FieldModifier.final$;
-            b.type = cb.Reference('String');
+            b.type = spec.primaryKeyType ?? cb.Reference('String');
             b.name = 'id';
           }),
         ...fields.entries.expand((entry) sync* {
@@ -261,7 +268,7 @@ abstract class FieldedArgs<A, N> extends Args<A, FieldOrmNode, N> {
             b.name = 'fromJson';
             if (spec.includesPrimaryKey) {
               b.requiredParameters.add(cb.Parameter((b) {
-                b.type = cb.Reference('String');
+                b.type = spec.primaryKeyType ?? cb.Reference('String');
                 b.name = 'id';
               }));
             }
@@ -289,13 +296,15 @@ abstract class FieldedArgs<A, N> extends Args<A, FieldOrmNode, N> {
               b.optionalParameters.add(cb.Parameter((b) {
                 b.required = true;
                 b.named = true;
-                b.type = cb.Reference('String');
+                b.type = spec.primaryKeyType ?? cb.Reference('String');
                 b.name = 'id';
               }));
             }
             b.optionalParameters.addAll(fields
                 .where((field) =>
-                    spec.shouldDeclareField(field) || extendsReference != null)
+                    field.isConcrete &&
+                    (spec.shouldDeclareField(field) ||
+                        extendsReference != null))
                 .entries
                 .expand((entry) sync* {
               final String fieldName = entry.key;
@@ -567,8 +576,7 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
   cb.Expression _uidTypeExpressionOf(UidType value) {
     return value.when(
       caseSimple: () => expressionOf('id'),
-      caseComposite: () =>
-          expressionOf('dependency').property('key').call([expressionOf('id')]),
+      caseComposite: () => _compositeIdExpression,
       caseSameAs: (type) {
         type as $Type;
         for (MapEntry<String, FieldOrmNode> entry
@@ -596,11 +604,33 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
           ),
         ]).property('when').call([], {
           'caseSimple': expressionOf('() => id'),
-          'caseComposite': expressionOf('() => dependency.key(id)'),
-          'caseValue': expressionOf('(id) => id'),
+          'caseComposite': expressionOf('() => $_compositeIdCode'),
+          'caseValue': expressionOf('(value) => value as ${naming.idTypeName}'),
         });
       },
     );
+  }
+
+  cb.Expression get _compositeIdExpression {
+    final List<cb.Expression> ids = [
+      ...fields
+          .where((field) => field.isForeign)
+          .keys
+          .map((name) => expressionOf('dependency').property(name)),
+      expressionOf('id'),
+    ];
+    return cb.literalList(ids).property('join').call([cb.literalString('&')]);
+  }
+
+  String get _compositeIdCode {
+    final List<String> ids = [
+      ...fields
+          .where((field) => field.isForeign)
+          .keys
+          .map((name) => 'dependency.$name'),
+      'id',
+    ];
+    return '[${ids.join(', ')}].join(\'&\')';
   }
 
   cb.Spec get _dummyClass {
@@ -710,9 +740,6 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
               cb.literalList(
                   fields.where((field) => field.isForeign).entries.map((entry) {
                 cb.Expression expression = expressionOf(entry.key);
-                if (!entry.value.required) {
-                  expression = expression.ifNullThen(cb.literalString(''));
-                }
                 return expression;
               })),
             ]),
@@ -730,6 +757,7 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
         b.url = '$_dormUrl';
         b.types.add(cb.Reference(naming.dataName));
         b.types.add(cb.Reference(naming.modelName));
+        b.types.add(naming.idReference);
       }));
       b.constructors.add(cb.Constructor((b) {
         b.constant = true;
@@ -750,7 +778,7 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
           b.name = 'dependency';
         }));
         b.requiredParameters.add(cb.Parameter((b) {
-          b.type = cb.Reference('String');
+          b.type = naming.idReference;
           b.name = 'id';
         }));
         b.requiredParameters.add(cb.Parameter((b) {
@@ -814,7 +842,7 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
         b.returns = cb.Reference(naming.modelName);
         b.name = 'fromJson';
         b.requiredParameters.add(cb.Parameter((b) {
-          b.type = cb.Reference('String');
+          b.type = naming.idReference;
           b.name = 'id';
         }));
         b.requiredParameters.add(cb.Parameter((b) {
@@ -832,7 +860,7 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
       }));
       b.methods.add(cb.Method((b) {
         b.annotations.add(expressionOf('override'));
-        b.returns = cb.Reference('String');
+        b.returns = naming.idReference;
         b.name = 'identify';
         b.requiredParameters.add(cb.Parameter((b) {
           b.type = cb.Reference(naming.modelName);
@@ -929,6 +957,7 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
       name: naming.modelName,
       spec: Spec(
         includesPrimaryKey: true,
+        primaryKeyType: naming.idReference,
         supportsSerialization: true,
         extendsReference: cb.Reference(naming.dataName),
         implementsReferences: [cb.Reference(naming.schemaName)],
@@ -1063,6 +1092,7 @@ class PolymorphicModelArgs extends FieldedArgs<void, PolymorphicDataNaming> {
 
 class Spec {
   final bool includesPrimaryKey;
+  final cb.Reference? primaryKeyType;
   final bool supportsSerialization;
   final cb.Reference? extendsReference;
   final List<cb.Reference> implementsReferences;
@@ -1073,6 +1103,7 @@ class Spec {
 
   const Spec({
     required this.includesPrimaryKey,
+    this.primaryKeyType,
     required this.supportsSerialization,
     required this.extendsReference,
     required this.implementsReferences,
@@ -1415,6 +1446,7 @@ class OrmGenerator extends Generator {
                 b.url = '$_dormUrl';
                 b.types.add(cb.Reference(naming.dataName));
                 b.types.add(cb.Reference(naming.modelName));
+                b.types.add(naming.idReference);
               });
               b.type = cb.MethodType.getter;
               b.lambda = true;

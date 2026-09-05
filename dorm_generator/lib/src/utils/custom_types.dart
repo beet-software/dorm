@@ -131,7 +131,7 @@ class $CustomUidValue implements CustomUidValue {
   T when<T>({
     required T Function() caseSimple,
     required T Function() caseComposite,
-    required T Function(String id) caseValue,
+    required T Function(Object id) caseValue,
   }) {
     throw UnimplementedError();
   }
