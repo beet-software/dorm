@@ -127,13 +127,13 @@ abstract class CustomUidValue {
   const factory CustomUidValue.composite() = _CompositeCustomUidValue;
 
   /// Evaluates to a ID equal to [id].
-  const factory CustomUidValue.value(String id) = _ValueCustomUidValue;
+  const factory CustomUidValue.value(Object id) = _ValueCustomUidValue;
 
   /// Evaluates a value based on the runtime type of this class.
   T when<T>({
     required T Function() caseSimple,
     required T Function() caseComposite,
-    required T Function(String id) caseValue,
+    required T Function(Object id) caseValue,
   });
 }
 
@@ -144,7 +144,7 @@ class _SimpleCustomUidValue implements CustomUidValue {
   T when<T>({
     required T Function() caseSimple,
     required T Function() caseComposite,
-    required T Function(String id) caseValue,
+    required T Function(Object id) caseValue,
   }) {
     return caseSimple();
   }
@@ -157,14 +157,14 @@ class _CompositeCustomUidValue implements CustomUidValue {
   T when<T>({
     required T Function() caseSimple,
     required T Function() caseComposite,
-    required T Function(String id) caseValue,
+    required T Function(Object id) caseValue,
   }) {
     return caseComposite();
   }
 }
 
 class _ValueCustomUidValue implements CustomUidValue {
-  final String id;
+  final Object id;
 
   const _ValueCustomUidValue(this.id);
 
@@ -172,7 +172,7 @@ class _ValueCustomUidValue implements CustomUidValue {
   T when<T>({
     required T Function() caseSimple,
     required T Function() caseComposite,
-    required T Function(String id) caseValue,
+    required T Function(Object id) caseValue,
   }) {
     return caseValue(id);
   }
