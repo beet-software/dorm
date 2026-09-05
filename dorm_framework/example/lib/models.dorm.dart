@@ -1,4 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format width=80
 
 part of 'models.dart';
 
@@ -10,7 +11,7 @@ part of 'models.dart';
   anyMap: true,
   explicitToJson: true,
 )
-class Profile {
+class Profile implements _Profile {
   factory Profile.fromJson(Map json) => _$ProfileFromJson(json);
 
   const Profile({
@@ -19,6 +20,7 @@ class Profile {
     required this.bio,
   });
 
+  @override
   @JsonKey(
     name: 'name',
     required: true,
@@ -26,6 +28,7 @@ class Profile {
   )
   final String name;
 
+  @override
   @JsonKey(
     name: 'birth-date',
     required: true,
@@ -33,6 +36,7 @@ class Profile {
   )
   final DateTime birthDate;
 
+  @override
   @JsonKey(name: 'bio')
   final String? bio;
 
@@ -106,6 +110,7 @@ class User extends UserData implements _User {
 
   @override
   String get _qUsername => [$normalizeText(username)].join('_');
+
   @override
   Map<String, Object?> toJson() {
     return {
@@ -119,7 +124,7 @@ class UserDependency extends Dependency<UserData> {
   const UserDependency() : super.strong();
 }
 
-class UserEntity implements Entity<UserData, User> {
+class UserEntity implements Entity<UserData, User, String> {
   const UserEntity();
 
   @override
@@ -145,6 +150,7 @@ class UserEntity implements Entity<UserData, User> {
     UserData data,
   ) =>
       model.copyWith(data);
+
   @override
   User fromJson(
     String id,
@@ -154,8 +160,10 @@ class UserEntity implements Entity<UserData, User> {
         id,
         json,
       );
+
   @override
   String identify(User model) => model.id;
+
   @override
   Map<String, Object?> toJson(UserData data) => data.toJson();
 }
@@ -238,6 +246,7 @@ class Product extends ProductData implements _Product {
 
   @override
   String get _qName => [$normalizeText(name)].join('_');
+
   @override
   Map<String, Object?> toJson() {
     return {
@@ -251,7 +260,7 @@ class ProductDependency extends Dependency<ProductData> {
   const ProductDependency() : super.strong();
 }
 
-class ProductEntity implements Entity<ProductData, Product> {
+class ProductEntity implements Entity<ProductData, Product, String> {
   const ProductEntity();
 
   @override
@@ -277,6 +286,7 @@ class ProductEntity implements Entity<ProductData, Product> {
     ProductData data,
   ) =>
       model.copyWith(data);
+
   @override
   Product fromJson(
     String id,
@@ -286,8 +296,10 @@ class ProductEntity implements Entity<ProductData, Product> {
         id,
         json,
       );
+
   @override
   String identify(Product model) => model.id;
+
   @override
   Map<String, Object?> toJson(ProductData data) => data.toJson();
 }
@@ -369,7 +381,7 @@ class CartDependency extends Dependency<CartData> {
   final String userId;
 }
 
-class CartEntity implements Entity<CartData, Cart> {
+class CartEntity implements Entity<CartData, Cart, String> {
   const CartEntity();
 
   @override
@@ -394,6 +406,7 @@ class CartEntity implements Entity<CartData, Cart> {
     CartData data,
   ) =>
       model.copyWith(data);
+
   @override
   Cart fromJson(
     String id,
@@ -403,8 +416,10 @@ class CartEntity implements Entity<CartData, Cart> {
         id,
         json,
       );
+
   @override
   String identify(Cart model) => model.id;
+
   @override
   Map<String, Object?> toJson(CartData data) => data.toJson();
 }
@@ -502,7 +517,7 @@ class CartItemDependency extends Dependency<CartItemData> {
   final String cartId;
 }
 
-class CartItemEntity implements Entity<CartItemData, CartItem> {
+class CartItemEntity implements Entity<CartItemData, CartItem, String> {
   const CartItemEntity();
 
   @override
@@ -528,6 +543,7 @@ class CartItemEntity implements Entity<CartItemData, CartItem> {
     CartItemData data,
   ) =>
       model.copyWith(data);
+
   @override
   CartItem fromJson(
     String id,
@@ -537,8 +553,10 @@ class CartItemEntity implements Entity<CartItemData, CartItem> {
         id,
         json,
       );
+
   @override
   String identify(CartItem model) => model.id;
+
   @override
   Map<String, Object?> toJson(CartItemData data) => data.toJson();
 }
@@ -582,8 +600,8 @@ class ReviewData {
   const ReviewData({
     required this.text,
     required this.timestamp,
-    required this.content,
     required this.type,
+    required this.content,
   });
 
   @JsonKey(
@@ -685,6 +703,7 @@ class Review extends ReviewData implements _Review {
         userId,
         $normalizeEnum(type),
       ].join('_');
+
   @override
   Map<String, Object?> toJson() {
     return {
@@ -700,7 +719,7 @@ class ReviewDependency extends Dependency<ReviewData> {
   final String userId;
 }
 
-class ReviewEntity implements Entity<ReviewData, Review> {
+class ReviewEntity implements Entity<ReviewData, Review, String> {
   const ReviewEntity();
 
   @override
@@ -728,6 +747,7 @@ class ReviewEntity implements Entity<ReviewData, Review> {
     ReviewData data,
   ) =>
       model.copyWith(data);
+
   @override
   Review fromJson(
     String id,
@@ -737,8 +757,10 @@ class ReviewEntity implements Entity<ReviewData, Review> {
         id,
         json,
       );
+
   @override
   String identify(Review model) => model.id;
+
   @override
   Map<String, Object?> toJson(ReviewData data) => data.toJson();
 }
@@ -857,23 +879,28 @@ class Dorm {
 
   final BaseEngine _engine;
 
-  DatabaseEntity<UserData, User> get users => DatabaseEntity(
+  DatabaseEntity<UserData, User, String> get users => DatabaseEntity(
         const UserEntity(),
         engine: _engine,
       );
-  DatabaseEntity<ProductData, Product> get products => DatabaseEntity(
+
+  DatabaseEntity<ProductData, Product, String> get products => DatabaseEntity(
         const ProductEntity(),
         engine: _engine,
       );
-  DatabaseEntity<CartData, Cart> get carts => DatabaseEntity(
+
+  DatabaseEntity<CartData, Cart, String> get carts => DatabaseEntity(
         const CartEntity(),
         engine: _engine,
       );
-  DatabaseEntity<CartItemData, CartItem> get cartItems => DatabaseEntity(
+
+  DatabaseEntity<CartItemData, CartItem, String> get cartItems =>
+      DatabaseEntity(
         const CartItemEntity(),
         engine: _engine,
       );
-  DatabaseEntity<ReviewData, Review> get reviews => DatabaseEntity(
+
+  DatabaseEntity<ReviewData, Review, String> get reviews => DatabaseEntity(
         const ReviewEntity(),
         engine: _engine,
       );
