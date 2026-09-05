@@ -1,4 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format width=80
 
 part of 'models.dart';
 
@@ -61,7 +62,7 @@ class UserDependency extends Dependency<UserData> {
   const UserDependency() : super.strong();
 }
 
-class UserEntity implements Entity<UserData, User> {
+class UserEntity implements Entity<UserData, User, String> {
   const UserEntity();
 
   @override
@@ -117,7 +118,7 @@ class Dorm {
 
   final BaseEngine _engine;
 
-  DatabaseEntity<UserData, User> get users => DatabaseEntity(
+  DatabaseEntity<UserData, User, String> get users => DatabaseEntity(
         const UserEntity(),
         engine: _engine,
       );
