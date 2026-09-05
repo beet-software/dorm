@@ -202,9 +202,23 @@ abstract class FieldedArgs<A, N> extends Args<A, FieldOrmNode, N> {
           if (!spec.shouldDeclareField(field)) return;
 
           final String? key = field.name;
-          final Object? defaultValue = field.defaultValue;
+          final ConstantReader? defaultValueReader =
+              field.defaultValue as ConstantReader?;
           final bool required =
-              defaultValue == null && declaredPropertyInfo.required;
+              (defaultValueReader == null || defaultValueReader.isNull) &&
+                  declaredPropertyInfo.required;
+          final cb.Expression? defaultValueExpression;
+          if (defaultValueReader == null || defaultValueReader.isNull) {
+            defaultValueExpression = null;
+          } else if (defaultValueReader.isLiteral) {
+            defaultValueExpression =
+                cb.literal(defaultValueReader.literalValue);
+          } else {
+            final revivable = defaultValueReader.revive();
+            defaultValueExpression = revivable.accessor.isNotEmpty
+                ? expressionOf(revivable.accessor)
+                : expressionOf('$revivable');
+          }
 
           yield cb.Field((b) {
             b.name = declaredPropertyName;
@@ -220,8 +234,8 @@ abstract class FieldedArgs<A, N> extends Args<A, FieldOrmNode, N> {
                   if (key != null) 'name': cb.literalString(key),
                   if (required) 'required': cb.literalTrue,
                   if (required) 'disallowNullValue': cb.literalTrue,
-                  if (defaultValue != null)
-                    'defaultValue': cb.literal(defaultValue),
+                  if (defaultValueExpression != null)
+                    'defaultValue': defaultValueExpression,
                 },
               ));
             }
@@ -1436,4 +1450,3 @@ class OrmGenerator extends Generator {
     ).format(spec.accept(emitter).toString());
   }
 }
-

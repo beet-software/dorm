@@ -20,10 +20,10 @@ UserData _$UserDataFromJson(Map json) {
 }
 
 Map<String, dynamic> _$UserDataToJson(UserData instance) => <String, dynamic>{
-      'name': instance.name,
-      'active': instance.active,
-      'age': instance.age,
-    };
+  'name': instance.name,
+  'active': instance.active,
+  'age': instance.age,
+};
 
 User _$UserFromJson(Map json) {
   $checkKeys(
@@ -40,8 +40,8 @@ User _$UserFromJson(Map json) {
 }
 
 Map<String, dynamic> _$UserToJson(User instance) => <String, dynamic>{
-      'name': instance.name,
-      'active': instance.active,
-      'age': instance.age,
-      '_id': instance.id,
-    };
+  'name': instance.name,
+  'active': instance.active,
+  'age': instance.age,
+  '_id': instance.id,
+};

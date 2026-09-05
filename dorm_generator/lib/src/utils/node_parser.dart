@@ -189,7 +189,7 @@ class ModelParser extends ClassNodeParser<Model> {
       as: $Symbol(reader: reader.read('as')),
       primaryKeyGenerator: primaryKeyReader.isNull
           ? null
-          : (_, __) => primaryKeyReader.functionName,
+          : (_, __) => primaryKeyReader.revive().accessor,
     );
   }
 
@@ -264,9 +264,15 @@ class FieldParser extends FieldNodeParser<Field> {
 
   @override
   Field _parse(ConstantReader reader) {
+    late final ConstantReader? defaultValueReader;
+    try {
+      defaultValueReader = reader.read('defaultValue');
+    } on FormatException {
+      defaultValueReader = null;
+    }
     return Field(
       name: reader.read('name').stringValue,
-      defaultValue: reader.read('defaultValue').literalValue,
+      defaultValue: defaultValueReader,
     );
   }
 }
@@ -330,6 +336,4 @@ class PolymorphicFieldParser extends FieldNodeParser<PolymorphicField> {
     );
   }
 }
-
-
 

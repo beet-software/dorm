@@ -31,9 +31,9 @@ void main(List<String> args) {
         .firstOrNullWhere((annotation) => annotation.name.name == 'Model')
         ?.arguments
         ?.arguments
-        .whereType<NamedExpression>()
-        .firstOrNullWhere((expression) => expression.name.label.name == 'name')
-        ?.expression
+        .whereType<NamedArgument>()
+        .firstOrNullWhere((expression) => expression.name.lexeme == 'name')
+        ?.argumentExpression
         .ifType<SimpleStringLiteral>()
         ?.value;
 
@@ -43,7 +43,7 @@ void main(List<String> args) {
       ..write(tableName)
       ..writeln(' (');
     buffer.writeln('  id CHAR(36) NOT NULL,');
-    for (ClassMember classMemberElement in classElement.members) {
+    for (ClassMember classMemberElement in classElement.body.members) {
       if (classMemberElement is! MethodDeclaration) continue;
       if (!classMemberElement.isGetter) continue;
 
@@ -51,10 +51,10 @@ void main(List<String> args) {
           .firstOrNullWhere((annotation) => annotation.name.name == 'Field')
           ?.arguments
           ?.arguments
-          .whereType<NamedExpression>()
+          .whereType<NamedArgument>()
           .firstOrNullWhere(
-              (expression) => expression.name.label.name == 'name')
-          ?.expression
+              (expression) => expression.name.lexeme == 'name')
+          ?.argumentExpression
           .ifType<SimpleStringLiteral>()
           ?.value;
       if (columnName == null) continue;

@@ -12,9 +12,9 @@ dependencies:
   mysql_client: ^0.0.27
   dorm_annotations: ^1.0.0-alpha.5
   dartx: ^1.2.0
-  analyzer: ^14.3.0
   uuid: ^4.6.0
 dev_dependencies:
+  analyzer: ^14.3.0
   test: ^1.32.0
   lints: ^5.0.0
   dotenv: ^4.2.0

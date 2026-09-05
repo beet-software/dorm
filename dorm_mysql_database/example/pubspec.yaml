@@ -2,7 +2,7 @@ name: example
 version: 0.1.0
 publish_to: none
 environment:
-  sdk: '>=3.0.5 <4.0.0'
+  sdk: '>=3.8.0 <4.0.0'
 
 dependencies:
   args: ^2.4.2
@@ -14,6 +14,7 @@ dependencies:
     path: ../../dorm_annotations
   dorm_mysql_database:
     path: ../../dorm_mysql_database
+  json_annotation: ^4.12.0
 
 dev_dependencies:
   lints: ^5.0.0
@@ -23,7 +24,7 @@ dev_dependencies:
     path: ../../dorm_generator
 
 dependency_overrides:
-  meta: 1.12.0
+  meta: 1.18.3
   dorm_framework:
     path: ../../dorm_framework
   dorm_annotations:
