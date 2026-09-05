@@ -87,7 +87,7 @@ class UserDependency extends Dependency<UserData> {
   const UserDependency() : super.strong();
 }
 
-class UserEntity implements Entity<UserData, User> {
+class UserEntity implements Entity<UserData, User, String> {
   const UserEntity();
 
   @override
@@ -221,7 +221,7 @@ class PostDependency extends Dependency<PostData> {
   final String userId;
 }
 
-class PostEntity implements Entity<PostData, Post> {
+class PostEntity implements Entity<PostData, Post, String> {
   const PostEntity();
 
   @override
@@ -370,7 +370,7 @@ class MessageDependency extends Dependency<MessageData> {
   final String receiverId;
 }
 
-class MessageEntity implements Entity<MessageData, Message> {
+class MessageEntity implements Entity<MessageData, Message, String> {
   const MessageEntity();
 
   @override
@@ -432,17 +432,17 @@ class Dorm {
 
   final BaseEngine _engine;
 
-  DatabaseEntity<UserData, User> get users => DatabaseEntity(
+  DatabaseEntity<UserData, User, String> get users => DatabaseEntity(
         const UserEntity(),
         engine: _engine,
       );
 
-  DatabaseEntity<PostData, Post> get post => DatabaseEntity(
+  DatabaseEntity<PostData, Post, String> get post => DatabaseEntity(
         const PostEntity(),
         engine: _engine,
       );
 
-  DatabaseEntity<MessageData, Message> get messages => DatabaseEntity(
+  DatabaseEntity<MessageData, Message, String> get messages => DatabaseEntity(
         const MessageEntity(),
         engine: _engine,
       );

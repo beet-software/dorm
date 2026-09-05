@@ -132,7 +132,7 @@ class SchoolDependency extends Dependency<SchoolData> {
   const SchoolDependency() : super.strong();
 }
 
-class SchoolEntity implements Entity<SchoolData, School> {
+class SchoolEntity implements Entity<SchoolData, School, String> {
   const SchoolEntity();
 
   @override
@@ -278,7 +278,7 @@ class StudentDependency extends Dependency<StudentData> {
   final String schoolId;
 }
 
-class StudentEntity implements Entity<StudentData, Student> {
+class StudentEntity implements Entity<StudentData, Student, String> {
   const StudentEntity();
 
   @override
@@ -291,7 +291,10 @@ class StudentEntity implements Entity<StudentData, Student> {
     StudentData data,
   ) {
     return Student(
-      id: dependency.key(id),
+      id: [
+        dependency.schoolId,
+        id,
+      ].join('&'),
       name: data.name,
       hasDisabilities: data.hasDisabilities,
       schoolId: dependency.schoolId,
@@ -428,7 +431,7 @@ class TeacherDependency extends Dependency<TeacherData> {
   const TeacherDependency() : super.strong();
 }
 
-class TeacherEntity implements Entity<TeacherData, Teacher> {
+class TeacherEntity implements Entity<TeacherData, Teacher, String> {
   const TeacherEntity();
 
   @override
@@ -446,8 +449,8 @@ class TeacherEntity implements Entity<TeacherData, Teacher> {
         data,
       )).when(
         caseSimple: () => id,
-        caseComposite: () => dependency.key(id),
-        caseValue: (id) => id,
+        caseComposite: () => [id].join('&'),
+        caseValue: (value) => value as String,
       ),
       name: data.name,
       ssn: data.ssn,
@@ -540,7 +543,7 @@ class HistoryDependency extends Dependency<HistoryData> {
   final String studentId;
 }
 
-class HistoryEntity implements Entity<HistoryData, History> {
+class HistoryEntity implements Entity<HistoryData, History, String> {
   const HistoryEntity();
 
   @override
@@ -653,7 +656,7 @@ class TeachingDependency extends Dependency<TeachingData> {
     required this.schoolId,
   }) : super.weak([
           teacherId,
-          schoolId ?? '',
+          schoolId,
         ]);
 
   final String teacherId;
@@ -661,7 +664,7 @@ class TeachingDependency extends Dependency<TeachingData> {
   final String? schoolId;
 }
 
-class TeachingEntity implements Entity<TeachingData, Teaching> {
+class TeachingEntity implements Entity<TeachingData, Teaching, String> {
   const TeachingEntity();
 
   @override
@@ -810,7 +813,7 @@ class ClassDependency extends Dependency<ClassData> {
   final String studentId;
 }
 
-class ClassEntity implements Entity<ClassData, Class> {
+class ClassEntity implements Entity<ClassData, Class, String> {
   const ClassEntity();
 
   @override
@@ -823,7 +826,11 @@ class ClassEntity implements Entity<ClassData, Class> {
     ClassData data,
   ) {
     return Class(
-      id: dependency.key(id),
+      id: [
+        dependency.teacherId,
+        dependency.studentId,
+        id,
+      ].join('&'),
       patron: data.patron,
       teacherId: dependency.teacherId,
       studentId: dependency.studentId,
@@ -872,32 +879,33 @@ class Dorm {
 
   final BaseEngine _engine;
 
-  DatabaseEntity<SchoolData, School> get schools => DatabaseEntity(
+  DatabaseEntity<SchoolData, School, String> get schools => DatabaseEntity(
         const SchoolEntity(),
         engine: _engine,
       );
 
-  DatabaseEntity<StudentData, Student> get students => DatabaseEntity(
+  DatabaseEntity<StudentData, Student, String> get students => DatabaseEntity(
         const StudentEntity(),
         engine: _engine,
       );
 
-  DatabaseEntity<TeacherData, Teacher> get teachers => DatabaseEntity(
+  DatabaseEntity<TeacherData, Teacher, String> get teachers => DatabaseEntity(
         const TeacherEntity(),
         engine: _engine,
       );
 
-  DatabaseEntity<HistoryData, History> get histories => DatabaseEntity(
+  DatabaseEntity<HistoryData, History, String> get histories => DatabaseEntity(
         const HistoryEntity(),
         engine: _engine,
       );
 
-  DatabaseEntity<TeachingData, Teaching> get teachings => DatabaseEntity(
+  DatabaseEntity<TeachingData, Teaching, String> get teachings =>
+      DatabaseEntity(
         const TeachingEntity(),
         engine: _engine,
       );
 
-  DatabaseEntity<ClassData, Class> get classes => DatabaseEntity(
+  DatabaseEntity<ClassData, Class, String> get classes => DatabaseEntity(
         const ClassEntity(),
         engine: _engine,
       );

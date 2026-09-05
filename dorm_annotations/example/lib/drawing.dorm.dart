@@ -118,7 +118,7 @@ class DrawingDependency extends Dependency<DrawingData> {
   const DrawingDependency() : super.strong();
 }
 
-class DrawingEntity implements Entity<DrawingData, Drawing> {
+class DrawingEntity implements Entity<DrawingData, Drawing, String> {
   const DrawingEntity();
 
   @override
@@ -256,7 +256,7 @@ class Dorm {
 
   final BaseEngine _engine;
 
-  DatabaseEntity<DrawingData, Drawing> get drawings => DatabaseEntity(
+  DatabaseEntity<DrawingData, Drawing, String> get drawings => DatabaseEntity(
         const DrawingEntity(),
         engine: _engine,
       );
