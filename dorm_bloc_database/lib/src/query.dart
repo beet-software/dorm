@@ -24,47 +24,47 @@ import 'package:dorm_framework/dorm_framework.dart';
 typedef TableRow = Map<String, Object?>;
 
 /// Operates on the underlying database table.
-typedef TableOperator = Map<String, TableRow> Function(
-  Map<String, TableRow> table,
+typedef TableOperator<I extends Object> = Map<I, TableRow> Function(
+  Map<I, TableRow> table,
 );
 
 /// Validates a [TableRow].
 typedef RowPredicate = bool Function(TableRow row);
 
 /// An in-memory [BaseQuery] implementation.
-class Query implements BaseQuery<Query> {
-  static Map<String, TableRow> _defaultTableOperator(
-    Map<String, TableRow> rows,
+class Query<I extends Object> implements BaseQuery<Query<I>> {
+  static Map<I, TableRow> _defaultTableOperator<I extends Object>(
+    Map<I, TableRow> rows,
   ) {
     return rows;
   }
 
-  final TableOperator operator;
+  final TableOperator<I> operator;
 
   const Query() : this._(_defaultTableOperator);
 
   const Query._(this.operator);
 
-  Query _where(RowPredicate predicate) {
+  Query<I> _where(RowPredicate predicate) {
     return _operate((rows) {
       return {
-        for (MapEntry<String, TableRow> entry in rows.entries)
+        for (MapEntry<I, TableRow> entry in rows.entries)
           if (predicate(entry.value)) entry.key: entry.value,
       };
     });
   }
 
-  Query _operate(TableOperator operator) {
-    return Query._((data) => operator(this.operator(data)));
+  Query<I> _operate(TableOperator<I> operator) {
+    return Query<I>._((data) => operator(this.operator(data)));
   }
 
   @override
-  Query whereValue(String key, Object? value) {
+  Query<I> whereValue(String key, Object? value) {
     return _where((row) => row[key] == value);
   }
 
   @override
-  Query whereText(String key, String prefix) {
+  Query<I> whereText(String key, String prefix) {
     return _where((row) {
       final Object? value = row[key];
       if (value is! String) return false;
@@ -73,7 +73,7 @@ class Query implements BaseQuery<Query> {
   }
 
   @override
-  Query whereDate(String key, DateTime date, DateFilterUnit unit) {
+  Query<I> whereDate(String key, DateTime date, DateFilterUnit unit) {
     return _where((row) {
       final Object? value = row[key];
       if (value is! DateTime) return false;
@@ -85,7 +85,7 @@ class Query implements BaseQuery<Query> {
   }
 
   @override
-  Query whereRange<T>(String key, FilterRange<T> range) {
+  Query<I> whereRange<T>(String key, FilterRange<T> range) {
     final T? from = range.from;
     final T? to = range.to;
     if (from == null && to == null) return this;
@@ -99,7 +99,7 @@ class Query implements BaseQuery<Query> {
   }
 
   @override
-  Query limit(int count) {
+  Query<I> limit(int count) {
     if (count == 0) return this;
     return _operate((table) {
       return Map.fromEntries(count > 0
@@ -109,7 +109,7 @@ class Query implements BaseQuery<Query> {
   }
 
   @override
-  Query sorted(String key) {
+  Query<I> sorted(String key) {
     return _operate((table) {
       return LinkedHashMap.fromEntries(table.entries.toList()
         ..sort((e0, e1) {

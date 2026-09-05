@@ -23,50 +23,52 @@ import 'package:uuid/uuid.dart';
 import 'query.dart';
 
 class _State {
-  final Map<String, _EntityReference<Object, Object>> references;
+  final Map<String, _EntityReference<Object, Object, Object>> references;
 
   const _State(this.references);
 
-  _EntityReference<Data, Model> access<Data, Model extends Data>(String key) {
-    return references[key] as _EntityReference<Data, Model>;
+  _EntityReference<Data, Model, I>
+      access<Data, Model extends Data, I extends Object>(String key) {
+    return references[key] as _EntityReference<Data, Model, I>;
   }
 }
 
 const Uuid _uuid = Uuid();
 
-class _EntityState<Model> {
-  final Map<String, Model> models;
+class _EntityState<Model, I extends Object> {
+  final Map<I, Model> models;
 
   const _EntityState(this.models);
 }
 
-class _EntityReference<Data, Model extends Data>
-    extends Cubit<_EntityState<Model>> {
-  final Entity<Data, Model> entity;
+class _EntityReference<Data, Model extends Data, I extends Object>
+    extends Cubit<_EntityState<Model, I>> {
+  final Entity<Data, Model, I> entity;
+  final I Function() generateId;
   StreamSubscription<void>? _subscription;
-  late final StreamController<Map<String, Model>> _controller;
+  late final StreamController<Map<I, Model>> _controller;
 
-  _EntityReference(this.entity) : super(const _EntityState({})) {
+  _EntityReference(this.entity, this.generateId) : super(_EntityState({})) {
     _controller = StreamController.broadcast(
       onListen: () => _controller.add(state.models),
     );
     _subscription = stream.map((state) => state.models).listen(_controller.add);
   }
 
-  Stream<Map<String, Model>> get dataStream => _controller.stream;
+  Stream<Map<I, Model>> get dataStream => _controller.stream;
 
-  R _emit<R>(R Function(Map<String, Model> models) action) {
-    final Map<String, Model> models = Map.of(state.models);
+  R _emit<R>(R Function(Map<I, Model> models) action) {
+    final Map<I, Model> models = Map.of(state.models);
     final R result = action(models);
     emit(_EntityState(models));
     return result;
   }
 
-  void pop(String id) {
+  void pop(I id) {
     _emit((models) => models.remove(id));
   }
 
-  void popKeys(Iterable<String> ids) {
+  void popKeys(Iterable<I> ids) {
     _emit((models) => models.removeWhere((id, _) => ids.contains(id)));
   }
 
@@ -82,9 +84,9 @@ class _EntityReference<Data, Model extends Data>
     });
   }
 
-  void popAll(TableOperator operator) {
+  void popAll(TableOperator<I> operator) {
     _emit((models) {
-      final Set<String> keys = operator(
+      final Set<I> keys = operator(
         models.map((key, value) => MapEntry(key, entity.toJson(value))),
       ).keys.toSet();
 
@@ -92,7 +94,7 @@ class _EntityReference<Data, Model extends Data>
     });
   }
 
-  void patch(String id, Model? Function(Model?) update) {
+  void patch(I id, Model? Function(Model?) update) {
     _emit((models) {
       final Model? model = update(models[id]);
       if (model == null) {
@@ -111,7 +113,7 @@ class _EntityReference<Data, Model extends Data>
 
   Model put(Dependency<Data> dependency, Data data) {
     return _emit((models) {
-      final Model model = entity.fromData(dependency, _uuid.v4(), data);
+      final Model model = entity.fromData(dependency, generateId(), data);
       models[entity.identify(model)] = model;
       return model;
     });
@@ -120,7 +122,7 @@ class _EntityReference<Data, Model extends Data>
   List<Model> putAll(Dependency<Data> dependency, List<Data> datum) {
     return _emit((current) {
       final List<Model> models = datum
-          .map((data) => entity.fromData(dependency, _uuid.v4(), data))
+          .map((data) => entity.fromData(dependency, generateId(), data))
           .toList();
 
       current.addAll({
@@ -139,37 +141,46 @@ class _EntityReference<Data, Model extends Data>
 
 /// A [BaseReference] implementation backed by a [Bloc].
 class Reference extends Cubit<_State> implements BaseReference {
-  Reference() : super(const _State({}));
+  final Object Function(String tableName) generateId;
 
-  _EntityReference<Data, Model> _access<Data, Model extends Data>(
-    Entity<Data, Model> entity,
+  Reference({Object Function(String tableName)? generateId})
+      : generateId = generateId ?? ((_) => _uuid.v4()),
+        super(const _State({}));
+
+  _EntityReference<Data, Model, I>
+      _access<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I> entity,
   ) {
-    final Map<String, _EntityReference<Object, Object>> blocs =
+    final Map<String, _EntityReference<Object, Object, Object>> blocs =
         Map.of(state.references);
-    final _EntityReference<Object, Object>? current = blocs[entity.tableName];
-    if (current != null) return current as _EntityReference<Data, Model>;
-    final _EntityReference<Data, Model> bloc = _EntityReference(entity);
-    blocs[entity.tableName] = bloc as _EntityReference<Object, Object>;
+    final _EntityReference<Object, Object, Object>? current =
+        blocs[entity.tableName];
+    if (current != null) return current as _EntityReference<Data, Model, I>;
+    final _EntityReference<Data, Model, I> bloc = _EntityReference(
+      entity,
+      () => generateId(entity.tableName) as I,
+    );
+    blocs[entity.tableName] = bloc as _EntityReference<Object, Object, Object>;
     emit(_State(blocs));
     return bloc;
   }
 
   @override
-  Future<Model?> peek<Data, Model extends Data>(
-    Entity<Data, Model> entity,
-    String id,
+  Future<Model?> peek<Data, Model extends Data, J extends Object>(
+    Entity<Data, Model, J> entity,
+    J id,
   ) async {
-    final _EntityReference<Data, Model> bloc = _access(entity);
+    final _EntityReference<Data, Model, J> bloc = _access(entity);
     return bloc.state.models[id];
   }
 
   @override
-  Future<List<Model>> peekAll<Data, Model extends Data>(
-    Entity<Data, Model> entity,
+  Future<List<Model>> peekAll<Data, Model extends Data, J extends Object>(
+    Entity<Data, Model, J> entity,
     Filter filter,
   ) async {
-    final _EntityReference<Data, Model> bloc = _access(entity);
-    final Query query = filter.accept(const Query());
+    final _EntityReference<Data, Model, J> bloc = _access(entity);
+    final Query<J> query = filter.accept(Query<J>());
     return query
         .operator(bloc.state.models
             .map((key, value) => MapEntry(key, entity.toJson(value))))
@@ -179,57 +190,57 @@ class Reference extends Cubit<_State> implements BaseReference {
   }
 
   @override
-  Future<List<String>> peekAllKeys<Data, Model extends Data>(
-    Entity<Data, Model> entity,
+  Future<List<J>> peekAllKeys<Data, Model extends Data, J extends Object>(
+    Entity<Data, Model, J> entity,
   ) async {
-    final _EntityReference<Data, Model> bloc = _access(entity);
+    final _EntityReference<Data, Model, J> bloc = _access(entity);
     return bloc.state.models.keys.toList();
   }
 
   @override
-  Future<void> pop<Data, Model extends Data>(
-    Entity<Data, Model> entity,
-    String id,
+  Future<void> pop<Data, Model extends Data, J extends Object>(
+    Entity<Data, Model, J> entity,
+    J id,
   ) async {
-    final _EntityReference<Data, Model> bloc = _access(entity);
+    final _EntityReference<Data, Model, J> bloc = _access(entity);
     bloc.pop(id);
   }
 
   @override
-  Future<void> popAll<Data, Model extends Data>(
-    Entity<Data, Model> entity,
+  Future<void> popAll<Data, Model extends Data, J extends Object>(
+    Entity<Data, Model, J> entity,
     Filter filter,
   ) async {
-    final _EntityReference<Data, Model> bloc = _access(entity);
-    final Query query = filter.accept(const Query());
+    final _EntityReference<Data, Model, J> bloc = _access(entity);
+    final Query<J> query = filter.accept(Query<J>());
     bloc.popAll(query.operator);
   }
 
   @override
-  Future<void> popKeys<Data, Model extends Data>(
-    Entity<Data, Model> entity,
-    Iterable<String> ids,
+  Future<void> popKeys<Data, Model extends Data, J extends Object>(
+    Entity<Data, Model, J> entity,
+    Iterable<J> ids,
   ) async {
-    final _EntityReference<Data, Model> bloc = _access(entity);
+    final _EntityReference<Data, Model, J> bloc = _access(entity);
     bloc.popKeys(ids.toSet());
   }
 
   @override
-  Stream<Model?> pull<Data, Model extends Data>(
-    Entity<Data, Model> entity,
-    String id,
+  Stream<Model?> pull<Data, Model extends Data, J extends Object>(
+    Entity<Data, Model, J> entity,
+    J id,
   ) {
-    final _EntityReference<Data, Model> bloc = _access(entity);
+    final _EntityReference<Data, Model, J> bloc = _access(entity);
     return bloc.dataStream.map((models) => models[id]);
   }
 
   @override
-  Stream<List<Model>> pullAll<Data, Model extends Data>(
-    Entity<Data, Model> entity,
+  Stream<List<Model>> pullAll<Data, Model extends Data, J extends Object>(
+    Entity<Data, Model, J> entity,
     Filter filter,
   ) {
-    final _EntityReference<Data, Model> bloc = _access(entity);
-    final Query query = filter.accept(const Query());
+    final _EntityReference<Data, Model, J> bloc = _access(entity);
+    final Query<J> query = filter.accept(Query<J>());
     return bloc.dataStream.map((models) => query
         .operator(
             models.map((key, value) => MapEntry(key, entity.toJson(value))))
@@ -239,58 +250,58 @@ class Reference extends Cubit<_State> implements BaseReference {
   }
 
   @override
-  Future<void> patch<Data, Model extends Data>(
-    Entity<Data, Model> entity,
-    String id,
+  Future<void> patch<Data, Model extends Data, J extends Object>(
+    Entity<Data, Model, J> entity,
+    J id,
     Model? Function(Model?) update,
   ) async {
-    final _EntityReference<Data, Model> bloc = _access(entity);
+    final _EntityReference<Data, Model, J> bloc = _access(entity);
     bloc.patch(id, update);
   }
 
   @override
-  Future<void> push<Data, Model extends Data>(
-    Entity<Data, Model> entity,
+  Future<void> push<Data, Model extends Data, J extends Object>(
+    Entity<Data, Model, J> entity,
     Model model,
   ) async {
-    final _EntityReference<Data, Model> bloc = _access(entity);
+    final _EntityReference<Data, Model, J> bloc = _access(entity);
     bloc.push(model);
   }
 
   @override
-  Future<void> pushAll<Data, Model extends Data>(
-    Entity<Data, Model> entity,
+  Future<void> pushAll<Data, Model extends Data, J extends Object>(
+    Entity<Data, Model, J> entity,
     List<Model> models,
   ) async {
-    final _EntityReference<Data, Model> bloc = _access(entity);
+    final _EntityReference<Data, Model, J> bloc = _access(entity);
     bloc.pushAll(models);
   }
 
   @override
-  Future<Model> put<Data, Model extends Data>(
-    Entity<Data, Model> entity,
+  Future<Model> put<Data, Model extends Data, J extends Object>(
+    Entity<Data, Model, J> entity,
     Dependency<Data> dependency,
     Data data,
   ) async {
-    final _EntityReference<Data, Model> bloc = _access(entity);
+    final _EntityReference<Data, Model, J> bloc = _access(entity);
     return bloc.put(dependency, data);
   }
 
   @override
-  Future<void> purge<Data, Model extends Data>(
-    Entity<Data, Model> entity,
+  Future<void> purge<Data, Model extends Data, J extends Object>(
+    Entity<Data, Model, J> entity,
   ) async {
-    final _EntityReference<Data, Model> bloc = _access(entity);
+    final _EntityReference<Data, Model, J> bloc = _access(entity);
     bloc.purge();
   }
 
   @override
-  Future<List<Model>> putAll<Data, Model extends Data>(
-    Entity<Data, Model> entity,
+  Future<List<Model>> putAll<Data, Model extends Data, J extends Object>(
+    Entity<Data, Model, J> entity,
     Dependency<Data> dependency,
     List<Data> datum,
   ) async {
-    final _EntityReference<Data, Model> bloc = _access(entity);
+    final _EntityReference<Data, Model, J> bloc = _access(entity);
     return bloc.putAll(dependency, datum);
   }
 }

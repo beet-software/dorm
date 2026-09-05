@@ -20,7 +20,10 @@ import 'reference.dart';
 import 'relationship.dart';
 
 class Engine implements BaseEngine {
-  final Reference _reference = Reference();
+  final Reference _reference;
+
+  Engine({Object Function(String tableName)? generateId})
+      : _reference = Reference(generateId: generateId);
 
   @override
   BaseReference createReference() => _reference;
