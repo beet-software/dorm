@@ -84,9 +84,11 @@ class _EntityReference<Data, Model extends Data>
 
   void popAll(TableOperator operator) {
     _emit((models) {
-      return operator(
+      final Set<String> keys = operator(
         models.map((key, value) => MapEntry(key, entity.toJson(value))),
-      );
+      ).keys.toSet();
+
+      models.removeWhere((key, _) => keys.contains(key));
     });
   }
 
