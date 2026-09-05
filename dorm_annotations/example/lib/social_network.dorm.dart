@@ -67,6 +67,18 @@ class UserEntity implements Entity<UserData, User, String> {
   final String tableName = 'user';
 
   @override
+  final EntitySchema schema = const EntitySchema(
+    tableName: 'user',
+    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
+    fields: [
+      FieldSchema(fieldName: 'name', columnName: 'name'),
+      FieldSchema(fieldName: 'birthDate', columnName: 'birth-date'),
+      FieldSchema(fieldName: 'email', columnName: 'email'),
+      FieldSchema(fieldName: 'pictureUrl', columnName: 'picture-url'),
+    ],
+  );
+
+  @override
   User fromData(UserDependency dependency, String id, UserData data) {
     return User(
       id: id,
@@ -154,6 +166,23 @@ class PostEntity implements Entity<PostData, Post, String> {
 
   @override
   final String tableName = 'post';
+
+  @override
+  final EntitySchema schema = const EntitySchema(
+    tableName: 'post',
+    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
+    fields: [
+      FieldSchema(fieldName: 'contents', columnName: 'contents'),
+      FieldSchema(fieldName: 'creationDate', columnName: 'creation-date'),
+      ForeignKeySchema(
+        fieldName: 'userId',
+        columnName: 'user-id',
+        targetTableName: 'user',
+        targetColumnName: 'id',
+        unique: false,
+      ),
+    ],
+  );
 
   @override
   Post fromData(PostDependency dependency, String id, PostData data) {
@@ -249,6 +278,30 @@ class MessageEntity implements Entity<MessageData, Message, String> {
 
   @override
   final String tableName = 'message';
+
+  @override
+  final EntitySchema schema = const EntitySchema(
+    tableName: 'message',
+    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
+    fields: [
+      FieldSchema(fieldName: 'contents', columnName: 'contents'),
+      FieldSchema(fieldName: 'creationDate', columnName: 'creation-date'),
+      ForeignKeySchema(
+        fieldName: 'senderId',
+        columnName: 'sender-id',
+        targetTableName: 'user',
+        targetColumnName: 'id',
+        unique: false,
+      ),
+      ForeignKeySchema(
+        fieldName: 'receiverId',
+        columnName: 'receiver-id',
+        targetTableName: 'user',
+        targetColumnName: 'id',
+        unique: false,
+      ),
+    ],
+  );
 
   @override
   Message fromData(MessageDependency dependency, String id, MessageData data) {

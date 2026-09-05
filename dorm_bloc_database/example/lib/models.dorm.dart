@@ -47,6 +47,13 @@ class UserEntity implements Entity<UserData, User, String> {
   final String tableName = 'users';
 
   @override
+  final EntitySchema schema = const EntitySchema(
+    tableName: 'users',
+    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
+    fields: [FieldSchema(fieldName: 'name', columnName: 'name')],
+  );
+
+  @override
   User fromData(UserDependency dependency, String id, UserData data) {
     return User(id: id, name: data.name);
   }

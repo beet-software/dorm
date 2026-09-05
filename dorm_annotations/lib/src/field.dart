@@ -39,8 +39,20 @@ class ForeignField extends Field {
   /// The class annotated with [Model] that this field references.
   final Type referTo;
 
+  /// Whether the foreign key is unique in the source model.
+  ///
+  /// A non-unique foreign key represents a many-to-one relation from the
+  /// source model to [referTo]. A unique foreign key can represent a
+  /// one-to-one relation. The inverse one-to-many relation is derived by the
+  /// generator and is not declared here.
+  final bool unique;
+
   /// Creates a [ForeignField] by its attributes.
-  const ForeignField({required super.name, required this.referTo});
+  const ForeignField({
+    required super.name,
+    required this.referTo,
+    this.unique = false,
+  });
 }
 
 abstract class ModelFieldType {}

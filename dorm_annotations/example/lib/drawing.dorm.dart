@@ -93,6 +93,17 @@ class DrawingEntity implements Entity<DrawingData, Drawing, String> {
   final String tableName = 'desenho';
 
   @override
+  final EntitySchema schema = const EntitySchema(
+    tableName: 'desenho',
+    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
+    fields: [
+      FieldSchema(fieldName: 'color', columnName: 'cor'),
+      FieldSchema(fieldName: 'type', columnName: 'tipo'),
+      FieldSchema(fieldName: 'shape', columnName: 'formato'),
+    ],
+  );
+
+  @override
   Drawing fromData(DrawingDependency dependency, String id, DrawingData data) {
     return Drawing(
       id: id,

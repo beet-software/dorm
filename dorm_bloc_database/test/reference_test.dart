@@ -19,6 +19,12 @@ class ItemEntity implements Entity<ItemData, Item, String> {
   String get tableName => 'items';
 
   @override
+  EntitySchema get schema => const EntitySchema(
+        tableName: 'items',
+        primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
+      );
+
+  @override
   Item fromJson(String id, Map data) {
     return Item(id: id, group: data['group'] as String);
   }

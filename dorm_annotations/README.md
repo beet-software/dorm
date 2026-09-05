@@ -94,6 +94,9 @@ It accepts the following parameters:
 
 - `name`: Specifies the name of the foreign key column in the underlying database.
 - `referTo`: Specifies the model class that the foreign key references.
+- `unique`: Indicates that the foreign key is unique in the source model. A
+  non-unique foreign key is many-to-one; a unique foreign key can be
+  one-to-one. The inverse relation is derived by the generator.
 
 ```dart
 import 'package:dorm_annotations/dorm_annotations.dart';

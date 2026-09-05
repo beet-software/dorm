@@ -90,6 +90,17 @@ class UserEntity implements Entity<UserData, User, String> {
   final String tableName = 'Users';
 
   @override
+  final EntitySchema schema = const EntitySchema(
+    tableName: 'Users',
+    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
+    fields: [
+      FieldSchema(fieldName: 'username', columnName: 'username'),
+      FieldSchema(fieldName: 'email', columnName: 'email'),
+      FieldSchema(fieldName: 'profile', columnName: 'profile'),
+    ],
+  );
+
+  @override
   User fromData(UserDependency dependency, String id, UserData data) {
     return User(
       id: id,
@@ -179,6 +190,17 @@ class ProductEntity implements Entity<ProductData, Product, String> {
 
   @override
   final String tableName = 'Products';
+
+  @override
+  final EntitySchema schema = const EntitySchema(
+    tableName: 'Products',
+    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
+    fields: [
+      FieldSchema(fieldName: 'name', columnName: 'name'),
+      FieldSchema(fieldName: 'description', columnName: 'description'),
+      FieldSchema(fieldName: 'price', columnName: 'price'),
+    ],
+  );
 
   @override
   Product fromData(ProductDependency dependency, String id, ProductData data) {
@@ -277,6 +299,22 @@ class CartEntity implements Entity<CartData, Cart, String> {
   final String tableName = 'Carts';
 
   @override
+  final EntitySchema schema = const EntitySchema(
+    tableName: 'Carts',
+    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
+    fields: [
+      FieldSchema(fieldName: 'timestamp', columnName: 'timestamp'),
+      ForeignKeySchema(
+        fieldName: 'userId',
+        columnName: 'user-id',
+        targetTableName: 'Users',
+        targetColumnName: 'id',
+        unique: false,
+      ),
+    ],
+  );
+
+  @override
   Cart fromData(CartDependency dependency, String id, CartData data) {
     return Cart(
       id: _Cart._generate(_$Cart.fromData(dependency, data), id),
@@ -360,6 +398,29 @@ class CartItemEntity implements Entity<CartItemData, CartItem, String> {
 
   @override
   final String tableName = 'CartItems';
+
+  @override
+  final EntitySchema schema = const EntitySchema(
+    tableName: 'CartItems',
+    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
+    fields: [
+      FieldSchema(fieldName: 'amount', columnName: 'amount'),
+      ForeignKeySchema(
+        fieldName: 'productId',
+        columnName: 'product-id',
+        targetTableName: 'Products',
+        targetColumnName: 'id',
+        unique: false,
+      ),
+      ForeignKeySchema(
+        fieldName: 'cartId',
+        columnName: 'cart-id',
+        targetTableName: 'Carts',
+        targetColumnName: 'id',
+        unique: false,
+      ),
+    ],
+  );
 
   @override
   CartItem fromData(
@@ -505,6 +566,25 @@ class ReviewEntity implements Entity<ReviewData, Review, String> {
 
   @override
   final String tableName = 'Reviews';
+
+  @override
+  final EntitySchema schema = const EntitySchema(
+    tableName: 'Reviews',
+    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
+    fields: [
+      FieldSchema(fieldName: 'text', columnName: 'text'),
+      FieldSchema(fieldName: 'timestamp', columnName: 'timestamp'),
+      FieldSchema(fieldName: 'type', columnName: 'type'),
+      FieldSchema(fieldName: 'content', columnName: 'content'),
+      ForeignKeySchema(
+        fieldName: 'userId',
+        columnName: 'user-id',
+        targetTableName: 'Users',
+        targetColumnName: 'id',
+        unique: false,
+      ),
+    ],
+  );
 
   @override
   Review fromData(ReviewDependency dependency, String id, ReviewData data) {

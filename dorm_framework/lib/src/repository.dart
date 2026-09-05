@@ -236,6 +236,9 @@ class Repository<Data, Model extends Data, I extends Object, Q extends BaseQuery
   })  : _reference = reference,
         _entity = entity;
 
+  /// The engine-independent schema of the repository's entity.
+  EntitySchema get schema => _entity.schema;
+
   @override
   Future<Model?> peek(I id) {
     return _reference.peek<Data, Model, I>(_entity, id);
@@ -310,5 +313,4 @@ class Repository<Data, Model extends Data, I extends Object, Q extends BaseQuery
     return _reference.purge<Data, Model, I>(_entity);
   }
 }
-
 

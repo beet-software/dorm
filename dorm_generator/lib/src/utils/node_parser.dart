@@ -285,6 +285,7 @@ class ForeignFieldParser extends FieldNodeParser<ForeignField> {
     return ForeignField(
       name: reader.read('name').stringValue,
       referTo: $Type(reader: reader.read('referTo')),
+      unique: reader.read('unique').boolValue,
     );
   }
 }
@@ -336,4 +337,3 @@ class PolymorphicFieldParser extends FieldNodeParser<PolymorphicField> {
     );
   }
 }
-

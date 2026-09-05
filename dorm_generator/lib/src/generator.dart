@@ -734,6 +734,71 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
     });
   }
 
+  String _foreignTargetTableName(ForeignField field) {
+    final $Type targetType = field.referTo as $Type;
+    final String? targetName = targetType.name;
+    final FieldedOrmNode<Object>? targetNode =
+        targetName == null ? null : nodes[targetName];
+    final ClassOrmNode<Object>? targetClass = targetNode?.annotation;
+    if (targetName == null || targetClass is! ModelOrmNode) {
+      throw StateError(
+        'Foreign field in ${naming.schemaName} must refer to a model '
+        'annotated with @Model(), found ${targetType.name ?? 'unknown'}.',
+      );
+    }
+    return ModelNaming(name: targetName, node: targetClass).tableName;
+  }
+
+  cb.Expression _fieldSchema(String fieldName, FieldOrmNode node) {
+    final Field field = node.annotation;
+    final String columnName = field.name ?? fieldName;
+    if (field is ForeignField) {
+      return cb.InvokeExpression.constOf(
+        cb.Reference('ForeignKeySchema', '$_dormUrl'),
+        [],
+        {
+          'fieldName': cb.literalString(fieldName),
+          'columnName': cb.literalString(columnName),
+          'targetTableName':
+              cb.literalString(_foreignTargetTableName(field)),
+          'targetColumnName': cb.literalString('id'),
+          'unique': cb.literalBool(field.unique),
+        },
+      );
+    }
+    return cb.InvokeExpression.constOf(
+      cb.Reference('FieldSchema', '$_dormUrl'),
+      [],
+      {
+        'fieldName': cb.literalString(fieldName),
+        'columnName': cb.literalString(columnName),
+      },
+    );
+  }
+
+  cb.Expression get _schemaExpression {
+    return cb.InvokeExpression.constOf(
+      cb.Reference('EntitySchema', '$_dormUrl'),
+      [],
+      {
+        'tableName': cb.literalString(naming.tableName),
+        'primaryKey': cb.InvokeExpression.constOf(
+          cb.Reference('FieldSchema', '$_dormUrl'),
+          [],
+          {
+            'fieldName': cb.literalString('id'),
+            'columnName': cb.literalString('id'),
+          },
+        ),
+        'fields': cb.literalConstList([
+          for (MapEntry<String, FieldOrmNode> entry
+              in fields.where((field) => field.isConcrete).entries)
+            _fieldSchema(entry.key, entry.value),
+        ]),
+      },
+    );
+  }
+
   cb.Spec get _entityClass {
     return cb.Class((b) {
       b.name = naming.entityName;
@@ -753,6 +818,13 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
         b.type = cb.Reference('String');
         b.name = 'tableName';
         b.assignment = cb.ToCodeExpression(cb.literalString(naming.tableName));
+      }));
+      b.fields.add(cb.Field((b) {
+        b.annotations.add(expressionOf('override'));
+        b.modifier = cb.FieldModifier.final$;
+        b.type = cb.Reference('EntitySchema', '$_dormUrl');
+        b.name = 'schema';
+        b.assignment = cb.ToCodeExpression(_schemaExpression);
       }));
       b.methods.add(cb.Method((b) {
         b.annotations.add(expressionOf('override'));

@@ -127,6 +127,17 @@ class SchoolEntity implements Entity<SchoolData, School, String> {
   final String tableName = 'escola';
 
   @override
+  final EntitySchema schema = const EntitySchema(
+    tableName: 'escola',
+    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
+    fields: [
+      FieldSchema(fieldName: 'name', columnName: 'nome'),
+      FieldSchema(fieldName: 'address', columnName: 'endereco'),
+      FieldSchema(fieldName: 'phoneNumbers', columnName: 'contatos'),
+    ],
+  );
+
+  @override
   School fromData(SchoolDependency dependency, String id, SchoolData data) {
     return School(
       id: _School._generate(_$School.fromData(dependency, data), id),
@@ -223,6 +234,26 @@ class StudentEntity implements Entity<StudentData, Student, String> {
   final String tableName = 'aluno';
 
   @override
+  final EntitySchema schema = const EntitySchema(
+    tableName: 'aluno',
+    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
+    fields: [
+      FieldSchema(fieldName: 'name', columnName: 'nome'),
+      FieldSchema(
+        fieldName: 'hasDisabilities',
+        columnName: 'possui-deficiencias',
+      ),
+      ForeignKeySchema(
+        fieldName: 'schoolId',
+        columnName: 'id-escola',
+        targetTableName: 'escola',
+        targetColumnName: 'id',
+        unique: false,
+      ),
+    ],
+  );
+
+  @override
   Student fromData(StudentDependency dependency, String id, StudentData data) {
     return Student(
       id: id,
@@ -305,6 +336,16 @@ class TeacherEntity implements Entity<TeacherData, Teacher, String> {
   final String tableName = 'professor';
 
   @override
+  final EntitySchema schema = const EntitySchema(
+    tableName: 'professor',
+    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
+    fields: [
+      FieldSchema(fieldName: 'name', columnName: 'nome'),
+      FieldSchema(fieldName: 'ssn', columnName: 'cpf'),
+    ],
+  );
+
+  @override
   Teacher fromData(TeacherDependency dependency, String id, TeacherData data) {
     return Teacher(id: id, name: data.name, ssn: data.ssn);
   }
@@ -366,6 +407,21 @@ class HistoryEntity implements Entity<HistoryData, History, String> {
 
   @override
   final String tableName = 'historico';
+
+  @override
+  final EntitySchema schema = const EntitySchema(
+    tableName: 'historico',
+    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
+    fields: [
+      ForeignKeySchema(
+        fieldName: 'studentId',
+        columnName: 'id-aluno',
+        targetTableName: 'aluno',
+        targetColumnName: 'id',
+        unique: false,
+      ),
+    ],
+  );
 
   @override
   History fromData(HistoryDependency dependency, String id, HistoryData data) {
@@ -441,6 +497,29 @@ class TeachingEntity implements Entity<TeachingData, Teaching, String> {
 
   @override
   final String tableName = 'cadastro-professor';
+
+  @override
+  final EntitySchema schema = const EntitySchema(
+    tableName: 'cadastro-professor',
+    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
+    fields: [
+      ForeignKeySchema(
+        fieldName: 'teacherId',
+        columnName: 'id-professor',
+        targetTableName: 'professor',
+        targetColumnName: 'id',
+        unique: false,
+      ),
+      ForeignKeySchema(
+        fieldName: 'schoolId',
+        columnName: 'id-escola',
+        targetTableName: 'escola',
+        targetColumnName: 'id',
+        unique: false,
+      ),
+      FieldSchema(fieldName: 'code', columnName: 'codigo'),
+    ],
+  );
 
   @override
   Teaching fromData(
@@ -540,6 +619,30 @@ class ClassEntity implements Entity<ClassData, Class, String> {
 
   @override
   final String tableName = 'aula';
+
+  @override
+  final EntitySchema schema = const EntitySchema(
+    tableName: 'aula',
+    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
+    fields: [
+      FieldSchema(fieldName: 'patron', columnName: 'paraninfo'),
+      ForeignKeySchema(
+        fieldName: 'teacherId',
+        columnName: 'id-professor',
+        targetTableName: 'professor',
+        targetColumnName: 'id',
+        unique: false,
+      ),
+      ForeignKeySchema(
+        fieldName: 'studentId',
+        columnName: 'id-escola',
+        targetTableName: 'aluno',
+        targetColumnName: 'id',
+        unique: false,
+      ),
+      FieldSchema(fieldName: 'location', columnName: 'nome-sala'),
+    ],
+  );
 
   @override
   Class fromData(ClassDependency dependency, String id, ClassData data) {

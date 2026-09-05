@@ -28,6 +28,12 @@ class IntegerEntity implements Entity<IntegerData, Integer, String> {
   const IntegerEntity();
 
   @override
+  final EntitySchema schema = const EntitySchema(
+    tableName: 'Integers',
+    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
+  );
+
+  @override
   Integer convert(Integer model, IntegerData data) {
     return Integer(id: model.id, value: data.value);
   }
@@ -75,6 +81,12 @@ class DateEntity implements Entity<DateData, Date, String> {
   const DateEntity();
 
   @override
+  final EntitySchema schema = const EntitySchema(
+    tableName: 'Dates',
+    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
+  );
+
+  @override
   Date convert(Date model, DateData data) {
     return Date(id: model.id, value: data.value);
   }
@@ -120,6 +132,12 @@ class TextDependency extends Dependency<TextData> {
 
 class TextEntity implements Entity<TextData, Text, String> {
   const TextEntity();
+
+  @override
+  final EntitySchema schema = const EntitySchema(
+    tableName: 'Texts',
+    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
+  );
 
   @override
   Text convert(Text model, TextData data) {
