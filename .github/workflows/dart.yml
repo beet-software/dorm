@@ -29,9 +29,10 @@ jobs:
         run: dart analyze
 
       - name: Prepare packages for publishing
-        run: dart run dorm_meta/lib/dorm_meta.dart -i ${{ matrix.pkg }}
+        run: dart run tool/prepare_package.dart --package ${{ matrix.pkg }}
 
       - name: Publish to pub.dev
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: k-paxian/dart-package-publisher@v1.6
         with:
           accessToken: ${{ secrets.OAUTH_ACCESS_TOKEN }}
@@ -42,11 +43,12 @@ jobs:
           suppressBuildRunner: true
 
   publish-children:
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     needs: build
     strategy:
       matrix:
-        pkg: [dorm_generator, dorm_firebase_database, dorm_bloc_database]
+        pkg: [dorm_generator, dorm_firebase_database, dorm_bloc_database, dorm_mysql_database]
     steps:
       - uses: actions/checkout@v3
       - uses: subosito/flutter-action@v2
@@ -55,7 +57,7 @@ jobs:
         run: dart pub get
 
       - name: Prepare packages for publishing
-        run: dart run dorm_meta/lib/dorm_meta.dart -i ${{ matrix.pkg }} --pubspec-dependencies-values
+        run: dart run tool/prepare_package.dart --package ${{ matrix.pkg }}
 
       - name: Dart and Flutter Package Publisher
         uses: k-paxian/dart-package-publisher@v1.6

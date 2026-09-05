@@ -1,6 +1,7 @@
 name: dorm_workspace
 description: Workspace for the dORM Dart and Flutter packages.
 publish_to: none
+repository: https://github.com/beet-software/dorm.git
 
 environment:
   sdk: ">=3.9.0 <4.0.0"
@@ -12,12 +13,16 @@ workspace:
   - dorm_bloc_database
   - dorm_firebase_database
   - dorm_mysql_database
-  - dorm_meta
 
 dev_dependencies:
   melos: ^8.6.0
 
 melos:
+  command:
+    version:
+      workspaceChangelog: true
+      includeScopes: true
+      linkToCommits: true
   scripts:
     analyze:
       description: Analyze all workspace packages.
