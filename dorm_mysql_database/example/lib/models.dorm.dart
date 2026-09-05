@@ -55,9 +55,6 @@ class UserEntity implements Entity<UserData, User, String> {
   const UserEntity();
 
   @override
-  final String tableName = 'Users';
-
-  @override
   final EntitySchema schema = const EntitySchema(
     tableName: 'Users',
     primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),

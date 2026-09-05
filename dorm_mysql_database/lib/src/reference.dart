@@ -56,7 +56,7 @@ class Reference implements BaseReference<Query> {
 
     final StringBuffer buffer = StringBuffer()
       ..write('SELECT * FROM ')
-      ..write(entity.tableName)
+      ..write(entity.schema.tableName)
       ..write(' WHERE id = :id;');
 
     return connection
@@ -73,7 +73,7 @@ class Reference implements BaseReference<Query> {
   ) {
     final StringBuffer preBuffer = StringBuffer()
       ..write('SELECT * FROM ')
-      ..write(entity.tableName);
+      ..write(entity.schema.tableName);
 
     final Query query = filter.accept(Query('$preBuffer'));
     final StringBuffer buffer = StringBuffer()
@@ -93,7 +93,7 @@ class Reference implements BaseReference<Query> {
   ) {
     final StringBuffer buffer = StringBuffer()
       ..write('SELECT id FROM ')
-      ..write(entity.tableName)
+      ..write(entity.schema.tableName)
       ..write(';');
 
     return connection.execute('$buffer').then((result) =>
@@ -110,7 +110,7 @@ class Reference implements BaseReference<Query> {
 
     final StringBuffer buffer = StringBuffer()
       ..write('DELETE FROM ')
-      ..write(entity.tableName)
+      ..write(entity.schema.tableName)
       ..write(' WHERE id = :id;');
 
     return connection.execute('$buffer', {'id': id});
@@ -123,7 +123,7 @@ class Reference implements BaseReference<Query> {
   ) {
     final StringBuffer preBuffer = StringBuffer()
       ..write('DELETE FROM ')
-      ..write(entity.tableName);
+      ..write(entity.schema.tableName);
 
     final Query query = filter.accept(Query('$preBuffer'));
     final StringBuffer buffer = StringBuffer()
@@ -141,7 +141,7 @@ class Reference implements BaseReference<Query> {
     final List<I> keys = ids.toList();
     final StringBuffer buffer = StringBuffer()
       ..write('DELETE FROM ')
-      ..write(entity.tableName)
+      ..write(entity.schema.tableName)
       ..write(' WHERE id IN (')
       ..writeAll(List.generate(keys.length, (i) => ':id$i'), ', ')
       ..write(');');
@@ -181,7 +181,7 @@ class Reference implements BaseReference<Query> {
     connection ??= this.connection;
     final StringBuffer buffer = StringBuffer()
       ..write('DELETE FROM ')
-      ..write(entity.tableName)
+      ..write(entity.schema.tableName)
       ..write(';');
 
     return connection.execute('$buffer');
@@ -266,7 +266,7 @@ class _QueryBuilder<Data, Model extends Data, I extends Object> {
     buffer
       ..write(replace ? 'REPLACE' : 'INSERT')
       ..write(' INTO ')
-      ..write(entity.tableName)
+      ..write(entity.schema.tableName)
       ..writeln(' (');
     for (int i = 0; i < keys.length; i++) {
       final String value = keys[i];

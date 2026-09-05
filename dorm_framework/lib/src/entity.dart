@@ -18,20 +18,8 @@ import 'package:dorm_framework/dorm_framework.dart';
 
 /// Represents the conversion of a [Model] into dORM's model system.
 abstract class Entity<Data, Model extends Data, I extends Object> {
-  /// The name of the table of this entity in the underlying database engine.
-  String get tableName;
-
   /// The engine-independent persisted schema of this entity.
-  ///
-  /// Hand-written entities receive a minimal schema by default. Generated
-  /// entities override this getter with field and foreign-key metadata.
-  EntitySchema get schema => EntitySchema(
-        tableName: tableName,
-        primaryKey: const FieldSchema(
-          fieldName: 'id',
-          columnName: 'id',
-        ),
-      );
+  EntitySchema get schema;
 
   /// Deserializes the [id] and the [data] of a row in the underlying database
   /// engine to a [Model].
@@ -171,12 +159,8 @@ class DatabaseEntity<Data, Model extends Data, I extends Object, Q extends BaseQ
   I identify(Model model) => _entity.identify(model);
 
   @override
-  String get tableName => _entity.tableName;
-
-  @override
   EntitySchema get schema => _entity.schema;
 
   @override
   Map<String, Object?> toJson(Data data) => _entity.toJson(data);
 }
-

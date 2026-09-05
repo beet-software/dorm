@@ -815,13 +815,6 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
       b.fields.add(cb.Field((b) {
         b.annotations.add(expressionOf('override'));
         b.modifier = cb.FieldModifier.final$;
-        b.type = cb.Reference('String');
-        b.name = 'tableName';
-        b.assignment = cb.ToCodeExpression(cb.literalString(naming.tableName));
-      }));
-      b.fields.add(cb.Field((b) {
-        b.annotations.add(expressionOf('override'));
-        b.modifier = cb.FieldModifier.final$;
         b.type = cb.Reference('EntitySchema', '$_dormUrl');
         b.name = 'schema';
         b.assignment = cb.ToCodeExpression(_schemaExpression);

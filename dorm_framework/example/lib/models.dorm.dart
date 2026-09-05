@@ -87,9 +87,6 @@ class UserEntity implements Entity<UserData, User, String> {
   const UserEntity();
 
   @override
-  final String tableName = 'Users';
-
-  @override
   final EntitySchema schema = const EntitySchema(
     tableName: 'Users',
     primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
@@ -187,9 +184,6 @@ class ProductDependency extends Dependency<ProductData> {
 
 class ProductEntity implements Entity<ProductData, Product, String> {
   const ProductEntity();
-
-  @override
-  final String tableName = 'Products';
 
   @override
   final EntitySchema schema = const EntitySchema(
@@ -296,9 +290,6 @@ class CartEntity implements Entity<CartData, Cart, String> {
   const CartEntity();
 
   @override
-  final String tableName = 'Carts';
-
-  @override
   final EntitySchema schema = const EntitySchema(
     tableName: 'Carts',
     primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
@@ -395,9 +386,6 @@ class CartItemDependency extends Dependency<CartItemData> {
 
 class CartItemEntity implements Entity<CartItemData, CartItem, String> {
   const CartItemEntity();
-
-  @override
-  final String tableName = 'CartItems';
 
   @override
   final EntitySchema schema = const EntitySchema(
@@ -563,9 +551,6 @@ class ReviewDependency extends Dependency<ReviewData> {
 
 class ReviewEntity implements Entity<ReviewData, Review, String> {
   const ReviewEntity();
-
-  @override
-  final String tableName = 'Reviews';
 
   @override
   final EntitySchema schema = const EntitySchema(

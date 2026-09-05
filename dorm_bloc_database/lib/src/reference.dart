@@ -147,10 +147,11 @@ class Reference extends Cubit<_State> implements BaseReference<Query> {
   ) {
     final Map<String, _EntityReference<Object, Object, Object>> blocs =
         Map.of(state.references);
-    final _EntityReference<Object, Object, Object>? current = blocs[entity.tableName];
+    final String tableName = entity.schema.tableName;
+    final _EntityReference<Object, Object, Object>? current = blocs[tableName];
     if (current != null) return current as _EntityReference<Data, Model, I>;
     final _EntityReference<Data, Model, I> bloc = _EntityReference(entity);
-    blocs[entity.tableName] = bloc as _EntityReference<Object, Object, Object>;
+    blocs[tableName] = bloc as _EntityReference<Object, Object, Object>;
     emit(_State(blocs));
     return bloc;
   }
@@ -295,7 +296,6 @@ class Reference extends Cubit<_State> implements BaseReference<Query> {
     return bloc.putAll(dependency, datum);
   }
 }
-
 
 
 

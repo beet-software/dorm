@@ -284,9 +284,12 @@ class SchoolEntity implements Entity<SchoolData, School> {
   @override
   Map<String, Object?> toJson(SchoolData data) => data.toJson();
 
-  // The name of this table in the database, equivalent to `CREATE TABLE schools` from SQL
+  // The persisted schema of this entity.
   @override
-  String get tableName => 'schools';
+  EntitySchema get schema => const EntitySchema(
+        tableName: 'schools',
+        primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
+      );
 
   // This represents the UPDATE method, see the previous section
   @override
@@ -379,7 +382,7 @@ void main() {
   final DatabaseEntity<SchoolData, School> controller /* = ... */;
 
   // Access the table name
-  print(controller.tableName); // schools
+  print(controller.schema.tableName); // schools
 
   // Decode a row
   school = controller.fromJson('123456', {'name': 'School'});

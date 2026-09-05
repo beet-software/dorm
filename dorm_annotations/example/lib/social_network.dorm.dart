@@ -64,9 +64,6 @@ class UserEntity implements Entity<UserData, User, String> {
   const UserEntity();
 
   @override
-  final String tableName = 'user';
-
-  @override
   final EntitySchema schema = const EntitySchema(
     tableName: 'user',
     primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
@@ -163,9 +160,6 @@ class PostDependency extends Dependency<PostData> {
 
 class PostEntity implements Entity<PostData, Post, String> {
   const PostEntity();
-
-  @override
-  final String tableName = 'post';
 
   @override
   final EntitySchema schema = const EntitySchema(
@@ -275,9 +269,6 @@ class MessageDependency extends Dependency<MessageData> {
 
 class MessageEntity implements Entity<MessageData, Message, String> {
   const MessageEntity();
-
-  @override
-  final String tableName = 'message';
 
   @override
   final EntitySchema schema = const EntitySchema(

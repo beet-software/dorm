@@ -90,9 +90,6 @@ class DrawingEntity implements Entity<DrawingData, Drawing, String> {
   const DrawingEntity();
 
   @override
-  final String tableName = 'desenho';
-
-  @override
   final EntitySchema schema = const EntitySchema(
     tableName: 'desenho',
     primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),

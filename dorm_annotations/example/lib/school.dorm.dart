@@ -124,9 +124,6 @@ class SchoolEntity implements Entity<SchoolData, School, String> {
   const SchoolEntity();
 
   @override
-  final String tableName = 'escola';
-
-  @override
   final EntitySchema schema = const EntitySchema(
     tableName: 'escola',
     primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
@@ -231,9 +228,6 @@ class StudentEntity implements Entity<StudentData, Student, String> {
   const StudentEntity();
 
   @override
-  final String tableName = 'aluno';
-
-  @override
   final EntitySchema schema = const EntitySchema(
     tableName: 'aluno',
     primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
@@ -333,9 +327,6 @@ class TeacherEntity implements Entity<TeacherData, Teacher, String> {
   const TeacherEntity();
 
   @override
-  final String tableName = 'professor';
-
-  @override
   final EntitySchema schema = const EntitySchema(
     tableName: 'professor',
     primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
@@ -404,9 +395,6 @@ class HistoryDependency extends Dependency<HistoryData> {
 
 class HistoryEntity implements Entity<HistoryData, History, String> {
   const HistoryEntity();
-
-  @override
-  final String tableName = 'historico';
 
   @override
   final EntitySchema schema = const EntitySchema(
@@ -494,9 +482,6 @@ class TeachingDependency extends Dependency<TeachingData> {
 
 class TeachingEntity implements Entity<TeachingData, Teaching, String> {
   const TeachingEntity();
-
-  @override
-  final String tableName = 'cadastro-professor';
 
   @override
   final EntitySchema schema = const EntitySchema(
@@ -616,9 +601,6 @@ class ClassDependency extends Dependency<ClassData> {
 
 class ClassEntity implements Entity<ClassData, Class, String> {
   const ClassEntity();
-
-  @override
-  final String tableName = 'aula';
 
   @override
   final EntitySchema schema = const EntitySchema(

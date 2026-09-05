@@ -40,7 +40,7 @@ class Reference implements BaseReference<Query> {
   fd.DatabaseReference _refOf<Data, Model extends Data, I extends Object>(
     Entity<Data, Model, I> entity,
   ) {
-    return _ref.child(entity.tableName);
+    return _ref.child(entity.schema.tableName);
   }
 
   String _key<I extends Object>(I id) {
@@ -257,4 +257,3 @@ class Reference implements BaseReference<Query> {
     return data.keys.map((key) => _id<I>(key as String)).toList();
   }
 }
-

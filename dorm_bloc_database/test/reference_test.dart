@@ -16,9 +16,6 @@ class Item extends ItemData {
 
 class ItemEntity implements Entity<ItemData, Item, String> {
   @override
-  String get tableName => 'items';
-
-  @override
   EntitySchema get schema => const EntitySchema(
         tableName: 'items',
         primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),

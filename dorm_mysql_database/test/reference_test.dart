@@ -55,9 +55,6 @@ class IntegerEntity implements Entity<IntegerData, Integer, String> {
   String identify(Integer model) => model.id;
 
   @override
-  final String tableName = 'Integers';
-
-  @override
   Map<String, Object?> toJson(IntegerData data) => {'value': data.value};
 }
 
@@ -108,9 +105,6 @@ class DateEntity implements Entity<DateData, Date, String> {
   String identify(Date model) => model.id;
 
   @override
-  final String tableName = 'Dates';
-
-  @override
   Map<String, Object?> toJson(DateData data) => {'value': data.value};
 }
 
@@ -158,9 +152,6 @@ class TextEntity implements Entity<TextData, Text, String> {
 
   @override
   String identify(Text model) => model.id;
-
-  @override
-  final String tableName = 'Texts';
 
   @override
   Map<String, Object?> toJson(TextData data) => {'value': data.value};
