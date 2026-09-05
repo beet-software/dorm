@@ -217,7 +217,7 @@ class Reference implements BaseReference {
       final Model model = entity.fromData(dependency, id, data);
       models.add(model);
     }
-    _refOf(entity).update({
+    await _refOf(entity).update({
       for (Model model in models) entity.identify(model): entity.toJson(model),
     });
     return models;
