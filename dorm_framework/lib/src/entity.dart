@@ -27,7 +27,7 @@ abstract class Entity<Data, Model extends Data, I extends Object> {
   /// ```dart
   /// final Entity<SchoolData, School> entity = ...;
   ///
-  /// const Object id = 'd12207624e35';
+  /// const String id = 'd12207624e35';
   /// const Map<String, Object?> data = {'name': 'S1', 'active': false};
   ///
   /// final School school = entity.fromJson(id, data);
@@ -39,7 +39,7 @@ abstract class Entity<Data, Model extends Data, I extends Object> {
   /// In most of the cases, this method implementation is
   ///
   /// ```dart
-  /// Model fromJson(Object id, Map data) => Model.fromJson(id, data);
+  /// Model fromJson(I id, Map data) => Model.fromJson(id, data);
   /// ```
   Model fromJson(I id, Map data);
 
@@ -74,7 +74,7 @@ abstract class Entity<Data, Model extends Data, I extends Object> {
   /// print(updatedSchool.active);    // false
   /// ```
   ///
-  /// Act as a `copyWith` method and is useful when editing existing data
+  /// Act as an `updateWith` method and is useful when editing existing data
   /// through a form.
   Model convert(Model model, Data data);
 
@@ -83,7 +83,7 @@ abstract class Entity<Data, Model extends Data, I extends Object> {
   /// ```dart
   /// final School school = School(id: 'd12207624e35', name: 'S1', active: true);
   /// final Dependency<StudentData> dependency = StudentDependency(schoolId: school.id);
-  /// final Object id = 'cc03334e70a9';
+  /// final String id = 'cc03334e70a9';
   /// final StudentData data = StudentData(name: 'John', birthDate: DateTime(1942, 6, 13));
   ///
   /// final Entity<StudentData, Student> entity = ...;
@@ -113,31 +113,31 @@ abstract class Entity<Data, Model extends Data, I extends Object> {
   /// In most of the cases, this method implementation is
   ///
   /// ```
-  /// Object identify(Model model) => model.id;
+  /// I identify(Model model) => model.id;
   /// ```
   I identify(Model model);
 }
 
 /// Represents the bridge between a database engine and a controller.
-class DatabaseEntity<Data, Model extends Data, I extends Object>
+class DatabaseEntity<Data, Model extends Data, I extends Object, Q extends BaseQuery<Q>>
     implements Entity<Data, Model, I> {
   final Entity<Data, Model, I> _entity;
-  final BaseReference _reference;
-  final BaseRelationship _relationship;
+  final BaseReference<Q> _reference;
+  final BaseRelationship<Q> _relationship;
 
   DatabaseEntity(
     Entity<Data, Model, I> entity, {
-    required BaseEngine engine,
+    required BaseEngine<Q> engine,
   })  : _entity = entity,
         _reference = engine.createReference(),
         _relationship = engine.createRelationship();
 
-  ModelRelationship<Model, I> get relationships {
+  ModelRelationship<Model, I, Q> get relationships {
     return ModelRelationship(left: repository, relationship: _relationship);
   }
 
   /// The controller of this entity.
-  Repository<Data, Model, I> get repository {
+  Repository<Data, Model, I, Q> get repository {
     return Repository(
       entity: _entity,
       reference: _reference,
@@ -164,3 +164,5 @@ class DatabaseEntity<Data, Model extends Data, I extends Object>
   @override
   Map<String, Object?> toJson(Data data) => _entity.toJson(data);
 }
+
+

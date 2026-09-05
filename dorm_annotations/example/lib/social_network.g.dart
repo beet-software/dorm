@@ -21,11 +21,11 @@ UserData _$UserDataFromJson(Map json) {
 }
 
 Map<String, dynamic> _$UserDataToJson(UserData instance) => <String, dynamic>{
-      'name': instance.name,
-      'birth-date': instance.birthDate.toIso8601String(),
-      'email': instance.email,
-      'picture-url': instance.pictureUrl.toString(),
-    };
+  'name': instance.name,
+  'birth-date': instance.birthDate.toIso8601String(),
+  'email': instance.email,
+  'picture-url': instance.pictureUrl.toString(),
+};
 
 User _$UserFromJson(Map json) {
   $checkKeys(
@@ -43,12 +43,12 @@ User _$UserFromJson(Map json) {
 }
 
 Map<String, dynamic> _$UserToJson(User instance) => <String, dynamic>{
-      'name': instance.name,
-      'birth-date': instance.birthDate.toIso8601String(),
-      'email': instance.email,
-      'picture-url': instance.pictureUrl.toString(),
-      '_id': instance.id,
-    };
+  'name': instance.name,
+  'birth-date': instance.birthDate.toIso8601String(),
+  'email': instance.email,
+  'picture-url': instance.pictureUrl.toString(),
+  '_id': instance.id,
+};
 
 PostData _$PostDataFromJson(Map json) {
   $checkKeys(
@@ -63,9 +63,9 @@ PostData _$PostDataFromJson(Map json) {
 }
 
 Map<String, dynamic> _$PostDataToJson(PostData instance) => <String, dynamic>{
-      'contents': instance.contents,
-      'creation-date': instance.creationDate.toIso8601String(),
-    };
+  'contents': instance.contents,
+  'creation-date': instance.creationDate.toIso8601String(),
+};
 
 Post _$PostFromJson(Map json) {
   $checkKeys(
@@ -82,11 +82,11 @@ Post _$PostFromJson(Map json) {
 }
 
 Map<String, dynamic> _$PostToJson(Post instance) => <String, dynamic>{
-      'contents': instance.contents,
-      'creation-date': instance.creationDate.toIso8601String(),
-      '_id': instance.id,
-      'user-id': instance.userId,
-    };
+  'contents': instance.contents,
+  'creation-date': instance.creationDate.toIso8601String(),
+  '_id': instance.id,
+  'user-id': instance.userId,
+};
 
 MessageData _$MessageDataFromJson(Map json) {
   $checkKeys(
@@ -114,14 +114,14 @@ Message _$MessageFromJson(Map json) {
       'creation-date',
       '_id',
       'sender-id',
-      'receiver-id'
+      'receiver-id',
     ],
     disallowNullValues: const [
       'contents',
       'creation-date',
       '_id',
       'sender-id',
-      'receiver-id'
+      'receiver-id',
     ],
   );
   return Message(
@@ -134,9 +134,9 @@ Message _$MessageFromJson(Map json) {
 }
 
 Map<String, dynamic> _$MessageToJson(Message instance) => <String, dynamic>{
-      'contents': instance.contents,
-      'creation-date': instance.creationDate.toIso8601String(),
-      '_id': instance.id,
-      'sender-id': instance.senderId,
-      'receiver-id': instance.receiverId,
-    };
+  'contents': instance.contents,
+  'creation-date': instance.creationDate.toIso8601String(),
+  '_id': instance.id,
+  'sender-id': instance.senderId,
+  'receiver-id': instance.receiverId,
+};

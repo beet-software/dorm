@@ -26,7 +26,7 @@ import 'offline.dart';
 import 'query.dart';
 
 /// A [BaseReference] that uses Firebase Realtime Database as engine.
-class Reference implements BaseReference {
+class Reference implements BaseReference<Query> {
   final FirebaseInstance instance;
   final fd.DatabaseReference _ref;
 
@@ -49,37 +49,8 @@ class Reference implements BaseReference {
   }
 
   I _id<I extends Object>(String key) {
-    final Object id = key;
-    if (id is I) return id;
-    throw ArgumentError.value(
-      key,
-      'key',
-      'Firebase IDs must be String values',
-    );
-  }
-
-  List<Model> _parseModels<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
-    Map<I, Object> data,
-  ) {
-    if (data.isEmpty) return [];
-    final List<Model> models = [];
-    for (MapEntry<I, Object> entry in data.entries) {
-      final I key = entry.key;
-      final Model model;
-      switch (entry.value) {
-        case Map modelData:
-          try {
-            model = entity.fromJson(key, modelData);
-          } catch (_) {
-            continue;
-          }
-        default:
-          continue;
-      }
-      models.add(model);
-    }
-    return models;
+    if (key is I) return key as I;
+    throw ArgumentError.value(key, 'key', 'Firebase IDs must be String values');
   }
 
   @override
@@ -91,18 +62,14 @@ class Reference implements BaseReference {
         .child(_key(id))
         .get()
         .then((snapshot) => snapshot.value)
-        .then((value) => value == null
-            ? null
-            : switch (value) {
-                Map() => entity.fromJson(id, value),
-                _ => null,
-              });
+        .then((value) =>
+            value == null ? null : entity.fromJson(id, value as Map));
   }
 
   @override
   Future<List<Model>> peekAll<Data, Model extends Data, I extends Object>(
     Entity<Data, Model, I> entity,
-    Filter filter,
+    BaseFilter<Query> filter,
   ) {
     final Query query = filter.accept(Query(_refOf(entity)));
     return query.query.get().then((snapshot) {
@@ -110,7 +77,14 @@ class Reference implements BaseReference {
         for (fd.DataSnapshot child in snapshot.children)
           _id<I>(child.key as String): child.value as Object,
       };
-    }).then((values) => _parseModels(entity, values));
+    }).then((values) {
+      if (values.isEmpty) return [];
+      return values.entries.map((entry) {
+        final I key = entry.key;
+        final Map value = entry.value as Map;
+        return entity.fromJson(key, value);
+      }).toList();
+    });
   }
 
   @override
@@ -132,7 +106,7 @@ class Reference implements BaseReference {
   @override
   Future<void> popAll<Data, Model extends Data, I extends Object>(
     Entity<Data, Model, I> entity,
-    Filter filter,
+    BaseFilter<Query> filter,
   ) async {
     // TODO Refactor this operation as atomic.
     // Firebase does not have `runTransaction` as a method of fd.Query.
@@ -152,10 +126,7 @@ class Reference implements BaseReference {
       if (value == null) {
         model = null;
       } else {
-        model = switch (value) {
-          Map() => entity.fromJson(id, value),
-          _ => null,
-        };
+        model = entity.fromJson(id, value as Map);
       }
 
       final Model? updatedModel;
@@ -179,12 +150,8 @@ class Reference implements BaseReference {
   ) {
     return _onValueOf(_refOf(entity).child(_key(id)))
         .map((snapshot) => snapshot.value)
-        .map((value) => value == null
-            ? null
-            : switch (value) {
-                Map() => entity.fromJson(id, value),
-                _ => null,
-              });
+        .map((value) =>
+            value == null ? null : entity.fromJson(id, value as Map));
   }
 
   Stream<fd.DataSnapshot> _onValueOf(fd.Query query) {
@@ -199,7 +166,7 @@ class Reference implements BaseReference {
   @override
   Stream<List<Model>> pullAll<Data, Model extends Data, I extends Object>(
     Entity<Data, Model, I> entity,
-    Filter filter,
+    BaseFilter<Query> filter,
   ) {
     final Query query = filter.accept(Query(_refOf(entity)));
     return _onValueOf(query.query).map((snapshot) {
@@ -207,7 +174,14 @@ class Reference implements BaseReference {
         for (fd.DataSnapshot child in snapshot.children)
           _id<I>(child.key as String): child.value as Object,
       };
-    }).map((values) => _parseModels(entity, values));
+    }).map((values) {
+      if (values.isEmpty) return [];
+      return values.entries.map((entry) {
+        final I key = entry.key;
+        final Map value = entry.value as Map;
+        return entity.fromJson(key, value);
+      }).toList();
+    });
   }
 
   @override
@@ -233,8 +207,7 @@ class Reference implements BaseReference {
       models.add(model);
     }
     await _refOf(entity).update({
-      for (Model model in models)
-        _key(entity.identify(model)): entity.toJson(model),
+      for (Model model in models) _key(entity.identify(model)): entity.toJson(model),
     });
     return models;
   }
@@ -259,9 +232,7 @@ class Reference implements BaseReference {
   }
 
   @override
-  Future<void> purge<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
-  ) {
+  Future<void> purge<Data, Model extends Data, I extends Object>(Entity<Data, Model, I> entity) {
     return _refOf(entity).remove();
   }
 
@@ -281,9 +252,9 @@ class Reference implements BaseReference {
         'shallow': 'true',
       },
     ));
-    return switch (json.decode(response.body)) {
-      Map<String, Object?> data => data.keys.map(_id<I>).toList(),
-      _ => [],
-    };
+    final Map? data = json.decode(response.body) as Map?;
+    if (data == null) return [];
+    return data.keys.map((key) => _id<I>(key as String)).toList();
   }
 }
+

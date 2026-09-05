@@ -11,6 +11,7 @@ workspace:
   - dorm_framework
   - dorm_bloc_database
   - dorm_firebase_database
+  - dorm_mysql_database
   - dorm_meta
 
 dev_dependencies:

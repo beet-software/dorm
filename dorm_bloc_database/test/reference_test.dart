@@ -43,10 +43,10 @@ class ItemEntity implements Entity<ItemData, Item, String> {
 }
 
 void main() {
-  late Repository<ItemData, Item, String> repository;
+  late Repository<ItemData, Item, String, Query> repository;
 
   setUp(() {
-    final DatabaseEntity<ItemData, Item, String> entity = DatabaseEntity(
+    final DatabaseEntity<ItemData, Item, String, Query> entity = DatabaseEntity(
       ItemEntity(),
       engine: Engine(),
     );

@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:dorm_framework/dorm_framework.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
+import 'package:dorm_bloc_database/dorm_bloc_database.dart';
 
 part 'models.dorm.dart';
 
@@ -56,8 +57,13 @@ abstract class _Product {
   String get _qName;
 }
 
-@Model(name: 'Carts', as: #carts, uidType: UidType.sameAs(_User))
+@Model(
+  name: 'Carts',
+  as: #carts,
+  primaryKeyGenerator: _Cart._generate,
+)
 abstract class _Cart {
+  static String _generate(_Cart cart, String id) => cart.userId;
   @Field(name: 'timestamp')
   DateTime get timestamp;
 

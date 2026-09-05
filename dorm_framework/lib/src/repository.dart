@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'package:dorm_framework/dorm_framework.dart';
+
 import 'dependency.dart';
 import 'entity.dart';
 import 'filter.dart';
@@ -27,7 +29,7 @@ abstract class SingleReadOperation<Model, I extends Object> {
   /// This method should retrieve *only* the accessed model:
   ///
   /// ```dart
-  /// const Object id = '7a3ee40b4a6b';
+  /// const String id = '7a3ee40b4a6b';
   ///
   /// // DON'T: Downloads all the models to the client
   /// final List<Model> models = await peekAll();
@@ -40,7 +42,7 @@ abstract class SingleReadOperation<Model, I extends Object> {
   /// If there is no model with the given [id], this method will return null.
   Future<Model?> peek(I id);
 
-  /// Listens for a model in this table, given íts [id].
+  /// Listens for a model in this table, given Ã­ts [id].
   ///
   /// As soon as this stream is listened, an event should be emitted containing
   /// the actual state of the model. Subsequent events should be emitted
@@ -51,11 +53,13 @@ abstract class SingleReadOperation<Model, I extends Object> {
 }
 
 /// Represents reading multiple models from the database engine.
-abstract class BatchReadOperation<Model> {
+abstract class BatchReadOperation<Model, Q extends BaseQuery<Q>> {
   /// Selects all the models matching [filter] in this table.
   ///
   /// If there are no models, this method will return an empty list.
-  Future<List<Model>> peekAll([Filter filter = const Filter.empty()]);
+  Future<List<Model>> peekAll([
+    BaseFilter<Q> filter = const BaseFilter.empty(),
+  ]);
 
   /// Listens for all the models in this table matching [filter] and their changes.
   ///
@@ -64,12 +68,14 @@ abstract class BatchReadOperation<Model> {
   /// whenever a change occurs on the query.
   ///
   /// If there are no models, this method will yield an empty list.
-  Stream<List<Model>> pullAll([Filter filter = const Filter.empty()]);
+  Stream<List<Model>> pullAll([
+    BaseFilter<Q> filter = const BaseFilter.empty(),
+  ]);
 }
 
 /// Represents the operations available for a [Model] in a database.
-abstract class ModelRepository<Model, I extends Object>
-    implements Readable<Model, I> {
+abstract class ModelRepository<Model, I extends Object, Q extends BaseQuery<Q>>
+    implements Readable<Model, I, Q> {
   /// Selects all the ids from the models of this table.
   ///
   /// This method should retrieve *only* the ids:
@@ -77,10 +83,10 @@ abstract class ModelRepository<Model, I extends Object>
   /// ```dart
   /// // DON'T: Downloads all the models (including attributes) to the client
   /// final List<Model> models = await peekAll();
-  /// final List<Object> ids = models.map((model) => model.id).toList();
+  /// final List<String> ids = models.map((model) => model.id).toList();
   ///
   /// // DO: Download only the ids of the models (does not include attributes)
-  /// final List<Object> ids = await peekAllKeys();
+  /// final List<String> ids = await peekAllKeys();
   /// ```
   ///
   /// If there are no models, this method will return an empty list.
@@ -96,7 +102,7 @@ abstract class ModelRepository<Model, I extends Object>
   /// This method should be atomic:
   ///
   /// ```dart
-  /// const List<Object> ids = ['f0b44d79a39c', '9d223f993f08', 'e7b608870ad0'];
+  /// const List<String> ids = ['f0b44d79a39c', '9d223f993f08', 'e7b608870ad0'];
   ///
   /// // DON'T: Calls the database engine 3 times, sequentially
   /// for (String id in ids) await pop(id);
@@ -131,7 +137,7 @@ abstract class ModelRepository<Model, I extends Object>
   ///
   /// If there are no rows matching [filter] in the table, this method will do
   /// nothing.
-  Future<void> popAll(Filter filter);
+  Future<void> popAll(BaseFilter<Q> filter);
 
   /// Inserts a [model] into its respective table on the database engine.
   ///
@@ -171,7 +177,7 @@ abstract class ModelRepository<Model, I extends Object>
   /// This method should be atomic:
   ///
   /// ```dart
-  /// const Object id = '7a3ee40b4a6b';
+  /// const String id = '7a3ee40b4a6b';
   /// Model? _update(Model? model) { /* ... */ }
   ///
   /// // DON'T: Calls the database engine twice
@@ -196,106 +202,113 @@ abstract class ModelRepository<Model, I extends Object>
 }
 
 /// Represents creating models into the database engine.
-abstract class DataRepository<Data, Model extends Data, I extends Object>
-    implements ModelRepository<Model, I> {
+abstract class DataRepository<Data, Model extends Data, I extends Object, Q extends BaseQuery<Q>>
+    implements ModelRepository<Model, I, Q> {
   /// Convert a [data] into a model and inserts it into its respective table on
   /// the database engine.
   ///
-  /// The id of the model is assigned by the database engine according to its
-  /// configured identification strategy. If there is a model in the table
-  /// with the same id as the one being created, it is overwritten.
+  /// The id of the model may be defined by [dependency], through its
+  /// [Dependency.key] method. If there is a model in the table with the same id
+  /// as the one being created, the existing model will be overwritten.
   Future<Model> put(Dependency<Data> dependency, Data data);
 
   /// Convert a sequence of [datum] into models and inserts them into their
   /// respective table on the database engine.
   ///
-  /// The ids of the models are assigned by the database engine according to its
-  /// configured identification strategy. If there are any models in the table
-  /// with the same ids as any of the ones being inserted, they are overwritten.
+  /// /// The id of the model may be defined by [dependency], through its
+  /// [Dependency.key] method. If there are any models in the table with the
+  /// same id as any of the ones being inserted, the existing models will be
+  /// overwritten.
   Future<List<Model>> putAll(Dependency<Data> dependency, List<Data> datum);
 }
 
 /// Represents the controller of the underlying database engine.
-class Repository<Data, Model extends Data, I extends Object>
-    implements DataRepository<Data, Model, I> {
-  final BaseReference _reference;
+class Repository<Data, Model extends Data, I extends Object, Q extends BaseQuery<Q>>
+    implements DataRepository<Data, Model, I, Q> {
+  final BaseReference<Q> _reference;
   final Entity<Data, Model, I> _entity;
 
   /// Creates a repository by its attributes.
   const Repository({
-    required BaseReference reference,
-    required BaseRelationship relationship,
+    required BaseReference<Q> reference,
+    required BaseRelationship<Q> relationship,
     required Entity<Data, Model, I> entity,
   })  : _reference = reference,
         _entity = entity;
 
   @override
   Future<Model?> peek(I id) {
-    return _reference.peek(_entity, id);
+    return _reference.peek<Data, Model, I>(_entity, id);
   }
 
   @override
-  Future<List<Model>> peekAll([Filter filter = const Filter.empty()]) {
-    return _reference.peekAll(_entity, filter);
+  Future<List<Model>> peekAll([
+    BaseFilter<Q> filter = const BaseFilter.empty(),
+  ]) {
+    return _reference.peekAll<Data, Model, I>(_entity, filter);
   }
 
   @override
   Future<List<I>> peekAllKeys() {
-    return _reference.peekAllKeys(_entity);
+    return _reference.peekAllKeys<Data, Model, I>(_entity);
   }
 
   @override
   Future<void> pop(I id) async {
-    return _reference.pop(_entity, id);
+    return _reference.pop<Data, Model, I>(_entity, id);
   }
 
   @override
   Future<void> popKeys(Iterable<I> ids) {
-    return _reference.popKeys(_entity, ids);
+    return _reference.popKeys<Data, Model, I>(_entity, ids);
   }
 
   @override
-  Future<void> popAll(Filter filter) {
-    return _reference.popAll(_entity, filter);
+  Future<void> popAll(BaseFilter<Q> filter) {
+    return _reference.popAll<Data, Model, I>(_entity, filter);
   }
 
   @override
   Stream<Model?> pull(I id) {
-    return _reference.pull(_entity, id);
+    return _reference.pull<Data, Model, I>(_entity, id);
   }
 
   @override
-  Stream<List<Model>> pullAll([Filter filter = const Filter.empty()]) {
-    return _reference.pullAll(_entity, filter);
+  Stream<List<Model>> pullAll([
+    BaseFilter<Q> filter = const BaseFilter.empty(),
+  ]) {
+    return _reference.pullAll<Data, Model, I>(_entity, filter);
   }
 
   @override
   Future<Model> put(Dependency<Data> dependency, Data data) async {
-    return _reference.put(_entity, dependency, data);
+    return _reference.put<Data, Model, I>(_entity, dependency, data);
   }
 
   @override
   Future<List<Model>> putAll(Dependency<Data> dependency, List<Data> datum) {
-    return _reference.putAll(_entity, dependency, datum);
+    return _reference.putAll<Data, Model, I>(_entity, dependency, datum);
   }
 
   @override
   Future<void> push(Model model) async {
-    return _reference.push(_entity, model);
+    return _reference.push<Data, Model, I>(_entity, model);
   }
 
   @override
   Future<void> pushAll(List<Model> models) async {
-    return _reference.pushAll(_entity, models);
+    return _reference.pushAll<Data, Model, I>(_entity, models);
   }
 
   @override
   Future<void> patch(I id, Model? Function(Model?) update) {
-    return _reference.patch(_entity, id, update);
+    return _reference.patch<Data, Model, I>(_entity, id, update);
   }
 
   @override
   Future<void> purge() {
-    return _reference.purge(_entity);
+    return _reference.purge<Data, Model, I>(_entity);
   }
 }
+
+

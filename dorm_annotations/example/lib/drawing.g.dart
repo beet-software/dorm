@@ -46,11 +46,11 @@ Drawing _$DrawingFromJson(Map json) {
 }
 
 Map<String, dynamic> _$DrawingToJson(Drawing instance) => <String, dynamic>{
-      'cor': instance.color,
-      'tipo': _$ShapeTypeEnumMap[instance.type]!,
-      'formato': instance.shape.toJson(),
-      '_id': instance.id,
-    };
+  'cor': instance.color,
+  'tipo': _$ShapeTypeEnumMap[instance.type]!,
+  'formato': instance.shape.toJson(),
+  '_id': instance.id,
+};
 
 Rectangle _$RectangleFromJson(Map json) {
   $checkKeys(
@@ -65,9 +65,9 @@ Rectangle _$RectangleFromJson(Map json) {
 }
 
 Map<String, dynamic> _$RectangleToJson(Rectangle instance) => <String, dynamic>{
-      'largura': instance.width,
-      'altura': instance.height,
-    };
+  'largura': instance.width,
+  'altura': instance.height,
+};
 
 Circle _$CircleFromJson(Map json) {
   $checkKeys(
@@ -75,11 +75,9 @@ Circle _$CircleFromJson(Map json) {
     requiredKeys: const ['raio'],
     disallowNullValues: const ['raio'],
   );
-  return Circle(
-    radius: (json['raio'] as num).toDouble(),
-  );
+  return Circle(radius: (json['raio'] as num).toDouble());
 }
 
 Map<String, dynamic> _$CircleToJson(Circle instance) => <String, dynamic>{
-      'raio': instance.radius,
-    };
+  'raio': instance.radius,
+};

@@ -149,7 +149,7 @@ class UserEntity implements Entity<UserData, User, String> {
     User model,
     UserData data,
   ) =>
-      model.copyWith(data);
+      model.updateWith(data);
 
   @override
   User fromJson(
@@ -169,7 +169,7 @@ class UserEntity implements Entity<UserData, User, String> {
 }
 
 extension UserProperties on User {
-  User copyWith(UserData data) {
+  User updateWith(UserData data) {
     return User(
       id: id,
       username: data.username,
@@ -285,7 +285,7 @@ class ProductEntity implements Entity<ProductData, Product, String> {
     Product model,
     ProductData data,
   ) =>
-      model.copyWith(data);
+      model.updateWith(data);
 
   @override
   Product fromJson(
@@ -305,7 +305,7 @@ class ProductEntity implements Entity<ProductData, Product, String> {
 }
 
 extension ProductProperties on Product {
-  Product copyWith(ProductData data) {
+  Product updateWith(ProductData data) {
     return Product(
       id: id,
       name: data.name,
@@ -313,6 +313,28 @@ extension ProductProperties on Product {
       price: data.price,
     );
   }
+}
+
+class _$Cart implements _Cart {
+  factory _$Cart.fromData(
+    CartDependency dependency,
+    CartData data,
+  ) =>
+      _$Cart(
+        timestamp: data.timestamp,
+        userId: dependency.userId,
+      );
+
+  const _$Cart({
+    required this.timestamp,
+    required this.userId,
+  });
+
+  @override
+  final DateTime timestamp;
+
+  @override
+  final String userId;
 }
 
 @JsonSerializable(
@@ -394,7 +416,13 @@ class CartEntity implements Entity<CartData, Cart, String> {
     CartData data,
   ) {
     return Cart(
-      id: dependency.userId,
+      id: _Cart._generate(
+        _$Cart.fromData(
+          dependency,
+          data,
+        ),
+        id,
+      ),
       timestamp: data.timestamp,
       userId: dependency.userId,
     );
@@ -405,7 +433,7 @@ class CartEntity implements Entity<CartData, Cart, String> {
     Cart model,
     CartData data,
   ) =>
-      model.copyWith(data);
+      model.updateWith(data);
 
   @override
   Cart fromJson(
@@ -425,7 +453,7 @@ class CartEntity implements Entity<CartData, Cart, String> {
 }
 
 extension CartProperties on Cart {
-  Cart copyWith(CartData data) {
+  Cart updateWith(CartData data) {
     return Cart(
       id: id,
       timestamp: data.timestamp,
@@ -542,7 +570,7 @@ class CartItemEntity implements Entity<CartItemData, CartItem, String> {
     CartItem model,
     CartItemData data,
   ) =>
-      model.copyWith(data);
+      model.updateWith(data);
 
   @override
   CartItem fromJson(
@@ -562,7 +590,7 @@ class CartItemEntity implements Entity<CartItemData, CartItem, String> {
 }
 
 extension CartItemProperties on CartItem {
-  CartItem copyWith(CartItemData data) {
+  CartItem updateWith(CartItemData data) {
     return CartItem(
       id: id,
       amount: data.amount,
@@ -746,7 +774,7 @@ class ReviewEntity implements Entity<ReviewData, Review, String> {
     Review model,
     ReviewData data,
   ) =>
-      model.copyWith(data);
+      model.updateWith(data);
 
   @override
   Review fromJson(
@@ -766,7 +794,7 @@ class ReviewEntity implements Entity<ReviewData, Review, String> {
 }
 
 extension ReviewProperties on Review {
-  Review copyWith(ReviewData data) {
+  Review updateWith(ReviewData data) {
     return Review(
       id: id,
       text: data.text,
@@ -877,30 +905,32 @@ class UserReviewContent implements ReviewContent, _UserReviewContent {
 class Dorm {
   const Dorm(this._engine);
 
-  final BaseEngine _engine;
+  final BaseEngine<Query> _engine;
 
-  DatabaseEntity<UserData, User, String> get users => DatabaseEntity(
+  DatabaseEntity<UserData, User, String, Query> get users => DatabaseEntity(
         const UserEntity(),
         engine: _engine,
       );
 
-  DatabaseEntity<ProductData, Product, String> get products => DatabaseEntity(
+  DatabaseEntity<ProductData, Product, String, Query> get products =>
+      DatabaseEntity(
         const ProductEntity(),
         engine: _engine,
       );
 
-  DatabaseEntity<CartData, Cart, String> get carts => DatabaseEntity(
+  DatabaseEntity<CartData, Cart, String, Query> get carts => DatabaseEntity(
         const CartEntity(),
         engine: _engine,
       );
 
-  DatabaseEntity<CartItemData, CartItem, String> get cartItems =>
+  DatabaseEntity<CartItemData, CartItem, String, Query> get cartItems =>
       DatabaseEntity(
         const CartItemEntity(),
         engine: _engine,
       );
 
-  DatabaseEntity<ReviewData, Review, String> get reviews => DatabaseEntity(
+  DatabaseEntity<ReviewData, Review, String, Query> get reviews =>
+      DatabaseEntity(
         const ReviewEntity(),
         engine: _engine,
       );

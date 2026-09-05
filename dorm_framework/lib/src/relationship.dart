@@ -14,8 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import 'filter.dart';
-import 'repository.dart';
+import 'package:dorm_framework/dorm_framework.dart';
 
 class Join<LeftModel, RightModel> {
   final LeftModel left;
@@ -35,48 +34,46 @@ class Join<LeftModel, RightModel> {
   int get hashCode => left.hashCode ^ right.hashCode;
 }
 
-/// A type that can evaluate [SingleReadModel] given an identifier and a list of
+/// A type that can evaluate [SingleReadModel] given a [String] and a list of
 /// [BatchReadModel]s given a [Filter].
-abstract class Readable2<SingleReadModel, I extends Object, BatchReadModel>
+abstract class Readable2<SingleReadModel, I extends Object, BatchReadModel,
+        Q extends BaseQuery<Q>>
     implements
         SingleReadOperation<SingleReadModel, I>,
-        BatchReadOperation<BatchReadModel> {}
+        BatchReadOperation<BatchReadModel, Q> {}
 
-/// A type that can evaluate [Model] given an identifier and a list of [Model]s
+/// A type that can evaluate [Model] given a [String] and a list of [Model]s
 /// given a [Filter].
 ///
 /// This is a special case of [Readable2].
-typedef Readable<Model, I extends Object> = Readable2<Model, I, Model>;
+typedef Readable<Model, I extends Object, Q extends BaseQuery<Q>> = Readable2<Model, I, Model, Q>;
 
-/// A type that can evaluate a [Join] between [L] and [SingleR] given an
-/// identifier and a list of [Join]s between [L] and [BatchR] given a [Filter].
-typedef Association2<L, I extends Object, SingleR, BatchR>
-    = Readable2<Join<L, SingleR>, I, Join<L, BatchR>>;
+/// A type that can evaluate a [Join] between [L] and [SingleR] given a
+/// [String] and a list of [Join]s between [L] and [BatchR] given a [Filter].
+typedef Association2<L, I extends Object, SingleR, BatchR, Q extends BaseQuery<Q>>
+    = Readable2<Join<L, SingleR>, I, Join<L, BatchR>, Q>;
 
-/// A type that can evaluate *V* given an identifier and to a list of *V* given a
+/// A type that can evaluate *V* given a [String] and to a list of *V* given a
 /// [Filter], where *V* is a [Join] between [L] and [R].
 ///
 /// This is a special case of [Association2].
-typedef Association<L, I extends Object, R> = Association2<L, I, R, R>;
+typedef Association<L, I extends Object, R, Q extends BaseQuery<Q>> = Association2<L, I, R, R, Q>;
 
 /// An association that evaluates joins between [L] to [R]?.
-typedef OneToOneAssociation<L, I extends Object, R> = Association<L, I, R?>;
+typedef OneToOneAssociation<L, I extends Object, R, Q extends BaseQuery<Q>> = Association<L, I, R?, Q>;
 
 /// An association that evaluates joins between [L] and a list of [R]s.
-typedef OneToManyAssociation<L, I extends Object, R>
-    = Association<L, I, List<R>>;
+typedef OneToManyAssociation<L, I extends Object, R, Q extends BaseQuery<Q>> = Association<L, I, List<R>, Q>;
 
-/// An association that evaluates a join between [R] and [L] given an identifier
+/// An association that evaluates a join between [R] and [L] given a [String]
 /// and joins between [R] and a list of [L] given a [Filter].
-typedef ManyToOneAssociation<L, I extends Object, R, J extends Object>
-    = Association2<R, I, L, List<L>>;
+typedef ManyToOneAssociation<L, I extends Object, R, J extends Object, Q extends BaseQuery<Q>> = Association2<R, I, L, List<L>, Q>;
 
 /// An association that evaluates joins between [M] and a tuple of [L] and [R].
-typedef ManyToManyAssociation<M, I extends Object, L, R>
-    = Association<M, I, (L?, R?)>;
+typedef ManyToManyAssociation<M, I extends Object, L, R, Q extends BaseQuery<Q>> = Association<M, I, (L?, R?), Q>;
 
 /// Declares associations between any two models.
-abstract class BaseRelationship {
+abstract class BaseRelationship<Q extends BaseQuery<Q>> {
   /// Represents an one-to-one operation.
   ///
   /// Let's suppose you have two models: `School` and `Principal`. Since a
@@ -95,10 +92,9 @@ abstract class BaseRelationship {
   /// final Stream<List<Join<School, Principal?>>> result = association
   ///     .pullAll(const Filter.value(true, key: 'active'));
   /// ```
-  OneToOneAssociation<L, I, R>
-      oneToOne<L, I extends Object, R, J extends Object>(
-    Readable<L, I> left,
-    Readable<R, J> right,
+  OneToOneAssociation<L, I, R, Q> oneToOne<L, I extends Object, R, J extends Object>(
+    Readable<L, I, Q> left,
+    Readable<R, J, Q> right,
     J Function(L) on,
   );
 
@@ -120,11 +116,10 @@ abstract class BaseRelationship {
   /// final Stream<List<Join<School, List<Student>>>> result = association
   ///     .pullAll(const Filter.value(true, key: 'active'));
   /// ```
-  OneToManyAssociation<L, I, R>
-      oneToMany<L, I extends Object, R, J extends Object>(
-    Readable<L, I> left,
-    Readable<R, J> right,
-    Filter Function(L) on,
+  OneToManyAssociation<L, I, R, Q> oneToMany<L, I extends Object, R, J extends Object>(
+    Readable<L, I, Q> left,
+    Readable<R, J, Q> right,
+    BaseFilter<Q> Function(L) on,
   );
 
   /// Represents a many-to-one operation.
@@ -148,10 +143,9 @@ abstract class BaseRelationship {
   /// final Stream<List<Join<School, List<Student>>>> result = association
   ///     .pullAll(Filter.date(DateTime(2018), key: 'birth-date', unit: DateFilterUnit.year));
   /// ```
-  ManyToOneAssociation<L, I, R, J>
-      manyToOne<L, I extends Object, R, J extends Object>(
-    Readable<L, I> left,
-    Readable<R, J> right,
+  ManyToOneAssociation<L, I, R, J, Q> manyToOne<L, I extends Object, R, J extends Object>(
+    Readable<L, I, Q> left,
+    Readable<R, J, Q> right,
     J Function(L) on,
   );
 
@@ -177,26 +171,25 @@ abstract class BaseRelationship {
   /// final Stream<List<Join<Teaching, (School?, Student?)>>> result = association
   ///     .pullAll(Filter.value(true, key: 'active'));
   /// ```
-  ManyToManyAssociation<M, I, L, R>
-      manyToMany<M, I extends Object, L, J extends Object, R, K extends Object>(
-    Readable<M, I> middle,
-    Readable<L, J> left,
+  ManyToManyAssociation<M, I, L, R, Q> manyToMany<M, I extends Object, L, J extends Object, R, K extends Object>(
+    Readable<M, I, Q> middle,
+    Readable<L, J, Q> left,
     J Function(M) onLeft,
-    Readable<R, K> right,
+    Readable<R, K, Q> right,
     K Function(M) onRight,
   );
 }
 
 /// Declares join-oriented reading and relationship assignment.
-class RelationshipDefinedAssociation<L, I extends Object, R>
-    implements Association<L, I, R> {
-  final BaseRelationship _relationship;
-  final Association<L, I, R> _association;
+class RelationshipDefinedAssociation<L, I extends Object, R, Q extends BaseQuery<Q>>
+    implements Association<L, I, R, Q> {
+  final BaseRelationship<Q> _relationship;
+  final Association<L, I, R, Q> _association;
 
   /// Creates a [RelationshipDefinedAssociation] by its attributes.
   const RelationshipDefinedAssociation(
     this._relationship, {
-    required Association<L, I, R> association,
+    required Association<L, I, R, Q> association,
   }) : _association = association;
 
   /// Evaluates the underlying association's [SingleReadOperation.peek] method.
@@ -208,7 +201,7 @@ class RelationshipDefinedAssociation<L, I extends Object, R>
   /// Evaluates the underlying association's [BatchReadOperation.peekAll] method.
   @override
   Future<List<Join<L, R>>> peekAll([
-    Filter filter = const Filter.empty(),
+    BaseFilter<Q> filter = const BaseFilter.empty(),
   ]) {
     return _association.peekAll(filter);
   }
@@ -222,16 +215,15 @@ class RelationshipDefinedAssociation<L, I extends Object, R>
   /// Evaluates the underlying association's [BatchReadOperation.pullAll] method.
   @override
   Stream<List<Join<L, R>>> pullAll([
-    Filter filter = const Filter.empty(),
+    BaseFilter<Q> filter = const BaseFilter.empty(),
   ]) {
     return _association.pullAll(filter);
   }
 
   /// Associates the underlying association with a [readable] using a 1:1
   /// relationship given by [on].
-  RelationshipDefinedAssociation<Join<L, R>, I, T?>
-      oneToOne<T, J extends Object>(
-    Readable<T, J> readable, {
+  RelationshipDefinedAssociation<Join<L, R>, I, T?, Q> oneToOne<T, J extends Object>(
+    Readable<T, J, Q> readable, {
     required J Function(Join<L, R>) on,
   }) {
     return RelationshipDefinedAssociation(
@@ -242,10 +234,9 @@ class RelationshipDefinedAssociation<L, I extends Object, R>
 
   /// Associates the underlying association with a [readable] using a 1:N
   /// relationship given by [on].
-  RelationshipDefinedAssociation<Join<L, R>, I, List<T>>
-      oneToMany<T, J extends Object>(
-    Readable<T, J> readable, {
-    required Filter Function(Join<L, R>) on,
+  RelationshipDefinedAssociation<Join<L, R>, I, List<T>, Q> oneToMany<T, J extends Object>(
+    Readable<T, J, Q> readable, {
+    required BaseFilter<Q> Function(Join<L, R>) on,
   }) {
     return RelationshipDefinedAssociation(
       _relationship,
@@ -255,8 +246,8 @@ class RelationshipDefinedAssociation<L, I extends Object, R>
 
   /// Associates the underlying association with a [readable] using a N:1
   /// relationship given by [on].
-  ManyToOneAssociation<Join<L, R>, I, T, J> manyToOne<T, J extends Object>(
-    Readable<T, J> readable, {
+  ManyToOneAssociation<Join<L, R>, I, T, J, Q> manyToOne<T, J extends Object>(
+    Readable<T, J, Q> readable, {
     required J Function(Join<L, R>) on,
   }) {
     return _relationship.manyToOne(this, readable, on);
@@ -264,21 +255,20 @@ class RelationshipDefinedAssociation<L, I extends Object, R>
 
   /// Associates the underlying association with a [readable] through [middle]
   /// using a M:N relationship given by [onJoin] and [on].
-  RelationshipDefinedAssociation<M, J, (Join<L, R>?, T?)>
-      manyToMany<M, J extends Object, T, K extends Object>({
-    required Readable<M, J> middle,
-    required I Function(M p1) on,
-    required Readable<T, K> readable,
-    required K Function(M p1) onJoin,
+  RelationshipDefinedAssociation<M, J, (Join<L, R>?, T?), Q> manyToMany<M, J extends Object, T, K extends Object>({
+    required Readable<M, J, Q> middle,
+    required J Function(M p1) onJoin,
+    required Readable<T, K, Q> readable,
+    required K Function(M p1) on,
   }) {
     return RelationshipDefinedAssociation(
       _relationship,
       association: _relationship.manyToMany(
         middle,
         this,
-        on,
-        readable,
         onJoin,
+        readable,
+        on,
       ),
     );
   }
@@ -305,9 +295,9 @@ class RelationshipDefinedAssociation<L, I extends Object, R>
 /// );
 /// relationship.oneToOne<R>(right, on);
 /// ```
-class ModelRelationship<L, I extends Object> {
-  final BaseRelationship relationship;
-  final Readable<L, I> left;
+class ModelRelationship<L, I extends Object, Q extends BaseQuery<Q>> {
+  final BaseRelationship<Q> relationship;
+  final Readable<L, I, Q> left;
 
   /// Creates a [ModelRelationship] from its attributes.
   const ModelRelationship({
@@ -332,8 +322,8 @@ class ModelRelationship<L, I extends Object> {
   /// final Stream<List<Join<School, Principal?>>> result = association
   ///     .pullAll(const Filter.value(true, key: 'active'));
   /// ```
-  RelationshipDefinedAssociation<L, I, R?> oneToOne<R, J extends Object>(
-    Readable<R, J> right, {
+  RelationshipDefinedAssociation<L, I, R?, Q> oneToOne<R, J extends Object>(
+    Readable<R, J, Q> right, {
     required J Function(L) on,
   }) {
     return RelationshipDefinedAssociation(
@@ -359,9 +349,9 @@ class ModelRelationship<L, I extends Object> {
   /// final Stream<List<Join<School, List<Student>>>> result = association
   ///     .pullAll(const Filter.value(true, key: 'active'));
   /// ```
-  RelationshipDefinedAssociation<L, I, List<R>> oneToMany<R, J extends Object>(
-    Readable<R, J> right, {
-    required Filter Function(L) on,
+  RelationshipDefinedAssociation<L, I, List<R>, Q> oneToMany<R, J extends Object>(
+    Readable<R, J, Q> right, {
+    required BaseFilter<Q> Function(L) on,
   }) {
     return RelationshipDefinedAssociation(
       relationship,
@@ -389,8 +379,8 @@ class ModelRelationship<L, I extends Object> {
   /// final Stream<List<Join<School, List<Student>>>> result = association
   ///     .pullAll(Filter.date(DateTime(2018), key: 'birth-date', unit: DateFilterUnit.year));
   /// ```
-  ManyToOneAssociation<L, I, R, J> manyToOne<R, J extends Object>(
-    Readable<R, J> right, {
+  ManyToOneAssociation<L, I, R, J, Q> manyToOne<R, J extends Object>(
+    Readable<R, J, Q> right, {
     required J Function(L) on,
   }) {
     return relationship.manyToOne(left, right, on);
@@ -417,11 +407,10 @@ class ModelRelationship<L, I extends Object> {
   /// final Stream<List<Join<Teaching, (School?, Student?)>>> result = association
   ///     .pullAll(Filter.value(true, key: 'active'));
   /// ```
-  RelationshipDefinedAssociation<L, I, (RL?, RR?)>
-      manyToMany<RL, J extends Object, RR, K extends Object>({
-    required Readable<RL, J> left,
+  RelationshipDefinedAssociation<L, I, (RL?, RR?), Q> manyToMany<RL, J extends Object, RR, K extends Object>({
+    required Readable<RL, J, Q> left,
     required J Function(L) onLeft,
-    required Readable<RR, K> right,
+    required Readable<RR, K, Q> right,
     required K Function(L) onRight,
   }) {
     return RelationshipDefinedAssociation(
@@ -436,3 +425,4 @@ class ModelRelationship<L, I extends Object> {
     );
   }
 }
+

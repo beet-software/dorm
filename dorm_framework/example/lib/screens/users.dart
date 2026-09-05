@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:dorm_framework/dorm_framework.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
+import 'package:dorm_bloc_database/dorm_bloc_database.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';

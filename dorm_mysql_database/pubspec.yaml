@@ -1,0 +1,20 @@
+name: dorm_mysql_database
+version: 1.0.0-alpha.5
+resolution: workspace
+description: A MySQL database engine for dORM.
+homepage: https://github.com/beet-software/dorm/tree/main/dorm_mysql_database
+repository: https://github.com/beet-software/dorm.git
+environment:
+  sdk: '>=3.11.5 <4.0.0'
+
+dependencies:
+  dorm_framework: ^1.0.0-alpha.3
+  mysql_client: ^0.0.27
+  dorm_annotations: ^1.0.0-alpha.5
+  dartx: ^1.2.0
+  analyzer: ^14.3.0
+  uuid: ^4.6.0
+dev_dependencies:
+  test: ^1.32.0
+  lints: ^5.0.0
+  dotenv: ^4.2.0

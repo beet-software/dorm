@@ -122,17 +122,4 @@ extension FieldFiltering on Map<String, FieldOrmNode> {
   }
 }
 
-class $CustomUidValue implements CustomUidValue {
-  final ConstantReader reader;
 
-  const $CustomUidValue(this.reader);
-
-  @override
-  T when<T>({
-    required T Function() caseSimple,
-    required T Function() caseComposite,
-    required T Function(Object id) caseValue,
-  }) {
-    throw UnimplementedError();
-  }
-}

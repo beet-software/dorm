@@ -338,53 +338,23 @@ abstract class _Healing implements _Action {
 
 ### Unique identification
 
-In the context of unique identification types for models, there are four types: simple, composite,
-same-as, and custom. These types determine how the unique identifier (id) of a model is defined and
-generated:
-
-- Simple *(default)*: generates a universally unique identifier as the id for the model. They are
-  highly likely to be unique across different systems. This type of UID is suitable when a globally
-  unique identifier is required for each instance of the model.
-- Composite: creates a string by joining all foreign keys of the model with a given separator and
-  appending a universally unique identifier to it. This type is particularly useful when users
-  frequently query models by their ids and want to include related foreign keys in the id for easier
-  referencing. The resulting id can be used to identify a specific instance of the model and
-  maintain a relationship with its associated foreign keys.
-- Same-as: receives a model class type and creates the same id as the referenced model. This type is
-  ideal for establishing one-to-one relationships between models where both models share the same
-  unique identifier. When two models have a same-as, it means they are linked by the same id,
-  allowing for efficient retrieval and synchronization of related data.
-- Custom: is a function that receives a model class and returns a string as the id. This type allows
-  users to customize the generation of the model's id based on their specific requirements. The
-  function can incorporate any logic or algorithm to generate a unique identifier based on the
-  model's attributes or external factors. This type is useful when users need fine-grained control
-  over how the id is generated, allowing for unique identification according to their own criteria.
-
-You can specify the unique identification of a model through `UidType`:
+The default identifier type is `String`. A custom primary-key generator receives the generated
+model and the default `String` id, and returns the id that should be persisted:
 
 ```dart
 import 'package:dorm_annotations/dorm_annotations.dart';
 
-@Model(name: 'country', as: #countries, uidType: UidType.simple())
+@Model(name: 'country', as: #countries)
 abstract class _Country {}
 
-@Model(name: 'state', as: #states, uidType: UidType.composite())
-abstract class _State {}
+@Model(name: 'capital', as: #capitals, primaryKeyGenerator: _Capital.generateId)
+abstract class _Capital {
+  static String generateId(_Capital model, String id) => model.countryId;
 
-@Model(name: 'capital', as: #capitals, uidType: UidType.sameAs(_Country))
-abstract class _Capital {}
-
-CustomUidValue _identifyCitizen(Object data) {
-  data as _Citizen;
-  if (data.isForeigner) {
-    return CustomUidValue.value(data.visaCode);
-  }
-  if (data.socialSecurity != null) {
-    return CustomUidValue.value(data.socialSecurity);
-  }
-  return const CustomUidValue.simple(); // or const CustomUidValue.composite();
+  @ForeignField(name: 'country-id', referTo: _Country)
+  String get countryId;
 }
-
-@Model(name: 'citizen', as: #citizens, uidType: UidType.custom(_identifyCitizen))
-abstract class _Citizen {}
 ```
+
+The generator validates the callback signature when it compiles the generated source. Other ID
+types can be declared through `idType`; each database engine decides which ID types it supports.

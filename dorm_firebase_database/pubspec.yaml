@@ -5,18 +5,21 @@ description: A firebase_database database engine for dORM.
 homepage: https://github.com/beet-software/dorm/tree/main/dorm_firebase_database
 repository: https://github.com/beet-software/dorm.git
 environment:
-  sdk: '>=3.5.0 <4.0.0'
+  sdk: '>=3.11.5 <4.0.0'
 false_secrets:
   - example/lib/main.dart
 
 dependencies:
   flutter:
     sdk: flutter
-  http: ^1.2.2
-  firebase_auth: ^4.4.0
-  firebase_core: ^2.9.0
-  firebase_database: ^10.1.0
+  http: ^1.6.0
+  firebase_auth: ^6.6.1
+  firebase_core: ^4.14.0
+  firebase_database: ^12.5.0
   dorm_framework: ^1.0.0-alpha.3
   rxdart: ^0.28.0
 dev_dependencies:
   lints: ^5.0.0
+
+dependency_overrides:
+  meta: 1.17.0

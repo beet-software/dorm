@@ -574,64 +574,22 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
     required super.naming,
   });
 
-  cb.Expression _uidTypeExpressionOf(UidType value) {
-    return value.when(
-      caseSimple: () => expressionOf('id'),
-      caseComposite: () => _compositeIdExpression,
-      caseSameAs: (type) {
-        type as $Type;
-        for (MapEntry<String, FieldOrmNode> entry
-            in fields.where((field) => field.isForeign).entries) {
-          final $Type currentType =
-              (entry.value.annotation as ForeignField).referTo as $Type;
-          if (currentType.name != type.name) continue;
-          return expressionOf('dependency').property(entry.key);
-        }
-        throw StateError('invalid reference on UidType.sameAs: ${type.name}');
-      },
-      caseCustom: (builder) {
-        final $CustomUidValue value = builder(0) as $CustomUidValue;
-        final String name = value.reader.functionName;
-        return cb.InvokeExpression.newOf(cb.Reference(name), [
-          cb.InvokeExpression.newOf(
-            cb.Reference(naming.dummyName),
-            [
-              expressionOf('dependency'),
-              expressionOf('data'),
-            ],
-            {},
-            [],
-            'fromData',
-          ),
-        ]).property('when').call([], {
-          'caseSimple': expressionOf('() => id'),
-          'caseComposite': expressionOf('() => $_compositeIdCode'),
-          'caseValue': expressionOf('(value) => value as ${naming.idTypeName}'),
-        });
-      },
+  cb.Expression get _primaryKeyExpression {
+    final Function? generator = annotation.primaryKeyGenerator;
+    if (generator == null) return expressionOf('id');
+    return cb.InvokeExpression.newOf(
+      cb.Reference(generator(null, '')),
+      [
+        cb.InvokeExpression.newOf(
+          cb.Reference(naming.dummyName),
+          [expressionOf('dependency'), expressionOf('data')],
+          {},
+          [],
+          'fromData',
+        ),
+        expressionOf('id'),
+      ],
     );
-  }
-
-  cb.Expression get _compositeIdExpression {
-    final List<cb.Expression> ids = [
-      ...fields
-          .where((field) => field.isForeign)
-          .keys
-          .map((name) => expressionOf('dependency').property(name)),
-      expressionOf('id'),
-    ];
-    return cb.literalList(ids).property('join').call([cb.literalString('&')]);
-  }
-
-  String get _compositeIdCode {
-    final List<String> ids = [
-      ...fields
-          .where((field) => field.isForeign)
-          .keys
-          .map((name) => 'dependency.$name'),
-      'id',
-    ];
-    return '[${ids.join(', ')}].join(\'&\')';
   }
 
   cb.Spec get _dummyClass {
@@ -791,7 +749,7 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
           cb.Reference(naming.modelName),
           [],
           {
-            'id': _uidTypeExpressionOf(annotation.uidType),
+            'id': _primaryKeyExpression,
             ...Map.fromEntries(fields
                 .where((field) => field.isConcrete)
                 .entries
@@ -834,7 +792,7 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
         cb.Expression baseExpression = expressionOf('model');
         if (fields.where((field) => field.isNative).isNotEmpty) {
           baseExpression =
-              baseExpression.property('copyWith').call([expressionOf('data')]);
+              baseExpression.property('updateWith').call([expressionOf('data')]);
         }
         b.body = cb.ToCodeExpression(baseExpression);
       }));
@@ -896,7 +854,7 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
       b.on = cb.Reference(naming.modelName);
       b.methods.add(cb.Method((b) {
         b.returns = cb.Reference(naming.modelName);
-        b.name = 'copyWith';
+        b.name = 'updateWith';
         b.requiredParameters.add(cb.Parameter((b) {
           b.type = cb.Reference(naming.dataName);
           b.name = 'data';
@@ -935,12 +893,7 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
 
   @override
   void accept(cb.LibraryBuilder b) {
-    annotation.uidType.when(
-      caseSimple: () {},
-      caseComposite: () {},
-      caseSameAs: (_) {},
-      caseCustom: (_) => b.body.add(_dummyClass),
-    );
+    if (annotation.primaryKeyGenerator != null) b.body.add(_dummyClass);
     b.body.add(newClass(
       name: naming.dataName,
       spec: Spec(
@@ -1430,7 +1383,11 @@ class OrmGenerator extends Generator {
           b.name = 'Dorm';
           b.fields.add(cb.Field((b) {
             b.modifier = cb.FieldModifier.final$;
-            b.type = cb.Reference('BaseEngine', '$_dormUrl');
+            b.type = cb.TypeReference((b) {
+              b.symbol = 'BaseEngine';
+              b.url = '$_dormUrl';
+              b.types.add(cb.Reference('Query'));
+            });
             b.name = '_engine';
           }));
           b.constructors.add(cb.Constructor((b) {
@@ -1448,6 +1405,7 @@ class OrmGenerator extends Generator {
                 b.types.add(cb.Reference(naming.dataName));
                 b.types.add(cb.Reference(naming.modelName));
                 b.types.add(naming.idReference);
+                b.types.add(cb.Reference('Query'));
               });
               b.type = cb.MethodType.getter;
               b.lambda = true;
@@ -1478,3 +1436,4 @@ class OrmGenerator extends Generator {
     ).format(spec.accept(emitter).toString());
   }
 }
+

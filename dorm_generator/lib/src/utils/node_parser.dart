@@ -180,32 +180,16 @@ class DataParser extends ClassNodeParser<Data> {
 class ModelParser extends ClassNodeParser<Model> {
   const ModelParser();
 
-  UidType? _decodeUidType(ConstantReader reader) {
-    if (reader.isNull) return null;
-    final String? uidTypeName = reader.objectValue.type?.getDisplayString();
-    if (uidTypeName == null) return null;
-
-    switch (uidTypeName) {
-      case '_SimpleUidType':
-        return const UidType.simple();
-      case '_CompositeUidType':
-        return const UidType.composite();
-      case '_SameAsUidType':
-        final Type type = $Type(reader: reader.read('type'));
-        return UidType.sameAs(type);
-      case '_CustomUidType':
-        return UidType.custom((_) => $CustomUidValue(reader.read('builder')));
-    }
-    return null;
-  }
-
   @override
   Model _parse(ConstantReader reader) {
+    final ConstantReader primaryKeyReader = reader.read('primaryKeyGenerator');
     return Model(
       name: reader.read('name').stringValue,
       idType: $Type(reader: reader.read('idType')),
       as: $Symbol(reader: reader.read('as')),
-      uidType: _decodeUidType(reader.read('uidType')) ?? UidType.simple(),
+      primaryKeyGenerator: primaryKeyReader.isNull
+          ? null
+          : (_, __) => primaryKeyReader.functionName,
     );
   }
 
@@ -346,3 +330,6 @@ class PolymorphicFieldParser extends FieldNodeParser<PolymorphicField> {
     );
   }
 }
+
+
+

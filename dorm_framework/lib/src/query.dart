@@ -16,10 +16,14 @@
 
 import 'filter.dart';
 
+Q f<Q extends BaseQuery<Q>>(Q query) {
+  return query.whereValue('active', true).sorted('value');
+}
+
 /// Represents how to consider rows within a read or delete operation.
-abstract class BaseQuery<T> {
+abstract class BaseQuery<Q extends BaseQuery<Q>> {
   /// Includes rows where the value of its attribute [key] is equal to [value].
-  T whereValue(String key, Object? value);
+  Q whereValue(String key, Object? value);
 
   /// Includes rows where the value of its the attribute [key] is a String and
   /// starts with [prefix].
@@ -27,7 +31,7 @@ abstract class BaseQuery<T> {
   /// Note that this comparison is not guaranteed to be case-sensitive, so you
   /// should implement strategies to overcome this in engines that do not
   /// support it.
-  T whereText(String key, String prefix);
+  Q whereText(String key, String prefix);
 
   /// Includes rows where the value of its attribute [key] is a DateTime and has
   /// the same value as [date] comparing by [unit].
@@ -42,21 +46,21 @@ abstract class BaseQuery<T> {
   ///
   /// Some database engines may not have DateTime as a data type, so it's
   /// allowed to alternatively accept ISO-8601 formatted Strings.
-  T whereDate(String key, DateTime date, DateFilterUnit unit);
+  Q whereDate(String key, DateTime date, DateFilterUnit unit);
 
   /// Includes rows where the value of its attribute [key] is inside [range].
   ///
   /// [range] defines the [FilterRange.from] and [FilterRange.to] components,
   /// that can be used to delimit the comparison.
-  T whereRange<R>(String key, FilterRange<R> range);
+  Q whereRange<R>(String key, FilterRange<R> range);
 
   /// From previous queries, includes only a [count] number of the rows.
   ///
   /// If [count] is positive, only the first [count] rows are included.
   /// If [count] is negative, only the last abs([count]) rows are included.
   /// If [count] is zero, no row is filtered (all rows are included).
-  T limit(int count);
+  Q limit(int count);
 
   /// From previous queries, sorts the query by the field [key].
-  T sorted(String key);
+  Q sorted(String key);
 }

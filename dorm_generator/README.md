@@ -260,12 +260,16 @@ void main() async {
 
 ### Unique identification
 
+The default identifier type is `String`. Use `primaryKeyGenerator` to derive an identifier from the
+generated model; the callback receives the model and the default `String` id. The examples below
+show the supported callback shape.
+
 #### Simple
 
 If
 
 ```dart
-@Model(name: 'country', as: #countries, uidType: UidType.simple())
+@Model(name: 'country', as: #countries)
 abstract class _Country {
   @Field(name: 'name')
   String get name;
@@ -290,7 +294,7 @@ void main() async {
 If
 
 ```dart
-@Model(name: 'state', as: #states, uidType: UidType.composite())
+@Model(name: 'state', as: #states)
 abstract class _State {
   @Field(name: 'name')
   String get name;
@@ -318,8 +322,10 @@ void main() async {
 If
 
 ```dart
-@Model(name: 'capital', as: #capitals, uidType: UidType.sameAs(_Country))
+@Model(name: 'capital', as: #capitals, primaryKeyGenerator: _Capital.generateId)
 abstract class _Capital {
+  static String generateId(_Capital model, String id) => model.countryId;
+
   @Field(name: 'name')
   String get name;
 
@@ -346,18 +352,10 @@ void main() async {
 If
 
 ```dart
-CustomUidValue _identifyCitizen(Object data) {
-  data as _Citizen;
-  if (data.isForeigner) {
-    return CustomUidValue.value(data.visaCode!);
-  }
-  if (data.socialSecurity != null) {
-    return CustomUidValue.value(data.socialSecurity);
-  }
-  return const CustomUidValue.simple();
-}
+String _identifyCitizen(_Citizen data, String id) =>
+    data.visaCode ?? data.socialSecurity ?? id;
 
-@Model(name: 'citizen', as: #citizens, uidType: UidType.custom(_identifyCitizen))
+@Model(name: 'citizen', as: #citizens, primaryKeyGenerator: _identifyCitizen)
 abstract class _Citizen {
   @Field(name: 'name')
   String get name;
