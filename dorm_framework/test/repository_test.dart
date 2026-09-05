@@ -59,8 +59,8 @@ void main() {
 
   late MockBaseReference referenceMock;
   late MockBaseRelationship relationshipMock;
-  late MockEntity<ModelData, Model> entityMock;
-  late Repository<ModelData, Model> repository;
+  late MockEntity<ModelData, Model, String> entityMock;
+  late Repository<ModelData, Model, String> repository;
 
   setUp(() {
     referenceMock = MockBaseReference();
