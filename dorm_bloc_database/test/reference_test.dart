@@ -14,7 +14,7 @@ class Item extends ItemData {
   const Item({required this.id, required super.group});
 }
 
-class ItemEntity implements Entity<ItemData, Item> {
+class ItemEntity implements Entity<ItemData, Item, String> {
   @override
   String get tableName => 'items';
 
@@ -43,10 +43,10 @@ class ItemEntity implements Entity<ItemData, Item> {
 }
 
 void main() {
-  late Repository<ItemData, Item> repository;
+  late Repository<ItemData, Item, String> repository;
 
   setUp(() {
-    final DatabaseEntity<ItemData, Item> entity = DatabaseEntity(
+    final DatabaseEntity<ItemData, Item, String> entity = DatabaseEntity(
       ItemEntity(),
       engine: Engine(),
     );
