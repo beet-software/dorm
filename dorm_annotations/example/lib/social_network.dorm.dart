@@ -34,6 +34,7 @@ class UserData {
 }
 
 @JsonSerializable(anyMap: true, explicitToJson: true)
+@CopyWith(skipFields: true)
 class User extends UserData implements _User {
   factory User.fromJson(String id, Map json) =>
       _$UserFromJson({...json, '_id': id});
@@ -117,6 +118,7 @@ class PostData {
 }
 
 @JsonSerializable(anyMap: true, explicitToJson: true)
+@CopyWith(skipFields: true)
 class Post extends PostData implements _Post {
   factory Post.fromJson(String id, Map json) =>
       _$PostFromJson({...json, '_id': id});
@@ -203,6 +205,7 @@ class MessageData {
 }
 
 @JsonSerializable(anyMap: true, explicitToJson: true)
+@CopyWith(skipFields: true)
 class Message extends MessageData implements _Message {
   factory Message.fromJson(String id, Map json) =>
       _$MessageFromJson({...json, '_id': id});

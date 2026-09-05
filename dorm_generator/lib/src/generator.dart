@@ -32,6 +32,10 @@ final Uri _jsonAnnotationUrl = Uri(
   scheme: 'package',
   pathSegments: ['json_annotation', 'json_annotation.dart'],
 );
+final Uri _copyWithAnnotationUrl = Uri(
+  scheme: 'package',
+  pathSegments: ['copy_with_extension', 'copy_with_extension.dart'],
+);
 final Uri _dormUrl = Uri(
   scheme: 'package',
   pathSegments: ['dorm', 'dorm.dart'],
@@ -273,6 +277,13 @@ abstract class FieldedArgs<A, N> extends Args<A, FieldOrmNode, N> {
             if (polymorphicFields.isNotEmpty)
               'constructor': cb.literalString('_'),
           },
+        ));
+      }
+      if (spec.generatesCopyWith) {
+        b.annotations.add(cb.InvokeExpression.newOf(
+          cb.Reference('CopyWith', '$_copyWithAnnotationUrl'),
+          [],
+          {'skipFields': cb.literalTrue},
         ));
       }
       b.constructors.addAll([
@@ -574,6 +585,7 @@ class DataArgs extends FieldedArgs<Data, DataNaming> {
         includesQueryGetters: false,
         ignoreOverrideFor: {'toJson'},
         discriminatorSpec: null,
+        generatesCopyWith: false,
         shouldDeclareField: (field) => field.isNative,
       ),
     ));
@@ -918,6 +930,7 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
         includesQueryGetters: false,
         ignoreOverrideFor: {},
         discriminatorSpec: null,
+        generatesCopyWith: false,
         shouldDeclareField: (field) => field.isNative,
       ),
     ));
@@ -932,6 +945,7 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
         includesQueryGetters: true,
         ignoreOverrideFor: {},
         discriminatorSpec: null,
+        generatesCopyWith: true,
         shouldDeclareField: (field) => field.isForeign,
       ),
     ));
@@ -1052,6 +1066,7 @@ class PolymorphicModelArgs extends FieldedArgs<void, PolymorphicDataNaming> {
           cb.Reference(naming.tag.enumName),
           naming.enumFieldName,
         ),
+        generatesCopyWith: true,
         shouldDeclareField: (field) => field.isConcrete,
       ),
     ));
@@ -1067,6 +1082,7 @@ class Spec {
   final bool includesQueryGetters;
   final Set<String> ignoreOverrideFor;
   final (cb.Reference, String)? discriminatorSpec;
+  final bool generatesCopyWith;
   final bool Function(Field field) shouldDeclareField;
 
   const Spec({
@@ -1078,6 +1094,7 @@ class Spec {
     required this.includesQueryGetters,
     required this.ignoreOverrideFor,
     required this.discriminatorSpec,
+    required this.generatesCopyWith,
     required this.shouldDeclareField,
   });
 }

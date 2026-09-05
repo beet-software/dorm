@@ -89,6 +89,7 @@ class SchoolData {
 }
 
 @JsonSerializable(anyMap: true, explicitToJson: true)
+@CopyWith(skipFields: true)
 class School extends SchoolData implements _School {
   factory School.fromJson(String id, Map json) =>
       _$SchoolFromJson({...json, '_id': id});
@@ -175,6 +176,7 @@ class StudentData {
 }
 
 @JsonSerializable(anyMap: true, explicitToJson: true)
+@CopyWith(skipFields: true)
 class Student extends StudentData implements _Student {
   factory Student.fromJson(String id, Map json) =>
       _$StudentFromJson({...json, '_id': id});
@@ -270,6 +272,7 @@ class TeacherData {
 }
 
 @JsonSerializable(anyMap: true, explicitToJson: true)
+@CopyWith(skipFields: true)
 class Teacher extends TeacherData implements _Teacher {
   factory Teacher.fromJson(String id, Map json) =>
       _$TeacherFromJson({...json, '_id': id});
@@ -332,6 +335,7 @@ class HistoryData {
 }
 
 @JsonSerializable(anyMap: true, explicitToJson: true)
+@CopyWith(skipFields: true)
 class History extends HistoryData implements _History {
   factory History.fromJson(String id, Map json) =>
       _$HistoryFromJson({...json, '_id': id});
@@ -394,6 +398,7 @@ class TeachingData {
 }
 
 @JsonSerializable(anyMap: true, explicitToJson: true)
+@CopyWith(skipFields: true)
 class Teaching extends TeachingData implements _Teaching {
   factory Teaching.fromJson(String id, Map json) =>
       _$TeachingFromJson({...json, '_id': id});
@@ -491,6 +496,7 @@ class ClassData {
 }
 
 @JsonSerializable(anyMap: true, explicitToJson: true)
+@CopyWith(skipFields: true)
 class Class extends ClassData implements _Class {
   factory Class.fromJson(String id, Map json) =>
       _$ClassFromJson({...json, '_id': id});

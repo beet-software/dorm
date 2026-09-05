@@ -7,10 +7,7 @@ part of 'models.dart';
 // OrmGenerator
 // **************************************************************************
 
-@JsonSerializable(
-  anyMap: true,
-  explicitToJson: true,
-)
+@JsonSerializable(anyMap: true, explicitToJson: true)
 class Profile implements _Profile {
   factory Profile.fromJson(Map json) => _$ProfileFromJson(json);
 
@@ -21,19 +18,11 @@ class Profile implements _Profile {
   });
 
   @override
-  @JsonKey(
-    name: 'name',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: 'name', required: true, disallowNullValue: true)
   final String name;
 
   @override
-  @JsonKey(
-    name: 'birth-date',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: 'birth-date', required: true, disallowNullValue: true)
   final DateTime birthDate;
 
   @override
@@ -43,10 +32,7 @@ class Profile implements _Profile {
   Map<String, Object?> toJson() => _$ProfileToJson(this);
 }
 
-@JsonSerializable(
-  anyMap: true,
-  explicitToJson: true,
-)
+@JsonSerializable(anyMap: true, explicitToJson: true)
 class UserData {
   factory UserData.fromJson(Map json) => _$UserDataFromJson(json);
 
@@ -56,43 +42,23 @@ class UserData {
     required this.profile,
   });
 
-  @JsonKey(
-    name: 'username',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: 'username', required: true, disallowNullValue: true)
   final String username;
 
-  @JsonKey(
-    name: 'email',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: 'email', required: true, disallowNullValue: true)
   final String email;
 
-  @JsonKey(
-    name: 'profile',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: 'profile', required: true, disallowNullValue: true)
   final Profile profile;
 
   Map<String, Object?> toJson() => _$UserDataToJson(this);
 }
 
-@JsonSerializable(
-  anyMap: true,
-  explicitToJson: true,
-)
+@JsonSerializable(anyMap: true, explicitToJson: true)
+@CopyWith(skipFields: true)
 class User extends UserData implements _User {
-  factory User.fromJson(
-    String id,
-    Map json,
-  ) =>
-      _$UserFromJson({
-        ...json,
-        '_id': id,
-      });
+  factory User.fromJson(String id, Map json) =>
+      _$UserFromJson({...json, '_id': id});
 
   const User({
     required this.id,
@@ -101,11 +67,7 @@ class User extends UserData implements _User {
     required super.profile,
   });
 
-  @JsonKey(
-    name: '_id',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: '_id', required: true, disallowNullValue: true)
   final String id;
 
   @override
@@ -113,10 +75,7 @@ class User extends UserData implements _User {
 
   @override
   Map<String, Object?> toJson() {
-    return {
-      ..._$UserToJson(this)..remove('_id'),
-      '_q-username': _qUsername,
-    };
+    return {..._$UserToJson(this)..remove('_id'), '_q-username': _qUsername};
   }
 }
 
@@ -131,11 +90,7 @@ class UserEntity implements Entity<UserData, User, String> {
   final String tableName = 'Users';
 
   @override
-  User fromData(
-    UserDependency dependency,
-    String id,
-    UserData data,
-  ) {
+  User fromData(UserDependency dependency, String id, UserData data) {
     return User(
       id: id,
       username: data.username,
@@ -145,21 +100,10 @@ class UserEntity implements Entity<UserData, User, String> {
   }
 
   @override
-  User convert(
-    User model,
-    UserData data,
-  ) =>
-      model.updateWith(data);
+  User convert(User model, UserData data) => model.updateWith(data);
 
   @override
-  User fromJson(
-    String id,
-    Map json,
-  ) =>
-      User.fromJson(
-        id,
-        json,
-      );
+  User fromJson(String id, Map json) => User.fromJson(id, json);
 
   @override
   String identify(User model) => model.id;
@@ -179,10 +123,7 @@ extension UserProperties on User {
   }
 }
 
-@JsonSerializable(
-  anyMap: true,
-  explicitToJson: true,
-)
+@JsonSerializable(anyMap: true, explicitToJson: true)
 class ProductData {
   factory ProductData.fromJson(Map json) => _$ProductDataFromJson(json);
 
@@ -192,43 +133,23 @@ class ProductData {
     required this.price,
   });
 
-  @JsonKey(
-    name: 'name',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: 'name', required: true, disallowNullValue: true)
   final String name;
 
-  @JsonKey(
-    name: 'description',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: 'description', required: true, disallowNullValue: true)
   final String description;
 
-  @JsonKey(
-    name: 'price',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: 'price', required: true, disallowNullValue: true)
   final Decimal price;
 
   Map<String, Object?> toJson() => _$ProductDataToJson(this);
 }
 
-@JsonSerializable(
-  anyMap: true,
-  explicitToJson: true,
-)
+@JsonSerializable(anyMap: true, explicitToJson: true)
+@CopyWith(skipFields: true)
 class Product extends ProductData implements _Product {
-  factory Product.fromJson(
-    String id,
-    Map json,
-  ) =>
-      _$ProductFromJson({
-        ...json,
-        '_id': id,
-      });
+  factory Product.fromJson(String id, Map json) =>
+      _$ProductFromJson({...json, '_id': id});
 
   const Product({
     required this.id,
@@ -237,11 +158,7 @@ class Product extends ProductData implements _Product {
     required super.price,
   });
 
-  @JsonKey(
-    name: '_id',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: '_id', required: true, disallowNullValue: true)
   final String id;
 
   @override
@@ -249,10 +166,7 @@ class Product extends ProductData implements _Product {
 
   @override
   Map<String, Object?> toJson() {
-    return {
-      ..._$ProductToJson(this)..remove('_id'),
-      '_q-name': _qName,
-    };
+    return {..._$ProductToJson(this)..remove('_id'), '_q-name': _qName};
   }
 }
 
@@ -267,11 +181,7 @@ class ProductEntity implements Entity<ProductData, Product, String> {
   final String tableName = 'Products';
 
   @override
-  Product fromData(
-    ProductDependency dependency,
-    String id,
-    ProductData data,
-  ) {
+  Product fromData(ProductDependency dependency, String id, ProductData data) {
     return Product(
       id: id,
       name: data.name,
@@ -281,21 +191,10 @@ class ProductEntity implements Entity<ProductData, Product, String> {
   }
 
   @override
-  Product convert(
-    Product model,
-    ProductData data,
-  ) =>
-      model.updateWith(data);
+  Product convert(Product model, ProductData data) => model.updateWith(data);
 
   @override
-  Product fromJson(
-    String id,
-    Map json,
-  ) =>
-      Product.fromJson(
-        id,
-        json,
-      );
+  Product fromJson(String id, Map json) => Product.fromJson(id, json);
 
   @override
   String identify(Product model) => model.id;
@@ -316,19 +215,10 @@ extension ProductProperties on Product {
 }
 
 class _$Cart implements _Cart {
-  factory _$Cart.fromData(
-    CartDependency dependency,
-    CartData data,
-  ) =>
-      _$Cart(
-        timestamp: data.timestamp,
-        userId: dependency.userId,
-      );
+  factory _$Cart.fromData(CartDependency dependency, CartData data) =>
+      _$Cart(timestamp: data.timestamp, userId: dependency.userId);
 
-  const _$Cart({
-    required this.timestamp,
-    required this.userId,
-  });
+  const _$Cart({required this.timestamp, required this.userId});
 
   @override
   final DateTime timestamp;
@@ -337,38 +227,23 @@ class _$Cart implements _Cart {
   final String userId;
 }
 
-@JsonSerializable(
-  anyMap: true,
-  explicitToJson: true,
-)
+@JsonSerializable(anyMap: true, explicitToJson: true)
 class CartData {
   factory CartData.fromJson(Map json) => _$CartDataFromJson(json);
 
   const CartData({required this.timestamp});
 
-  @JsonKey(
-    name: 'timestamp',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: 'timestamp', required: true, disallowNullValue: true)
   final DateTime timestamp;
 
   Map<String, Object?> toJson() => _$CartDataToJson(this);
 }
 
-@JsonSerializable(
-  anyMap: true,
-  explicitToJson: true,
-)
+@JsonSerializable(anyMap: true, explicitToJson: true)
+@CopyWith(skipFields: true)
 class Cart extends CartData implements _Cart {
-  factory Cart.fromJson(
-    String id,
-    Map json,
-  ) =>
-      _$CartFromJson({
-        ...json,
-        '_id': id,
-      });
+  factory Cart.fromJson(String id, Map json) =>
+      _$CartFromJson({...json, '_id': id});
 
   const Cart({
     required this.id,
@@ -376,19 +251,11 @@ class Cart extends CartData implements _Cart {
     required this.userId,
   });
 
-  @JsonKey(
-    name: '_id',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: '_id', required: true, disallowNullValue: true)
   final String id;
 
   @override
-  @JsonKey(
-    name: 'user-id',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: 'user-id', required: true, disallowNullValue: true)
   final String userId;
 
   @override
@@ -410,40 +277,19 @@ class CartEntity implements Entity<CartData, Cart, String> {
   final String tableName = 'Carts';
 
   @override
-  Cart fromData(
-    CartDependency dependency,
-    String id,
-    CartData data,
-  ) {
+  Cart fromData(CartDependency dependency, String id, CartData data) {
     return Cart(
-      id: _Cart._generate(
-        _$Cart.fromData(
-          dependency,
-          data,
-        ),
-        id,
-      ),
+      id: _Cart._generate(_$Cart.fromData(dependency, data), id),
       timestamp: data.timestamp,
       userId: dependency.userId,
     );
   }
 
   @override
-  Cart convert(
-    Cart model,
-    CartData data,
-  ) =>
-      model.updateWith(data);
+  Cart convert(Cart model, CartData data) => model.updateWith(data);
 
   @override
-  Cart fromJson(
-    String id,
-    Map json,
-  ) =>
-      Cart.fromJson(
-        id,
-        json,
-      );
+  Cart fromJson(String id, Map json) => Cart.fromJson(id, json);
 
   @override
   String identify(Cart model) => model.id;
@@ -454,46 +300,27 @@ class CartEntity implements Entity<CartData, Cart, String> {
 
 extension CartProperties on Cart {
   Cart updateWith(CartData data) {
-    return Cart(
-      id: id,
-      timestamp: data.timestamp,
-      userId: userId,
-    );
+    return Cart(id: id, timestamp: data.timestamp, userId: userId);
   }
 }
 
-@JsonSerializable(
-  anyMap: true,
-  explicitToJson: true,
-)
+@JsonSerializable(anyMap: true, explicitToJson: true)
 class CartItemData {
   factory CartItemData.fromJson(Map json) => _$CartItemDataFromJson(json);
 
   const CartItemData({required this.amount});
 
-  @JsonKey(
-    name: 'amount',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: 'amount', required: true, disallowNullValue: true)
   final int amount;
 
   Map<String, Object?> toJson() => _$CartItemDataToJson(this);
 }
 
-@JsonSerializable(
-  anyMap: true,
-  explicitToJson: true,
-)
+@JsonSerializable(anyMap: true, explicitToJson: true)
+@CopyWith(skipFields: true)
 class CartItem extends CartItemData implements _CartItem {
-  factory CartItem.fromJson(
-    String id,
-    Map json,
-  ) =>
-      _$CartItemFromJson({
-        ...json,
-        '_id': id,
-      });
+  factory CartItem.fromJson(String id, Map json) =>
+      _$CartItemFromJson({...json, '_id': id});
 
   const CartItem({
     required this.id,
@@ -502,27 +329,15 @@ class CartItem extends CartItemData implements _CartItem {
     required this.cartId,
   });
 
-  @JsonKey(
-    name: '_id',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: '_id', required: true, disallowNullValue: true)
   final String id;
 
   @override
-  @JsonKey(
-    name: 'product-id',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: 'product-id', required: true, disallowNullValue: true)
   final String productId;
 
   @override
-  @JsonKey(
-    name: 'cart-id',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: 'cart-id', required: true, disallowNullValue: true)
   final String cartId;
 
   @override
@@ -532,13 +347,8 @@ class CartItem extends CartItemData implements _CartItem {
 }
 
 class CartItemDependency extends Dependency<CartItemData> {
-  CartItemDependency({
-    required this.productId,
-    required this.cartId,
-  }) : super.weak([
-          productId,
-          cartId,
-        ]);
+  CartItemDependency({required this.productId, required this.cartId})
+    : super.weak([productId, cartId]);
 
   final String productId;
 
@@ -566,21 +376,10 @@ class CartItemEntity implements Entity<CartItemData, CartItem, String> {
   }
 
   @override
-  CartItem convert(
-    CartItem model,
-    CartItemData data,
-  ) =>
-      model.updateWith(data);
+  CartItem convert(CartItem model, CartItemData data) => model.updateWith(data);
 
   @override
-  CartItem fromJson(
-    String id,
-    Map json,
-  ) =>
-      CartItem.fromJson(
-        id,
-        json,
-      );
+  CartItem fromJson(String id, Map json) => CartItem.fromJson(id, json);
 
   @override
   String identify(CartItem model) => model.id;
@@ -600,11 +399,7 @@ extension CartItemProperties on CartItem {
   }
 }
 
-@JsonSerializable(
-  anyMap: true,
-  explicitToJson: true,
-  constructor: '_',
-)
+@JsonSerializable(anyMap: true, explicitToJson: true, constructor: '_')
 class ReviewData {
   factory ReviewData.fromJson(Map json) => _$ReviewDataFromJson(json);
 
@@ -618,10 +413,7 @@ class ReviewData {
       text: text,
       timestamp: timestamp,
       type: type,
-      content: ReviewContent.fromType(
-        type,
-        content,
-      ),
+      content: ReviewContent.fromType(type, content),
     );
   }
 
@@ -632,51 +424,26 @@ class ReviewData {
     required this.content,
   });
 
-  @JsonKey(
-    name: 'text',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: 'text', required: true, disallowNullValue: true)
   final String text;
 
-  @JsonKey(
-    name: 'timestamp',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: 'timestamp', required: true, disallowNullValue: true)
   final DateTime timestamp;
 
-  @JsonKey(
-    name: 'type',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: 'type', required: true, disallowNullValue: true)
   final ReviewContentType type;
 
-  @JsonKey(
-    name: 'content',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: 'content', required: true, disallowNullValue: true)
   final ReviewContent content;
 
   Map<String, Object?> toJson() => _$ReviewDataToJson(this);
 }
 
-@JsonSerializable(
-  anyMap: true,
-  explicitToJson: true,
-  constructor: '_',
-)
+@JsonSerializable(anyMap: true, explicitToJson: true, constructor: '_')
+@CopyWith(skipFields: true)
 class Review extends ReviewData implements _Review {
-  factory Review.fromJson(
-    String id,
-    Map json,
-  ) =>
-      _$ReviewFromJson({
-        ...json,
-        '_id': id,
-      });
+  factory Review.fromJson(String id, Map json) =>
+      _$ReviewFromJson({...json, '_id': id});
 
   factory Review._({
     required String id,
@@ -711,33 +478,19 @@ class Review extends ReviewData implements _Review {
     required this.userId,
   });
 
-  @JsonKey(
-    name: '_id',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: '_id', required: true, disallowNullValue: true)
   final String id;
 
   @override
-  @JsonKey(
-    name: 'user-id',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: 'user-id', required: true, disallowNullValue: true)
   final String userId;
 
   @override
-  String get _qUserIdType => [
-        userId,
-        $normalizeEnum(type),
-      ].join('_');
+  String get _qUserIdType => [userId, $normalizeEnum(type)].join('_');
 
   @override
   Map<String, Object?> toJson() {
-    return {
-      ..._$ReviewToJson(this)..remove('_id'),
-      '_q-type': _qUserIdType,
-    };
+    return {..._$ReviewToJson(this)..remove('_id'), '_q-type': _qUserIdType};
   }
 }
 
@@ -754,11 +507,7 @@ class ReviewEntity implements Entity<ReviewData, Review, String> {
   final String tableName = 'Reviews';
 
   @override
-  Review fromData(
-    ReviewDependency dependency,
-    String id,
-    ReviewData data,
-  ) {
+  Review fromData(ReviewDependency dependency, String id, ReviewData data) {
     return Review(
       id: id,
       text: data.text,
@@ -770,21 +519,10 @@ class ReviewEntity implements Entity<ReviewData, Review, String> {
   }
 
   @override
-  Review convert(
-    Review model,
-    ReviewData data,
-  ) =>
-      model.updateWith(data);
+  Review convert(Review model, ReviewData data) => model.updateWith(data);
 
   @override
-  Review fromJson(
-    String id,
-    Map json,
-  ) =>
-      Review.fromJson(
-        id,
-        json,
-      );
+  Review fromJson(String id, Map json) => Review.fromJson(id, json);
 
   @override
   String identify(Review model) => model.id;
@@ -809,10 +547,7 @@ extension ReviewProperties on Review {
 enum ReviewContentType { product, service, user }
 
 abstract class ReviewContent implements _ReviewContent {
-  factory ReviewContent.fromType(
-    ReviewContentType type,
-    Map json,
-  ) {
+  factory ReviewContent.fromType(ReviewContentType type, Map json) {
     switch (type) {
       case ReviewContentType.product:
         return ProductReviewContent.fromJson(json);
@@ -827,10 +562,8 @@ abstract class ReviewContent implements _ReviewContent {
   Map<String, Object?> toJson();
 }
 
-@JsonSerializable(
-  anyMap: true,
-  explicitToJson: true,
-)
+@JsonSerializable(anyMap: true, explicitToJson: true)
+@CopyWith(skipFields: true)
 class ProductReviewContent implements ReviewContent, _ProductReviewContent {
   factory ProductReviewContent.fromJson(Map json) =>
       _$ProductReviewContentFromJson(json);
@@ -838,11 +571,7 @@ class ProductReviewContent implements ReviewContent, _ProductReviewContent {
   const ProductReviewContent({required this.rating});
 
   @override
-  @JsonKey(
-    name: 'rating',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: 'rating', required: true, disallowNullValue: true)
   final int rating;
 
   @override
@@ -852,10 +581,8 @@ class ProductReviewContent implements ReviewContent, _ProductReviewContent {
   Map<String, Object?> toJson() => _$ProductReviewContentToJson(this);
 }
 
-@JsonSerializable(
-  anyMap: true,
-  explicitToJson: true,
-)
+@JsonSerializable(anyMap: true, explicitToJson: true)
+@CopyWith(skipFields: true)
 class ServiceReviewContent implements ReviewContent, _ServiceReviewContent {
   factory ServiceReviewContent.fromJson(Map json) =>
       _$ServiceReviewContentFromJson(json);
@@ -863,11 +590,7 @@ class ServiceReviewContent implements ReviewContent, _ServiceReviewContent {
   const ServiceReviewContent({required this.rating});
 
   @override
-  @JsonKey(
-    name: 'satisfaction',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: 'satisfaction', required: true, disallowNullValue: true)
   final ReviewSatisfaction rating;
 
   @override
@@ -877,10 +600,8 @@ class ServiceReviewContent implements ReviewContent, _ServiceReviewContent {
   Map<String, Object?> toJson() => _$ServiceReviewContentToJson(this);
 }
 
-@JsonSerializable(
-  anyMap: true,
-  explicitToJson: true,
-)
+@JsonSerializable(anyMap: true, explicitToJson: true)
+@CopyWith(skipFields: true)
 class UserReviewContent implements ReviewContent, _UserReviewContent {
   factory UserReviewContent.fromJson(Map json) =>
       _$UserReviewContentFromJson(json);
@@ -888,11 +609,7 @@ class UserReviewContent implements ReviewContent, _UserReviewContent {
   const UserReviewContent({required this.userId});
 
   @override
-  @JsonKey(
-    name: 'user-id',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: 'user-id', required: true, disallowNullValue: true)
   final String userId;
 
   @override
@@ -907,31 +624,18 @@ class Dorm {
 
   final BaseEngine<Query> _engine;
 
-  DatabaseEntity<UserData, User, String, Query> get users => DatabaseEntity(
-        const UserEntity(),
-        engine: _engine,
-      );
+  DatabaseEntity<UserData, User, String, Query> get users =>
+      DatabaseEntity(const UserEntity(), engine: _engine);
 
   DatabaseEntity<ProductData, Product, String, Query> get products =>
-      DatabaseEntity(
-        const ProductEntity(),
-        engine: _engine,
-      );
+      DatabaseEntity(const ProductEntity(), engine: _engine);
 
-  DatabaseEntity<CartData, Cart, String, Query> get carts => DatabaseEntity(
-        const CartEntity(),
-        engine: _engine,
-      );
+  DatabaseEntity<CartData, Cart, String, Query> get carts =>
+      DatabaseEntity(const CartEntity(), engine: _engine);
 
   DatabaseEntity<CartItemData, CartItem, String, Query> get cartItems =>
-      DatabaseEntity(
-        const CartItemEntity(),
-        engine: _engine,
-      );
+      DatabaseEntity(const CartItemEntity(), engine: _engine);
 
   DatabaseEntity<ReviewData, Review, String, Query> get reviews =>
-      DatabaseEntity(
-        const ReviewEntity(),
-        engine: _engine,
-      );
+      DatabaseEntity(const ReviewEntity(), engine: _engine);
 }

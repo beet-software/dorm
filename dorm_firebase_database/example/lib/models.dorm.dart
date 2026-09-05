@@ -20,6 +20,7 @@ class UserData {
 }
 
 @JsonSerializable(anyMap: true, explicitToJson: true)
+@CopyWith(skipFields: true)
 class User extends UserData implements _User {
   factory User.fromJson(String id, Map json) =>
       _$UserFromJson({...json, '_id': id});

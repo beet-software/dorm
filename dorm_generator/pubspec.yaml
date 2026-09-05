@@ -17,6 +17,7 @@ dependencies:
   code_builder: ^4.12.0
   json_serializable: ^6.14.1
   dorm_annotations: ^1.0.0-alpha.3
+  copy_with_extension_gen: ^17.1.0
 dev_dependencies:
   lints: ^5.0.0
   build_runner: ^2.16.1

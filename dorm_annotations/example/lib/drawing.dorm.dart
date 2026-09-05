@@ -42,6 +42,7 @@ class DrawingData {
 }
 
 @JsonSerializable(anyMap: true, explicitToJson: true, constructor: '_')
+@CopyWith(skipFields: true)
 class Drawing extends DrawingData implements _Drawing {
   factory Drawing.fromJson(String id, Map json) =>
       _$DrawingFromJson({...json, '_id': id});
@@ -142,6 +143,7 @@ sealed class Shape implements _Shape {
 }
 
 @JsonSerializable(anyMap: true, explicitToJson: true)
+@CopyWith(skipFields: true)
 class Rectangle implements Shape, _Rectangle {
   factory Rectangle.fromJson(Map json) => _$RectangleFromJson(json);
 
@@ -163,6 +165,7 @@ class Rectangle implements Shape, _Rectangle {
 }
 
 @JsonSerializable(anyMap: true, explicitToJson: true)
+@CopyWith(skipFields: true)
 class Circle implements Shape, _Circle {
   factory Circle.fromJson(Map json) => _$CircleFromJson(json);
 

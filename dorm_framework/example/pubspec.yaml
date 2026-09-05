@@ -4,7 +4,7 @@ publish_to: none
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.0.5 <4.0.0'
+  sdk: '>=3.8.0 <4.0.0'
 
 dependencies:
   flutter:
@@ -29,10 +29,12 @@ dependencies:
       url: https://github.com/enzo-santos/form_bloc
       path: packages/flutter_form_bloc
   flutter_rating_bar: ^4.0.1
+  json_annotation: ^4.12.0
 
 dev_dependencies:
   flutter_lints: 5.0.0
   build_runner: ^2.4.9
+  json_serializable: ^6.14.1
   dorm_generator:
     path: ../../dorm_generator
 
