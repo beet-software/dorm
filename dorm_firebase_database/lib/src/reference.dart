@@ -37,20 +37,35 @@ class Reference implements BaseReference {
 
   const Reference._(this.instance, this._ref);
 
-  fd.DatabaseReference _refOf<Data, Model extends Data>(
-    Entity<Data, Model> entity,
+  fd.DatabaseReference _refOf<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I> entity,
   ) {
     return _ref.child(entity.tableName);
   }
 
-  List<Model> _parseModels<Data, Model extends Data>(
-    Entity<Data, Model> entity,
-    Map<String, Object> data,
+  String _key<I extends Object>(I id) {
+    if (id case String value) return value;
+    throw ArgumentError.value(id, 'id', 'Firebase IDs must be String values');
+  }
+
+  I _id<I extends Object>(String key) {
+    final Object id = key;
+    if (id is I) return id;
+    throw ArgumentError.value(
+      key,
+      'key',
+      'Firebase IDs must be String values',
+    );
+  }
+
+  List<Model> _parseModels<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I> entity,
+    Map<I, Object> data,
   ) {
     if (data.isEmpty) return [];
     final List<Model> models = [];
-    for (MapEntry<String, Object> entry in data.entries) {
-      final String key = entry.key;
+    for (MapEntry<I, Object> entry in data.entries) {
+      final I key = entry.key;
       final Model model;
       switch (entry.value) {
         case Map modelData:
@@ -68,12 +83,12 @@ class Reference implements BaseReference {
   }
 
   @override
-  Future<Model?> peek<Data, Model extends Data>(
-    Entity<Data, Model> entity,
-    String id,
+  Future<Model?> peek<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I> entity,
+    I id,
   ) {
     return _refOf(entity) //
-        .child(id)
+        .child(_key(id))
         .get()
         .then((snapshot) => snapshot.value)
         .then((value) => value == null
@@ -85,38 +100,38 @@ class Reference implements BaseReference {
   }
 
   @override
-  Future<List<Model>> peekAll<Data, Model extends Data>(
-    Entity<Data, Model> entity,
+  Future<List<Model>> peekAll<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I> entity,
     Filter filter,
   ) {
     final Query query = filter.accept(Query(_refOf(entity)));
     return query.query.get().then((snapshot) {
       return {
         for (fd.DataSnapshot child in snapshot.children)
-          child.key as String: child.value as Object,
+          _id<I>(child.key as String): child.value as Object,
       };
     }).then((values) => _parseModels(entity, values));
   }
 
   @override
-  Future<void> pop<Data, Model extends Data>(
-    Entity<Data, Model> entity,
-    String id,
+  Future<void> pop<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I> entity,
+    I id,
   ) {
-    return _refOf(entity).child(id).remove();
+    return _refOf(entity).child(_key(id)).remove();
   }
 
   @override
-  Future<void> popKeys<Data, Model extends Data>(
-    Entity<Data, Model> entity,
-    Iterable<String> ids,
+  Future<void> popKeys<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I> entity,
+    Iterable<I> ids,
   ) {
-    return _refOf(entity).update({for (String id in ids) id: null});
+    return _refOf(entity).update({for (I id in ids) _key(id): null});
   }
 
   @override
-  Future<void> popAll<Data, Model extends Data>(
-    Entity<Data, Model> entity,
+  Future<void> popAll<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I> entity,
     Filter filter,
   ) async {
     // TODO Refactor this operation as atomic.
@@ -127,12 +142,12 @@ class Reference implements BaseReference {
   }
 
   @override
-  Future<void> patch<Data, Model extends Data>(
-    Entity<Data, Model> entity,
-    String id,
+  Future<void> patch<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I> entity,
+    I id,
     Model? Function(Model?) update,
   ) {
-    return _refOf(entity).child(id).runTransaction((value) {
+    return _refOf(entity).child(_key(id)).runTransaction((value) {
       final Model? model;
       if (value == null) {
         model = null;
@@ -158,11 +173,11 @@ class Reference implements BaseReference {
   }
 
   @override
-  Stream<Model?> pull<Data, Model extends Data>(
-    Entity<Data, Model> entity,
-    String id,
+  Stream<Model?> pull<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I> entity,
+    I id,
   ) {
-    return _onValueOf(_refOf(entity).child(id))
+    return _onValueOf(_refOf(entity).child(_key(id)))
         .map((snapshot) => snapshot.value)
         .map((value) => value == null
             ? null
@@ -182,22 +197,22 @@ class Reference implements BaseReference {
   }
 
   @override
-  Stream<List<Model>> pullAll<Data, Model extends Data>(
-    Entity<Data, Model> entity,
+  Stream<List<Model>> pullAll<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I> entity,
     Filter filter,
   ) {
     final Query query = filter.accept(Query(_refOf(entity)));
     return _onValueOf(query.query).map((snapshot) {
       return {
         for (fd.DataSnapshot child in snapshot.children)
-          child.key as String: child.value as Object,
+          _id<I>(child.key as String): child.value as Object,
       };
     }).map((values) => _parseModels(entity, values));
   }
 
   @override
-  Future<Model> put<Data, Model extends Data>(
-    Entity<Data, Model> entity,
+  Future<Model> put<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I> entity,
     Dependency<Data> dependency,
     Data data,
   ) {
@@ -205,50 +220,54 @@ class Reference implements BaseReference {
   }
 
   @override
-  Future<List<Model>> putAll<Data, Model extends Data>(
-    Entity<Data, Model> entity,
+  Future<List<Model>> putAll<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I> entity,
     Dependency<Data> dependency,
     List<Data> datum,
   ) async {
     final List<Model> models = [];
     for (Data data in datum) {
       final fd.DatabaseReference ref = _refOf(entity).push();
-      final String id = ref.key as String;
+      final I id = _id<I>(ref.key as String);
       final Model model = entity.fromData(dependency, id, data);
       models.add(model);
     }
     await _refOf(entity).update({
-      for (Model model in models) entity.identify(model): entity.toJson(model),
+      for (Model model in models)
+        _key(entity.identify(model)): entity.toJson(model),
     });
     return models;
   }
 
   @override
-  Future<void> push<Data, Model extends Data>(
-    Entity<Data, Model> entity,
+  Future<void> push<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I> entity,
     Model model,
   ) {
     return pushAll(entity, [model]);
   }
 
   @override
-  Future<void> pushAll<Data, Model extends Data>(
-    Entity<Data, Model> entity,
+  Future<void> pushAll<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I> entity,
     List<Model> models,
   ) {
     return _refOf(entity).update({
-      for (Model model in models) entity.identify(model): entity.toJson(model),
+      for (Model model in models)
+        _key(entity.identify(model)): entity.toJson(model),
     });
   }
 
   @override
-  Future<void> purge<Data, Model extends Data>(Entity<Data, Model> entity) {
+  Future<void> purge<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I> entity,
+  ) {
     return _refOf(entity).remove();
   }
 
   @override
-  Future<List<String>> peekAllKeys<Data, Model extends Data>(
-    Entity<Data, Model> entity,
+  Future<List<I>> peekAllKeys<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I> entity,
   ) async {
     final String path = _refOf(entity).path;
     final String projectId = instance.app.options.projectId;
@@ -263,7 +282,7 @@ class Reference implements BaseReference {
       },
     ));
     return switch (json.decode(response.body)) {
-      Map<String, Object?> data => data.keys.toList(),
+      Map<String, Object?> data => data.keys.map(_id<I>).toList(),
       _ => [],
     };
   }

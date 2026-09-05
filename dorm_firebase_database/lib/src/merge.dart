@@ -175,9 +175,10 @@ class OneToOneBatchMerge<L, R> extends BatchMerge<L, L, R> {
   }
 }
 
-class ManyToOneBatchMerge<L, R> extends BatchMerge<R, L, List<R>> {
-  final String Function(R) onLeft;
-  final Stream<L?> Function(String) onRight;
+class ManyToOneBatchMerge<L, R, I extends Object>
+    extends BatchMerge<R, L, List<R>> {
+  final I Function(R) onLeft;
+  final Stream<L?> Function(I) onRight;
 
   ManyToOneBatchMerge({
     required super.left,
@@ -187,7 +188,7 @@ class ManyToOneBatchMerge<L, R> extends BatchMerge<R, L, List<R>> {
 
   @override
   List<Stream<Join<L?, List<R>>>> parse(List<R> values) {
-    final Map<String, List<R>> groups = {};
+    final Map<I, List<R>> groups = {};
     for (R value in values) {
       groups.putIfAbsent(onLeft(value), () => []).add(value);
     }
