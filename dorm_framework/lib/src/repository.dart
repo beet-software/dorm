@@ -21,13 +21,13 @@ import 'reference.dart';
 import 'relationship.dart';
 
 /// Represents reading a single model from the database engine.
-abstract class SingleReadOperation<Model> {
+abstract class SingleReadOperation<Model, I extends Object> {
   /// Selects a model in this table, given its [id].
   ///
   /// This method should retrieve *only* the accessed model:
   ///
   /// ```dart
-  /// const String id = '7a3ee40b4a6b';
+  /// const Object id = '7a3ee40b4a6b';
   ///
   /// // DON'T: Downloads all the models to the client
   /// final List<Model> models = await peekAll();
@@ -38,7 +38,7 @@ abstract class SingleReadOperation<Model> {
   /// ```
   ///
   /// If there is no model with the given [id], this method will return null.
-  Future<Model?> peek(String id);
+  Future<Model?> peek(I id);
 
   /// Listens for a model in this table, given íts [id].
   ///
@@ -47,7 +47,7 @@ abstract class SingleReadOperation<Model> {
   /// whenever a change occurs on the model.
   ///
   /// If there is no model with the given [id], this method will yield null.
-  Stream<Model?> pull(String id);
+  Stream<Model?> pull(I id);
 }
 
 /// Represents reading multiple models from the database engine.
@@ -68,7 +68,8 @@ abstract class BatchReadOperation<Model> {
 }
 
 /// Represents the operations available for a [Model] in a database.
-abstract class ModelRepository<Model> implements Readable<Model> {
+abstract class ModelRepository<Model, I extends Object>
+    implements Readable<Model, I> {
   /// Selects all the ids from the models of this table.
   ///
   /// This method should retrieve *only* the ids:
@@ -76,26 +77,26 @@ abstract class ModelRepository<Model> implements Readable<Model> {
   /// ```dart
   /// // DON'T: Downloads all the models (including attributes) to the client
   /// final List<Model> models = await peekAll();
-  /// final List<String> ids = models.map((model) => model.id).toList();
+  /// final List<Object> ids = models.map((model) => model.id).toList();
   ///
   /// // DO: Download only the ids of the models (does not include attributes)
-  /// final List<String> ids = await peekAllKeys();
+  /// final List<Object> ids = await peekAllKeys();
   /// ```
   ///
   /// If there are no models, this method will return an empty list.
-  Future<List<String>> peekAllKeys();
+  Future<List<I>> peekAllKeys();
 
   /// Deletes a model in this table, given its [id].
   ///
   /// If there is no model with the given [id], this method will do nothing.
-  Future<void> pop(String id);
+  Future<void> pop(I id);
 
   /// Deletes all the models in this table with the given [ids].
   ///
   /// This method should be atomic:
   ///
   /// ```dart
-  /// const List<String> ids = ['f0b44d79a39c', '9d223f993f08', 'e7b608870ad0'];
+  /// const List<Object> ids = ['f0b44d79a39c', '9d223f993f08', 'e7b608870ad0'];
   ///
   /// // DON'T: Calls the database engine 3 times, sequentially
   /// for (String id in ids) await pop(id);
@@ -108,7 +109,7 @@ abstract class ModelRepository<Model> implements Readable<Model> {
   /// ```
   ///
   /// If there are no models with the given [ids], this method will do nothing.
-  Future<void> popKeys(Iterable<String> ids);
+  Future<void> popKeys(Iterable<I> ids);
 
   /// Deletes all the models in this table matching the given [filter].
   ///
@@ -170,7 +171,7 @@ abstract class ModelRepository<Model> implements Readable<Model> {
   /// This method should be atomic:
   ///
   /// ```dart
-  /// const String id = '7a3ee40b4a6b';
+  /// const Object id = '7a3ee40b4a6b';
   /// Model? _update(Model? model) { /* ... */ }
   ///
   /// // DON'T: Calls the database engine twice
@@ -185,7 +186,7 @@ abstract class ModelRepository<Model> implements Readable<Model> {
   /// // DO: Calls the database engine once
   /// await patch(id, _update);
   /// ```
-  Future<void> patch(String id, Model? Function(Model?) update);
+  Future<void> patch(I id, Model? Function(Model?) update);
 
   /// Removes all models from this table.
   ///
@@ -195,42 +196,41 @@ abstract class ModelRepository<Model> implements Readable<Model> {
 }
 
 /// Represents creating models into the database engine.
-abstract class DataRepository<Data, Model extends Data>
-    implements ModelRepository<Model> {
+abstract class DataRepository<Data, Model extends Data, I extends Object>
+    implements ModelRepository<Model, I> {
   /// Convert a [data] into a model and inserts it into its respective table on
   /// the database engine.
   ///
-  /// The id of the model may be defined by [dependency], through its
-  /// [Dependency.key] method. If there is a model in the table with the same id
-  /// as the one being created, the existing model will be overwritten.
+  /// The id of the model is assigned by the database engine according to its
+  /// configured identification strategy. If there is a model in the table
+  /// with the same id as the one being created, it is overwritten.
   Future<Model> put(Dependency<Data> dependency, Data data);
 
   /// Convert a sequence of [datum] into models and inserts them into their
   /// respective table on the database engine.
   ///
-  /// /// The id of the model may be defined by [dependency], through its
-  /// [Dependency.key] method. If there are any models in the table with the
-  /// same id as any of the ones being inserted, the existing models will be
-  /// overwritten.
+  /// The ids of the models are assigned by the database engine according to its
+  /// configured identification strategy. If there are any models in the table
+  /// with the same ids as any of the ones being inserted, they are overwritten.
   Future<List<Model>> putAll(Dependency<Data> dependency, List<Data> datum);
 }
 
 /// Represents the controller of the underlying database engine.
-class Repository<Data, Model extends Data>
-    implements DataRepository<Data, Model> {
+class Repository<Data, Model extends Data, I extends Object>
+    implements DataRepository<Data, Model, I> {
   final BaseReference _reference;
-  final Entity<Data, Model> _entity;
+  final Entity<Data, Model, I> _entity;
 
   /// Creates a repository by its attributes.
   const Repository({
     required BaseReference reference,
     required BaseRelationship relationship,
-    required Entity<Data, Model> entity,
+    required Entity<Data, Model, I> entity,
   })  : _reference = reference,
         _entity = entity;
 
   @override
-  Future<Model?> peek(String id) {
+  Future<Model?> peek(I id) {
     return _reference.peek(_entity, id);
   }
 
@@ -240,17 +240,17 @@ class Repository<Data, Model extends Data>
   }
 
   @override
-  Future<List<String>> peekAllKeys() {
+  Future<List<I>> peekAllKeys() {
     return _reference.peekAllKeys(_entity);
   }
 
   @override
-  Future<void> pop(String id) async {
+  Future<void> pop(I id) async {
     return _reference.pop(_entity, id);
   }
 
   @override
-  Future<void> popKeys(Iterable<String> ids) {
+  Future<void> popKeys(Iterable<I> ids) {
     return _reference.popKeys(_entity, ids);
   }
 
@@ -260,7 +260,7 @@ class Repository<Data, Model extends Data>
   }
 
   @override
-  Stream<Model?> pull(String id) {
+  Stream<Model?> pull(I id) {
     return _reference.pull(_entity, id);
   }
 
@@ -290,7 +290,7 @@ class Repository<Data, Model extends Data>
   }
 
   @override
-  Future<void> patch(String id, Model? Function(Model?) update) {
+  Future<void> patch(I id, Model? Function(Model?) update) {
     return _reference.patch(_entity, id, update);
   }
 

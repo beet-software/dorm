@@ -17,7 +17,7 @@
 import 'package:dorm_framework/dorm_framework.dart';
 
 /// Represents the conversion of a [Model] into dORM's model system.
-abstract class Entity<Data, Model extends Data> {
+abstract class Entity<Data, Model extends Data, I extends Object> {
   /// The name of the table of this entity in the underlying database engine.
   String get tableName;
 
@@ -27,7 +27,7 @@ abstract class Entity<Data, Model extends Data> {
   /// ```dart
   /// final Entity<SchoolData, School> entity = ...;
   ///
-  /// const String id = 'd12207624e35';
+  /// const Object id = 'd12207624e35';
   /// const Map<String, Object?> data = {'name': 'S1', 'active': false};
   ///
   /// final School school = entity.fromJson(id, data);
@@ -39,9 +39,9 @@ abstract class Entity<Data, Model extends Data> {
   /// In most of the cases, this method implementation is
   ///
   /// ```dart
-  /// Model fromJson(String id, Map data) => Model.fromJson(id, data);
+  /// Model fromJson(Object id, Map data) => Model.fromJson(id, data);
   /// ```
-  Model fromJson(String id, Map data);
+  Model fromJson(I id, Map data);
 
   /// Serializes [data] to the underlying database engine representation.
   ///
@@ -83,7 +83,7 @@ abstract class Entity<Data, Model extends Data> {
   /// ```dart
   /// final School school = School(id: 'd12207624e35', name: 'S1', active: true);
   /// final Dependency<StudentData> dependency = StudentDependency(schoolId: school.id);
-  /// final String id = 'cc03334e70a9';
+  /// final Object id = 'cc03334e70a9';
   /// final StudentData data = StudentData(name: 'John', birthDate: DateTime(1942, 6, 13));
   ///
   /// final Entity<StudentData, Student> entity = ...;
@@ -100,7 +100,7 @@ abstract class Entity<Data, Model extends Data> {
   /// ```
   ///
   /// Its useful when modeling *new* data received from a form.
-  Model fromData(covariant Dependency<Data> dependency, String id, Data data);
+  Model fromData(covariant Dependency<Data> dependency, I id, Data data);
 
   /// Uniquely identify a [model].
   ///
@@ -113,30 +113,31 @@ abstract class Entity<Data, Model extends Data> {
   /// In most of the cases, this method implementation is
   ///
   /// ```
-  /// String identify(Model model) => model.id;
+  /// Object identify(Model model) => model.id;
   /// ```
-  String identify(Model model);
+  I identify(Model model);
 }
 
 /// Represents the bridge between a database engine and a controller.
-class DatabaseEntity<Data, Model extends Data> implements Entity<Data, Model> {
-  final Entity<Data, Model> _entity;
+class DatabaseEntity<Data, Model extends Data, I extends Object>
+    implements Entity<Data, Model, I> {
+  final Entity<Data, Model, I> _entity;
   final BaseReference _reference;
   final BaseRelationship _relationship;
 
   DatabaseEntity(
-    Entity<Data, Model> entity, {
+    Entity<Data, Model, I> entity, {
     required BaseEngine engine,
   })  : _entity = entity,
         _reference = engine.createReference(),
         _relationship = engine.createRelationship();
 
-  ModelRelationship<Model> get relationships {
+  ModelRelationship<Model, I> get relationships {
     return ModelRelationship(left: repository, relationship: _relationship);
   }
 
   /// The controller of this entity.
-  Repository<Data, Model> get repository {
+  Repository<Data, Model, I> get repository {
     return Repository(
       entity: _entity,
       reference: _reference,
@@ -148,14 +149,14 @@ class DatabaseEntity<Data, Model extends Data> implements Entity<Data, Model> {
   Model convert(Model model, Data data) => _entity.convert(model, data);
 
   @override
-  Model fromData(covariant Dependency<Data> dependency, String id, Data data) =>
+  Model fromData(covariant Dependency<Data> dependency, I id, Data data) =>
       _entity.fromData(dependency, id, data);
 
   @override
-  Model fromJson(String id, Map data) => _entity.fromJson(id, data);
+  Model fromJson(I id, Map data) => _entity.fromJson(id, data);
 
   @override
-  String identify(Model model) => _entity.identify(model);
+  I identify(Model model) => _entity.identify(model);
 
   @override
   String get tableName => _entity.tableName;

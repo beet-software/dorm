@@ -47,15 +47,12 @@ abstract class Dependency<Data> {
   /// - M is identified by a combination of its own attributes and the primary
   ///   key of its associated strong entity. The primary key of the strong
   ///   entity acts as a partial key or discriminator for the weak entity.
-  const Dependency.weak(List<String> ids) : this._(ids);
+  const Dependency.weak(List<Object?> ids) : this._(ids);
 
   /// Primary keys of the strong entities the underlying model depends on.
   ///
   /// If it's empty, it means the underlying model is a strong entity.
-  final List<String> ids;
+  final List<Object?> ids;
 
   const Dependency._(this.ids);
-
-  /// Creates a primary key for the underlying model.
-  String key([String? id]) => [...ids, if (id != null) id].join('&');
 }
