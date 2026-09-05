@@ -1,9 +1,10 @@
 name: dorm_meta
 version: 1.0.0
+resolution: workspace
 publish_to: none
 
 environment:
-  sdk: ^3.0.5
+  sdk: ^3.5.0
 
 dependencies:
   glob: ^2.1.2
@@ -15,4 +16,4 @@ dependencies:
   args: ^2.5.0
 
 dev_dependencies:
-  lints: ^4.0.0
+  lints: ^5.0.0

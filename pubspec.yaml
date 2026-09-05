@@ -1,0 +1,31 @@
+name: dorm_workspace
+description: Workspace for the dORM Dart and Flutter packages.
+publish_to: none
+
+environment:
+  sdk: ">=3.9.0 <4.0.0"
+
+workspace:
+  - dorm_annotations
+  - dorm_generator
+  - dorm_framework
+  - dorm_bloc_database
+  - dorm_firebase_database
+  - dorm_meta
+
+dev_dependencies:
+  melos: ^8.6.0
+
+melos:
+  scripts:
+    analyze:
+      description: Analyze all workspace packages.
+      exec: dart analyze .
+    test:
+      description: Run tests in workspace packages that contain a test directory.
+      exec: dart test
+      packageFilters:
+        dirExists: test
+    generate:
+      description: Run build_runner in workspace packages that depend on it.
+      run: melos exec -c 1 --depends-on build_runner -- "dart run build_runner build"

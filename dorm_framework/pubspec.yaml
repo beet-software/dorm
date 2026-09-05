@@ -1,15 +1,16 @@
 name: dorm_framework
 version: 1.0.0-alpha.5
+resolution: workspace
 description: Exposes classes, filters and joins to implement the dORM framework.
 homepage: https://github.com/beet-software/dorm/tree/main/dorm_framework
 repository: https://github.com/beet-software/dorm.git
 environment:
-  sdk: '>=3.0.5 <4.0.0'
+  sdk: '>=3.5.0 <4.0.0'
 false_secrets:
   - example/lib/main.dart
 
 dev_dependencies:
   test: ^1.25.4
-  lints: ^3.0.0
+  lints: ^5.0.0
   mockito: ^5.4.4
   build_runner: ^2.4.9
