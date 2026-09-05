@@ -75,7 +75,13 @@ abstract class BatchReadOperation<Model, Q extends BaseQuery<Q>> {
 
 /// Represents the operations available for a [Model] in a database.
 abstract class ModelRepository<Model, I extends Object, Q extends BaseQuery<Q>>
-    implements Readable<Model, I, Q> {
+    implements RelationSource<Model, I, Q> {
+  @override
+  RelationPlan<Model, I> get plan;
+
+  @override
+  EntitySchema? get schema;
+
   /// Selects all the ids from the models of this table.
   ///
   /// This method should retrieve *only* the ids:
@@ -224,7 +230,7 @@ abstract class DataRepository<Data, Model extends Data, I extends Object, Q exte
 
 /// Represents the controller of the underlying database engine.
 class Repository<Data, Model extends Data, I extends Object, Q extends BaseQuery<Q>>
-    implements DataRepository<Data, Model, I, Q> {
+    implements DataRepository<Data, Model, I, Q>, RelationSource<Model, I, Q> {
   final BaseReference<Q> _reference;
   final Entity<Data, Model, I> _entity;
 
@@ -237,7 +243,14 @@ class Repository<Data, Model extends Data, I extends Object, Q extends BaseQuery
         _entity = entity;
 
   /// The engine-independent schema of the repository's entity.
+  @override
   EntitySchema get schema => _entity.schema;
+
+  @override
+  RelationPlan<Model, I> get plan => TableRelationPlan(
+        schema: _entity.schema,
+        fromJson: _entity.fromJson,
+      );
 
   @override
   Future<Model?> peek(I id) {
@@ -313,4 +326,3 @@ class Repository<Data, Model extends Data, I extends Object, Q extends BaseQuery
     return _reference.purge<Data, Model, I>(_entity);
   }
 }
-

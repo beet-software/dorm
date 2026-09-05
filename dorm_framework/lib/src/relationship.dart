@@ -48,6 +48,62 @@ abstract class Readable2<SingleReadModel, I extends Object, BatchReadModel,
 /// This is a special case of [Readable2].
 typedef Readable<Model, I extends Object, Q extends BaseQuery<Q>> = Readable2<Model, I, Model, Q>;
 
+/// A readable model source with a backend-neutral relationship plan.
+///
+/// A table-backed source exposes its [TableRelationPlan]. A composed
+/// relationship exposes a [CompositeRelationPlan]. Engines may use the plan
+/// to optimize execution, while sources that cannot be optimized still use
+/// the regular [Readable] operations.
+abstract interface class RelationSource<
+        Model, I extends Object, Q extends BaseQuery<Q>>
+    implements Readable<Model, I, Q> {
+  RelationPlan<Model, I> get plan;
+
+  /// The schema of a direct table source, or `null` for a composed source.
+  EntitySchema? get schema => plan.schema;
+}
+
+/// Describes how a [RelationSource] can be executed by an engine.
+abstract class RelationPlan<Model, I extends Object> {
+  const RelationPlan();
+
+  /// The table schema when this plan represents a direct table.
+  EntitySchema? get schema => null;
+}
+
+/// Non-generic view of a table plan for engine implementations.
+abstract interface class TableRelationPlanBase {
+  EntitySchema get schema;
+
+  Object? decode(Map<String, Object?> data);
+}
+
+/// A plan for a source backed directly by an [EntitySchema].
+class TableRelationPlan<Model, I extends Object>
+    extends RelationPlan<Model, I> implements TableRelationPlanBase {
+  final Model Function(I id, Map data) fromJson;
+
+  @override
+  final EntitySchema schema;
+
+  const TableRelationPlan({
+    required this.schema,
+    required this.fromJson,
+  });
+
+  @override
+  Object? decode(Map<String, Object?> data) {
+    final I id = data[schema.primaryKey.columnName] as I;
+    return fromJson(id, data);
+  }
+}
+
+/// A plan for a source produced by another relationship.
+class CompositeRelationPlan<Model, I extends Object>
+    extends RelationPlan<Model, I> {
+  const CompositeRelationPlan();
+}
+
 /// A type that can evaluate a [Join] between [L] and [SingleR] given a
 /// [String] and a list of [Join]s between [L] and [BatchR] given a [Filter].
 typedef Association2<L, I extends Object, SingleR, BatchR, Q extends BaseQuery<Q>>
@@ -93,8 +149,8 @@ abstract class BaseRelationship<Q extends BaseQuery<Q>> {
   ///     .pullAll(const Filter.value(true, key: 'active'));
   /// ```
   OneToOneAssociation<L, I, R, Q> oneToOne<L, I extends Object, R, J extends Object>(
-    Readable<L, I, Q> left,
-    Readable<R, J, Q> right,
+    RelationSource<L, I, Q> left,
+    RelationSource<R, J, Q> right,
     J Function(L) on,
   );
 
@@ -111,14 +167,14 @@ abstract class BaseRelationship<Q extends BaseQuery<Q>> {
   /// final OneToManyAssociation<School, Student> association = relationship.oneToMany(
   ///   left: schools,
   ///   right: students,
-  ///   on: (school) => Filter.value(school.id, key: 'school-id'),
+  ///   on: (school) => Filter.value(school.id, field: StudentEntity.fields.schoolId),
   /// );
   /// final Stream<List<Join<School, List<Student>>>> result = association
   ///     .pullAll(const Filter.value(true, key: 'active'));
   /// ```
   OneToManyAssociation<L, I, R, Q> oneToMany<L, I extends Object, R, J extends Object>(
-    Readable<L, I, Q> left,
-    Readable<R, J, Q> right,
+    RelationSource<L, I, Q> left,
+    RelationSource<R, J, Q> right,
     BaseFilter<Q> Function(L) on,
   );
 
@@ -144,8 +200,8 @@ abstract class BaseRelationship<Q extends BaseQuery<Q>> {
   ///     .pullAll(Filter.date(DateTime(2018), key: 'birth-date', unit: DateFilterUnit.year));
   /// ```
   ManyToOneAssociation<L, I, R, J, Q> manyToOne<L, I extends Object, R, J extends Object>(
-    Readable<L, I, Q> left,
-    Readable<R, J, Q> right,
+    RelationSource<L, I, Q> left,
+    RelationSource<R, J, Q> right,
     J Function(L) on,
   );
 
@@ -172,17 +228,17 @@ abstract class BaseRelationship<Q extends BaseQuery<Q>> {
   ///     .pullAll(Filter.value(true, key: 'active'));
   /// ```
   ManyToManyAssociation<M, I, L, R, Q> manyToMany<M, I extends Object, L, J extends Object, R, K extends Object>(
-    Readable<M, I, Q> middle,
-    Readable<L, J, Q> left,
+    RelationSource<M, I, Q> middle,
+    RelationSource<L, J, Q> left,
     J Function(M) onLeft,
-    Readable<R, K, Q> right,
+    RelationSource<R, K, Q> right,
     K Function(M) onRight,
   );
 }
 
 /// Declares join-oriented reading and relationship assignment.
 class RelationshipDefinedAssociation<L, I extends Object, R, Q extends BaseQuery<Q>>
-    implements Association<L, I, R, Q> {
+    implements Association<L, I, R, Q>, RelationSource<Join<L, R>, I, Q> {
   final BaseRelationship<Q> _relationship;
   final Association<L, I, R, Q> _association;
 
@@ -191,6 +247,12 @@ class RelationshipDefinedAssociation<L, I extends Object, R, Q extends BaseQuery
     this._relationship, {
     required Association<L, I, R, Q> association,
   }) : _association = association;
+
+  @override
+  RelationPlan<Join<L, R>, I> get plan => const CompositeRelationPlan();
+
+  @override
+  EntitySchema? get schema => null;
 
   /// Evaluates the underlying association's [SingleReadOperation.peek] method.
   @override
@@ -223,7 +285,7 @@ class RelationshipDefinedAssociation<L, I extends Object, R, Q extends BaseQuery
   /// Associates the underlying association with a [readable] using a 1:1
   /// relationship given by [on].
   RelationshipDefinedAssociation<Join<L, R>, I, T?, Q> oneToOne<T, J extends Object>(
-    Readable<T, J, Q> readable, {
+    RelationSource<T, J, Q> readable, {
     required J Function(Join<L, R>) on,
   }) {
     return RelationshipDefinedAssociation(
@@ -235,7 +297,7 @@ class RelationshipDefinedAssociation<L, I extends Object, R, Q extends BaseQuery
   /// Associates the underlying association with a [readable] using a 1:N
   /// relationship given by [on].
   RelationshipDefinedAssociation<Join<L, R>, I, List<T>, Q> oneToMany<T, J extends Object>(
-    Readable<T, J, Q> readable, {
+    RelationSource<T, J, Q> readable, {
     required BaseFilter<Q> Function(Join<L, R>) on,
   }) {
     return RelationshipDefinedAssociation(
@@ -247,7 +309,7 @@ class RelationshipDefinedAssociation<L, I extends Object, R, Q extends BaseQuery
   /// Associates the underlying association with a [readable] using a N:1
   /// relationship given by [on].
   ManyToOneAssociation<Join<L, R>, I, T, J, Q> manyToOne<T, J extends Object>(
-    Readable<T, J, Q> readable, {
+    RelationSource<T, J, Q> readable, {
     required J Function(Join<L, R>) on,
   }) {
     return _relationship.manyToOne(this, readable, on);
@@ -256,9 +318,9 @@ class RelationshipDefinedAssociation<L, I extends Object, R, Q extends BaseQuery
   /// Associates the underlying association with a [readable] through [middle]
   /// using a M:N relationship given by [onJoin] and [on].
   RelationshipDefinedAssociation<M, J, (Join<L, R>?, T?), Q> manyToMany<M, J extends Object, T, K extends Object>({
-    required Readable<M, J, Q> middle,
+    required RelationSource<M, J, Q> middle,
     required J Function(M p1) onJoin,
-    required Readable<T, K, Q> readable,
+    required RelationSource<T, K, Q> readable,
     required K Function(M p1) on,
   }) {
     return RelationshipDefinedAssociation(
@@ -297,7 +359,7 @@ class RelationshipDefinedAssociation<L, I extends Object, R, Q extends BaseQuery
 /// ```
 class ModelRelationship<L, I extends Object, Q extends BaseQuery<Q>> {
   final BaseRelationship<Q> relationship;
-  final Readable<L, I, Q> left;
+  final RelationSource<L, I, Q> left;
 
   /// Creates a [ModelRelationship] from its attributes.
   const ModelRelationship({
@@ -323,7 +385,7 @@ class ModelRelationship<L, I extends Object, Q extends BaseQuery<Q>> {
   ///     .pullAll(const Filter.value(true, key: 'active'));
   /// ```
   RelationshipDefinedAssociation<L, I, R?, Q> oneToOne<R, J extends Object>(
-    Readable<R, J, Q> right, {
+    RelationSource<R, J, Q> right, {
     required J Function(L) on,
   }) {
     return RelationshipDefinedAssociation(
@@ -344,13 +406,13 @@ class ModelRelationship<L, I extends Object, Q extends BaseQuery<Q>> {
   /// final Association<School, List<Student>> association;
   /// association = relationship.oneToMany(
   ///   students,
-  ///   on: (school) => Filter.value(school.id, key: 'school-id'),
+  ///   on: (school) => Filter.value(school.id, field: StudentEntity.fields.schoolId),
   /// );
   /// final Stream<List<Join<School, List<Student>>>> result = association
   ///     .pullAll(const Filter.value(true, key: 'active'));
   /// ```
   RelationshipDefinedAssociation<L, I, List<R>, Q> oneToMany<R, J extends Object>(
-    Readable<R, J, Q> right, {
+    RelationSource<R, J, Q> right, {
     required BaseFilter<Q> Function(L) on,
   }) {
     return RelationshipDefinedAssociation(
@@ -380,7 +442,7 @@ class ModelRelationship<L, I extends Object, Q extends BaseQuery<Q>> {
   ///     .pullAll(Filter.date(DateTime(2018), key: 'birth-date', unit: DateFilterUnit.year));
   /// ```
   ManyToOneAssociation<L, I, R, J, Q> manyToOne<R, J extends Object>(
-    Readable<R, J, Q> right, {
+    RelationSource<R, J, Q> right, {
     required J Function(L) on,
   }) {
     return relationship.manyToOne(left, right, on);
@@ -408,9 +470,9 @@ class ModelRelationship<L, I extends Object, Q extends BaseQuery<Q>> {
   ///     .pullAll(Filter.value(true, key: 'active'));
   /// ```
   RelationshipDefinedAssociation<L, I, (RL?, RR?), Q> manyToMany<RL, J extends Object, RR, K extends Object>({
-    required Readable<RL, J, Q> left,
+    required RelationSource<RL, J, Q> left,
     required J Function(L) onLeft,
-    required Readable<RR, K, Q> right,
+    required RelationSource<RR, K, Q> right,
     required K Function(L) onRight,
   }) {
     return RelationshipDefinedAssociation(
@@ -425,4 +487,3 @@ class ModelRelationship<L, I extends Object, Q extends BaseQuery<Q>> {
     );
   }
 }
-

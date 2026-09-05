@@ -41,16 +41,20 @@ abstract class BaseFilter<Q extends BaseQuery<Q>> {
   const factory BaseFilter.empty() = _EmptyFilter;
 
   /// Evaluates to true for rows where its [key] attribute is equal to [value].
+  ///
+  /// Use [field] with a generated [FieldSchema] when the field belongs to a
+  /// generated entity. This keeps the persisted name in the model definition
+  /// instead of repeating it at every call site. Exactly one of [key] or
+  /// [field] must be provided.
   const factory BaseFilter.value(
     Object? value, {
-    required String key,
-  }) = _ValueFilter;
+    String? key,
+    FieldSchema? field,
+  }) = ValueFilter;
 
   /// Evaluates to true for rows where its [key] attribute starts with [text].
-  const factory BaseFilter.text(
-    String text, {
-    required String key,
-  }) = _TextFilter;
+  const factory BaseFilter.text(String text, {required String key}) =
+      _TextFilter;
 
   /// Evaluates to true for rows where its [key] attribute is lexicographically
   /// between [FilterRange.from] and [FilterRange.to], provided by [range].
@@ -99,16 +103,25 @@ class _EmptyFilter<Q extends BaseQuery<Q>> implements BaseFilter<Q> {
   int get hashCode => 0;
 }
 
-class _ValueFilter<Q extends BaseQuery<Q>> implements BaseFilter<Q> {
-  final String key;
+/// A filter that compares one field with a value.
+///
+/// Engines may inspect this structured value instead of parsing a generated
+/// query string when planning a batch operation or a relationship.
+class ValueFilter<Q extends BaseQuery<Q>> implements BaseFilter<Q> {
+  final String? _key;
   final Object? value;
+  final FieldSchema? field;
 
-  const _ValueFilter(this.value, {required this.key});
+  const ValueFilter(this.value, {String? key, this.field})
+      : assert((key == null) != (field == null)),
+        _key = key;
+
+  String get key => _key ?? field!.columnName;
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is _ValueFilter &&
+      other is ValueFilter &&
           runtimeType == other.runtimeType &&
           key == other.key &&
           value == other.value;

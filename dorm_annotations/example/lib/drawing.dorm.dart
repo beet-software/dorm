@@ -86,19 +86,40 @@ class DrawingDependency extends Dependency<DrawingData> {
   const DrawingDependency() : super.strong();
 }
 
+class DrawingFields {
+  const DrawingFields();
+
+  final FieldSchema id = const FieldSchema(fieldName: 'id', columnName: 'id');
+
+  final FieldSchema color = const FieldSchema(
+    fieldName: 'color',
+    columnName: 'cor',
+  );
+
+  final FieldSchema type = const FieldSchema(
+    fieldName: 'type',
+    columnName: 'tipo',
+  );
+
+  final FieldSchema shape = const FieldSchema(
+    fieldName: 'shape',
+    columnName: 'formato',
+  );
+}
+
 class DrawingEntity implements Entity<DrawingData, Drawing, String> {
   const DrawingEntity();
 
-  @override
-  final EntitySchema schema = const EntitySchema(
+  static const DrawingFields fields = DrawingFields();
+
+  static final EntitySchema _schema = EntitySchema(
     tableName: 'desenho',
-    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
-    fields: [
-      FieldSchema(fieldName: 'color', columnName: 'cor'),
-      FieldSchema(fieldName: 'type', columnName: 'tipo'),
-      FieldSchema(fieldName: 'shape', columnName: 'formato'),
-    ],
+    primaryKey: fields.id,
+    fields: [fields.color, fields.type, fields.shape],
   );
+
+  @override
+  EntitySchema get schema => _schema;
 
   @override
   Drawing fromData(DrawingDependency dependency, String id, DrawingData data) {

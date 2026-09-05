@@ -83,19 +83,40 @@ class UserDependency extends Dependency<UserData> {
   const UserDependency() : super.strong();
 }
 
+class UserFields {
+  const UserFields();
+
+  final FieldSchema id = const FieldSchema(fieldName: 'id', columnName: 'id');
+
+  final FieldSchema username = const FieldSchema(
+    fieldName: 'username',
+    columnName: 'username',
+  );
+
+  final FieldSchema email = const FieldSchema(
+    fieldName: 'email',
+    columnName: 'email',
+  );
+
+  final FieldSchema profile = const FieldSchema(
+    fieldName: 'profile',
+    columnName: 'profile',
+  );
+}
+
 class UserEntity implements Entity<UserData, User, String> {
   const UserEntity();
 
-  @override
-  final EntitySchema schema = const EntitySchema(
+  static const UserFields fields = UserFields();
+
+  static final EntitySchema _schema = EntitySchema(
     tableName: 'Users',
-    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
-    fields: [
-      FieldSchema(fieldName: 'username', columnName: 'username'),
-      FieldSchema(fieldName: 'email', columnName: 'email'),
-      FieldSchema(fieldName: 'profile', columnName: 'profile'),
-    ],
+    primaryKey: fields.id,
+    fields: [fields.username, fields.email, fields.profile],
   );
+
+  @override
+  EntitySchema get schema => _schema;
 
   @override
   User fromData(UserDependency dependency, String id, UserData data) {
@@ -182,19 +203,40 @@ class ProductDependency extends Dependency<ProductData> {
   const ProductDependency() : super.strong();
 }
 
+class ProductFields {
+  const ProductFields();
+
+  final FieldSchema id = const FieldSchema(fieldName: 'id', columnName: 'id');
+
+  final FieldSchema name = const FieldSchema(
+    fieldName: 'name',
+    columnName: 'name',
+  );
+
+  final FieldSchema description = const FieldSchema(
+    fieldName: 'description',
+    columnName: 'description',
+  );
+
+  final FieldSchema price = const FieldSchema(
+    fieldName: 'price',
+    columnName: 'price',
+  );
+}
+
 class ProductEntity implements Entity<ProductData, Product, String> {
   const ProductEntity();
 
-  @override
-  final EntitySchema schema = const EntitySchema(
+  static const ProductFields fields = ProductFields();
+
+  static final EntitySchema _schema = EntitySchema(
     tableName: 'Products',
-    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
-    fields: [
-      FieldSchema(fieldName: 'name', columnName: 'name'),
-      FieldSchema(fieldName: 'description', columnName: 'description'),
-      FieldSchema(fieldName: 'price', columnName: 'price'),
-    ],
+    primaryKey: fields.id,
+    fields: [fields.name, fields.description, fields.price],
   );
+
+  @override
+  EntitySchema get schema => _schema;
 
   @override
   Product fromData(ProductDependency dependency, String id, ProductData data) {
@@ -286,24 +328,38 @@ class CartDependency extends Dependency<CartData> {
   final String userId;
 }
 
+class CartFields {
+  const CartFields();
+
+  final FieldSchema id = const FieldSchema(fieldName: 'id', columnName: 'id');
+
+  final FieldSchema timestamp = const FieldSchema(
+    fieldName: 'timestamp',
+    columnName: 'timestamp',
+  );
+
+  final ForeignKeySchema userId = const ForeignKeySchema(
+    fieldName: 'userId',
+    columnName: 'user-id',
+    targetTableName: 'Users',
+    targetColumnName: 'id',
+    unique: false,
+  );
+}
+
 class CartEntity implements Entity<CartData, Cart, String> {
   const CartEntity();
 
-  @override
-  final EntitySchema schema = const EntitySchema(
+  static const CartFields fields = CartFields();
+
+  static final EntitySchema _schema = EntitySchema(
     tableName: 'Carts',
-    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
-    fields: [
-      FieldSchema(fieldName: 'timestamp', columnName: 'timestamp'),
-      ForeignKeySchema(
-        fieldName: 'userId',
-        columnName: 'user-id',
-        targetTableName: 'Users',
-        targetColumnName: 'id',
-        unique: false,
-      ),
-    ],
+    primaryKey: fields.id,
+    fields: [fields.timestamp, fields.userId],
   );
+
+  @override
+  EntitySchema get schema => _schema;
 
   @override
   Cart fromData(CartDependency dependency, String id, CartData data) {
@@ -384,31 +440,46 @@ class CartItemDependency extends Dependency<CartItemData> {
   final String cartId;
 }
 
+class CartItemFields {
+  const CartItemFields();
+
+  final FieldSchema id = const FieldSchema(fieldName: 'id', columnName: 'id');
+
+  final FieldSchema amount = const FieldSchema(
+    fieldName: 'amount',
+    columnName: 'amount',
+  );
+
+  final ForeignKeySchema productId = const ForeignKeySchema(
+    fieldName: 'productId',
+    columnName: 'product-id',
+    targetTableName: 'Products',
+    targetColumnName: 'id',
+    unique: false,
+  );
+
+  final ForeignKeySchema cartId = const ForeignKeySchema(
+    fieldName: 'cartId',
+    columnName: 'cart-id',
+    targetTableName: 'Carts',
+    targetColumnName: 'id',
+    unique: false,
+  );
+}
+
 class CartItemEntity implements Entity<CartItemData, CartItem, String> {
   const CartItemEntity();
 
-  @override
-  final EntitySchema schema = const EntitySchema(
+  static const CartItemFields fields = CartItemFields();
+
+  static final EntitySchema _schema = EntitySchema(
     tableName: 'CartItems',
-    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
-    fields: [
-      FieldSchema(fieldName: 'amount', columnName: 'amount'),
-      ForeignKeySchema(
-        fieldName: 'productId',
-        columnName: 'product-id',
-        targetTableName: 'Products',
-        targetColumnName: 'id',
-        unique: false,
-      ),
-      ForeignKeySchema(
-        fieldName: 'cartId',
-        columnName: 'cart-id',
-        targetTableName: 'Carts',
-        targetColumnName: 'id',
-        unique: false,
-      ),
-    ],
+    primaryKey: fields.id,
+    fields: [fields.amount, fields.productId, fields.cartId],
   );
+
+  @override
+  EntitySchema get schema => _schema;
 
   @override
   CartItem fromData(
@@ -549,27 +620,59 @@ class ReviewDependency extends Dependency<ReviewData> {
   final String userId;
 }
 
+class ReviewFields {
+  const ReviewFields();
+
+  final FieldSchema id = const FieldSchema(fieldName: 'id', columnName: 'id');
+
+  final FieldSchema text = const FieldSchema(
+    fieldName: 'text',
+    columnName: 'text',
+  );
+
+  final FieldSchema timestamp = const FieldSchema(
+    fieldName: 'timestamp',
+    columnName: 'timestamp',
+  );
+
+  final FieldSchema type = const FieldSchema(
+    fieldName: 'type',
+    columnName: 'type',
+  );
+
+  final FieldSchema content = const FieldSchema(
+    fieldName: 'content',
+    columnName: 'content',
+  );
+
+  final ForeignKeySchema userId = const ForeignKeySchema(
+    fieldName: 'userId',
+    columnName: 'user-id',
+    targetTableName: 'Users',
+    targetColumnName: 'id',
+    unique: false,
+  );
+}
+
 class ReviewEntity implements Entity<ReviewData, Review, String> {
   const ReviewEntity();
 
-  @override
-  final EntitySchema schema = const EntitySchema(
+  static const ReviewFields fields = ReviewFields();
+
+  static final EntitySchema _schema = EntitySchema(
     tableName: 'Reviews',
-    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
+    primaryKey: fields.id,
     fields: [
-      FieldSchema(fieldName: 'text', columnName: 'text'),
-      FieldSchema(fieldName: 'timestamp', columnName: 'timestamp'),
-      FieldSchema(fieldName: 'type', columnName: 'type'),
-      FieldSchema(fieldName: 'content', columnName: 'content'),
-      ForeignKeySchema(
-        fieldName: 'userId',
-        columnName: 'user-id',
-        targetTableName: 'Users',
-        targetColumnName: 'id',
-        unique: false,
-      ),
+      fields.text,
+      fields.timestamp,
+      fields.type,
+      fields.content,
+      fields.userId,
     ],
   );
+
+  @override
+  EntitySchema get schema => _schema;
 
   @override
   Review fromData(ReviewDependency dependency, String id, ReviewData data) {

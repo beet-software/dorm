@@ -60,20 +60,45 @@ class UserDependency extends Dependency<UserData> {
   const UserDependency() : super.strong();
 }
 
+class UserFields {
+  const UserFields();
+
+  final FieldSchema id = const FieldSchema(fieldName: 'id', columnName: 'id');
+
+  final FieldSchema name = const FieldSchema(
+    fieldName: 'name',
+    columnName: 'name',
+  );
+
+  final FieldSchema birthDate = const FieldSchema(
+    fieldName: 'birthDate',
+    columnName: 'birth-date',
+  );
+
+  final FieldSchema email = const FieldSchema(
+    fieldName: 'email',
+    columnName: 'email',
+  );
+
+  final FieldSchema pictureUrl = const FieldSchema(
+    fieldName: 'pictureUrl',
+    columnName: 'picture-url',
+  );
+}
+
 class UserEntity implements Entity<UserData, User, String> {
   const UserEntity();
 
-  @override
-  final EntitySchema schema = const EntitySchema(
+  static const UserFields fields = UserFields();
+
+  static final EntitySchema _schema = EntitySchema(
     tableName: 'user',
-    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
-    fields: [
-      FieldSchema(fieldName: 'name', columnName: 'name'),
-      FieldSchema(fieldName: 'birthDate', columnName: 'birth-date'),
-      FieldSchema(fieldName: 'email', columnName: 'email'),
-      FieldSchema(fieldName: 'pictureUrl', columnName: 'picture-url'),
-    ],
+    primaryKey: fields.id,
+    fields: [fields.name, fields.birthDate, fields.email, fields.pictureUrl],
   );
+
+  @override
+  EntitySchema get schema => _schema;
 
   @override
   User fromData(UserDependency dependency, String id, UserData data) {
@@ -158,25 +183,43 @@ class PostDependency extends Dependency<PostData> {
   final String userId;
 }
 
+class PostFields {
+  const PostFields();
+
+  final FieldSchema id = const FieldSchema(fieldName: 'id', columnName: 'id');
+
+  final FieldSchema contents = const FieldSchema(
+    fieldName: 'contents',
+    columnName: 'contents',
+  );
+
+  final FieldSchema creationDate = const FieldSchema(
+    fieldName: 'creationDate',
+    columnName: 'creation-date',
+  );
+
+  final ForeignKeySchema userId = const ForeignKeySchema(
+    fieldName: 'userId',
+    columnName: 'user-id',
+    targetTableName: 'user',
+    targetColumnName: 'id',
+    unique: false,
+  );
+}
+
 class PostEntity implements Entity<PostData, Post, String> {
   const PostEntity();
 
-  @override
-  final EntitySchema schema = const EntitySchema(
+  static const PostFields fields = PostFields();
+
+  static final EntitySchema _schema = EntitySchema(
     tableName: 'post',
-    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
-    fields: [
-      FieldSchema(fieldName: 'contents', columnName: 'contents'),
-      FieldSchema(fieldName: 'creationDate', columnName: 'creation-date'),
-      ForeignKeySchema(
-        fieldName: 'userId',
-        columnName: 'user-id',
-        targetTableName: 'user',
-        targetColumnName: 'id',
-        unique: false,
-      ),
-    ],
+    primaryKey: fields.id,
+    fields: [fields.contents, fields.creationDate, fields.userId],
   );
+
+  @override
+  EntitySchema get schema => _schema;
 
   @override
   Post fromData(PostDependency dependency, String id, PostData data) {
@@ -267,32 +310,56 @@ class MessageDependency extends Dependency<MessageData> {
   final String receiverId;
 }
 
+class MessageFields {
+  const MessageFields();
+
+  final FieldSchema id = const FieldSchema(fieldName: 'id', columnName: 'id');
+
+  final FieldSchema contents = const FieldSchema(
+    fieldName: 'contents',
+    columnName: 'contents',
+  );
+
+  final FieldSchema creationDate = const FieldSchema(
+    fieldName: 'creationDate',
+    columnName: 'creation-date',
+  );
+
+  final ForeignKeySchema senderId = const ForeignKeySchema(
+    fieldName: 'senderId',
+    columnName: 'sender-id',
+    targetTableName: 'user',
+    targetColumnName: 'id',
+    unique: false,
+  );
+
+  final ForeignKeySchema receiverId = const ForeignKeySchema(
+    fieldName: 'receiverId',
+    columnName: 'receiver-id',
+    targetTableName: 'user',
+    targetColumnName: 'id',
+    unique: false,
+  );
+}
+
 class MessageEntity implements Entity<MessageData, Message, String> {
   const MessageEntity();
 
-  @override
-  final EntitySchema schema = const EntitySchema(
+  static const MessageFields fields = MessageFields();
+
+  static final EntitySchema _schema = EntitySchema(
     tableName: 'message',
-    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
+    primaryKey: fields.id,
     fields: [
-      FieldSchema(fieldName: 'contents', columnName: 'contents'),
-      FieldSchema(fieldName: 'creationDate', columnName: 'creation-date'),
-      ForeignKeySchema(
-        fieldName: 'senderId',
-        columnName: 'sender-id',
-        targetTableName: 'user',
-        targetColumnName: 'id',
-        unique: false,
-      ),
-      ForeignKeySchema(
-        fieldName: 'receiverId',
-        columnName: 'receiver-id',
-        targetTableName: 'user',
-        targetColumnName: 'id',
-        unique: false,
-      ),
+      fields.contents,
+      fields.creationDate,
+      fields.senderId,
+      fields.receiverId,
     ],
   );
+
+  @override
+  EntitySchema get schema => _schema;
 
   @override
   Message fromData(MessageDependency dependency, String id, MessageData data) {

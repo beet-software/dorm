@@ -755,6 +755,11 @@ With a database entity ready to be used, we want to ask the database questions r
 relationships between schemas, such as "What are the students of a given school?". These questions
 can be asked through the `relationships` field of a database entity.
 
+Relationship operands are `RelationSource`s. Repositories expose a
+`TableRelationPlan`, while associations created from other relationships expose a
+`CompositeRelationPlan`. Database engines may use these plans to batch or optimize
+relationship reads; callback-based relationships remain supported as a fallback.
+
 #### One-to-one
 
 An one-to-one relationship between two models refers to a unique and bidirectional association where
@@ -809,7 +814,8 @@ void main() async {
   final OneToManyAssociation<School, Student> association;
   association = schoolController.relationships.oneToMany(
     studentController.repository,
-    on: (School school) => Filter.value(school.id, key: 'school-id'),
+    on: (School school) =>
+        Filter.value(school.id, field: StudentEntity.fields.schoolId),
   );
 
   final Join<School, List<Student>>? join = await association.peek('123456');

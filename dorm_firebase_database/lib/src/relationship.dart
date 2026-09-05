@@ -27,8 +27,8 @@ class Relationship implements BaseRelationship<Query> {
 
   @override
   OneToOneAssociation<L, I, R, Query> oneToOne<L, I extends Object, R, J extends Object>(
-    Readable<L, I, Query> left,
-    Readable<R, J, Query> right,
+    RelationSource<L, I, Query> left,
+    RelationSource<R, J, Query> right,
     J Function(L p1) on,
   ) {
     return _OneToOne(left: left, right: right, on: on);
@@ -36,8 +36,8 @@ class Relationship implements BaseRelationship<Query> {
 
   @override
   OneToManyAssociation<L, I, R, Query> oneToMany<L, I extends Object, R, J extends Object>(
-    Readable<L, I, Query> left,
-    Readable<R, J, Query> right,
+    RelationSource<L, I, Query> left,
+    RelationSource<R, J, Query> right,
     BaseFilter<Query> Function(L p1) on,
   ) {
     return _OneToMany(left: left, right: right, on: on);
@@ -45,8 +45,8 @@ class Relationship implements BaseRelationship<Query> {
 
   @override
   ManyToOneAssociation<L, I, R, J, Query> manyToOne<L, I extends Object, R, J extends Object>(
-    Readable<L, I, Query> left,
-    Readable<R, J, Query> right,
+    RelationSource<L, I, Query> left,
+    RelationSource<R, J, Query> right,
     J Function(L p1) on,
   ) {
     return _ManyToOne(left: left, right: right, on: on);
@@ -54,10 +54,10 @@ class Relationship implements BaseRelationship<Query> {
 
   @override
   ManyToManyAssociation<M, I, L, R, Query> manyToMany<M, I extends Object, L, J extends Object, R, K extends Object>(
-    Readable<M, I, Query> middle,
-    Readable<L, J, Query> left,
+    RelationSource<M, I, Query> middle,
+    RelationSource<L, J, Query> left,
     J Function(M p1) onLeft,
-    Readable<R, K, Query> right,
+    RelationSource<R, K, Query> right,
     K Function(M p1) onRight,
   ) {
     return _ManyToMany(
@@ -71,8 +71,8 @@ class Relationship implements BaseRelationship<Query> {
 }
 
 class _OneToOne<L, I extends Object, R, J extends Object> implements OneToOneAssociation<L, I, R, Query> {
-  final Readable<L, I, Query> left;
-  final Readable<R, J, Query> right;
+  final RelationSource<L, I, Query> left;
+  final RelationSource<R, J, Query> right;
   final J Function(L) on;
 
   const _OneToOne({
@@ -122,8 +122,8 @@ class _OneToOne<L, I extends Object, R, J extends Object> implements OneToOneAss
 }
 
 class _OneToMany<L, I extends Object, R, J extends Object> implements OneToManyAssociation<L, I, R, Query> {
-  final Readable<L, I, Query> left;
-  final Readable<R, J, Query> right;
+  final RelationSource<L, I, Query> left;
+  final RelationSource<R, J, Query> right;
   final BaseFilter<Query> Function(L) on;
 
   const _OneToMany({
@@ -177,8 +177,8 @@ class _OneToMany<L, I extends Object, R, J extends Object> implements OneToManyA
 }
 
 class _ManyToOne<L, I extends Object, R, J extends Object> implements ManyToOneAssociation<L, I, R, J, Query> {
-  final Readable<L, I, Query> left;
-  final Readable<R, J, Query> right;
+  final RelationSource<L, I, Query> left;
+  final RelationSource<R, J, Query> right;
   final J Function(L) on;
 
   const _ManyToOne({
@@ -241,9 +241,9 @@ class _ManyToOne<L, I extends Object, R, J extends Object> implements ManyToOneA
 }
 
 class _ManyToMany<M, I extends Object, L, J extends Object, R, K extends Object> implements ManyToManyAssociation<M, I, L, R, Query> {
-  final Readable<M, I, Query> middle;
-  final Readable<L, J, Query> left;
-  final Readable<R, K, Query> right;
+  final RelationSource<M, I, Query> middle;
+  final RelationSource<L, J, Query> left;
+  final RelationSource<R, K, Query> right;
   final J Function(M) onLeft;
   final K Function(M) onRight;
 
@@ -327,7 +327,6 @@ class _ManyToMany<M, I extends Object, L, J extends Object, R, K extends Object>
     ).stream;
   }
 }
-
 
 
 

@@ -93,6 +93,9 @@ class ModelNaming extends Naming<ModelOrmNode> {
   /// UserProperties
   String get extensionName => '${modelName}Properties';
 
+  /// UserFields
+  String get fieldsName => '${modelName}Fields';
+
   cb.Reference get idReference {
     final $Type type = node.annotation.idType as $Type;
     return cb.Reference(type.name ?? 'String');
@@ -776,24 +779,58 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
     );
   }
 
+  cb.Spec get _fieldsClass {
+    return cb.Class((b) {
+      b.name = naming.fieldsName;
+      b.constructors.add(cb.Constructor((b) {
+        b.constant = true;
+      }));
+      b.fields.add(
+        cb.Field((b) {
+          b.modifier = cb.FieldModifier.final$;
+          b.type = cb.Reference('FieldSchema', '$_dormUrl');
+          b.name = 'id';
+          b.assignment = cb.ToCodeExpression(
+            cb.InvokeExpression.constOf(
+              cb.Reference('FieldSchema', '$_dormUrl'),
+              [],
+              {
+                'fieldName': cb.literalString('id'),
+                'columnName': cb.literalString('id'),
+              },
+            ),
+          );
+        }),
+      );
+      b.fields.addAll(fields.where((field) => field.isConcrete).entries.map((entry) {
+        return cb.Field((b) {
+          b.modifier = cb.FieldModifier.final$;
+          b.type = cb.Reference(
+            entry.value.annotation is ForeignField
+                ? 'ForeignKeySchema'
+                : 'FieldSchema',
+            '$_dormUrl',
+          );
+          b.name = entry.key;
+          b.assignment = cb.ToCodeExpression(
+            _fieldSchema(entry.key, entry.value),
+          );
+        });
+      }));
+    });
+  }
+
   cb.Expression get _schemaExpression {
-    return cb.InvokeExpression.constOf(
+    return cb.InvokeExpression.newOf(
       cb.Reference('EntitySchema', '$_dormUrl'),
       [],
       {
         'tableName': cb.literalString(naming.tableName),
-        'primaryKey': cb.InvokeExpression.constOf(
-          cb.Reference('FieldSchema', '$_dormUrl'),
-          [],
-          {
-            'fieldName': cb.literalString('id'),
-            'columnName': cb.literalString('id'),
-          },
-        ),
-        'fields': cb.literalConstList([
+        'primaryKey': expressionOf('fields.id'),
+        'fields': cb.literalList([
           for (MapEntry<String, FieldOrmNode> entry
               in fields.where((field) => field.isConcrete).entries)
-            _fieldSchema(entry.key, entry.value),
+            expressionOf('fields.${entry.key}'),
         ]),
       },
     );
@@ -813,12 +850,37 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
         b.constant = true;
       }));
       b.fields.add(cb.Field((b) {
-        b.annotations.add(expressionOf('override'));
+        b.static = true;
         b.modifier = cb.FieldModifier.final$;
         b.type = cb.Reference('EntitySchema', '$_dormUrl');
-        b.name = 'schema';
+        b.name = '_schema';
         b.assignment = cb.ToCodeExpression(_schemaExpression);
       }));
+      b.methods.add(cb.Method((b) {
+        b.annotations.add(expressionOf('override'));
+        b.returns = cb.Reference('EntitySchema', '$_dormUrl');
+        b.name = 'schema';
+        b.type = cb.MethodType.getter;
+        b.lambda = true;
+        b.body = expressionOf('_schema').code;
+      }));
+      b.fields.insertAll(
+        0,
+        [
+          cb.Field((b) {
+            b.static = true;
+            b.modifier = cb.FieldModifier.constant;
+            b.type = cb.Reference(naming.fieldsName);
+            b.name = 'fields';
+            b.assignment = cb.ToCodeExpression(
+              cb.InvokeExpression.constOf(
+                cb.Reference(naming.fieldsName),
+                [],
+              ),
+            );
+          }),
+        ],
+      );
       b.methods.add(cb.Method((b) {
         b.annotations.add(expressionOf('override'));
         b.returns = cb.Reference(naming.modelName);
@@ -1015,6 +1077,7 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
       ),
     ));
     b.body.add(_dependencyClass);
+    b.body.add(_fieldsClass);
     b.body.add(_entityClass);
     if (fields.where((field) => field.isNative).isNotEmpty) {
       b.body.add(_extension);

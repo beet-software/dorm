@@ -30,5 +30,5 @@ class Engine implements BaseEngine<Query> {
   BaseReference<Query> createReference() => Reference(connection);
 
   @override
-  BaseRelationship<Query> createRelationship() => Relationship();
+  BaseRelationship<Query> createRelationship() => Relationship(connection);
 }

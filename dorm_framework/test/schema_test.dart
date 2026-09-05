@@ -1,6 +1,33 @@
 import 'package:dorm_framework/dorm_framework.dart';
 import 'package:test/test.dart';
 
+class _Query extends BaseQuery<_Query> {
+  String? key;
+  Object? value;
+
+  @override
+  _Query whereValue(String key, Object? value) {
+    this.key = key;
+    this.value = value;
+    return this;
+  }
+
+  @override
+  _Query whereText(String key, String prefix) => this;
+
+  @override
+  _Query whereDate(String key, DateTime date, DateFilterUnit unit) => this;
+
+  @override
+  _Query whereRange<R>(String key, FilterRange<R> range) => this;
+
+  @override
+  _Query limit(int count) => this;
+
+  @override
+  _Query sorted(String key) => this;
+}
+
 void main() {
   test('exposes foreign-key metadata without engine details', () {
     const EntitySchema schema = EntitySchema(
@@ -31,5 +58,20 @@ void main() {
     );
 
     expect(foreignKey.unique, isTrue);
+  });
+
+  test('resolves a value filter field from its schema metadata', () {
+    const FieldSchema field = FieldSchema(
+      fieldName: 'schoolId',
+      columnName: 'school_id',
+    );
+
+    final _Query query = const BaseFilter<_Query>.value(
+      7,
+      field: field,
+    ).accept(_Query());
+
+    expect(query.key, 'school_id');
+    expect(query.value, 7);
   });
 }

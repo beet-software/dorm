@@ -40,15 +40,30 @@ class UserDependency extends Dependency<UserData> {
   const UserDependency() : super.strong();
 }
 
+class UserFields {
+  const UserFields();
+
+  final FieldSchema id = const FieldSchema(fieldName: 'id', columnName: 'id');
+
+  final FieldSchema name = const FieldSchema(
+    fieldName: 'name',
+    columnName: 'name',
+  );
+}
+
 class UserEntity implements Entity<UserData, User, String> {
   const UserEntity();
 
-  @override
-  final EntitySchema schema = const EntitySchema(
+  static const UserFields fields = UserFields();
+
+  static final EntitySchema _schema = EntitySchema(
     tableName: 'users',
-    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
-    fields: [FieldSchema(fieldName: 'name', columnName: 'name')],
+    primaryKey: fields.id,
+    fields: [fields.name],
   );
+
+  @override
+  EntitySchema get schema => _schema;
 
   @override
   User fromData(UserDependency dependency, String id, UserData data) {

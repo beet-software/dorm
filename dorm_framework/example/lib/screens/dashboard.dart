@@ -28,7 +28,8 @@ class DashboardScreen extends StatelessWidget {
                       GetIt.instance.get<Dorm>().products.repository,
                       on: (item) => item.productId,
                     ),
-                on: (user) => Filter.value(user.id, key: 'cart-id'),
+                on: (user) =>
+                    Filter.value(user.id, field: CartItemEntity.fields.cartId),
               )
               .pullAll()
               .map((event) =>
