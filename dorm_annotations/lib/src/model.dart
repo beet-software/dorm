@@ -16,6 +16,8 @@
 
 import 'package:meta/meta_meta.dart';
 
+import 'id.dart';
+
 /// Allows a class to be serialized.
 @Target({TargetKind.classType})
 class Data {
@@ -29,22 +31,26 @@ class Model {
   /// Name of the table in the underlying database.
   final String? name;
 
-  /// Type of the model's identifier.
-  final Type idType;
+  /// Parts of the model's primary key.
+  ///
+  /// The generator supports one [GeneratedIdSpec] or one or more
+  /// [ExistingIdSpec] parts. Composite generated keys are not supported.
+  final List<IdSpec> primaryKey;
 
   /// Name for the Dart repository accessor of this model.
   final Symbol? as;
 
   /// Unique identification type for this model.
   ///
-  /// Should have the signature String Function(_AnnotatedClass, String), where
-  /// `_AnnotatedClass` is the class annotated by this [Model] instance.
+  /// Should accept the annotated class and the generated ID value, and return
+  /// the model's generated primary-key value. The generated ID argument and
+  /// return type must match the active [GeneratedIdSpec.type].
   final Function? primaryKeyGenerator;
 
   /// Creates a [Model] by its attributes.
   const Model({
     this.name,
-    this.idType = String,
+    this.primaryKey = const [GeneratedIdSpec()],
     this.as,
     this.primaryKeyGenerator,
   });

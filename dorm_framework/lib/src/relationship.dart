@@ -75,6 +75,10 @@ abstract class RelationPlan<Model, I extends Object> {
 abstract interface class TableRelationPlanBase {
   EntitySchema get schema;
 
+  List<Object?> encodeKey(Object key);
+
+  Object? decodeKey(Map<String, Object?> data);
+
   Object? decode(Map<String, Object?> data);
 }
 
@@ -83,17 +87,32 @@ class TableRelationPlan<Model, I extends Object>
     extends RelationPlan<Model, I> implements TableRelationPlanBase {
   final Model Function(I id, Map data) fromJson;
 
+  final PrimaryKeyCodec<I> primaryKeyCodec;
+
   @override
   final EntitySchema schema;
 
   const TableRelationPlan({
     required this.schema,
     required this.fromJson,
+    this.primaryKeyCodec = const SinglePrimaryKeyCodec(),
   });
 
   @override
+  List<Object?> encodeKey(Object key) {
+    return primaryKeyCodec.encode(key as I);
+  }
+
+  @override
+  Object? decodeKey(Map<String, Object?> data) {
+    return primaryKeyCodec.decode(
+      schema.keyFields.map((field) => data[field.columnName]),
+    );
+  }
+
+  @override
   Object? decode(Map<String, Object?> data) {
-    final I id = data[schema.primaryKey.columnName] as I;
+    final I id = decodeKey(data) as I;
     return fromJson(id, data);
   }
 }

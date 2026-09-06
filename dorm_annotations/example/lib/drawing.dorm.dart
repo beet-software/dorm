@@ -122,6 +122,9 @@ class DrawingEntity implements Entity<DrawingData, Drawing, String> {
   EntitySchema get schema => _schema;
 
   @override
+  PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
+
+  @override
   Drawing fromData(DrawingDependency dependency, String id, DrawingData data) {
     return Drawing(
       id: id,

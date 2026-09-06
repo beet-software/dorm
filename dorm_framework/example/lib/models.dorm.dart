@@ -119,6 +119,9 @@ class UserEntity implements Entity<UserData, User, String> {
   EntitySchema get schema => _schema;
 
   @override
+  PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
+
+  @override
   User fromData(UserDependency dependency, String id, UserData data) {
     return User(
       id: id,
@@ -237,6 +240,9 @@ class ProductEntity implements Entity<ProductData, Product, String> {
 
   @override
   EntitySchema get schema => _schema;
+
+  @override
+  PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
   Product fromData(ProductDependency dependency, String id, ProductData data) {
@@ -362,6 +368,9 @@ class CartEntity implements Entity<CartData, Cart, String> {
   EntitySchema get schema => _schema;
 
   @override
+  PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
+
+  @override
   Cart fromData(CartDependency dependency, String id, CartData data) {
     return Cart(
       id: _Cart._generate(_$Cart.fromData(dependency, data), id),
@@ -480,6 +489,9 @@ class CartItemEntity implements Entity<CartItemData, CartItem, String> {
 
   @override
   EntitySchema get schema => _schema;
+
+  @override
+  PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
   CartItem fromData(
@@ -673,6 +685,9 @@ class ReviewEntity implements Entity<ReviewData, Review, String> {
 
   @override
   EntitySchema get schema => _schema;
+
+  @override
+  PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
   Review fromData(ReviewDependency dependency, String id, ReviewData data) {

@@ -101,6 +101,9 @@ class UserEntity implements Entity<UserData, User, String> {
   EntitySchema get schema => _schema;
 
   @override
+  PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
+
+  @override
   User fromData(UserDependency dependency, String id, UserData data) {
     return User(
       id: id,
@@ -220,6 +223,9 @@ class PostEntity implements Entity<PostData, Post, String> {
 
   @override
   EntitySchema get schema => _schema;
+
+  @override
+  PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
   Post fromData(PostDependency dependency, String id, PostData data) {
@@ -360,6 +366,9 @@ class MessageEntity implements Entity<MessageData, Message, String> {
 
   @override
   EntitySchema get schema => _schema;
+
+  @override
+  PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
   Message fromData(MessageDependency dependency, String id, MessageData data) {

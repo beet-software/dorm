@@ -111,6 +111,12 @@ class _EntityReference<Data, Model extends Data, I extends Object>
   }
 
   Model put(Dependency<Data> dependency, Data data) {
+    if (entity.schema.isCompositePrimaryKey) {
+      throw UnsupportedError(
+        'BLoC put requires an explicitly identified model for composite '
+        'primary keys; use push instead.',
+      );
+    }
     return _emit((models) {
       final Model model = entity.fromData(dependency, _uuid.v4() as I, data);
       models[entity.identify(model)] = model;
@@ -119,6 +125,12 @@ class _EntityReference<Data, Model extends Data, I extends Object>
   }
 
   List<Model> putAll(Dependency<Data> dependency, List<Data> datum) {
+    if (entity.schema.isCompositePrimaryKey) {
+      throw UnsupportedError(
+        'BLoC putAll requires explicitly identified models for composite '
+        'primary keys; use pushAll instead.',
+      );
+    }
     return _emit((current) {
       final List<Model> models = datum
           .map((data) => entity.fromData(dependency, _uuid.v4() as I, data))
@@ -296,7 +308,6 @@ class Reference extends Cubit<_State> implements BaseReference<Query> {
     return bloc.putAll(dependency, datum);
   }
 }
-
 
 
 

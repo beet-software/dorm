@@ -180,12 +180,34 @@ class DataParser extends ClassNodeParser<Data> {
 class ModelParser extends ClassNodeParser<Model> {
   const ModelParser();
 
+  IdSpec _parseIdSpec(ConstantReader reader) {
+    final String? typeName = reader.objectValue.type?.getDisplayString();
+    switch (typeName) {
+      case 'GeneratedIdSpec':
+        return GeneratedIdSpec(
+          as: $Symbol(reader: reader.read('as')),
+          name: reader.read('name').stringValue,
+          type: $Type(reader: reader.read('type')),
+        );
+      case 'ExistingIdSpec':
+        return ExistingIdSpec(referTo: $Symbol(reader: reader.read('referTo')));
+      default:
+        throw StateError(
+          'Unsupported primary-key specification: ${typeName ?? 'unknown'}',
+        );
+    }
+  }
+
   @override
   Model _parse(ConstantReader reader) {
     final ConstantReader primaryKeyReader = reader.read('primaryKeyGenerator');
+    final ConstantReader primaryKeySpecsReader = reader.read('primaryKey');
     return Model(
       name: reader.read('name').stringValue,
-      idType: $Type(reader: reader.read('idType')),
+      primaryKey: [
+        for (final DartObject object in primaryKeySpecsReader.listValue)
+          _parseIdSpec(ConstantReader(object)),
+      ],
       as: $Symbol(reader: reader.read('as')),
       primaryKeyGenerator: primaryKeyReader.isNull
           ? null
@@ -238,8 +260,9 @@ class PolymorphicDataParser extends ClassNodeParser<PolymorphicData> {
     PolymorphicData annotation,
     ClassElement element,
   ) {
-    final InterfaceType supertypeType =
-        element.allSupertypes.singleWhere((type) => !type.isDartCoreObject);
+    final InterfaceType supertypeType = element.allSupertypes.singleWhere(
+      (type) => !type.isDartCoreObject,
+    );
 
     final bool isSealed;
     final InterfaceElement superTypeElement = supertypeType.element;

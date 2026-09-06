@@ -21,6 +21,7 @@ export 'src/engine.dart';
 export 'src/entity.dart';
 export 'src/filter.dart';
 export 'src/query.dart';
+export 'src/primary_key.dart';
 export 'src/reference.dart';
 export 'src/relationship.dart';
 export 'src/repository.dart';

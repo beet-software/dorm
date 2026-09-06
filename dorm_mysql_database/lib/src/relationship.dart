@@ -35,7 +35,7 @@ Future<List<_DecodedRow>> _readRows(
   );
   return result.rows.map((row) {
     final Map<String, Object?> data = row.typedAssoc();
-    final Object key = data[plan.schema.primaryKey.columnName]!;
+    final Object key = plan.decodeKey(data)!;
     return _DecodedRow(
       key: key,
       model: plan.decode(data)!,
@@ -51,17 +51,36 @@ Future<Map<Object, Object>> _readByIds(
 ) async {
   final List<Object> values = ids.toSet().toList();
   if (values.isEmpty) return {};
-  final Map<String, Object?> params = {
-    for (int i = 0; i < values.length; i++) 'relation_id_$i': values[i],
-  };
-  final String placeholders = List.generate(
-    values.length,
-    (i) => ':relation_id_$i',
-  ).join(', ');
+  final List<FieldSchema> fields = plan.schema.keyFields;
+  final Map<String, Object?> params = {};
+  final String where;
+  if (fields.length == 1) {
+    where = '${fields.single.columnName} IN ('
+        '${List.generate(values.length, (i) => ':relation_id_$i').join(', ')})';
+    for (int i = 0; i < values.length; i++) {
+      params['relation_id_$i'] = plan.encodeKey(values[i]).single;
+    }
+  } else {
+    final List<String> tuples = [];
+    for (int i = 0; i < values.length; i++) {
+      final List<Object?> parts = plan.encodeKey(values[i]);
+      if (parts.length != fields.length) {
+        throw StateError('Primary-key codec returned an invalid value count.');
+      }
+      tuples.add(
+        '(${List.generate(parts.length, (part) => ':relation_id_${i}_$part').join(', ')})',
+      );
+      for (int part = 0; part < parts.length; part++) {
+        params['relation_id_${i}_$part'] = parts[part];
+      }
+    }
+    where = '(${fields.map((field) => field.columnName).join(', ')}) IN '
+        '(${tuples.join(', ')})';
+  }
   final List<_DecodedRow> rows = await _readRows(
     connection,
     plan,
-    where: '${plan.schema.primaryKey.columnName} IN ($placeholders)',
+    where: where,
     params: params,
   );
   return {for (final _DecodedRow row in rows) row.key: row.model};

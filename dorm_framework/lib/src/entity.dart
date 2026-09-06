@@ -21,6 +21,13 @@ abstract class Entity<Data, Model extends Data, I extends Object> {
   /// The engine-independent persisted schema of this entity.
   EntitySchema get schema;
 
+  /// Encodes and decodes this entity's identity for its schema.
+  ///
+  /// The default codec handles a single identity value. Generated entities
+  /// with composite primary keys override it with a
+  /// [CompositePrimaryKeyCodec].
+  PrimaryKeyCodec<I> get primaryKeyCodec => const SinglePrimaryKeyCodec();
+
   /// Deserializes the [id] and the [data] of a row in the underlying database
   /// engine to a [Model].
   ///
@@ -160,6 +167,9 @@ class DatabaseEntity<Data, Model extends Data, I extends Object, Q extends BaseQ
 
   @override
   EntitySchema get schema => _entity.schema;
+
+  @override
+  PrimaryKeyCodec<I> get primaryKeyCodec => _entity.primaryKeyCodec;
 
   @override
   Map<String, Object?> toJson(Data data) => _entity.toJson(data);

@@ -250,6 +250,7 @@ class Repository<Data, Model extends Data, I extends Object, Q extends BaseQuery
   RelationPlan<Model, I> get plan => TableRelationPlan(
         schema: _entity.schema,
         fromJson: _entity.fromJson,
+        primaryKeyCodec: _entity.primaryKeyCodec,
       );
 
   @override

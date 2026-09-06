@@ -87,6 +87,9 @@ class UserEntity implements Entity<UserData, User, String> {
   EntitySchema get schema => _schema;
 
   @override
+  PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
+
+  @override
   User fromData(UserDependency dependency, String id, UserData data) {
     return User(id: id, name: data.name, active: data.active, age: data.age);
   }

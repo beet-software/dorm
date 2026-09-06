@@ -156,6 +156,9 @@ class SchoolEntity implements Entity<SchoolData, School, String> {
   EntitySchema get schema => _schema;
 
   @override
+  PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
+
+  @override
   School fromData(SchoolDependency dependency, String id, SchoolData data) {
     return School(
       id: _School._generate(_$School.fromData(dependency, data), id),
@@ -284,6 +287,9 @@ class StudentEntity implements Entity<StudentData, Student, String> {
   EntitySchema get schema => _schema;
 
   @override
+  PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
+
+  @override
   Student fromData(StudentDependency dependency, String id, StudentData data) {
     return Student(
       id: id,
@@ -390,6 +396,9 @@ class TeacherEntity implements Entity<TeacherData, Teacher, String> {
   EntitySchema get schema => _schema;
 
   @override
+  PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
+
+  @override
   Teacher fromData(TeacherDependency dependency, String id, TeacherData data) {
     return Teacher(id: id, name: data.name, ssn: data.ssn);
   }
@@ -473,6 +482,9 @@ class HistoryEntity implements Entity<HistoryData, History, String> {
 
   @override
   EntitySchema get schema => _schema;
+
+  @override
+  PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
   History fromData(HistoryDependency dependency, String id, HistoryData data) {
@@ -583,6 +595,9 @@ class TeachingEntity implements Entity<TeachingData, Teaching, String> {
 
   @override
   EntitySchema get schema => _schema;
+
+  @override
+  PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
   Teaching fromData(
@@ -727,6 +742,9 @@ class ClassEntity implements Entity<ClassData, Class, String> {
 
   @override
   EntitySchema get schema => _schema;
+
+  @override
+  PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
   Class fromData(ClassDependency dependency, String id, ClassData data) {

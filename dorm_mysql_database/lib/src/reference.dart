@@ -22,6 +22,40 @@ import 'package:uuid/uuid.dart';
 
 import 'query.dart';
 
+String _primaryKeyPredicate(
+  EntitySchema schema, {
+  String prefix = 'id',
+}) {
+  final List<FieldSchema> fields = schema.keyFields;
+  if (fields.length == 1) return '${fields.single.columnName} = :$prefix';
+  return fields
+      .asMap()
+      .entries
+      .map((entry) => '${entry.value.columnName} = :$prefix${entry.key}')
+      .join(' AND ');
+}
+
+Map<String, Object?> _primaryKeyParameters<
+    Data, Model extends Data, I extends Object>(
+  Entity<Data, Model, I> entity,
+  I id, {
+  String prefix = 'id',
+}) {
+  final List<Object?> values = entity.primaryKeyCodec.encode(id);
+  final List<FieldSchema> fields = entity.schema.keyFields;
+  if (values.length != fields.length) {
+    throw StateError(
+      'The primary-key codec returned ${values.length} values for '
+      '${fields.length} schema fields.',
+    );
+  }
+  final Map<String, Object?> parameters = {};
+  for (int i = 0; i < values.length; i++) {
+    parameters[fields.length == 1 ? prefix : '$prefix$i'] = values[i];
+  }
+  return parameters;
+}
+
 /// A [BaseReference] that uses MySQL as engine.
 class Reference implements BaseReference<Query> {
   final MySQLConnection connection;
@@ -57,10 +91,12 @@ class Reference implements BaseReference<Query> {
     final StringBuffer buffer = StringBuffer()
       ..write('SELECT * FROM ')
       ..write(entity.schema.tableName)
-      ..write(' WHERE id = :id;');
+      ..write(' WHERE ')
+      ..write(_primaryKeyPredicate(entity.schema))
+      ..write(';');
 
     return connection
-        .execute('$buffer', {'id': id})
+        .execute('$buffer', _primaryKeyParameters(entity, id))
         .then((result) => result.rows.firstOrNull)
         .then((row) =>
             row == null ? null : entity.fromJson(id, row.typedAssoc()));
@@ -83,7 +119,14 @@ class Reference implements BaseReference<Query> {
     return connection.execute('$buffer', query.params).then((result) => result
         .rows
         .map((row) => row.typedAssoc())
-        .map((json) => entity.fromJson(json['id'] as I, json))
+        .map((json) => entity.fromJson(
+              entity.primaryKeyCodec.decode(
+                entity.schema.keyFields.map(
+                  (field) => json[field.columnName],
+                ),
+              ),
+              json,
+            ))
         .toList());
   }
 
@@ -92,12 +135,23 @@ class Reference implements BaseReference<Query> {
     Entity<Data, Model, I> entity,
   ) {
     final StringBuffer buffer = StringBuffer()
-      ..write('SELECT id FROM ')
+      ..write('SELECT ')
+      ..writeAll(
+        entity.schema.keyFields.map((field) => field.columnName),
+        ', ',
+      )
+      ..write(' FROM ')
       ..write(entity.schema.tableName)
       ..write(';');
 
     return connection.execute('$buffer').then((result) =>
-        result.rows.map((row) => row.typedAssoc()['id'] as I).toList());
+        result.rows
+            .map((row) => entity.primaryKeyCodec.decode(
+                  entity.schema.keyFields.map(
+                    (field) => row.typedAssoc()[field.columnName],
+                  ),
+                ))
+            .toList());
   }
 
   @override
@@ -111,9 +165,11 @@ class Reference implements BaseReference<Query> {
     final StringBuffer buffer = StringBuffer()
       ..write('DELETE FROM ')
       ..write(entity.schema.tableName)
-      ..write(' WHERE id = :id;');
+      ..write(' WHERE ')
+      ..write(_primaryKeyPredicate(entity.schema))
+      ..write(';');
 
-    return connection.execute('$buffer', {'id': id});
+    return connection.execute('$buffer', _primaryKeyParameters(entity, id));
   }
 
   @override
@@ -139,15 +195,49 @@ class Reference implements BaseReference<Query> {
     Iterable<I> ids,
   ) {
     final List<I> keys = ids.toList();
+    if (keys.isEmpty) return Future.value();
+    final List<FieldSchema> fields = entity.schema.keyFields;
+    final Map<String, Object?> params = {};
     final StringBuffer buffer = StringBuffer()
       ..write('DELETE FROM ')
       ..write(entity.schema.tableName)
-      ..write(' WHERE id IN (')
-      ..writeAll(List.generate(keys.length, (i) => ':id$i'), ', ')
-      ..write(');');
-    return connection.execute('$buffer', {
-      for (int i = 0; i < keys.length; i++) 'id$i': keys[i],
-    });
+      ..write(' WHERE ');
+    if (fields.length == 1) {
+      buffer
+        ..write(fields.single.columnName)
+        ..write(' IN (')
+        ..writeAll(List.generate(keys.length, (i) => ':id$i'), ', ')
+        ..write(');');
+      params.addAll({
+        for (int i = 0; i < keys.length; i++)
+          'id$i': entity.primaryKeyCodec.encode(keys[i]).single,
+      });
+    } else {
+      buffer
+        ..write('(')
+        ..writeAll(fields.map((field) => field.columnName), ', ')
+        ..write(') IN (');
+      for (int i = 0; i < keys.length; i++) {
+        final List<Object?> values = entity.primaryKeyCodec.encode(keys[i]);
+        if (values.length != fields.length) {
+          throw StateError('Primary-key codec returned an invalid value count.');
+        }
+        if (i > 0) buffer.write(', ');
+        buffer
+          ..write('(')
+          ..writeAll(
+            List.generate(values.length, (part) => ':id${i}_$part'),
+            ', ',
+          )
+          ..write(')');
+        params.addAll({
+          for (int part = 0; part < values.length; part++)
+            'id${i}_$part': values[part],
+        });
+      }
+      buffer.write(');');
+    }
+    return connection.execute('$buffer', params);
   }
 
   @override
@@ -219,6 +309,12 @@ class Reference implements BaseReference<Query> {
     Data data, {
     MySQLConnection? connection,
   }) {
+    if (entity.schema.isCompositePrimaryKey) {
+      throw UnsupportedError(
+        'MySQL put requires an explicitly identified model for composite '
+        'primary keys; use push instead.',
+      );
+    }
     final I id = const Uuid().v4() as I;
     final Model model = entity.fromData(dependency, id, data);
     final StringBuffer buffer = StringBuffer();
@@ -255,12 +351,23 @@ class _QueryBuilder<Data, Model extends Data, I extends Object> {
   }) {
     final Map<String, Object?> json = entity.toJson(model);
     final List<String> columns = json.keys.toList();
-    final List<String> keys = ['id', ...columns];
+    final List<FieldSchema> primaryKeyFields = entity.schema.keyFields;
+    final List<Object?> primaryKeyValues = entity.primaryKeyCodec.encode(
+      entity.identify(model),
+    );
+    if (primaryKeyValues.length != primaryKeyFields.length) {
+      throw StateError('Primary-key codec returned an invalid value count.');
+    }
+    final List<String> keys = [
+      ...primaryKeyFields.map((field) => field.columnName),
+      ...columns,
+    ];
 
     final List<MapEntry<String, Object?>> valuesParams = [
-      MapEntry('val0', entity.identify(model)),
+      for (int i = 0; i < primaryKeyValues.length; i++)
+        MapEntry('val$i', primaryKeyValues[i]),
       for (int i = 0; i < columns.length; i++)
-        MapEntry('val${i + 1}', json[columns[i]]),
+        MapEntry('val${i + primaryKeyValues.length}', json[columns[i]]),
     ];
 
     buffer
