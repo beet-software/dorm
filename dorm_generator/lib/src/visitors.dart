@@ -26,7 +26,7 @@ const Map<ClassNodeParser<Object>, List<FieldNodeParser<Field>>> _visiting = {
     ModelFieldParser(),
     ForeignFieldParser(),
     PolymorphicFieldParser(),
-    QueryFieldParser(),
+    DerivedFieldParser(),
     FieldParser(),
   ],
   PolymorphicDataParser(): [
@@ -76,15 +76,17 @@ Map<String, FieldedOrmNode<Object>> parseLibrary(LibraryReader reader) {
     for (MapEntry<ClassNodeParser<Object>, List<FieldNodeParser<Field>>> entry
         in _visiting.entries) {
       final ClassNodeParser<Object> classParser = entry.key;
-      final ClassOrmNode<Object>? classNode =
-          classParser.parseElement(classElement);
+      final ClassOrmNode<Object>? classNode = classParser.parseElement(
+        classElement,
+      );
       if (classNode == null) continue;
 
       final Map<String, FieldOrmNode> fields = {};
       for (FieldElement fieldElement in classElement.fields) {
         for (FieldNodeParser<Field> fieldParser in entry.value) {
-          final FieldOrmNode? fieldNode =
-              fieldParser.parseElement(fieldElement);
+          final FieldOrmNode? fieldNode = fieldParser.parseElement(
+            fieldElement,
+          );
           if (fieldNode == null) continue;
           fields[fieldElement.name!] = fieldNode;
           break;
@@ -98,4 +100,3 @@ Map<String, FieldedOrmNode<Object>> parseLibrary(LibraryReader reader) {
   }
   return nodes;
 }
-

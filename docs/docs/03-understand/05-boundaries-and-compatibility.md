@@ -51,7 +51,7 @@ The current design records several behaviors that are not equivalent to permanen
 | Batch atomicity across all engines | Limitation; desired behavior is incomplete |
 | Public transactions | Limitation; intended but currently blocked |
 | Filter portability | Intended semantic direction; current API may need improvement |
-| `QueryField` | Existing legacy Firebase-oriented API with portability limitations |
+| `DerivedField` | Generated persisted value with engine-specific storage mapping |
 | Polymorphic serialization | Existing Firebase-origin representation requiring review for non-JSON engines |
 | Pagination | Limitation; intended portable capability currently absent |
 

@@ -116,22 +116,19 @@ abstract class _Post {
 }
 ```
 
-### Query fields
+### Derived fields
 
-The `QueryField` annotation is used to link a database index to a Dart field within a model class.
-
-An index is a data structure that improves the speed and efficiency of data retrieval operations on
-database tables. It provides a way to quickly locate and access specific data within a table based
-on the values stored in one or more columns. When a query includes a condition on indexed columns,
-the database engine can use the index to quickly identify the relevant rows, rather than scanning
-the entire table.
+The `DerivedField` annotation defines a persisted `String` value built from other Dart fields within a
+model class. It does not create a database index. A SQL engine stores a simple name as a scalar
+column and a `root/child` name inside a backend-specific JSON value.
 
 It accepts the following parameters:
 
 - `name`: Specifies the name of the column in the underlying database.
-- `referTo`: Specifies the query tokens that the field refers to.
+- `referTo`: Specifies the derived tokens that the field refers to.
+- `joinBy`: Specifies the separator used between token values.
 
-#### Single-column indexing
+#### Single derived value
 
 ```dart
 import 'package:dorm_annotations/dorm_annotations.dart';
@@ -144,22 +141,19 @@ abstract class _School {
   @Field(name: 'active', defaultValue: true)
   bool get active;
 
-  @QueryField(name: '_query_active', referTo: [QueryToken(#active)])
+  @DerivedField(name: '_query_active', referTo: [DerivedToken(#active)])
   String get _qActive;
 }
 ```
 
 Applying `Filter.value(true, key: '_query_active')` (described in the
-[`dorm_framework` package](https://pub.dev/packages/dorm_framework)) should optimize the reading of
-all active schools.
+[`dorm_framework` package](https://pub.dev/packages/dorm_framework)) compares the persisted derived
+value.
 
-#### Multiple-column indexing
+#### Combining multiple fields
 
-Combining two or more columns in a query involves searching for data based on the values present in
-two or more different columns simultaneously. This type of query allows you to perform logical
-operations on the values of two or more columns, such as concatenation, comparison, or matching
-patterns. Examples of combining two columns include searching for records where the values in column
-A and column B are equal:
+A derived field can combine two or more source fields into one persisted value. For example, a
+combined value can be compared with `Filter.value`:
 
 ```dart
 import 'package:dorm_annotations/dorm_annotations.dart';
@@ -172,25 +166,22 @@ abstract class _SchoolAddress {
   @Field(name: 'number')
   int get number;
 
-  @QueryField(
+  @DerivedField(
     name: '_query_address',
-    referTo: [QueryToken(#zipCode), QueryToken(#number)],
+    referTo: [DerivedToken(#zipCode), DerivedToken(#number)],
     joinBy: '_',
   )
   String get _qAddress;
 }
 ```
 
-Applying `Filter.value('99950_13', key: '_query_address')` should optimize the reading of all
-addresses with zip code 99950 and number 13.
+Applying `Filter.value('99950_13', key: '_query_address')` compares the materialized value for an
+address with zip code 99950 and number 13.
 
-#### Text indexing
+#### Text normalization
 
-Searching by prefix involves finding records that match a specific prefix or initial set of
-characters in a given column. This type of query is particularly useful when you want to retrieve
-data based on partial matches or when you only have partial information about the desired data.
-Examples of searching by prefix include searching for names starting with "John" in a column
-containing full names:
+A token can use `DerivedTransform.text` before it is joined into the persisted value. The resulting
+value can be used with a text filter:
 
 ```dart
 import 'package:dorm_annotations/dorm_annotations.dart';
@@ -203,17 +194,17 @@ abstract class _Student {
   @ForeignField(name: 'id-school', referTo: _School)
   String get schoolId;
 
-  @QueryField(
+  @DerivedField(
     name: '_query_sbn',
-    referTo: [QueryToken(#schoolId), QueryToken(#name, QueryType.text)],
+    referTo: [DerivedToken(#schoolId), DerivedToken(#name, DerivedTransform.text)],
     joinBy: '#',
   )
   String get _qSchoolByName;
 }
 ```
 
-Applying `Filter.text('school7319004#Paul', key: '_query_sbn')` should optimize the reading of all
-Pauls studying at the school with ID `school7319004`.
+Applying `Filter.text('school7319004#Paul', key: '_query_sbn')` compares the materialized value for
+the selected school and name prefix.
 
 ### Composite fields
 

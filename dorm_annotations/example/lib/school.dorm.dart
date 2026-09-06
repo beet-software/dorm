@@ -139,6 +139,13 @@ class SchoolFields {
     fieldName: 'phoneNumbers',
     columnName: 'contatos',
   );
+
+  final DerivedFieldSchema q0 = const DerivedFieldSchema(
+    fieldName: '_q0',
+    columnName: '_query/nome',
+    path: ['_query', 'nome'],
+    storageName: '_query',
+  );
 }
 
 class SchoolEntity implements Entity<SchoolData, School, String> {
@@ -150,6 +157,7 @@ class SchoolEntity implements Entity<SchoolData, School, String> {
     tableName: 'escola',
     primaryKey: fields.id,
     fields: [fields.name, fields.address, fields.phoneNumbers],
+    derivedFields: [fields.q0],
   );
 
   @override
@@ -270,6 +278,20 @@ class StudentFields {
     targetColumnName: 'id',
     unique: false,
   );
+
+  final DerivedFieldSchema q0 = const DerivedFieldSchema(
+    fieldName: '_q0',
+    columnName: '_query/nome',
+    path: ['_query', 'nome'],
+    storageName: '_query',
+  );
+
+  final DerivedFieldSchema q1 = const DerivedFieldSchema(
+    fieldName: '_q1',
+    columnName: '_query/id-escola_nome',
+    path: ['_query', 'id-escola_nome'],
+    storageName: '_query',
+  );
 }
 
 class StudentEntity implements Entity<StudentData, Student, String> {
@@ -281,6 +303,7 @@ class StudentEntity implements Entity<StudentData, Student, String> {
     tableName: 'aluno',
     primaryKey: fields.id,
     fields: [fields.name, fields.hasDisabilities, fields.schoolId],
+    derivedFields: [fields.q0, fields.q1],
   );
 
   @override
@@ -379,6 +402,13 @@ class TeacherFields {
     fieldName: 'ssn',
     columnName: 'cpf',
   );
+
+  final DerivedFieldSchema q0 = const DerivedFieldSchema(
+    fieldName: '_q0',
+    columnName: '_query/cpf',
+    path: ['_query', 'cpf'],
+    storageName: '_query',
+  );
 }
 
 class TeacherEntity implements Entity<TeacherData, Teacher, String> {
@@ -390,6 +420,7 @@ class TeacherEntity implements Entity<TeacherData, Teacher, String> {
     tableName: 'professor',
     primaryKey: fields.id,
     fields: [fields.name, fields.ssn],
+    derivedFields: [fields.q0],
   );
 
   @override
@@ -478,6 +509,7 @@ class HistoryEntity implements Entity<HistoryData, History, String> {
     tableName: 'historico',
     primaryKey: fields.id,
     fields: [fields.studentId],
+    derivedFields: [],
   );
 
   @override
@@ -591,6 +623,7 @@ class TeachingEntity implements Entity<TeachingData, Teaching, String> {
     tableName: 'cadastro-professor',
     primaryKey: fields.id,
     fields: [fields.teacherId, fields.schoolId, fields.code],
+    derivedFields: [],
   );
 
   @override
@@ -738,6 +771,7 @@ class ClassEntity implements Entity<ClassData, Class, String> {
       fields.studentId,
       fields.location,
     ],
+    derivedFields: [],
   );
 
   @override

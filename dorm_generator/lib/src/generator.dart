@@ -129,16 +129,14 @@ class ModelNaming extends Naming<ModelOrmNode> {
   _PrimaryKeyNaming _resolvePrimaryKey(IdSpec spec) {
     return switch (spec) {
       GeneratedIdSpec generated => _PrimaryKeyNaming(
-          fieldName: _symbolName(generated.as) ?? 'id',
-          columnName: generated.name,
-          type: cb.Reference(
-            switch (generated.type) {
-              $Type type => type.name ?? 'String',
-              _ => generated.type.toString(),
-            },
-          ),
-          generated: true,
-        ),
+        fieldName: _symbolName(generated.as) ?? 'id',
+        columnName: generated.name,
+        type: cb.Reference(switch (generated.type) {
+          $Type type => type.name ?? 'String',
+          _ => generated.type.toString(),
+        }),
+        generated: true,
+      ),
       ExistingIdSpec existing => _existingPrimaryKey(existing),
     };
   }
@@ -159,7 +157,7 @@ class ModelNaming extends Naming<ModelOrmNode> {
     if (!field.annotation.isConcrete) {
       throw StateError(
         '$schemaName primary key $fieldName must refer to a persisted '
-        'field, not a query field.',
+        'field, not a derived field.',
       );
     }
     if (!field.required) {
@@ -692,9 +690,11 @@ abstract class FieldedArgs<A, N> extends Args<A, FieldOrmNode, N> {
               queryObject = {};
               final Map<String, Map<String, Object>> queries = {};
               for (MapEntry<String, FieldOrmNode> entry
-                  in fields.where((field) => field.isA<QueryField>()).entries) {
+                  in fields
+                      .where((field) => field.isA<DerivedField>())
+                      .entries) {
                 final String? name =
-                    (entry.value.annotation as QueryField).name;
+                    (entry.value.annotation as DerivedField).name;
                 if (name == null) continue;
                 final List<String> segments = name.split('/');
                 final cb.Expression child = expressionOf(entry.key);
@@ -724,9 +724,9 @@ abstract class FieldedArgs<A, N> extends Args<A, FieldOrmNode, N> {
               for (final String key in spec.primaryKeyNames.map(
                 spec.primaryKeyJsonName,
               )) {
-                cleanedExpression = cleanedExpression
-                    .cascade('remove')
-                    .call([cb.literalString(key)]);
+                cleanedExpression = cleanedExpression.cascade('remove').call([
+                  cb.literalString(key),
+                ]);
               }
               body = cb
                   .literalMap({
@@ -993,7 +993,109 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
     );
   }
 
+  cb.Expression _derivedFieldSchema(String fieldName, FieldOrmNode node) {
+    final DerivedField field = node.annotation as DerivedField;
+    final String name = field.name ?? fieldName;
+    final List<String> path = name.split('/');
+    if (path.length > 2 || path.any((segment) => segment.isEmpty)) {
+      throw StateError(
+        'Derived field $fieldName must use a simple name or a root/child path.',
+      );
+    }
+    return cb.InvokeExpression.constOf(
+      cb.Reference('DerivedFieldSchema', '$_dormUrl'),
+      [],
+      {
+        'fieldName': cb.literalString(fieldName),
+        'columnName': cb.literalString(name),
+        'path': cb.literalList(path.map(cb.literalString)),
+        'storageName': cb.literalString(path.first),
+      },
+    );
+  }
+
+  String _derivedSchemaFieldName(String fieldName) {
+    final String publicName = fieldName.removePrefix('_');
+    if (publicName.isEmpty) {
+      throw StateError(
+        'Derived field $fieldName must have a public schema name.',
+      );
+    }
+    return publicName;
+  }
+
+  void _validateDerivedFields() {
+    final Map<String, String> ordinaryStorageNames = {};
+    final Map<String, bool> derivedRootShapes = {};
+    final Map<String, String> generatedSchemaNames = {};
+    for (MapEntry<String, FieldOrmNode> entry in fields.entries) {
+      final Field field = entry.value.annotation;
+      final String schemaName = field.isDerived
+          ? _derivedSchemaFieldName(entry.key)
+          : entry.key;
+      final String? previousSchemaName = generatedSchemaNames[schemaName];
+      if (previousSchemaName != null && previousSchemaName != entry.key) {
+        throw StateError(
+          'Generated field metadata name $schemaName conflicts with '
+          '$previousSchemaName.',
+        );
+      }
+      generatedSchemaNames[schemaName] = entry.key;
+      if (!field.isDerived) {
+        ordinaryStorageNames[field.name ?? entry.key] = entry.key;
+      }
+    }
+    for (MapEntry<String, FieldOrmNode> entry in fields.entries) {
+      final Field field = entry.value.annotation;
+      if (!field.isDerived) continue;
+      final String declaredName = field.name ?? entry.key;
+      if (entry.value.type.replaceAll('?', '') != 'String') {
+        throw StateError(
+          'Derived field ${entry.key} must declare a String getter.',
+        );
+      }
+      final List<String> path = declaredName.split('/');
+      if (path.length > 2 || path.any((segment) => segment.isEmpty)) {
+        throw StateError(
+          'Derived field ${entry.key} must use a simple name or a root/child path.',
+        );
+      }
+      final String root = path.first;
+      final String? previous = ordinaryStorageNames[root];
+      if (previous != null) {
+        throw StateError(
+          'Derived field ${entry.key} conflicts with storage field $previous.',
+        );
+      }
+      final bool hierarchical = path.length == 2;
+      final bool? previousShape = derivedRootShapes[root];
+      if (previousShape != null && previousShape != hierarchical) {
+        throw StateError(
+          'Derived field ${entry.key} conflicts with the storage shape of '
+          'derived fields rooted at $root.',
+        );
+      }
+      derivedRootShapes[root] = hierarchical;
+      final String? duplicate = fields.entries
+          .where(
+            (other) =>
+                other.key != entry.key && other.value.annotation.isDerived,
+          )
+          .firstOrNullWhere(
+            (other) =>
+                (other.value.annotation.name ?? other.key) == declaredName,
+          )
+          ?.key;
+      if (duplicate != null) {
+        throw StateError(
+          'Derived field ${entry.key} duplicates derived field $duplicate.',
+        );
+      }
+    }
+  }
+
   cb.Spec get _fieldsClass {
+    _validateDerivedFields();
     return cb.Class((b) {
       b.name = naming.fieldsName;
       b.constructors.add(
@@ -1055,6 +1157,20 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
               });
             }),
       );
+      b.fields.addAll(
+        fields.entries.where((entry) => entry.value.annotation.isDerived).map((
+          entry,
+        ) {
+          return cb.Field((b) {
+            b.modifier = cb.FieldModifier.final$;
+            b.type = cb.Reference('DerivedFieldSchema', '$_dormUrl');
+            b.name = _derivedSchemaFieldName(entry.key);
+            b.assignment = cb.ToCodeExpression(
+              _derivedFieldSchema(entry.key, entry.value),
+            );
+          });
+        }),
+      );
     });
   }
 
@@ -1064,7 +1180,9 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
       [],
       {
         'tableName': cb.literalString(naming.tableName),
-        'primaryKey': expressionOf('fields.${naming.primaryKeyFieldNames.first}'),
+        'primaryKey': expressionOf(
+          'fields.${naming.primaryKeyFieldNames.first}',
+        ),
         if (naming.isCompositePrimaryKey)
           'primaryKeys': cb.literalList(
             naming.primaryKeyFieldNames.map(
@@ -1078,6 +1196,12 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
                 !naming.primaryKeyFieldNames.contains(entry.key),
           ))
             expressionOf('fields.${entry.key}'),
+        ]),
+        'derivedFields': cb.literalList([
+          for (MapEntry<String, FieldOrmNode> entry in fields.entries.where(
+            (entry) => entry.value.annotation.isDerived,
+          ))
+            expressionOf('fields.${_derivedSchemaFieldName(entry.key)}'),
         ]),
       },
     );
@@ -1130,17 +1254,15 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
           b.name = 'primaryKeyCodec';
           b.type = cb.MethodType.getter;
           b.lambda = true;
-          b.body = cb
-              .InvokeExpression.constOf(
-                cb.Reference(
-                  naming.isCompositePrimaryKey
-                      ? 'CompositePrimaryKeyCodec'
-                      : 'SinglePrimaryKeyCodec',
-                  '$_dormUrl',
-                ),
-                [],
-              )
-              .code;
+          b.body = cb.InvokeExpression.constOf(
+            cb.Reference(
+              naming.isCompositePrimaryKey
+                  ? 'CompositePrimaryKeyCodec'
+                  : 'SinglePrimaryKeyCodec',
+              '$_dormUrl',
+            ),
+            [],
+          ).code;
         }),
       );
       b.fields.insertAll(0, [
@@ -1181,9 +1303,11 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
           final Map<String, cb.Expression> primaryKeyEntries =
               naming.isCompositePrimaryKey
               ? {
-                  for (int index = 0;
-                      index < naming.primaryKeyFieldNames.length;
-                      index++)
+                  for (
+                    int index = 0;
+                    index < naming.primaryKeyFieldNames.length;
+                    index++
+                  )
                     naming.primaryKeyFieldNames[index]: expressionOf(
                       'id.values[$index]',
                     ),
@@ -1744,9 +1868,9 @@ extension on Spec {
 extension _BaseWriting on Map<String, FieldOrmNode> {
   Iterable<cb.Method> get queryGetters sync* {
     for (MapEntry<String, FieldOrmNode> entry in where(
-      (field) => field.isA<QueryField>(),
+      (field) => field.isA<DerivedField>(),
     ).entries) {
-      final QueryField field = entry.value.annotation as QueryField;
+      final DerivedField field = entry.value.annotation as DerivedField;
       if (field.referTo.isEmpty) continue;
 
       yield cb.Method((b) {
@@ -1759,7 +1883,7 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
           cb
               .literalList(
                 field.referTo.map((token) {
-                  final QueryType? type = token.type;
+                  final DerivedTransform? transform = token.transform;
 
                   final String? symbolName = (token.field as $Symbol).name;
                   if (symbolName == null) {
@@ -1781,7 +1905,7 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
                       });
 
                   if (referredField == null ||
-                      referredField.annotation is QueryField) {
+                      referredField.annotation is DerivedField) {
                     throw StateError(
                       'field ${field.name}/$symbolName must have a '
                       'symbol referring to a valid field',
@@ -1790,11 +1914,11 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
 
                   cb.Expression expression = expressionOf(symbolName);
                   final cb.Expression? callExpression;
-                  switch (type) {
-                    case QueryType.text:
+                  switch (transform) {
+                    case DerivedTransform.text:
                       callExpression = expressionOf('\$normalizeText');
                       break;
-                    case QueryType.enumeration:
+                    case DerivedTransform.enumeration:
                       callExpression = expressionOf('\$normalizeEnum');
                       break;
                     case null:
@@ -1901,8 +2025,7 @@ class OrmGenerator extends Generator {
             'conflicts with its generated primary key.',
           );
         }
-
-      }
+    }
   }
 
   List<_GeneratedRelation> _relations(

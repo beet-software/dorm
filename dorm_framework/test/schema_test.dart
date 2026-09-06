@@ -60,6 +60,18 @@ void main() {
     expect(foreignKey.unique, isTrue);
   });
 
+  test('exposes derived-field path and storage metadata', () {
+    const DerivedFieldSchema field = DerivedFieldSchema(
+      fieldName: 'searchName',
+      columnName: '_query/name',
+      path: ['_query', 'name'],
+      storageName: '_query',
+    );
+
+    expect(field.path, ['_query', 'name']);
+    expect(field.storageName, '_query');
+  });
+
   test('resolves a value filter field from its schema metadata', () {
     const FieldSchema field = FieldSchema(
       fieldName: 'schoolId',

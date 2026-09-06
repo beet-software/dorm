@@ -30,7 +30,7 @@ The annotations package contains the declarations read by code generation:
   shape and generated accessor name.
 - `Field`, `ForeignField`, and `ModelField` describe stored fields and
   relationships.
-- `QueryField` and `QueryToken` describe generated query values.
+- `DerivedField` and `DerivedToken` describe generated persisted values.
 - `PolymorphicField` and `PolymorphicData` describe polymorphic values.
 - `GeneratedIdSpec` and `ExistingIdSpec` describe primary-key parts.
 

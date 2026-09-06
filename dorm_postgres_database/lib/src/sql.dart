@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dorm_framework/dorm_framework.dart';
 import 'package:postgres/postgres.dart';
 
@@ -25,7 +27,13 @@ Future<List<DecodedRow>> readRows(
       parameters: params,
     );
     return result.map((row) {
-      final Map<String, Object?> data = row.toColumnMap();
+      final Map<String, Object?> raw = row.toColumnMap();
+      final Map<String, Object?> data = {...raw};
+      for (final DerivedFieldSchema field in plan.schema.derivedFields) {
+        if (field.path.length == 1) continue;
+        final Object? value = data[field.storageName];
+        if (value is String) data[field.storageName] = jsonDecode(value);
+      }
       return DecodedRow(
         key: plan.decodeKey(data)!,
         model: plan.decode(data)!,

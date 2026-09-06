@@ -38,9 +38,9 @@ abstract class _School {
   @Field(name: 'contatos', defaultValue: [])
   List<String> get phoneNumbers;
 
-  @QueryField(
+  @DerivedField(
     name: '_query/nome',
-    referTo: [QueryToken(#name, QueryType.text)],
+    referTo: [DerivedToken(#name, DerivedTransform.text)],
   )
   // ignore: unused_element
   String get _q0;
@@ -59,16 +59,19 @@ abstract class _Student {
   @ForeignField(name: 'id-escola', referTo: _School, inverseAs: #students)
   String get schoolId;
 
-  @QueryField(
+  @DerivedField(
     name: '_query/nome',
-    referTo: [QueryToken(#name, QueryType.text)],
+    referTo: [DerivedToken(#name, DerivedTransform.text)],
   )
   // ignore: unused_element
   String get _q0;
 
-  @QueryField(
+  @DerivedField(
     name: '_query/id-escola_nome',
-    referTo: [QueryToken(#schoolId), QueryToken(#name, QueryType.text)],
+    referTo: [
+      DerivedToken(#schoolId),
+      DerivedToken(#name, DerivedTransform.text),
+    ],
   )
   // ignore: unused_element
   String get _q1;
@@ -82,7 +85,7 @@ abstract class _Teacher {
   @Field(name: 'cpf')
   String? get ssn;
 
-  @QueryField(name: '_query/cpf', referTo: [QueryToken(#ssn)])
+  @DerivedField(name: '_query/cpf', referTo: [DerivedToken(#ssn)])
   // ignore: unused_element
   String get _q0;
 }

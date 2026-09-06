@@ -63,8 +63,9 @@ class $ModelFieldTemplate implements ModelFieldTemplate {
     if (reader.isNull) return null;
     final String? typeLabel = reader.objectValue.type?.getDisplayString();
     if (typeLabel == null) return null;
-    final Match? match =
-        RegExp('ModelFieldTemplate<(.*)>').matchAsPrefix(typeLabel);
+    final Match? match = RegExp(
+      'ModelFieldTemplate<(.*)>',
+    ).matchAsPrefix(typeLabel);
     if (match == null) return null;
     return match.group(1);
   }
@@ -91,10 +92,8 @@ class $Symbol implements Symbol {
 class $ConcreteSymbol extends $Symbol {
   final String _defaultName;
 
-  const $ConcreteSymbol({
-    required super.reader,
-    required String defaultName,
-  }) : _defaultName = defaultName;
+  const $ConcreteSymbol({required super.reader, required String defaultName})
+    : _defaultName = defaultName;
 
   @override
   String get name => super.name ?? _defaultName;
@@ -104,7 +103,10 @@ extension FieldFilter on Field {
   bool isA<F extends Field>() => this is F;
 
   /// If a field belongs to a schema.
-  bool get isConcrete => this is! QueryField;
+  bool get isConcrete => this is! DerivedField;
+
+  /// If a field is generated from other model fields.
+  bool get isDerived => this is DerivedField;
 
   // If a field belongs exclusively to a dORM model class.
   bool get isForeign => this is ForeignField;
@@ -121,5 +123,3 @@ extension FieldFiltering on Map<String, FieldOrmNode> {
     };
   }
 }
-
-

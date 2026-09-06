@@ -48,35 +48,43 @@ String _toSqlDateFormat(
 class Query implements BaseQuery<Query> {
   final String query;
   final Map<String, Object?> params;
+  final EntitySchema? schema;
 
-  const Query(this.query, {this.params = const {}});
+  const Query(this.query, {this.params = const {}, this.schema});
+
+  String _field(String key) {
+    final DerivedFieldSchema? derived = schema?.derivedFields
+        .where((field) => field.columnName == key)
+        .firstOrNull;
+    if (derived == null || derived.path.length == 1) return key;
+    return "JSON_UNQUOTE(JSON_EXTRACT(${derived.storageName}, '\$.${derived.path[1]}'))";
+  }
 
   @override
   Query limit(int count) {
     if (count == 0) {
       return this;
     }
-    return Query(
-      '$query LIMIT $count',
-      params: {...params},
-    );
+    return Query('$query LIMIT $count', params: {...params}, schema: schema);
   }
 
   @override
   Query sorted(String key, {bool ascending = true}) {
     return Query(
-      '$query ORDER BY $key ${ascending ? '' : 'DESC'}',
+      '$query ORDER BY ${_field(key)} ${ascending ? '' : 'DESC'}',
       params: {...params},
+      schema: schema,
     );
   }
 
   @override
   Query whereDate(String key, DateTime date, DateFilterUnit unit) {
     return Query(
-      '$query WHERE $key '
+      '$query WHERE ${_field(key)} '
       'BETWEEN \'${_toSqlDateFormat(date, unit: unit, type: _BoundType.start)}\' '
       'AND \'${_toSqlDateFormat(date, unit: unit, type: _BoundType.end)}\'',
       params: {...params},
+      schema: schema,
     );
   }
 
@@ -105,24 +113,20 @@ class Query implements BaseQuery<Query> {
         return this;
       }
       return Query(
-        '$query WHERE $key <= :$toArgParameterName',
-        params: {
-          ...params,
-          toArgParameterName: toArg,
-        },
+        '$query WHERE ${_field(key)} <= :$toArgParameterName',
+        params: {...params, toArgParameterName: toArg},
+        schema: schema,
       );
     }
     if (toArg == null) {
       return Query(
-        '$query WHERE $key >= :$fromArgParameterName',
-        params: {
-          ...params,
-          fromArgParameterName: fromArg,
-        },
+        '$query WHERE ${_field(key)} >= :$fromArgParameterName',
+        params: {...params, fromArgParameterName: fromArg},
+        schema: schema,
       );
     }
     return Query(
-      '$query WHERE $key '
+      '$query WHERE ${_field(key)} '
       'BETWEEN :$fromArgParameterName '
       'AND :$toArgParameterName',
       params: {
@@ -130,22 +134,25 @@ class Query implements BaseQuery<Query> {
         fromArgParameterName: fromArg,
         toArgParameterName: toArg,
       },
+      schema: schema,
     );
   }
 
   @override
   Query whereText(String key, String prefix) {
     return Query(
-      '$query WHERE $key LIKE CONCAT(:prefix, \'%\')',
+      '$query WHERE ${_field(key)} LIKE CONCAT(:prefix, \'%\')',
       params: {...params, 'prefix': prefix},
+      schema: schema,
     );
   }
 
   @override
   Query whereValue(String key, Object? value) {
     return Query(
-      '$query WHERE $key = :value',
+      '$query WHERE ${_field(key)} = :value',
       params: {...params, 'value': value},
+      schema: schema,
     );
   }
 }

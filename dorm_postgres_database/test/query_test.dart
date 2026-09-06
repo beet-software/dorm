@@ -3,6 +3,32 @@ import 'package:dorm_postgres_database/src/query.dart';
 import 'package:test/test.dart';
 
 void main() {
+  const EntitySchema schema = EntitySchema(
+    tableName: 'users',
+    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
+    derivedFields: [
+      DerivedFieldSchema(
+        fieldName: 'searchName',
+        columnName: '_query/name',
+        path: ['_query', 'name'],
+        storageName: '_query',
+      ),
+    ],
+  );
+
+  test('translates PostgreSQL derived paths', () {
+    final Query query = const Query(
+      'SELECT * FROM users',
+      schema: schema,
+    ).whereText('_query/name', 'ada');
+
+    expect(
+      query.query,
+      "SELECT * FROM users WHERE _query ->> 'name' LIKE (@p0 || '%')",
+    );
+    expect(query.params, {'p0': 'ada'});
+  });
+
   test('adds named value parameters', () {
     final Query query = const Query(
       'SELECT * FROM users',

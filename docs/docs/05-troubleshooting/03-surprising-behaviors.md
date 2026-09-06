@@ -87,12 +87,12 @@ before interpreting a composite-key error as a model-generation failure.
 
 ## Query fields carry legacy and portability qualifications
 
-`QueryField` and generated query metadata are used by current filters and
+`DerivedField` and generated derived metadata are used by current filters and
 relationship examples. The existing query-field representation originated in
 the Firebase-oriented part of the implementation and has portability limits
 in the current abstraction.
 
-Treat a query field as the current generated/query API shape. Do not infer
+Treat a derived field as the current generated/query API shape. Do not infer
 that every query-field operation has identical server-side behavior in BLoC,
 Firebase, and MySQL. The selected engine translates or evaluates the query in
 its own backend representation.
@@ -137,4 +137,3 @@ into a compatibility guarantee.
 
 For current version, runtime, engine, and API status, read
 [Boundaries and compatibility](../03-understand/05-boundaries-and-compatibility.md).
-

@@ -29,17 +29,17 @@ identity or one or more existing identity fields are supported by the
 annotation model; composite generated keys are not supported by the current
 generator.
 
-## Query annotations
+## Derived-field annotations
 
 | Type | Constructor | Meaning |
 | --- | --- | --- |
-| `QueryType` | `text`, `enumeration` | Transformation category for a query token. |
-| `QueryField` | `const QueryField({required String name, required List<QueryToken> referTo, String joinBy = '_'})` | Creates a stored/query value from other fields. |
-| `QueryToken` | `const QueryToken(Symbol field, [QueryType? type])` | Selects one annotated field and optional normalization. |
+| `DerivedTransform` | `text`, `enumeration` | Transformation category for a derived token. |
+| `DerivedField` | `const DerivedField({required String name, required List<DerivedToken> referTo, String joinBy = '_'})` | Creates a persisted value from other fields. |
+| `DerivedToken` | `const DerivedToken(Symbol field, [DerivedTransform? transform])` | Selects one annotated field and an optional transformation. |
 
-`QueryType.text` applies text normalization; `QueryType.enumeration` applies
-enum-style normalization. Query-field behavior is engine-specific after the
-generated field is passed to a filter.
+`DerivedTransform.text` applies text normalization; `DerivedTransform.enumeration`
+applies enum-style normalization. Derived values are generated on `Model` and
+are available through generated field metadata for filters.
 
 ## Polymorphism annotations
 
@@ -126,4 +126,3 @@ Run `dart run build_runner build` from the directory containing the
 application `pubspec.yaml`. See [Diagnose annotation and generated-code problems](../05-troubleshooting/02-code-generation-problems.md)
 for generation failures and [Compatibility and release status](06-compatibility-and-release-status.md)
 for current stability qualifications.
-

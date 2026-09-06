@@ -116,6 +116,7 @@ class DrawingEntity implements Entity<DrawingData, Drawing, String> {
     tableName: 'desenho',
     primaryKey: fields.id,
     fields: [fields.color, fields.type, fields.shape],
+    derivedFields: [],
   );
 
   @override

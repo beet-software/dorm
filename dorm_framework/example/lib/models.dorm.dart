@@ -102,6 +102,13 @@ class UserFields {
     fieldName: 'profile',
     columnName: 'profile',
   );
+
+  final DerivedFieldSchema qUsername = const DerivedFieldSchema(
+    fieldName: '_qUsername',
+    columnName: '_q-username',
+    path: ['_q-username'],
+    storageName: '_q-username',
+  );
 }
 
 class UserEntity implements Entity<UserData, User, String> {
@@ -113,6 +120,7 @@ class UserEntity implements Entity<UserData, User, String> {
     tableName: 'Users',
     primaryKey: fields.id,
     fields: [fields.username, fields.email, fields.profile],
+    derivedFields: [fields.qUsername],
   );
 
   @override
@@ -225,6 +233,13 @@ class ProductFields {
     fieldName: 'price',
     columnName: 'price',
   );
+
+  final DerivedFieldSchema qName = const DerivedFieldSchema(
+    fieldName: '_qName',
+    columnName: '_q-name',
+    path: ['_q-name'],
+    storageName: '_q-name',
+  );
 }
 
 class ProductEntity implements Entity<ProductData, Product, String> {
@@ -236,6 +251,7 @@ class ProductEntity implements Entity<ProductData, Product, String> {
     tableName: 'Products',
     primaryKey: fields.id,
     fields: [fields.name, fields.description, fields.price],
+    derivedFields: [fields.qName],
   );
 
   @override
@@ -362,6 +378,7 @@ class CartEntity implements Entity<CartData, Cart, String> {
     tableName: 'Carts',
     primaryKey: fields.id,
     fields: [fields.timestamp, fields.userId],
+    derivedFields: [],
   );
 
   @override
@@ -485,6 +502,7 @@ class CartItemEntity implements Entity<CartItemData, CartItem, String> {
     tableName: 'CartItems',
     primaryKey: fields.id,
     fields: [fields.amount, fields.productId, fields.cartId],
+    derivedFields: [],
   );
 
   @override
@@ -664,6 +682,13 @@ class ReviewFields {
     targetColumnName: 'id',
     unique: false,
   );
+
+  final DerivedFieldSchema qUserIdType = const DerivedFieldSchema(
+    fieldName: '_qUserIdType',
+    columnName: '_q-type',
+    path: ['_q-type'],
+    storageName: '_q-type',
+  );
 }
 
 class ReviewEntity implements Entity<ReviewData, Review, String> {
@@ -681,6 +706,7 @@ class ReviewEntity implements Entity<ReviewData, Review, String> {
       fields.content,
       fields.userId,
     ],
+    derivedFields: [fields.qUserIdType],
   );
 
   @override

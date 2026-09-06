@@ -110,7 +110,7 @@ The trade-off preserves one observation vocabulary across engines while not guar
 
 The author classifies public transactions and pagination as intended capabilities that are currently missing or blocked. Batch atomicity is desired but incomplete across engines. Filter portability is desired, but the current API may need improvement. These statuses do not turn the current absence into a permanent design principle.
 
-The author also classifies composite-key restrictions as accidental, identifies `QueryField` as a Firebase-origin legacy API, and identifies the current polymorphic representation as requiring review for non-JSON engines.
+The author also classifies composite-key restrictions as accidental and identifies the current polymorphic representation as requiring review for non-JSON engines. Derived fields are the current generated persisted-value API; they do not create indexes automatically.
 
 ## Treat common abstractions as focused rather than complete
 

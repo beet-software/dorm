@@ -61,9 +61,9 @@ abstract class _User {
   @ModelField(name: 'profile', referTo: _Profile)
   get profile;
 
-  @QueryField(
+  @DerivedField(
     name: '_q-username',
-    referTo: [QueryToken(#username, QueryType.text)],
+    referTo: [DerivedToken(#username, DerivedTransform.text)],
   )
   // ignore: unused_element
   String get _qUsername;
@@ -72,11 +72,11 @@ abstract class _User {
 
 The `name` value is the stored table name. The `as` value supplies the generated accessor name, so the generated database object exposes `dorm.users`.
 
-The `QueryField` declaration creates a stored query field from `username`. Its `QueryToken` marks the value as text for username search.
+The `DerivedField` declaration creates a stored value from `username`. Its `DerivedToken` marks the value as text for username search.
 
 ## Define the product model
 
-Add the catalog entity with a text query field for product-name searches:
+Add the catalog entity with a text-derived field for product-name searches:
 
 ```dart
 import 'package:decimal/decimal.dart';
@@ -92,9 +92,9 @@ abstract class _Product {
   @Field(name: 'price')
   Decimal get price;
 
-  @QueryField(
+  @DerivedField(
     name: '_q-name',
-    referTo: [QueryToken(#name, QueryType.text)],
+    referTo: [DerivedToken(#name, DerivedTransform.text)],
   )
   // ignore: unused_element
   String get _qName;

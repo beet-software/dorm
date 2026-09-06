@@ -93,7 +93,7 @@ final List<Review> reviews = await dorm.reviews.repository.peekAll(
 );
 ```
 
-The model also declares `_q-type`, a query field composed from `userId` and the normalized `type`. Build the same query value when filtering one user's reviews by variant:
+The model also declares `_q-type`, a derived field composed from `userId` and the normalized `type`. Build the same derived value when filtering one user's reviews by variant:
 
 ```dart
 final List<Review> productReviews = await dorm.reviews.repository.peekAll(
@@ -104,7 +104,7 @@ final List<Review> productReviews = await dorm.reviews.repository.peekAll(
 );
 ```
 
-The generated query field uses the enum normalization used by dORM. Use the generated enum value's normalized representation when constructing a query value rather than relying on the enum's display text.
+The generated derived field uses the enum normalization used by dORM. Use the generated enum value's normalized representation when constructing a query value rather than relying on the enum's display text.
 
 ## Keep embedded data and polymorphic data distinct
 

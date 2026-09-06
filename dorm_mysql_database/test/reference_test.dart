@@ -28,6 +28,9 @@ class IntegerEntity implements Entity<IntegerData, Integer, String> {
   const IntegerEntity();
 
   @override
+  PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
+
+  @override
   final EntitySchema schema = const EntitySchema(
     tableName: 'Integers',
     primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
@@ -78,6 +81,9 @@ class DateEntity implements Entity<DateData, Date, String> {
   const DateEntity();
 
   @override
+  PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
+
+  @override
   final EntitySchema schema = const EntitySchema(
     tableName: 'Dates',
     primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
@@ -126,6 +132,9 @@ class TextDependency extends Dependency<TextData> {
 
 class TextEntity implements Entity<TextData, Text, String> {
   const TextEntity();
+
+  @override
+  PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
   final EntitySchema schema = const EntitySchema(

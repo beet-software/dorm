@@ -84,6 +84,6 @@ The MySQL command instead parses the annotated source and prints SQL. Run both w
 
 ## Preserve the tool's current scope
 
-The tool does not read every dORM annotation. Embedded `@ModelField` values, polymorphic payloads, query fields, and complex value conversions are not represented by a general migration plan in the current implementation.
+The tool does not read every dORM annotation. Embedded `@ModelField` values, polymorphic payloads, and complex value conversions are not represented by a general migration plan in the current implementation. Derived fields are emitted as scalar columns or JSON roots according to their declared path; the tool does not create indexes.
 
 The command also does not compare an existing database with a new model, rename columns, drop columns, or record migration history. Its current output is a fresh `CREATE TABLE IF NOT EXISTS` statement derived from the declarations it recognizes.

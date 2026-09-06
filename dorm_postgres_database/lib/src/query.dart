@@ -72,10 +72,27 @@ DateTime _endOf(DateTime value, DateFilterUnit unit) {
 class Query implements BaseQuery<Query> {
   final String query;
   final Map<String, Object?> params;
+  final EntitySchema? schema;
   final int _nextParameter;
 
-  const Query(this.query, {this.params = const {}, int nextParameter = 0})
-    : _nextParameter = nextParameter;
+  const Query(
+    this.query, {
+    this.params = const {},
+    this.schema,
+    int nextParameter = 0,
+  }) : _nextParameter = nextParameter;
+
+  String _field(String key) {
+    DerivedFieldSchema? derived;
+    for (final DerivedFieldSchema field in schema?.derivedFields ?? const []) {
+      if (field.columnName == key) {
+        derived = field;
+        break;
+      }
+    }
+    if (derived == null || derived.path.length == 1) return key;
+    return '${derived.storageName} ->> \'${derived.path[1]}\'';
+  }
 
   Query _append(String expression, Map<String, Object?> values) {
     final String separator =
@@ -86,6 +103,7 @@ class Query implements BaseQuery<Query> {
       '$query$separator$expression',
       params: {...params, ...values},
       nextParameter: _nextParameter + values.length,
+      schema: schema,
     );
   }
 
@@ -94,20 +112,20 @@ class Query implements BaseQuery<Query> {
   @override
   Query whereValue(String key, Object? value) {
     final String name = _parameterName(0);
-    return _append('$key = @$name', {name: value});
+    return _append('${_field(key)} = @$name', {name: value});
   }
 
   @override
   Query whereText(String key, String prefix) {
     final String name = _parameterName(0);
-    return _append("$key LIKE (@$name || '%')", {name: prefix});
+    return _append("${_field(key)} LIKE (@$name || '%')", {name: prefix});
   }
 
   @override
   Query whereDate(String key, DateTime date, DateFilterUnit unit) {
     final String start = _parameterName(0);
     final String end = _parameterName(1);
-    return _append('$key BETWEEN @$start AND @$end', {
+    return _append('${_field(key)} BETWEEN @$start AND @$end', {
       start: _startOf(date, unit),
       end: _endOf(date, unit),
     });
@@ -125,15 +143,15 @@ class Query implements BaseQuery<Query> {
     if (from == null && to == null) return this;
     if (from == null) {
       final String name = _parameterName(0);
-      return _append('$key <= @$name', {name: to});
+      return _append('${_field(key)} <= @$name', {name: to});
     }
     if (to == null) {
       final String name = _parameterName(0);
-      return _append('$key >= @$name', {name: from});
+      return _append('${_field(key)} >= @$name', {name: from});
     }
     final String fromName = _parameterName(0);
     final String toName = _parameterName(1);
-    return _append('$key BETWEEN @$fromName AND @$toName', {
+    return _append('${_field(key)} BETWEEN @$fromName AND @$toName', {
       fromName: from,
       toName: to,
     });
@@ -149,15 +167,16 @@ class Query implements BaseQuery<Query> {
         'PostgreSQL limits must be non-negative.',
       );
     }
-    return Query('$query LIMIT $count', params: {...params});
+    return Query('$query LIMIT $count', params: {...params}, schema: schema);
   }
 
   @override
   Query sorted(String key, {bool ascending = true}) {
     return Query(
-      '$query ORDER BY $key ${ascending ? 'ASC' : 'DESC'}',
+      '$query ORDER BY ${_field(key)} ${ascending ? 'ASC' : 'DESC'}',
       params: {...params},
       nextParameter: _nextParameter,
+      schema: schema,
     );
   }
 }

@@ -1,6 +1,6 @@
 # Query construction and relationship execution details
 
-The task pages use `Filter`, generated query fields, and relation paths. Internally, those APIs are translated through query and relationship contracts that an engine implements.
+The task pages use `Filter`, generated derived fields, and relation paths. Internally, those APIs are translated through query and relationship contracts that an engine implements.
 
 ## Move from `BaseFilter` to `BaseQuery`
 
@@ -17,21 +17,21 @@ The framework provides filters for empty results, exact values, text prefixes, d
 
 An engine's `Query` implements the same methods for its storage technology. MySQL creates SQL text and parameter maps. Firebase calls Realtime Database query methods. BLoC evaluates its query representation against serialized in-memory values.
 
-## Use generated query fields
+## Use generated derived fields
 
-`@QueryField` declares a persisted query value derived from other model fields:
+`@DerivedField` declares a persisted value derived from other model fields:
 
 ```dart
-@QueryField(
+@DerivedField(
   name: '_q-username',
-  referTo: [QueryToken(#username, QueryType.text)],
+  referTo: [DerivedToken(#username, DerivedTransform.text)],
 )
 String get _qUsername;
 ```
 
 The generated `User` computes `_qUsername` from `username` and writes `_q-username` into its serialized representation. The application then queries that generated key with `Filter.text`.
 
-The review model uses a query field composed from `userId` and the normalized review type. Query fields and their normalization helpers are current generated behavior, but the author classifies this API as a legacy Firebase-oriented querying mechanism whose portable final form is not confirmed.
+The review model uses a derived field composed from `userId` and the normalized review type. A derived field is a persisted model value; it does not create an index automatically.
 
 ## Describe relation sources
 

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dorm_framework/dorm_framework.dart';
 import 'package:postgres/postgres.dart';
 import 'package:uuid/uuid.dart';
@@ -43,7 +45,34 @@ Future<Result> _execute(
   return session.execute(Sql.named(sql), parameters: params);
 }
 
-Map<String, Object?> _row(ResultRow row) => row.toColumnMap();
+Map<String, Object?> _decodeDerived(
+  EntitySchema schema,
+  Map<String, Object?> json,
+) {
+  final Map<String, Object?> result = {...json};
+  for (final DerivedFieldSchema field in schema.derivedFields) {
+    if (field.path.length == 1) continue;
+    final Object? value = result[field.storageName];
+    if (value is String) result[field.storageName] = jsonDecode(value);
+  }
+  return result;
+}
+
+Map<String, Object?> _row(EntitySchema schema, ResultRow row) =>
+    _decodeDerived(schema, row.toColumnMap());
+
+Map<String, Object?> _encodeDerived(
+  EntitySchema schema,
+  Map<String, Object?> json,
+) {
+  final Map<String, Object?> result = {...json};
+  for (final DerivedFieldSchema field in schema.derivedFields) {
+    if (field.path.length == 1) continue;
+    final Object? value = result[field.storageName];
+    if (value is Map) result[field.storageName] = jsonEncode(value);
+  }
+  return result;
+}
 
 class Reference implements BaseReference<Query> {
   final SessionExecutor executor;
@@ -67,7 +96,7 @@ class Reference implements BaseReference<Query> {
     );
     final ResultRow? row = result.isEmpty ? null : result.first;
     if (row == null) return null;
-    return entity.fromJson(id, _row(row));
+    return entity.fromJson(id, _row(entity.schema, row));
   }
 
   Future<void> _insert<Data, Model extends Data, I extends Object>(
@@ -76,7 +105,10 @@ class Reference implements BaseReference<Query> {
     required Session session,
     required bool upsert,
   }) async {
-    final Map<String, Object?> json = entity.toJson(model);
+    final Map<String, Object?> json = _encodeDerived(
+      entity.schema,
+      entity.toJson(model),
+    );
     final List<FieldSchema> keyFields = entity.schema.keyFields;
     final List<Object?> keyValues = entity.primaryKeyCodec.encode(
       entity.identify(model),
@@ -142,11 +174,14 @@ class Reference implements BaseReference<Query> {
   ) {
     return _run((session) async {
       final Query query = filter.accept(
-        Query('SELECT * FROM ${entity.schema.tableName}'),
+        Query(
+          'SELECT * FROM ${entity.schema.tableName}',
+          schema: entity.schema,
+        ),
       );
       final Result result = await _execute(session, query.query, query.params);
       return result.map((row) {
-        final Map<String, Object?> data = _row(row);
+        final Map<String, Object?> data = _row(entity.schema, row);
         final I id = entity.primaryKeyCodec.decode(
           entity.schema.keyFields.map((field) => data[field.columnName]),
         );
@@ -166,7 +201,7 @@ class Reference implements BaseReference<Query> {
         'FROM ${entity.schema.tableName}',
       );
       return result.map((row) {
-        final Map<String, Object?> data = _row(row);
+        final Map<String, Object?> data = _row(entity.schema, row);
         return entity.primaryKeyCodec.decode(
           entity.schema.keyFields.map((field) => data[field.columnName]),
         );
@@ -242,7 +277,7 @@ class Reference implements BaseReference<Query> {
   ) {
     return _run((session) async {
       final Query query = filter.accept(
-        Query('DELETE FROM ${entity.schema.tableName}'),
+        Query('DELETE FROM ${entity.schema.tableName}', schema: entity.schema),
       );
       await _execute(session, query.query, query.params);
     });

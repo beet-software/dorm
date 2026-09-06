@@ -95,6 +95,7 @@ class UserEntity implements Entity<UserData, User, String> {
     tableName: 'user',
     primaryKey: fields.id,
     fields: [fields.name, fields.birthDate, fields.email, fields.pictureUrl],
+    derivedFields: [],
   );
 
   @override
@@ -219,6 +220,7 @@ class PostEntity implements Entity<PostData, Post, String> {
     tableName: 'post',
     primaryKey: fields.id,
     fields: [fields.contents, fields.creationDate, fields.userId],
+    derivedFields: [],
   );
 
   @override
@@ -362,6 +364,7 @@ class MessageEntity implements Entity<MessageData, Message, String> {
       fields.senderId,
       fields.receiverId,
     ],
+    derivedFields: [],
   );
 
   @override

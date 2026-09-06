@@ -52,46 +52,59 @@ void main(List<String> args) {
         ..write(primaryKey.sqlType)
         ..writeln(' NOT NULL,');
     }
+    final Set<String> emittedColumns = {
+      ...primaryKeys.map((primaryKey) => primaryKey.columnName),
+    };
     for (ClassMember classMemberElement in classElement.body.members) {
       if (classMemberElement is! MethodDeclaration) continue;
       if (!classMemberElement.isGetter) continue;
 
       if (primaryKeys.any(
-        (primaryKey) => primaryKey.fieldName == classMemberElement.name?.lexeme,
+        (primaryKey) => primaryKey.fieldName == classMemberElement.name.lexeme,
       )) {
         continue;
       }
 
-      final String? columnName = classMemberElement.metadata
+      final Annotation? fieldAnnotation = classMemberElement.metadata
           .firstOrNullWhere(
-              (annotation) =>
-                  annotation.name.name == 'Field' ||
-                  annotation.name.name == 'ForeignField')
-          ?.arguments
-          ?.arguments
+            (annotation) =>
+                annotation.name.name == 'Field' ||
+                annotation.name.name == 'ForeignField' ||
+                annotation.name.name == 'DerivedField',
+          );
+      if (fieldAnnotation == null) continue;
+      final String? declaredName = fieldAnnotation.arguments?.arguments
           .whereType<NamedArgument>()
-          .firstOrNullWhere(
-              (expression) => expression.name.lexeme == 'name')
+          .firstOrNullWhere((expression) => expression.name.lexeme == 'name')
           ?.argumentExpression
           .ifType<SimpleStringLiteral>()
           ?.value;
+      final String? columnName = declaredName;
       if (columnName == null) continue;
+
+      final bool derived = fieldAnnotation.name.name == 'DerivedField';
+      final String storageName = derived && columnName.contains('/')
+          ? columnName.split('/').first
+          : columnName;
+      if (!emittedColumns.add(storageName)) continue;
 
       final TypeAnnotation? methodReturnType = classMemberElement.returnType;
       if (methodReturnType == null) continue;
 
       final String typeName = methodReturnType.beginToken.lexeme;
       final bool nullable = methodReturnType.question != null;
-      final String columnType = const {
-        'String': 'VARCHAR',
-        'int': 'INTEGER',
-        'bool': 'BOOLEAN',
-        'double': 'DOUBLE',
-      }[typeName]!;
+      final String columnType = derived && columnName.contains('/')
+          ? 'JSON'
+          : const {
+              'String': 'VARCHAR',
+              'int': 'INTEGER',
+              'bool': 'BOOLEAN',
+              'double': 'DOUBLE',
+            }[typeName]!;
 
       buffer
         ..write('  ')
-        ..write(columnName)
+        ..write(storageName)
         ..write(' ')
         ..write(columnType)
         ..write(nullable ? '' : ' NOT NULL')
@@ -127,7 +140,8 @@ List<_PrimaryKey> _primaryKeys(ClassDeclaration declaration) {
       .whereType<NamedArgument>()
       .firstOrNullWhere((argument) => argument.name.lexeme == 'primaryKey')
       ?.argumentExpression;
-  final List<Expression> specs = primaryKey
+  final List<Expression> specs =
+      primaryKey
           ?.ifType<ListLiteral>()
           ?.elements
           .whereType<Expression>()
@@ -163,7 +177,7 @@ _PrimaryKey _primaryKey(
     final String fieldName = _symbolArgument(spec, 'referTo') ?? 'id';
     final MethodDeclaration? field = declaration.body.members
         .whereType<MethodDeclaration>()
-        .firstOrNullWhere((member) => member.name?.lexeme == fieldName);
+        .firstOrNullWhere((member) => member.name.lexeme == fieldName);
     final String columnName = field == null
         ? fieldName
         : _fieldColumnName(field) ?? fieldName;
@@ -211,9 +225,11 @@ String? _symbolArgument(InstanceCreationExpression expression, String name) {
 String? _fieldColumnName(MethodDeclaration field) {
   return field.metadata
       .firstOrNullWhere(
-          (annotation) =>
-              annotation.name.name == 'Field' ||
-              annotation.name.name == 'ForeignField')
+        (annotation) =>
+            annotation.name.name == 'Field' ||
+            annotation.name.name == 'ForeignField' ||
+            annotation.name.name == 'DerivedField',
+      )
       ?.arguments
       ?.arguments
       .whereType<NamedArgument>()

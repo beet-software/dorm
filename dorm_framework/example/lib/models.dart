@@ -30,9 +30,9 @@ abstract class _User {
   @ModelField(name: 'profile', referTo: _Profile)
   get profile;
 
-  @QueryField(
+  @DerivedField(
     name: '_q-username',
-    referTo: [QueryToken(#username, QueryType.text)],
+    referTo: [DerivedToken(#username, DerivedTransform.text)],
   )
   // ignore: unused_element
   String get _qUsername;
@@ -49,9 +49,9 @@ abstract class _Product {
   @Field(name: 'price')
   Decimal get price;
 
-  @QueryField(
+  @DerivedField(
     name: '_q-name',
-    referTo: [QueryToken(#name, QueryType.text)],
+    referTo: [DerivedToken(#name, DerivedTransform.text)],
   )
   // ignore: unused_element
   String get _qName;
@@ -120,9 +120,12 @@ abstract class _Review {
   @ForeignField(name: 'user-id', referTo: _User, inverseAs: #reviews)
   String get userId;
 
-  @QueryField(
+  @DerivedField(
     name: '_q-type',
-    referTo: [QueryToken(#userId), QueryToken(#type, QueryType.enumeration)],
+    referTo: [
+      DerivedToken(#userId),
+      DerivedToken(#type, DerivedTransform.enumeration),
+    ],
     joinBy: '_',
   )
   // ignore: unused_element

@@ -1,6 +1,6 @@
 # Search and filter the store
 
-Repositories accept structured filters for one-shot reads, stream reads, and filtered removals. The store model already defines query fields for user names and product names, so text search can use those generated fields instead of reading every record in application code.
+Repositories accept structured filters for one-shot reads, stream reads, and filtered removals. The store model already defines derived fields for user names and product names, so text search can use those generated values instead of reading every record in application code.
 
 This guide assumes that the generated `User` and `Product` types are available and that `Dorm` is initialized as shown in [Create, read, update, and remove store records](01-crud.md).
 
@@ -47,9 +47,9 @@ final List<Product> products = await dorm.products.repository.peekAll(
 
 `key` and `field` identify the same persisted field in two forms. A value filter compares the field with the supplied value. The `key` form is useful for a dynamic field name; the generated `field` form keeps the model's column name in the generated metadata.
 
-## Search text with a generated query field
+## Search text with a generated derived field
 
-The `User` model declares `_q-username` as a query field built from `username`. Use that stored query field with `Filter.text`:
+The `User` model declares `_q-username` as a derived field built from `username`. Use that stored value with `Filter.text`:
 
 ```dart
 final List<User> matches = await dorm.users.repository.peekAll(
@@ -57,7 +57,7 @@ final List<User> matches = await dorm.users.repository.peekAll(
 );
 ```
 
-The `Product` model exposes the equivalent `_q-name` query field:
+The `Product` model exposes the equivalent `_q-name` derived field:
 
 ```dart
 final List<Product> matches = await dorm.products.repository.peekAll(
@@ -65,9 +65,9 @@ final List<Product> matches = await dorm.products.repository.peekAll(
 );
 ```
 
-`Filter.text` matches values that start with the supplied text according to the query implementation. The query field declaration determines which model fields contribute to the searchable value and how those values are normalized.
+`Filter.text` matches values that start with the supplied text according to the query implementation. The derived-field declaration determines which model fields contribute to the searchable value and how those values are normalized.
 
-To add text search to another model, declare a `@QueryField` in the annotated source and regenerate the model before querying that field.
+To add text search to another model, declare a `@DerivedField` in the annotated source and regenerate the model before querying that field.
 
 ## Filter dates and ranges
 

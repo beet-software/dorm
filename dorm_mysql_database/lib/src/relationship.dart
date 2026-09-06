@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dorm_framework/dorm_framework.dart';
 import 'package:mysql_client/mysql_client.dart';
 
@@ -34,14 +36,26 @@ Future<List<_DecodedRow>> _readRows(
     params,
   );
   return result.rows.map((row) {
-    final Map<String, Object?> data = row.typedAssoc();
-    final Object key = plan.decodeKey(data)!;
-    return _DecodedRow(
-      key: key,
-      model: plan.decode(data)!,
-      data: data,
+    final Map<String, Object?> data = _decodeDerived(
+      plan.schema,
+      row.typedAssoc(),
     );
+    final Object key = plan.decodeKey(data)!;
+    return _DecodedRow(key: key, model: plan.decode(data)!, data: data);
   }).toList();
+}
+
+Map<String, Object?> _decodeDerived(
+  EntitySchema schema,
+  Map<String, Object?> json,
+) {
+  final Map<String, Object?> result = {...json};
+  for (final DerivedFieldSchema field in schema.derivedFields) {
+    if (field.path.length == 1) continue;
+    final Object? value = result[field.storageName];
+    if (value is String) result[field.storageName] = jsonDecode(value);
+  }
+  return result;
 }
 
 Future<Map<Object, Object>> _readByIds(
@@ -55,7 +69,8 @@ Future<Map<Object, Object>> _readByIds(
   final Map<String, Object?> params = {};
   final String where;
   if (fields.length == 1) {
-    where = '${fields.single.columnName} IN ('
+    where =
+        '${fields.single.columnName} IN ('
         '${List.generate(values.length, (i) => ':relation_id_$i').join(', ')})';
     for (int i = 0; i < values.length; i++) {
       params['relation_id_$i'] = plan.encodeKey(values[i]).single;
@@ -74,7 +89,8 @@ Future<Map<Object, Object>> _readByIds(
         params['relation_id_${i}_$part'] = parts[part];
       }
     }
-    where = '(${fields.map((field) => field.columnName).join(', ')}) IN '
+    where =
+        '(${fields.map((field) => field.columnName).join(', ')}) IN '
         '(${tuples.join(', ')})';
   }
   final List<_DecodedRow> rows = await _readRows(
@@ -110,7 +126,9 @@ Future<Map<Object, List<Object>>> _readByForeignKey(
   final Map<Object, List<Object>> result = {};
   for (final _DecodedRow row in rows) {
     final Object? foreignKey = row.data[field.columnName];
-    if (foreignKey != null) result.putIfAbsent(foreignKey, () => []).add(row.model);
+    if (foreignKey != null) {
+      result.putIfAbsent(foreignKey, () => []).add(row.model);
+    }
   }
   return result;
 }
@@ -129,52 +147,37 @@ class Relationship implements BaseRelationship<Query> {
 
   @override
   OneToOneAssociation<L, I, R, Query>
-      oneToOne<L, I extends Object, R, J extends Object>(
+  oneToOne<L, I extends Object, R, J extends Object>(
     RelationSource<L, I, Query> left,
     RelationSource<R, J, Query> right,
     J Function(L) on,
   ) {
-    return _OneToOne(
-      left: left,
-      right: right,
-      on: on,
-      connection: connection,
-    );
+    return _OneToOne(left: left, right: right, on: on, connection: connection);
   }
 
   @override
   OneToManyAssociation<L, I, R, Query>
-      oneToMany<L, I extends Object, R, J extends Object>(
+  oneToMany<L, I extends Object, R, J extends Object>(
     RelationSource<L, I, Query> left,
     RelationSource<R, J, Query> right,
     BaseFilter<Query> Function(L) on,
   ) {
-    return _OneToMany(
-      left: left,
-      right: right,
-      on: on,
-      connection: connection,
-    );
+    return _OneToMany(left: left, right: right, on: on, connection: connection);
   }
 
   @override
   ManyToOneAssociation<L, I, R, J, Query>
-      manyToOne<L, I extends Object, R, J extends Object>(
+  manyToOne<L, I extends Object, R, J extends Object>(
     RelationSource<L, I, Query> left,
     RelationSource<R, J, Query> right,
     J Function(L) on,
   ) {
-    return _ManyToOne(
-      left: left,
-      right: right,
-      on: on,
-      connection: connection,
-    );
+    return _ManyToOne(left: left, right: right, on: on, connection: connection);
   }
 
   @override
   ManyToManyAssociation<M, I, L, R, Query>
-      manyToMany<M, I extends Object, L, J extends Object, R, K extends Object>(
+  manyToMany<M, I extends Object, L, J extends Object, R, K extends Object>(
     RelationSource<M, I, Query> middle,
     RelationSource<L, J, Query> left,
     J Function(M) onLeft,
@@ -298,7 +301,7 @@ class _OneToMany<L, I extends Object, R, J extends Object>
             relationFilters.first.field! as ForeignKeySchema;
         final bool targetsLeft =
             field.targetTableName == leftPlan.schema.tableName &&
-                field.targetColumnName == leftPlan.schema.primaryKey.columnName;
+            field.targetColumnName == leftPlan.schema.primaryKey.columnName;
         final bool sameField = relationFilters.every((relationFilter) {
           final ForeignKeySchema current =
               relationFilter.field! as ForeignKeySchema;
@@ -307,8 +310,7 @@ class _OneToMany<L, I extends Object, R, J extends Object>
               current.targetColumnName == field.targetColumnName;
         });
         if (targetsLeft && sameField) {
-          final Map<Object, List<Object>> associated =
-              await _readByForeignKey(
+          final Map<Object, List<Object>> associated = await _readByForeignKey(
             connection!,
             rightPlan,
             field,
@@ -318,9 +320,7 @@ class _OneToMany<L, I extends Object, R, J extends Object>
             for (int i = 0; i < leftModels.length; i++)
               Join(
                 left: leftModels[i],
-                right: associated[relationFilters[i].value]
-                        ?.cast<R>() ??
-                    <R>[],
+                right: associated[relationFilters[i].value]?.cast<R>() ?? <R>[],
               ),
           ];
         }
@@ -392,10 +392,7 @@ class _ManyToOne<L, I extends Object, R, J extends Object>
       return [
         for (final MapEntry<J, List<L>> entry in entries)
           if (rightModels[entry.key] != null)
-            Join(
-              left: rightModels[entry.key] as R,
-              right: entry.value,
-            ),
+            Join(left: rightModels[entry.key] as R, right: entry.value),
       ];
     }
     final List<R?> rightModels = await Future.wait(

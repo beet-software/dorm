@@ -60,6 +60,7 @@ class UserEntity implements Entity<UserData, User, String> {
     tableName: 'users',
     primaryKey: fields.id,
     fields: [fields.name],
+    derivedFields: [],
   );
 
   @override
@@ -159,6 +160,7 @@ class PostEntity implements Entity<PostData, Post, String> {
     tableName: 'posts',
     primaryKey: fields.id,
     fields: [fields.title, fields.userId],
+    derivedFields: [],
   );
 
   @override

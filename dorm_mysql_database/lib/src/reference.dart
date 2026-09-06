@@ -15,6 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:dorm_framework/dorm_framework.dart';
 import 'package:mysql_client/mysql_client.dart';
@@ -22,10 +23,7 @@ import 'package:uuid/uuid.dart';
 
 import 'query.dart';
 
-String _primaryKeyPredicate(
-  EntitySchema schema, {
-  String prefix = 'id',
-}) {
+String _primaryKeyPredicate(EntitySchema schema, {String prefix = 'id'}) {
   final List<FieldSchema> fields = schema.keyFields;
   if (fields.length == 1) return '${fields.single.columnName} = :$prefix';
   return fields
@@ -36,11 +34,10 @@ String _primaryKeyPredicate(
 }
 
 Map<String, Object?> _primaryKeyParameters<
-    Data, Model extends Data, I extends Object>(
-  Entity<Data, Model, I> entity,
-  I id, {
-  String prefix = 'id',
-}) {
+  Data,
+  Model extends Data,
+  I extends Object
+>(Entity<Data, Model, I> entity, I id, {String prefix = 'id'}) {
   final List<Object?> values = entity.primaryKeyCodec.encode(id);
   final List<FieldSchema> fields = entity.schema.keyFields;
   if (values.length != fields.length) {
@@ -56,6 +53,32 @@ Map<String, Object?> _primaryKeyParameters<
   return parameters;
 }
 
+Map<String, Object?> _encodeDerived(
+  EntitySchema schema,
+  Map<String, Object?> json,
+) {
+  final Map<String, Object?> result = {...json};
+  for (final DerivedFieldSchema field in schema.derivedFields) {
+    if (field.path.length == 1) continue;
+    final Object? value = result[field.storageName];
+    if (value is Map) result[field.storageName] = jsonEncode(value);
+  }
+  return result;
+}
+
+Map<String, Object?> _decodeDerived(
+  EntitySchema schema,
+  Map<String, Object?> json,
+) {
+  final Map<String, Object?> result = {...json};
+  for (final DerivedFieldSchema field in schema.derivedFields) {
+    if (field.path.length == 1) continue;
+    final Object? value = result[field.storageName];
+    if (value is String) result[field.storageName] = jsonDecode(value);
+  }
+  return result;
+}
+
 /// A [BaseReference] that uses MySQL as engine.
 class Reference implements BaseReference<Query> {
   final MySQLConnection connection;
@@ -69,13 +92,20 @@ class Reference implements BaseReference<Query> {
     Model? Function(Model?) update,
   ) {
     return connection.transactional((connection) async {
-      final Model? existingModel =
-          await peek<Data, Model, I>(entity, id, connection: connection);
+      final Model? existingModel = await peek<Data, Model, I>(
+        entity,
+        id,
+        connection: connection,
+      );
       final Model? updatedModel = update(existingModel);
       if (updatedModel == null) {
         await pop<Data, Model, I>(entity, id, connection: connection);
       } else {
-        await push<Data, Model, I>(entity, updatedModel, connection: connection);
+        await push<Data, Model, I>(
+          entity,
+          updatedModel,
+          connection: connection,
+        );
       }
     });
   }
@@ -98,8 +128,14 @@ class Reference implements BaseReference<Query> {
     return connection
         .execute('$buffer', _primaryKeyParameters(entity, id))
         .then((result) => result.rows.firstOrNull)
-        .then((row) =>
-            row == null ? null : entity.fromJson(id, row.typedAssoc()));
+        .then(
+          (row) => row == null
+              ? null
+              : entity.fromJson(
+                  id,
+                  _decodeDerived(entity.schema, row.typedAssoc()),
+                ),
+        );
   }
 
   @override
@@ -111,23 +147,30 @@ class Reference implements BaseReference<Query> {
       ..write('SELECT * FROM ')
       ..write(entity.schema.tableName);
 
-    final Query query = filter.accept(Query('$preBuffer'));
+    final Query query = filter.accept(
+      Query('$preBuffer', schema: entity.schema),
+    );
     final StringBuffer buffer = StringBuffer()
       ..write(query.query)
       ..write(';');
 
-    return connection.execute('$buffer', query.params).then((result) => result
-        .rows
-        .map((row) => row.typedAssoc())
-        .map((json) => entity.fromJson(
-              entity.primaryKeyCodec.decode(
-                entity.schema.keyFields.map(
-                  (field) => json[field.columnName],
+    return connection
+        .execute('$buffer', query.params)
+        .then(
+          (result) => result.rows
+              .map((row) => _decodeDerived(entity.schema, row.typedAssoc()))
+              .map(
+                (json) => entity.fromJson(
+                  entity.primaryKeyCodec.decode(
+                    entity.schema.keyFields.map(
+                      (field) => json[field.columnName],
+                    ),
+                  ),
+                  json,
                 ),
-              ),
-              json,
-            ))
-        .toList());
+              )
+              .toList(),
+        );
   }
 
   @override
@@ -136,22 +179,24 @@ class Reference implements BaseReference<Query> {
   ) {
     final StringBuffer buffer = StringBuffer()
       ..write('SELECT ')
-      ..writeAll(
-        entity.schema.keyFields.map((field) => field.columnName),
-        ', ',
-      )
+      ..writeAll(entity.schema.keyFields.map((field) => field.columnName), ', ')
       ..write(' FROM ')
       ..write(entity.schema.tableName)
       ..write(';');
 
-    return connection.execute('$buffer').then((result) =>
-        result.rows
-            .map((row) => entity.primaryKeyCodec.decode(
+    return connection
+        .execute('$buffer')
+        .then(
+          (result) => result.rows
+              .map(
+                (row) => entity.primaryKeyCodec.decode(
                   entity.schema.keyFields.map(
                     (field) => row.typedAssoc()[field.columnName],
                   ),
-                ))
-            .toList());
+                ),
+              )
+              .toList(),
+        );
   }
 
   @override
@@ -181,7 +226,9 @@ class Reference implements BaseReference<Query> {
       ..write('DELETE FROM ')
       ..write(entity.schema.tableName);
 
-    final Query query = filter.accept(Query('$preBuffer'));
+    final Query query = filter.accept(
+      Query('$preBuffer', schema: entity.schema),
+    );
     final StringBuffer buffer = StringBuffer()
       ..write(query.query)
       ..write(';');
@@ -220,7 +267,9 @@ class Reference implements BaseReference<Query> {
       for (int i = 0; i < keys.length; i++) {
         final List<Object?> values = entity.primaryKeyCodec.encode(keys[i]);
         if (values.length != fields.length) {
-          throw StateError('Primary-key codec returned an invalid value count.');
+          throw StateError(
+            'Primary-key codec returned an invalid value count.',
+          );
         }
         if (i > 0) buffer.write(', ');
         buffer
@@ -285,8 +334,9 @@ class Reference implements BaseReference<Query> {
   }) {
     connection ??= this.connection;
     final StringBuffer buffer = StringBuffer();
-    final Map<String, Object?>? params =
-        _QueryBuilder(entity).push(buffer, model, replace: true);
+    final Map<String, Object?>? params = _QueryBuilder(
+      entity,
+    ).push(buffer, model, replace: true);
     return connection.execute('$buffer', params);
   }
 
@@ -318,9 +368,12 @@ class Reference implements BaseReference<Query> {
     final I id = const Uuid().v4() as I;
     final Model model = entity.fromData(dependency, id, data);
     final StringBuffer buffer = StringBuffer();
-    final Map<String, Object?>? params =
-        _QueryBuilder(entity).push(buffer, model, replace: false);
-    return (connection ?? this.connection).execute('$buffer', params).then((_) => model);
+    final Map<String, Object?>? params = _QueryBuilder(
+      entity,
+    ).push(buffer, model, replace: false);
+    return (connection ?? this.connection)
+        .execute('$buffer', params)
+        .then((_) => model);
   }
 
   @override
@@ -349,7 +402,10 @@ class _QueryBuilder<Data, Model extends Data, I extends Object> {
     Model model, {
     bool replace = true,
   }) {
-    final Map<String, Object?> json = entity.toJson(model);
+    final Map<String, Object?> json = _encodeDerived(
+      entity.schema,
+      entity.toJson(model),
+    );
     final List<String> columns = json.keys.toList();
     final List<FieldSchema> primaryKeyFields = entity.schema.keyFields;
     final List<Object?> primaryKeyValues = entity.primaryKeyCodec.encode(

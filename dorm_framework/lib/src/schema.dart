@@ -23,9 +23,23 @@ class FieldSchema {
   final String columnName;
 
   /// Creates a [FieldSchema].
-  const FieldSchema({
-    required this.fieldName,
-    required this.columnName,
+  const FieldSchema({required this.fieldName, required this.columnName});
+}
+
+/// Describes a persisted value derived from other model fields.
+class DerivedFieldSchema extends FieldSchema {
+  /// The path used by the storage adapter.
+  final List<String> path;
+
+  /// The physical storage column containing the value.
+  final String storageName;
+
+  /// Creates a [DerivedFieldSchema].
+  const DerivedFieldSchema({
+    required super.fieldName,
+    required super.columnName,
+    required this.path,
+    required this.storageName,
   });
 }
 
@@ -68,12 +82,16 @@ class EntitySchema {
   /// The model's persisted fields, excluding [primaryKey].
   final List<FieldSchema> fields;
 
+  /// The model's generated persisted fields.
+  final List<DerivedFieldSchema> derivedFields;
+
   /// Creates an [EntitySchema].
   const EntitySchema({
     required this.tableName,
     required this.primaryKey,
     this.primaryKeys = const [],
     this.fields = const [],
+    this.derivedFields = const [],
   });
 
   /// Returns the ordered fields that make up the primary key.

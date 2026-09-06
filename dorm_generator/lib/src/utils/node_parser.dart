@@ -328,18 +328,18 @@ class ModelFieldParser extends FieldNodeParser<ModelField> {
   }
 }
 
-class QueryFieldParser extends FieldNodeParser<QueryField> {
-  const QueryFieldParser();
+class DerivedFieldParser extends FieldNodeParser<DerivedField> {
+  const DerivedFieldParser();
 
   @override
-  QueryField _parse(ConstantReader reader) {
-    return QueryField(
+  DerivedField _parse(ConstantReader reader) {
+    return DerivedField(
       name: reader.read('name').stringValue,
       referTo: reader.read('referTo').listValue.map((obj) {
         final ConstantReader reader = ConstantReader(obj);
-        return QueryToken(
+        return DerivedToken(
           $Symbol(reader: reader.read('field')),
-          reader.read('type').enumValueFrom(QueryType.values),
+          reader.read('transform').enumValueFrom(DerivedTransform.values),
         );
       }).toList(),
       joinBy: reader.read('joinBy').stringValue,

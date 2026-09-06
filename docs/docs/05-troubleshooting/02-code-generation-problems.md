@@ -63,13 +63,13 @@ output. Current validation failures include:
 
 - primary-key specifications with unsupported types or missing required
   fields;
-- nullable or query fields used where an identity field is required;
+- nullable or derived fields used where an identity field is required;
 - invalid generated primary-key names or conflicts;
 - foreign fields whose target is not an annotated model;
 - foreign-field relationships involving unsupported composite primary-key
   combinations;
 - duplicate generated relationship path names;
-- query fields that refer to invalid fields or symbols.
+- derived fields that refer to invalid fields or symbols.
 
 These failures are raised as `StateError` from the generator and are reported
 through `build_runner`. The message generally identifies the model, field, or
@@ -121,7 +121,7 @@ engine runtime restriction.
 Run generation after changing any of the following:
 
 - model or data fields;
-- `@Field`, `@ForeignField`, `@ModelField`, or `@QueryField` declarations;
+- `@Field`, `@ForeignField`, `@ModelField`, or `@DerivedField` declarations;
 - primary-key declarations;
 - relationship names or targets;
 - serialization-related model declarations.

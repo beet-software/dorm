@@ -102,7 +102,7 @@ A `Class` extends `ClassData`, implements `_Class`, has an additional `id` field
 contain only the getters annotated with 
 [`ForeignField`](https://pub.dev/documentation/dorm_annotations/latest/dorm_annotations/ForeignField-class.html)
 and
-[`QueryField`](https://pub.dev/documentation/dorm_annotations/latest/dorm_annotations/QueryField-class.html).
+[`DerivedField`](https://pub.dev/documentation/dorm_annotations/latest/dorm_annotations/DerivedField-class.html).
 In the above example is defined as:
 
 ```dart
