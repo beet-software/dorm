@@ -13,6 +13,7 @@ workspace:
   - dorm_bloc_database
   - dorm_firebase_database
   - dorm_mysql_database
+  - dorm_postgres_database
 
 dev_dependencies:
   melos: ^8.6.0

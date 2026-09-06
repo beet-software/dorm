@@ -48,7 +48,7 @@ jobs:
     needs: build
     strategy:
       matrix:
-        pkg: [dorm_generator, dorm_firebase_database, dorm_bloc_database, dorm_mysql_database]
+        pkg: [dorm_generator, dorm_firebase_database, dorm_bloc_database, dorm_mysql_database, dorm_postgres_database]
     steps:
       - uses: actions/checkout@v3
       - uses: subosito/flutter-action@v2

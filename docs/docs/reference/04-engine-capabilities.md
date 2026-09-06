@@ -6,19 +6,19 @@ requirements.
 
 ## Capability matrix
 
-| Capability | BLoC | Firebase | MySQL |
-| --- | --- | --- | --- |
-| Storage | In-process state | Firebase Realtime Database | MySQL through mysql_client |
-| Public engine constructor | Engine() | Engine(FirebaseInstance, {String? path}) | Engine(MySQLConnection) |
-| External service | None | Firebase app/database or emulator | MySQL server and schema |
-| Automatic identity | UUID-backed in-memory identity | Firebase push key | UUID-backed SQL identity |
-| Identity restriction | Composite-key put/putAll throw UnsupportedError | Reference identities must be String | Composite-key put throws UnsupportedError |
-| Collection filtering | In-memory query evaluation | Realtime Database query | SQL query |
-| Single reads | In-memory map lookup | Firebase SDK read | SQL read |
-| Streams | State-backed | Firebase value events, with offline behavior | Initial read only in current implementation |
-| Relationships | Framework relationship implementation | Framework relationship implementation | Direct relation plans plus readable fallbacks |
-| Public transaction API | None documented | None; patch uses a Firebase transaction internally | None; selected operations use MySQL transactions internally |
-| Pagination | Not supported by the common API | Not supported | Not supported |
+| Capability | BLoC | Firebase | MySQL | PostgreSQL |
+| --- | --- | --- | --- | --- |
+| Storage | In-process state | Firebase Realtime Database | MySQL through mysql_client | PostgreSQL through postgres |
+| Public engine constructor | Engine() | Engine(FirebaseInstance, {String? path}) | Engine(MySQLConnection) | Engine(SessionExecutor) |
+| External service | None | Firebase app/database or emulator | MySQL server and schema | PostgreSQL server and schema |
+| Automatic identity | UUID-backed in-memory identity | Firebase push key | UUID-backed SQL identity | UUID-backed SQL identity |
+| Identity restriction | Composite-key put/putAll throw UnsupportedError | Reference identities must be String | Composite-key put throws UnsupportedError | Composite-key put throws UnsupportedError |
+| Collection filtering | In-memory query evaluation | Realtime Database query | SQL query | PostgreSQL SQL query |
+| Single reads | In-memory map lookup | Firebase SDK read | SQL read | SQL read |
+| Streams | State-backed | Firebase value events, with offline behavior | Initial read only in current implementation | Initial read only |
+| Relationships | Framework relationship implementation | Framework relationship implementation | Direct relation plans plus readable fallbacks | Direct relation plans plus readable fallbacks |
+| Public transaction API | None documented | None; patch uses a Firebase transaction internally | None; selected operations use MySQL transactions internally | None; selected operations use PostgreSQL transactions internally |
+| Pagination | Not supported by the common API | Not supported | Not supported | Not supported |
 
 The matrix records current behavior. It does not create a future compatibility
 promise.
@@ -119,6 +119,34 @@ definitions from annotated Dart input. It is not a general migration API.
 See [Run with MySQL](../03-apply/04-use-mysql.md) and
 [Generate MySQL table definitions](../03-apply/07-generate-mysql-schema.md).
 
+## PostgreSQL engine
+
+Import:
+
+~~~dart
+import 'package:dorm_postgres_database/dorm_postgres_database.dart';
+import 'package:postgres/postgres.dart';
+~~~
+
+Construct it with an opened `Connection` or `Pool`:
+
+~~~dart
+final SessionExecutor executor = await Connection.open(endpoint);
+final Engine engine = Engine(executor);
+final Dorm dorm = Dorm(engine);
+~~~
+
+The engine maps generated schema metadata and filters to PostgreSQL SQL with
+named parameters. It requires tables to exist before normal CRUD operations
+can succeed. Identified writes use PostgreSQL upsert statements. The package
+does not provide schema generation or migrations.
+
+`pull` and `pullAll` perform the initial read only. Selected batch and patch
+operations use driver transactions internally, while the common framework
+does not expose a transaction object.
+
+See [Run with PostgreSQL](../03-apply/08-use-postgres.md).
+
 ## Shared surface and engine-specific errors
 
 Dorm, generated DatabaseEntity accessors, repositories, filters, and
@@ -128,4 +156,3 @@ Backend exceptions do not share one dORM error class.
 Use [Diagnose errors by layer](../05-troubleshooting/01-error-by-layer.md) for
 the observed propagation behavior and [Boundaries and compatibility](../03-understand/05-boundaries-and-compatibility.md)
 for unresolved capability status.
-

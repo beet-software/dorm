@@ -1,0 +1,66 @@
+import 'package:dorm_framework/dorm_framework.dart';
+import 'package:dorm_postgres_database/src/query.dart';
+import 'package:test/test.dart';
+
+void main() {
+  test('adds named value parameters', () {
+    final Query query = const Query(
+      'SELECT * FROM users',
+    ).whereValue('active', true);
+
+    expect(query.query, 'SELECT * FROM users WHERE active = @p0');
+    expect(query.params, {'p0': true});
+  });
+
+  test('combines filters without replacing existing parameters', () {
+    final Query query = const Query(
+      'SELECT * FROM users',
+    ).whereValue('active', true).whereText('name', 'Al');
+
+    expect(
+      query.query,
+      'SELECT * FROM users WHERE active = @p0 AND name LIKE (@p1 || \'%\')',
+    );
+    expect(query.params, {'p0': true, 'p1': 'Al'});
+  });
+
+  test('builds bounded numeric ranges', () {
+    final Query query = const Query(
+      'SELECT * FROM products',
+    ).whereRange('price', const FilterRange<double>(from: 10, to: 20));
+
+    expect(
+      query.query,
+      'SELECT * FROM products WHERE price BETWEEN @p0 AND @p1',
+    );
+    expect(query.params, {'p0': 10, 'p1': 20});
+  });
+
+  test('builds date bounds for a date unit', () {
+    final Query query = const Query(
+      'SELECT * FROM events',
+    ).whereDate('created-at', DateTime(2025, 3, 4, 12, 30), DateFilterUnit.day);
+
+    expect(
+      query.query,
+      'SELECT * FROM events WHERE created-at BETWEEN @p0 AND @p1',
+    );
+    expect(query.params['p0'], DateTime(2025, 3, 4));
+    expect(query.params['p1'], DateTime(2025, 3, 4, 23, 59, 59, 999));
+  });
+
+  test('adds sort and limit clauses', () {
+    final Query query = const Query(
+      'SELECT * FROM products',
+    ).sorted('price').limit(5);
+
+    expect(query.query, 'SELECT * FROM products ORDER BY price ASC LIMIT 5');
+  });
+
+  test('rejects negative PostgreSQL limits', () {
+    expect(
+      () => const Query('SELECT * FROM products').limit(-1),
+      throwsArgumentError,
+    );
+  });
+}

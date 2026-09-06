@@ -12,6 +12,8 @@
 
 [![pub package](https://img.shields.io/pub/v/dorm_firebase_database.svg?label=dorm_firebase_database)](https://pub.dev/packages/dorm_firebase_database)
 [![pub package](https://img.shields.io/pub/v/dorm_bloc_database.svg?label=dorm_bloc_database)](https://pub.dev/packages/dorm_bloc_database)
+[![pub package](https://img.shields.io/pub/v/dorm_mysql_database.svg?label=dorm_mysql_database)](https://pub.dev/packages/dorm_mysql_database)
+[![pub package](https://img.shields.io/pub/v/dorm_postgres_database.svg?label=dorm_postgres_database)](https://pub.dev/packages/dorm_postgres_database)
 
 
 A language-agnostic Object Relational Mapper library for Dart.
@@ -37,7 +39,8 @@ dart pub add dorm_annotations
 dart pub add dev:dorm_generator
 dart pub add dev:build_runner
 # Choose a dorm_*_database package to use as engine
-dart pub add dorm_firebase_database
+dart pub add dorm_postgres_database
+dart pub add postgres
 dart pub get
 ```
 
@@ -98,6 +101,8 @@ Here's a step-by-step guide:
 4. Discover what database engines are available to integrate with dORM
    - Integrate using Firebase Realtime Database, explained by [`dorm_firebase_database`](https://pub.dev/packages/dorm_firebase_database)
    - Integrate using local memory and the BLoC pattern, explained by [`dorm_bloc_database`](https://pub.dev/packages/dorm_bloc_database)
+   - Integrate using MySQL, explained by [`dorm_mysql_database`](https://pub.dev/packages/dorm_mysql_database)
+   - Integrate using PostgreSQL, explained by [`dorm_postgres_database`](https://pub.dev/packages/dorm_postgres_database)
    - Using another engine? Take a look at the "Implementing your own engine" section below
 
 You can find an *example/* folder inside *every* package mentioned above, containing specific examples

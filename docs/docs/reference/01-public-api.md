@@ -15,6 +15,7 @@ Use these package entry points for application code:
 | BLoC engine | `package:dorm_bloc_database/dorm_bloc_database.dart` |
 | Firebase engine | `package:dorm_firebase_database/dorm_firebase_database.dart` |
 | MySQL engine | `package:dorm_mysql_database/dorm_mysql_database.dart` |
+| PostgreSQL engine | `package:dorm_postgres_database/dorm_postgres_database.dart` |
 
 Concrete classes below `lib/src/` are not automatically part of the barrel
 surface. A class being importable by an internal package path does not by
@@ -124,6 +125,7 @@ and [Framework contracts](03-framework-contracts.md).
 | BLoC | `Engine()`, `Filter`, `Query`, and the exported BLoC API. |
 | Firebase | `Engine(FirebaseInstance, {String? path})`, `FirebaseInstance`, `OfflineMode`, `Filter`, `Query`, and selected Firebase types. |
 | MySQL | `Engine(MySQLConnection)`, `Filter`, and `Query`. |
+| PostgreSQL | `Engine(SessionExecutor)`, `Filter`, and `Query`. PostgreSQL driver types are imported from `package:postgres/postgres.dart`. |
 
 The generated `Dorm` receives one concrete engine and exposes generated
 `DatabaseEntity` accessors. See [Engine capability reference](04-engine-capabilities.md)

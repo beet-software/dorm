@@ -15,14 +15,14 @@ Some engine methods use internal transaction primitives. That does not create a 
 
 ## Engine-specific boundaries
 
-| Area | BLoC | Firebase | MySQL |
-| --- | --- | --- | --- |
-| Runtime | In-process memory | Firebase Realtime Database | MySQL through `mysql_client` |
-| Automatic identity | UUID-backed current implementation | String push keys | UUID-backed current implementation |
-| Identity restriction | Composite-key `put`/`putAll` throw `UnsupportedError` | IDs must be `String`; non-String IDs throw `ArgumentError` | Composite-key `put` throws `UnsupportedError` |
-| `pull`/`pullAll` | State-backed change events | Firebase value events and offline adapter | Initial read only in current reference |
-| `popAll` atomicity | In-memory state update | Current implementation reads matching models then removes keys | SQL delete operation |
-| External service | None | Firebase app, rules, and connectivity | MySQL server and schema |
+| Area | BLoC | Firebase | MySQL | PostgreSQL |
+| --- | --- | --- | --- | --- |
+| Runtime | In-process memory | Firebase Realtime Database | MySQL through `mysql_client` | PostgreSQL through `postgres` |
+| Automatic identity | UUID-backed current implementation | String push keys | UUID-backed current implementation | UUID-backed current implementation |
+| Identity restriction | Composite-key `put`/`putAll` throw `UnsupportedError` | IDs must be `String`; non-String IDs throw `ArgumentError` | Composite-key `put` throws `UnsupportedError` | Composite-key `put` throws `UnsupportedError` |
+| `pull`/`pullAll` | State-backed change events | Firebase value events and offline adapter | Initial read only in current reference | Initial read only |
+| `popAll` atomicity | In-memory state update | Current implementation reads matching models then removes keys | SQL delete operation | SQL delete operation |
+| External service | None | Firebase app, rules, and connectivity | MySQL server and schema | PostgreSQL server and schema |
 
 The common method names therefore do not imply identical storage, event, or transaction behavior.
 

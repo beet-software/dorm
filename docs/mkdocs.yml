@@ -21,6 +21,7 @@ nav:
       - Test the integration: 03-apply/05-test-the-integration.md
       - Configure security boundaries: 03-apply/06-security-and-configuration.md
       - Generate MySQL schema: 03-apply/07-generate-mysql-schema.md
+      - Run with PostgreSQL: 03-apply/08-use-postgres.md
   - Understand dORM:
       - How the pieces fit: 03-understand/01-how-the-pieces-fit.md
       - Identity and dependencies: 03-understand/02-identity-and-dependencies.md

@@ -9,6 +9,7 @@ Use the engine that matches the runtime and storage service required by your app
 | `dorm_bloc_database` | In-memory state managed by BLoC | Construct `Engine()` and reuse it while the application runs |
 | `dorm_firebase_database` | Firebase Realtime Database | Initialize Firebase, create `FirebaseInstance`, and configure Firebase access |
 | `dorm_mysql_database` | MySQL server through `mysql_client` | Open a `MySQLConnection` and pass it to `Engine` |
+| `dorm_postgres_database` | PostgreSQL server through `postgres` | Open a `Connection` or `Pool` and pass it to `Engine` |
 
 The framework does not select an engine automatically. The generated `Dorm` receives the concrete engine through its constructor.
 
@@ -93,18 +94,45 @@ The MySQL engine executes SQL against the connection. Tables must exist before C
 
 Continue with [Run the store with MySQL](04-use-mysql.md) and [Generate MySQL table definitions](07-generate-mysql-schema.md).
 
+## Use PostgreSQL for a SQL-backed runtime
+
+Add the PostgreSQL engine:
+
+```shell
+dart pub add dorm_postgres_database
+```
+
+Open a `Connection` or `Pool` from the `postgres` package and pass the opened
+object to `Engine`. Both implement the `SessionExecutor` accepted by the
+engine:
+
+```dart
+final Connection connection = await Connection.open(endpoint);
+final Dorm dorm = Dorm(Engine(connection));
+```
+
+The PostgreSQL engine executes parameterized SQL, supports generated CRUD,
+filters, ordering, limits, and relationship paths, and uses PostgreSQL upsert
+statements for identified writes. The engine does not create tables or
+migrations. Create the schema with SQL before using repository operations.
+
+Its `pull` and `pullAll` streams emit the initial read result only; the
+engine does not use PostgreSQL `LISTEN`/`NOTIFY` for these operations.
+
+Continue with [Run the PostgreSQL example](08-use-postgres.md).
+
 ## Compare current capability boundaries
 
 The common repository API does not imply identical runtime behavior in every engine:
 
-| Capability | BLoC | Firebase | MySQL |
-| --- | --- | --- | --- |
-| External server required | No | Firebase project or emulator | Yes |
-| Generated identity from `put` | UUID in memory | Firebase push key | UUID in SQL |
-| Composite identity with `put` | `UnsupportedError` | Firebase IDs must be `String` | `UnsupportedError` from `put` |
-| Single-record streams | State-backed | Firebase value events | Initial read only in current implementation |
-| Filter/query execution | In-memory query implementation | Firebase Realtime Database query | SQL query |
-| Transactions exposed by the public framework API | No documented transaction API | `patch` uses a Firebase transaction internally | Some batch and patch operations use MySQL transactions internally |
+| Capability | BLoC | Firebase | MySQL | PostgreSQL |
+| --- | --- | --- | --- | --- |
+| External server required | No | Firebase project or emulator | Yes | Yes |
+| Generated identity from `put` | UUID in memory | Firebase push key | UUID in SQL | UUID in SQL |
+| Composite identity with `put` | `UnsupportedError` | Firebase IDs must be `String` | `UnsupportedError` from `put` | `UnsupportedError` from `put` |
+| Single-record streams | State-backed | Firebase value events | Initial read only in current implementation | Initial read only |
+| Filter/query execution | In-memory query implementation | Firebase Realtime Database query | SQL query | PostgreSQL SQL query |
+| Transactions exposed by the public framework API | No documented transaction API | `patch` uses a Firebase transaction internally | Some batch and patch operations use MySQL transactions internally | Some batch and patch operations use PostgreSQL transactions internally |
 
 The matrix describes current implementation behavior. It is not a compatibility promise for a future release.
 

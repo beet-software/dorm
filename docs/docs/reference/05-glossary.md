@@ -103,6 +103,8 @@ See [Generate the model and repository API](../01-start-here/03-generate-the-mod
 | OfflineMode | Firebase setting with include and exclude modes for local/remote event handling. |
 | MySQL Query | Query implementation that stores SQL text and named parameters. |
 | Relation plan | In MySQL, direct table plans can enable grouped relationship reads; generic sources use readable operations. |
+| PostgreSQL engine | SQL engine that accepts a `postgres` `SessionExecutor` and maps framework operations to PostgreSQL statements. |
+| SessionExecutor | `postgres` driver abstraction accepted by the PostgreSQL engine; an opened `Connection` or `Pool` implements it. |
 
 See [Engine capability reference](04-engine-capabilities.md).
 
@@ -143,4 +145,3 @@ The public framework does not expose a general transaction object. Firebase
 patch and selected MySQL operations use backend transaction mechanisms
 internally. The word transaction therefore has different scopes in the API
 and engine implementations.
-
