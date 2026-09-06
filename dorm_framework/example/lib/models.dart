@@ -67,7 +67,7 @@ abstract class _Cart {
   @Field(name: 'timestamp')
   DateTime get timestamp;
 
-  @ForeignField(name: 'user-id', referTo: _User)
+  @ForeignField(name: 'user-id', referTo: _User, inverseAs: #carts)
   String get userId;
 }
 
@@ -76,10 +76,10 @@ abstract class _CartItem {
   @Field(name: 'amount')
   int get amount;
 
-  @ForeignField(name: 'product-id', referTo: _Product)
+  @ForeignField(name: 'product-id', referTo: _Product, inverseAs: #cartItems)
   String get productId;
 
-  @ForeignField(name: 'cart-id', referTo: _Cart)
+  @ForeignField(name: 'cart-id', referTo: _Cart, inverseAs: #items)
   String get cartId;
 }
 
@@ -117,7 +117,7 @@ abstract class _Review {
   @PolymorphicField(name: 'content', pivotName: 'type')
   _ReviewContent get content;
 
-  @ForeignField(name: 'user-id', referTo: _User)
+  @ForeignField(name: 'user-id', referTo: _User, inverseAs: #reviews)
   String get userId;
 
   @QueryField(

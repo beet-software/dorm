@@ -96,7 +96,9 @@ It accepts the following parameters:
 - `referTo`: Specifies the model class that the foreign key references.
 - `unique`: Indicates that the foreign key is unique in the source model. A
   non-unique foreign key is many-to-one; a unique foreign key can be
-  one-to-one. The inverse relation is derived by the generator.
+  one-to-one.
+- `as`: Optional name of the generated forward relationship accessor.
+- `inverseAs`: Optional explicit name of the generated inverse relationship accessor.
 
 ```dart
 import 'package:dorm_annotations/dorm_annotations.dart';
@@ -109,7 +111,7 @@ abstract class _Post {
   @Field(name: 'creation-date')
   DateTime get creationDate;
 
-  @ForeignField(name: 'user-id', referTo: _User)
+  @ForeignField(name: 'user-id', referTo: _User, inverseAs: #posts)
   String get userId;
 }
 ```

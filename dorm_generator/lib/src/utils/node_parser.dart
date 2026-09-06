@@ -286,6 +286,8 @@ class ForeignFieldParser extends FieldNodeParser<ForeignField> {
       name: reader.read('name').stringValue,
       referTo: $Type(reader: reader.read('referTo')),
       unique: reader.read('unique').boolValue,
+      as: $Symbol(reader: reader.read('as')),
+      inverseAs: $Symbol(reader: reader.read('inverseAs')),
     );
   }
 }

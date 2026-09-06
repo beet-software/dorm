@@ -56,7 +56,7 @@ abstract class _Student {
   @Field(name: 'possui-deficiencias', defaultValue: StudentType.regular)
   StudentType get hasDisabilities;
 
-  @ForeignField(name: 'id-escola', referTo: _School)
+  @ForeignField(name: 'id-escola', referTo: _School, inverseAs: #students)
   String get schoolId;
 
   @QueryField(
@@ -89,16 +89,16 @@ abstract class _Teacher {
 
 @Model(name: 'historico', as: #histories)
 abstract class _History {
-  @ForeignField(name: 'id-aluno', referTo: _Student)
+  @ForeignField(name: 'id-aluno', referTo: _Student, inverseAs: #histories)
   String get studentId;
 }
 
 @Model(name: 'cadastro-professor', as: #teachings)
 abstract class _Teaching {
-  @ForeignField(name: 'id-professor', referTo: _Teacher)
+  @ForeignField(name: 'id-professor', referTo: _Teacher, inverseAs: #teachings)
   String get teacherId;
 
-  @ForeignField(name: 'id-escola', referTo: _School)
+  @ForeignField(name: 'id-escola', referTo: _School, inverseAs: #teachings)
   String? get schoolId;
 
   @Field(name: 'codigo')
@@ -110,10 +110,10 @@ abstract class _Class {
   @ModelField(name: 'paraninfo', referTo: _Teacher)
   get patron;
 
-  @ForeignField(name: 'id-professor', referTo: _Teacher)
+  @ForeignField(name: 'id-professor', referTo: _Teacher, inverseAs: #classes)
   String get teacherId;
 
-  @ForeignField(name: 'id-escola', referTo: _Student)
+  @ForeignField(name: 'id-escola', referTo: _Student, inverseAs: #classes)
   String get studentId;
 
   @Field(name: 'nome-sala')

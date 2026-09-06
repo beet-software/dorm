@@ -806,4 +806,233 @@ class Dorm {
 
   DatabaseEntity<ReviewData, Review, String, Query> get reviews =>
       DatabaseEntity(const ReviewEntity(), engine: _engine);
+
+  DormRelations get relations => DormRelations(this);
+}
+
+class DormRelations {
+  const DormRelations(this._dorm);
+  final Dorm _dorm;
+  RelationPath<Dorm, User, User, Query> get users =>
+      RelationPath.root(_dorm.users.repository, context: _dorm);
+  RelationPath<Dorm, Product, Product, Query> get products =>
+      RelationPath.root(_dorm.products.repository, context: _dorm);
+  RelationPath<Dorm, Cart, Cart, Query> get carts =>
+      RelationPath.root(_dorm.carts.repository, context: _dorm);
+  RelationPath<Dorm, CartItem, CartItem, Query> get cartItems =>
+      RelationPath.root(_dorm.cartItems.repository, context: _dorm);
+  RelationPath<Dorm, Review, Review, Query> get reviews =>
+      RelationPath.root(_dorm.reviews.repository, context: _dorm);
+}
+
+extension UserRelationPaths<Root> on RelationPath<Dorm, Root, User, Query> {
+  RelationPath<Dorm, Root, Cart, Query> get carts {
+    return toMany(
+      context.carts.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.many,
+        source: UserEntity.fields.id,
+        target: CartEntity.fields.userId,
+      ),
+      on: (model) =>
+          BaseFilter.value(model.id, field: CartEntity.fields.userId),
+    );
+  }
+
+  RelationPath<Dorm, Root, List<Cart>, Query> get cartsOrEmpty {
+    return toManyOrEmpty(
+      context.carts.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.many,
+        source: UserEntity.fields.id,
+        target: CartEntity.fields.userId,
+      ),
+      on: (model) =>
+          BaseFilter.value(model.id, field: CartEntity.fields.userId),
+    );
+  }
+
+  RelationPath<Dorm, Root, Review, Query> get reviews {
+    return toMany(
+      context.reviews.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.many,
+        source: UserEntity.fields.id,
+        target: ReviewEntity.fields.userId,
+      ),
+      on: (model) =>
+          BaseFilter.value(model.id, field: ReviewEntity.fields.userId),
+    );
+  }
+
+  RelationPath<Dorm, Root, List<Review>, Query> get reviewsOrEmpty {
+    return toManyOrEmpty(
+      context.reviews.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.many,
+        source: UserEntity.fields.id,
+        target: ReviewEntity.fields.userId,
+      ),
+      on: (model) =>
+          BaseFilter.value(model.id, field: ReviewEntity.fields.userId),
+    );
+  }
+}
+
+extension ProductRelationPaths<Root>
+    on RelationPath<Dorm, Root, Product, Query> {
+  RelationPath<Dorm, Root, CartItem, Query> get cartItems {
+    return toMany(
+      context.cartItems.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.many,
+        source: ProductEntity.fields.id,
+        target: CartItemEntity.fields.productId,
+      ),
+      on: (model) =>
+          BaseFilter.value(model.id, field: CartItemEntity.fields.productId),
+    );
+  }
+
+  RelationPath<Dorm, Root, List<CartItem>, Query> get cartItemsOrEmpty {
+    return toManyOrEmpty(
+      context.cartItems.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.many,
+        source: ProductEntity.fields.id,
+        target: CartItemEntity.fields.productId,
+      ),
+      on: (model) =>
+          BaseFilter.value(model.id, field: CartItemEntity.fields.productId),
+    );
+  }
+}
+
+extension CartRelationPaths<Root> on RelationPath<Dorm, Root, Cart, Query> {
+  RelationPath<Dorm, Root, User, Query> get user {
+    return toOne(
+      context.users.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.one,
+        source: CartEntity.fields.userId,
+        target: UserEntity.fields.id,
+      ),
+      on: (model) => model.userId,
+    );
+  }
+
+  RelationPath<Dorm, Root, User?, Query> get userOrNull {
+    return toOneOrNull(
+      context.users.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.one,
+        source: CartEntity.fields.userId,
+        target: UserEntity.fields.id,
+      ),
+      on: (model) => model.userId,
+    );
+  }
+
+  RelationPath<Dorm, Root, CartItem, Query> get items {
+    return toMany(
+      context.cartItems.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.many,
+        source: CartEntity.fields.id,
+        target: CartItemEntity.fields.cartId,
+      ),
+      on: (model) =>
+          BaseFilter.value(model.id, field: CartItemEntity.fields.cartId),
+    );
+  }
+
+  RelationPath<Dorm, Root, List<CartItem>, Query> get itemsOrEmpty {
+    return toManyOrEmpty(
+      context.cartItems.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.many,
+        source: CartEntity.fields.id,
+        target: CartItemEntity.fields.cartId,
+      ),
+      on: (model) =>
+          BaseFilter.value(model.id, field: CartItemEntity.fields.cartId),
+    );
+  }
+}
+
+extension CartItemRelationPaths<Root>
+    on RelationPath<Dorm, Root, CartItem, Query> {
+  RelationPath<Dorm, Root, Product, Query> get product {
+    return toOne(
+      context.products.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.one,
+        source: CartItemEntity.fields.productId,
+        target: ProductEntity.fields.id,
+      ),
+      on: (model) => model.productId,
+    );
+  }
+
+  RelationPath<Dorm, Root, Product?, Query> get productOrNull {
+    return toOneOrNull(
+      context.products.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.one,
+        source: CartItemEntity.fields.productId,
+        target: ProductEntity.fields.id,
+      ),
+      on: (model) => model.productId,
+    );
+  }
+
+  RelationPath<Dorm, Root, Cart, Query> get cart {
+    return toOne(
+      context.carts.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.one,
+        source: CartItemEntity.fields.cartId,
+        target: CartEntity.fields.id,
+      ),
+      on: (model) => model.cartId,
+    );
+  }
+
+  RelationPath<Dorm, Root, Cart?, Query> get cartOrNull {
+    return toOneOrNull(
+      context.carts.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.one,
+        source: CartItemEntity.fields.cartId,
+        target: CartEntity.fields.id,
+      ),
+      on: (model) => model.cartId,
+    );
+  }
+}
+
+extension ReviewRelationPaths<Root> on RelationPath<Dorm, Root, Review, Query> {
+  RelationPath<Dorm, Root, User, Query> get user {
+    return toOne(
+      context.users.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.one,
+        source: ReviewEntity.fields.userId,
+        target: UserEntity.fields.id,
+      ),
+      on: (model) => model.userId,
+    );
+  }
+
+  RelationPath<Dorm, Root, User?, Query> get userOrNull {
+    return toOneOrNull(
+      context.users.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.one,
+        source: ReviewEntity.fields.userId,
+        target: UserEntity.fields.id,
+      ),
+      on: (model) => model.userId,
+    );
+  }
 }

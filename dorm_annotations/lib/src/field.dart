@@ -43,15 +43,26 @@ class ForeignField extends Field {
   ///
   /// A non-unique foreign key represents a many-to-one relation from the
   /// source model to [referTo]. A unique foreign key can represent a
-  /// one-to-one relation. The inverse one-to-many relation is derived by the
-  /// generator and is not declared here.
+  /// one-to-one relation.
   final bool unique;
+
+  /// Name of the generated forward relationship accessor.
+  ///
+  /// When omitted, the generator removes a trailing `Id` when present.
+  final Symbol? as;
+
+  /// Name of the generated inverse relationship accessor on [referTo].
+  ///
+  /// An inverse accessor is generated only when this value is provided.
+  final Symbol? inverseAs;
 
   /// Creates a [ForeignField] by its attributes.
   const ForeignField({
     required super.name,
     required this.referTo,
     this.unique = false,
+    this.as,
+    this.inverseAs,
   });
 }
 

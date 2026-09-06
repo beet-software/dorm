@@ -410,4 +410,174 @@ class Dorm {
 
   DatabaseEntity<MessageData, Message, String, Query> get messages =>
       DatabaseEntity(const MessageEntity(), engine: _engine);
+
+  DormRelations get relations => DormRelations(this);
+}
+
+class DormRelations {
+  const DormRelations(this._dorm);
+  final Dorm _dorm;
+  RelationPath<Dorm, User, User, Query> get users =>
+      RelationPath.root(_dorm.users.repository, context: _dorm);
+  RelationPath<Dorm, Post, Post, Query> get post =>
+      RelationPath.root(_dorm.post.repository, context: _dorm);
+  RelationPath<Dorm, Message, Message, Query> get messages =>
+      RelationPath.root(_dorm.messages.repository, context: _dorm);
+}
+
+extension UserRelationPaths<Root> on RelationPath<Dorm, Root, User, Query> {
+  RelationPath<Dorm, Root, Post, Query> get posts {
+    return toMany(
+      context.post.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.many,
+        source: UserEntity.fields.id,
+        target: PostEntity.fields.userId,
+      ),
+      on: (model) =>
+          BaseFilter.value(model.id, field: PostEntity.fields.userId),
+    );
+  }
+
+  RelationPath<Dorm, Root, List<Post>, Query> get postsOrEmpty {
+    return toManyOrEmpty(
+      context.post.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.many,
+        source: UserEntity.fields.id,
+        target: PostEntity.fields.userId,
+      ),
+      on: (model) =>
+          BaseFilter.value(model.id, field: PostEntity.fields.userId),
+    );
+  }
+
+  RelationPath<Dorm, Root, Message, Query> get sentMessages {
+    return toMany(
+      context.messages.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.many,
+        source: UserEntity.fields.id,
+        target: MessageEntity.fields.senderId,
+      ),
+      on: (model) =>
+          BaseFilter.value(model.id, field: MessageEntity.fields.senderId),
+    );
+  }
+
+  RelationPath<Dorm, Root, List<Message>, Query> get sentMessagesOrEmpty {
+    return toManyOrEmpty(
+      context.messages.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.many,
+        source: UserEntity.fields.id,
+        target: MessageEntity.fields.senderId,
+      ),
+      on: (model) =>
+          BaseFilter.value(model.id, field: MessageEntity.fields.senderId),
+    );
+  }
+
+  RelationPath<Dorm, Root, Message, Query> get receivedMessages {
+    return toMany(
+      context.messages.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.many,
+        source: UserEntity.fields.id,
+        target: MessageEntity.fields.receiverId,
+      ),
+      on: (model) =>
+          BaseFilter.value(model.id, field: MessageEntity.fields.receiverId),
+    );
+  }
+
+  RelationPath<Dorm, Root, List<Message>, Query> get receivedMessagesOrEmpty {
+    return toManyOrEmpty(
+      context.messages.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.many,
+        source: UserEntity.fields.id,
+        target: MessageEntity.fields.receiverId,
+      ),
+      on: (model) =>
+          BaseFilter.value(model.id, field: MessageEntity.fields.receiverId),
+    );
+  }
+}
+
+extension PostRelationPaths<Root> on RelationPath<Dorm, Root, Post, Query> {
+  RelationPath<Dorm, Root, User, Query> get user {
+    return toOne(
+      context.users.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.one,
+        source: PostEntity.fields.userId,
+        target: UserEntity.fields.id,
+      ),
+      on: (model) => model.userId,
+    );
+  }
+
+  RelationPath<Dorm, Root, User?, Query> get userOrNull {
+    return toOneOrNull(
+      context.users.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.one,
+        source: PostEntity.fields.userId,
+        target: UserEntity.fields.id,
+      ),
+      on: (model) => model.userId,
+    );
+  }
+}
+
+extension MessageRelationPaths<Root>
+    on RelationPath<Dorm, Root, Message, Query> {
+  RelationPath<Dorm, Root, User, Query> get sender {
+    return toOne(
+      context.users.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.one,
+        source: MessageEntity.fields.senderId,
+        target: UserEntity.fields.id,
+      ),
+      on: (model) => model.senderId,
+    );
+  }
+
+  RelationPath<Dorm, Root, User?, Query> get senderOrNull {
+    return toOneOrNull(
+      context.users.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.one,
+        source: MessageEntity.fields.senderId,
+        target: UserEntity.fields.id,
+      ),
+      on: (model) => model.senderId,
+    );
+  }
+
+  RelationPath<Dorm, Root, User, Query> get receiver {
+    return toOne(
+      context.users.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.one,
+        source: MessageEntity.fields.receiverId,
+        target: UserEntity.fields.id,
+      ),
+      on: (model) => model.receiverId,
+    );
+  }
+
+  RelationPath<Dorm, Root, User?, Query> get receiverOrNull {
+    return toOneOrNull(
+      context.users.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.one,
+        source: MessageEntity.fields.receiverId,
+        target: UserEntity.fields.id,
+      ),
+      on: (model) => model.receiverId,
+    );
+  }
 }

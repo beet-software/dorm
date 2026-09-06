@@ -1,4 +1,3 @@
-import 'package:dorm_bloc_database/dorm_bloc_database.dart';
 import 'package:dorm_framework/dorm_framework.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
@@ -6,8 +5,8 @@ import 'package:provider/provider.dart';
 
 import '../models.dart';
 
-typedef _OrderView = List<Join<User, List<Join<CartItem, Product?>>>>;
-typedef _CountView = List<Join<Product, List<CartItem>>>;
+typedef _OrderView = List<Join<User, Product?>>;
+typedef _CountView = List<Join<Product, CartItem>>;
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -16,21 +15,17 @@ class DashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        // Allows reading all products ordered by an user
+        // Allows reading all products ordered by an user through
+        // User -> Cart -> CartItem -> Product.
         StreamProvider<AsyncSnapshot<_OrderView>>(
           initialData: const AsyncSnapshot.waiting(),
           create: (_) => GetIt.instance
               .get<Dorm>()
+              .relations
               .users
-              .relationships
-              .oneToMany(
-                GetIt.instance.get<Dorm>().cartItems.relationships.oneToOne(
-                      GetIt.instance.get<Dorm>().products.repository,
-                      on: (item) => item.productId,
-                    ),
-                on: (user) =>
-                    Filter.value(user.id, field: CartItemEntity.fields.cartId),
-              )
+              .carts
+              .items
+              .productOrNull
               .pullAll()
               .map((event) =>
                   AsyncSnapshot.withData(ConnectionState.active, event)),
@@ -40,12 +35,9 @@ class DashboardScreen extends StatelessWidget {
           initialData: const AsyncSnapshot.waiting(),
           create: (_) => GetIt.instance
               .get<Dorm>()
+              .relations
+              .products
               .cartItems
-              .relationships
-              .manyToOne(
-                GetIt.instance.get<Dorm>().products.repository,
-                on: (item) => item.productId,
-              )
               .pullAll()
               .map((event) =>
                   AsyncSnapshot.withData(ConnectionState.active, event)),
@@ -70,29 +62,26 @@ class DashboardScreen extends StatelessWidget {
                       return child!;
                     }
                     final _OrderView joins = snapshot.data!;
+                    final Map<User, Set<String>> grouped = {};
+                    for (final Join<User, Product?> join in joins) {
+                      final Product? product = join.right;
+                      if (product == null) continue;
+                      grouped.putIfAbsent(join.left, () => {}).add(product.name);
+                    }
+                    final List<MapEntry<User, Set<String>>> entries =
+                        grouped.entries.toList();
                     return ListView.builder(
-                      itemCount: joins.length,
+                      itemCount: entries.length,
                       itemBuilder: (context, i) {
-                        final User user = joins[i].left;
-                        final Map<Product, int> amounts = {};
-                        for (Join<CartItem, Product?> join in joins[i].right) {
-                          final CartItem item = join.left;
-                          final Product? product = join.right;
-                          if (product == null) continue;
-                          final int amount = item.amount;
-                          amounts[product] = (amounts[product] ?? 0) + amount;
-                        }
-                        final List<MapEntry<Product, int>> entries =
-                            amounts.entries.toList()
-                              ..sort((e1, e0) => e0.value.compareTo(e1.value));
+                        final User user = entries[i].key;
+                        final Set<String> products = entries[i].value;
 
                         return ListTile(
                           leading: const Icon(Icons.person_search),
                           title: Text('@${user.username}'),
-                          subtitle: Text(entries
-                              .map((entry) =>
-                                  '${entry.key.name} (x${entry.value})')
-                              .join(', ')),
+                          subtitle: Text(
+                            products.join(', '),
+                          ),
                         );
                       },
                     );
@@ -105,11 +94,17 @@ class DashboardScreen extends StatelessWidget {
                       return child!;
                     }
                     final _CountView joins = snapshot.data!;
+                    final Map<Product, List<CartItem>> grouped = {};
+                    for (final Join<Product, CartItem> join in joins) {
+                      grouped.putIfAbsent(join.left, () => []).add(join.right);
+                    }
+                    final List<MapEntry<Product, List<CartItem>>> entries =
+                        grouped.entries.toList();
                     return ListView.builder(
-                      itemCount: joins.length,
+                      itemCount: entries.length,
                       itemBuilder: (context, i) {
-                        final Product product = joins[i].left;
-                        final List<CartItem> items = joins[i].right;
+                        final Product product = entries[i].key;
+                        final List<CartItem> items = entries[i].value;
                         final int count =
                             items.map((item) => item.cartId).toSet().length;
                         return ListTile(

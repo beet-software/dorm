@@ -128,6 +128,184 @@ typedef ManyToOneAssociation<L, I extends Object, R, J extends Object, Q extends
 /// An association that evaluates joins between [M] and a tuple of [L] and [R].
 typedef ManyToManyAssociation<M, I extends Object, L, R, Q extends BaseQuery<Q>> = Association<M, I, (L?, R?), Q>;
 
+/// Describes the cardinality of a generated relationship path step.
+enum RelationCardinality { one, many }
+
+/// Engine-independent metadata for one relationship path step.
+class RelationSpec {
+  final RelationCardinality cardinality;
+  final FieldSchema source;
+  final FieldSchema target;
+
+  const RelationSpec({
+    required this.cardinality,
+    required this.source,
+    required this.target,
+  });
+}
+
+/// A generated, navigable path of direct relationships.
+///
+/// A path is lazy: its getters only append steps. The first database read is
+/// performed by [pullAll] or [peekAll]. Results are flattened to the root and
+/// terminal model, so a path can be extended without exposing intermediate
+/// [Join] types.
+class RelationPath<Context, Root, Current, Q extends BaseQuery<Q>> {
+  final Future<List<Join<Root, Current>>> Function(BaseFilter<Q>) _load;
+
+  /// The generated database context used to resolve the next source.
+  final Context context;
+
+  /// The structured steps in this path, available to an engine-specific
+  /// planner.
+  final List<RelationSpec> specs;
+
+  const RelationPath._({
+    required Future<List<Join<Root, Current>>> Function(BaseFilter<Q>) load,
+    required this.context,
+    required this.specs,
+  }) : _load = load;
+
+  /// Creates the root of a generated path from a readable source.
+  factory RelationPath.root(
+    RelationSource<Root, dynamic, Q> source, {
+    required Context context,
+  }) {
+    return RelationPath._(
+      load: (filter) async {
+        final List<Root> models = await source.peekAll(filter);
+        return [
+          for (final Root model in models)
+            Join(left: model, right: model as Current),
+        ];
+      },
+      context: context,
+      specs: const [],
+    );
+  }
+
+  /// Appends a to-one relationship and keeps only matching targets.
+  RelationPath<Context, Root, Target, Q> toOne<Target, I extends Object>(
+    RelationSource<Target, I, Q> target, {
+    required RelationSpec spec,
+    required I? Function(Current) on,
+  }) {
+    final RelationPath<Context, Root, Current, Q> parent = this;
+    return RelationPath._(
+      load: (filter) async {
+        final List<Join<Root, Current>> parents = await parent._load(filter);
+        final List<Target?> models = await Future.wait(
+          parents.map((parentJoin) async {
+            final I? id = on(parentJoin.right);
+            return id == null ? null : target.peek(id);
+          }),
+        );
+        return [
+          for (int index = 0; index < parents.length; index++)
+            if (models[index] case final Target model)
+              Join(left: parents[index].left, right: model),
+        ];
+      },
+      context: parent.context,
+      specs: [...parent.specs, spec],
+    );
+  }
+
+  /// Appends an optional to-one relationship and preserves missing targets.
+  RelationPath<Context, Root, Target?, Q> toOneOrNull<Target, I extends Object>(
+    RelationSource<Target, I, Q> target, {
+    required RelationSpec spec,
+    required I? Function(Current) on,
+  }) {
+    final RelationPath<Context, Root, Current, Q> parent = this;
+    return RelationPath._(
+      load: (filter) async {
+        final List<Join<Root, Current>> parents = await parent._load(filter);
+        final List<Target?> models = await Future.wait(
+          parents.map((parentJoin) async {
+            final I? id = on(parentJoin.right);
+            return id == null ? null : target.peek(id);
+          }),
+        );
+        return [
+          for (int index = 0; index < parents.length; index++)
+            Join(left: parents[index].left, right: models[index]),
+        ];
+      },
+      context: parent.context,
+      specs: [...parent.specs, spec],
+    );
+  }
+
+  /// Appends a to-many relationship.
+  RelationPath<Context, Root, Target, Q> toMany<Target, I extends Object>(
+    RelationSource<Target, I, Q> target, {
+      required RelationSpec spec,
+      required BaseFilter<Q> Function(Current) on,
+  }) {
+    final RelationPath<Context, Root, Current, Q> parent = this;
+    return RelationPath._(
+      load: (filter) async {
+        final List<Join<Root, Current>> parents = await parent._load(filter);
+        final List<List<Join<Root, Target>>> groups = await Future.wait(
+          parents.map((parentJoin) async {
+            final List<Target> models = await target.peekAll(on(parentJoin.right));
+            return [
+              for (final Target model in models)
+                Join(left: parentJoin.left, right: model),
+            ];
+          }),
+        );
+        return groups.expand((group) => group).toList();
+      },
+      context: parent.context,
+      specs: [...parent.specs, spec],
+    );
+  }
+
+  /// Appends a to-many relationship and preserves parents without targets.
+  ///
+  /// Unlike [toMany], this is a terminal, grouped operation. Its result is
+  /// equivalent to the previous `oneToMany` API:
+  /// `Join<Root, List<Target>>` is emitted once for every root model,
+  /// including models whose target list is empty.
+  RelationPath<Context, Root, List<Target>, Q> toManyOrEmpty<
+      Target,
+      I extends Object>(
+    RelationSource<Target, I, Q> target, {
+    required RelationSpec spec,
+    required BaseFilter<Q> Function(Current) on,
+  }) {
+    final RelationPath<Context, Root, Current, Q> parent = this;
+    return RelationPath._(
+      load: (filter) async {
+        final List<Join<Root, Current>> parents = await parent._load(filter);
+        final List<List<Target>> groups = await Future.wait(
+          parents.map((parentJoin) => target.peekAll(on(parentJoin.right))),
+        );
+        return [
+          for (int index = 0; index < parents.length; index++)
+            Join(left: parents[index].left, right: groups[index]),
+        ];
+      },
+      context: parent.context,
+      specs: [...parent.specs, spec],
+    );
+  }
+
+  Future<List<Join<Root, Current>>> peekAll([
+    BaseFilter<Q> filter = const BaseFilter.empty(),
+  ]) {
+    return _load(filter);
+  }
+
+  Stream<List<Join<Root, Current>>> pullAll([
+    BaseFilter<Q> filter = const BaseFilter.empty(),
+  ]) async* {
+    yield await _load(filter);
+  }
+}
+
 /// Declares associations between any two models.
 abstract class BaseRelationship<Q extends BaseQuery<Q>> {
   /// Represents an one-to-one operation.

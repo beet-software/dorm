@@ -786,4 +786,339 @@ class Dorm {
 
   DatabaseEntity<ClassData, Class, String, Query> get classes =>
       DatabaseEntity(const ClassEntity(), engine: _engine);
+
+  DormRelations get relations => DormRelations(this);
+}
+
+class DormRelations {
+  const DormRelations(this._dorm);
+  final Dorm _dorm;
+  RelationPath<Dorm, School, School, Query> get schools =>
+      RelationPath.root(_dorm.schools.repository, context: _dorm);
+  RelationPath<Dorm, Student, Student, Query> get students =>
+      RelationPath.root(_dorm.students.repository, context: _dorm);
+  RelationPath<Dorm, Teacher, Teacher, Query> get teachers =>
+      RelationPath.root(_dorm.teachers.repository, context: _dorm);
+  RelationPath<Dorm, History, History, Query> get histories =>
+      RelationPath.root(_dorm.histories.repository, context: _dorm);
+  RelationPath<Dorm, Teaching, Teaching, Query> get teachings =>
+      RelationPath.root(_dorm.teachings.repository, context: _dorm);
+  RelationPath<Dorm, Class, Class, Query> get classes =>
+      RelationPath.root(_dorm.classes.repository, context: _dorm);
+}
+
+extension SchoolRelationPaths<Root> on RelationPath<Dorm, Root, School, Query> {
+  RelationPath<Dorm, Root, Student, Query> get students {
+    return toMany(
+      context.students.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.many,
+        source: SchoolEntity.fields.id,
+        target: StudentEntity.fields.schoolId,
+      ),
+      on: (model) =>
+          BaseFilter.value(model.id, field: StudentEntity.fields.schoolId),
+    );
+  }
+
+  RelationPath<Dorm, Root, List<Student>, Query> get studentsOrEmpty {
+    return toManyOrEmpty(
+      context.students.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.many,
+        source: SchoolEntity.fields.id,
+        target: StudentEntity.fields.schoolId,
+      ),
+      on: (model) =>
+          BaseFilter.value(model.id, field: StudentEntity.fields.schoolId),
+    );
+  }
+
+  RelationPath<Dorm, Root, Teaching, Query> get teachings {
+    return toMany(
+      context.teachings.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.many,
+        source: SchoolEntity.fields.id,
+        target: TeachingEntity.fields.schoolId,
+      ),
+      on: (model) =>
+          BaseFilter.value(model.id, field: TeachingEntity.fields.schoolId),
+    );
+  }
+
+  RelationPath<Dorm, Root, List<Teaching>, Query> get teachingsOrEmpty {
+    return toManyOrEmpty(
+      context.teachings.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.many,
+        source: SchoolEntity.fields.id,
+        target: TeachingEntity.fields.schoolId,
+      ),
+      on: (model) =>
+          BaseFilter.value(model.id, field: TeachingEntity.fields.schoolId),
+    );
+  }
+}
+
+extension StudentRelationPaths<Root>
+    on RelationPath<Dorm, Root, Student, Query> {
+  RelationPath<Dorm, Root, School, Query> get school {
+    return toOne(
+      context.schools.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.one,
+        source: StudentEntity.fields.schoolId,
+        target: SchoolEntity.fields.id,
+      ),
+      on: (model) => model.schoolId,
+    );
+  }
+
+  RelationPath<Dorm, Root, School?, Query> get schoolOrNull {
+    return toOneOrNull(
+      context.schools.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.one,
+        source: StudentEntity.fields.schoolId,
+        target: SchoolEntity.fields.id,
+      ),
+      on: (model) => model.schoolId,
+    );
+  }
+
+  RelationPath<Dorm, Root, History, Query> get histories {
+    return toMany(
+      context.histories.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.many,
+        source: StudentEntity.fields.id,
+        target: HistoryEntity.fields.studentId,
+      ),
+      on: (model) =>
+          BaseFilter.value(model.id, field: HistoryEntity.fields.studentId),
+    );
+  }
+
+  RelationPath<Dorm, Root, List<History>, Query> get historiesOrEmpty {
+    return toManyOrEmpty(
+      context.histories.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.many,
+        source: StudentEntity.fields.id,
+        target: HistoryEntity.fields.studentId,
+      ),
+      on: (model) =>
+          BaseFilter.value(model.id, field: HistoryEntity.fields.studentId),
+    );
+  }
+
+  RelationPath<Dorm, Root, Class, Query> get classes {
+    return toMany(
+      context.classes.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.many,
+        source: StudentEntity.fields.id,
+        target: ClassEntity.fields.studentId,
+      ),
+      on: (model) =>
+          BaseFilter.value(model.id, field: ClassEntity.fields.studentId),
+    );
+  }
+
+  RelationPath<Dorm, Root, List<Class>, Query> get classesOrEmpty {
+    return toManyOrEmpty(
+      context.classes.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.many,
+        source: StudentEntity.fields.id,
+        target: ClassEntity.fields.studentId,
+      ),
+      on: (model) =>
+          BaseFilter.value(model.id, field: ClassEntity.fields.studentId),
+    );
+  }
+}
+
+extension TeacherRelationPaths<Root>
+    on RelationPath<Dorm, Root, Teacher, Query> {
+  RelationPath<Dorm, Root, Teaching, Query> get teachings {
+    return toMany(
+      context.teachings.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.many,
+        source: TeacherEntity.fields.id,
+        target: TeachingEntity.fields.teacherId,
+      ),
+      on: (model) =>
+          BaseFilter.value(model.id, field: TeachingEntity.fields.teacherId),
+    );
+  }
+
+  RelationPath<Dorm, Root, List<Teaching>, Query> get teachingsOrEmpty {
+    return toManyOrEmpty(
+      context.teachings.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.many,
+        source: TeacherEntity.fields.id,
+        target: TeachingEntity.fields.teacherId,
+      ),
+      on: (model) =>
+          BaseFilter.value(model.id, field: TeachingEntity.fields.teacherId),
+    );
+  }
+
+  RelationPath<Dorm, Root, Class, Query> get classes {
+    return toMany(
+      context.classes.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.many,
+        source: TeacherEntity.fields.id,
+        target: ClassEntity.fields.teacherId,
+      ),
+      on: (model) =>
+          BaseFilter.value(model.id, field: ClassEntity.fields.teacherId),
+    );
+  }
+
+  RelationPath<Dorm, Root, List<Class>, Query> get classesOrEmpty {
+    return toManyOrEmpty(
+      context.classes.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.many,
+        source: TeacherEntity.fields.id,
+        target: ClassEntity.fields.teacherId,
+      ),
+      on: (model) =>
+          BaseFilter.value(model.id, field: ClassEntity.fields.teacherId),
+    );
+  }
+}
+
+extension HistoryRelationPaths<Root>
+    on RelationPath<Dorm, Root, History, Query> {
+  RelationPath<Dorm, Root, Student, Query> get student {
+    return toOne(
+      context.students.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.one,
+        source: HistoryEntity.fields.studentId,
+        target: StudentEntity.fields.id,
+      ),
+      on: (model) => model.studentId,
+    );
+  }
+
+  RelationPath<Dorm, Root, Student?, Query> get studentOrNull {
+    return toOneOrNull(
+      context.students.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.one,
+        source: HistoryEntity.fields.studentId,
+        target: StudentEntity.fields.id,
+      ),
+      on: (model) => model.studentId,
+    );
+  }
+}
+
+extension TeachingRelationPaths<Root>
+    on RelationPath<Dorm, Root, Teaching, Query> {
+  RelationPath<Dorm, Root, Teacher, Query> get teacher {
+    return toOne(
+      context.teachers.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.one,
+        source: TeachingEntity.fields.teacherId,
+        target: TeacherEntity.fields.id,
+      ),
+      on: (model) => model.teacherId,
+    );
+  }
+
+  RelationPath<Dorm, Root, Teacher?, Query> get teacherOrNull {
+    return toOneOrNull(
+      context.teachers.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.one,
+        source: TeachingEntity.fields.teacherId,
+        target: TeacherEntity.fields.id,
+      ),
+      on: (model) => model.teacherId,
+    );
+  }
+
+  RelationPath<Dorm, Root, School, Query> get school {
+    return toOne(
+      context.schools.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.one,
+        source: TeachingEntity.fields.schoolId,
+        target: SchoolEntity.fields.id,
+      ),
+      on: (model) => model.schoolId,
+    );
+  }
+
+  RelationPath<Dorm, Root, School?, Query> get schoolOrNull {
+    return toOneOrNull(
+      context.schools.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.one,
+        source: TeachingEntity.fields.schoolId,
+        target: SchoolEntity.fields.id,
+      ),
+      on: (model) => model.schoolId,
+    );
+  }
+}
+
+extension ClassRelationPaths<Root> on RelationPath<Dorm, Root, Class, Query> {
+  RelationPath<Dorm, Root, Teacher, Query> get teacher {
+    return toOne(
+      context.teachers.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.one,
+        source: ClassEntity.fields.teacherId,
+        target: TeacherEntity.fields.id,
+      ),
+      on: (model) => model.teacherId,
+    );
+  }
+
+  RelationPath<Dorm, Root, Teacher?, Query> get teacherOrNull {
+    return toOneOrNull(
+      context.teachers.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.one,
+        source: ClassEntity.fields.teacherId,
+        target: TeacherEntity.fields.id,
+      ),
+      on: (model) => model.teacherId,
+    );
+  }
+
+  RelationPath<Dorm, Root, Student, Query> get student {
+    return toOne(
+      context.students.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.one,
+        source: ClassEntity.fields.studentId,
+        target: StudentEntity.fields.id,
+      ),
+      on: (model) => model.studentId,
+    );
+  }
+
+  RelationPath<Dorm, Root, Student?, Query> get studentOrNull {
+    return toOneOrNull(
+      context.students.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.one,
+        source: ClassEntity.fields.studentId,
+        target: StudentEntity.fields.id,
+      ),
+      on: (model) => model.studentId,
+    );
+  }
 }

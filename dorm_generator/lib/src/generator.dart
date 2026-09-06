@@ -104,6 +104,35 @@ class ModelNaming extends Naming<ModelOrmNode> {
   String get idTypeName => (node.annotation.idType as $Type).name ?? 'String';
 }
 
+class _GeneratedRelation {
+  final ModelNaming current;
+  final ModelNaming target;
+  final String name;
+  final String fieldName;
+  final bool inverse;
+  final bool unique;
+
+  const _GeneratedRelation({
+    required this.current,
+    required this.target,
+    required this.name,
+    required this.fieldName,
+    required this.inverse,
+    required this.unique,
+  });
+}
+
+String? _symbolName(Symbol? symbol) {
+  return symbol is $Symbol ? symbol.name : null;
+}
+
+String _defaultRelationName(String fieldName) {
+  if (fieldName.endsWith('Id') && fieldName.length > 2) {
+    return fieldName.substring(0, fieldName.length - 2);
+  }
+  return fieldName;
+}
+
 class PolymorphicDataNaming extends Naming<PolymorphicDataOrmNode> {
   const PolymorphicDataNaming({required super.name, required super.node});
 
@@ -1411,6 +1440,164 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
 class OrmGenerator extends Generator {
   const OrmGenerator();
 
+  List<_GeneratedRelation> _relations(
+    Map<String, FieldedOrmNode<Object>> nodes,
+    List<ModelNaming> models,
+  ) {
+    final List<_GeneratedRelation> relations = [];
+    for (final ModelNaming current in models) {
+      final FieldedOrmNode<Object> node = nodes[current.schemaName]!;
+      for (final MapEntry<String, FieldOrmNode> entry
+          in node.fields.entries) {
+        final Field field = entry.value.annotation;
+        if (field is! ForeignField) continue;
+
+        final $Type targetType = field.referTo as $Type;
+        final String? targetName = targetType.name;
+        final FieldedOrmNode<Object>? targetNode =
+            targetName == null ? null : nodes[targetName];
+        final ClassOrmNode<Object>? targetClass = targetNode?.annotation;
+        if (targetName == null || targetClass is! ModelOrmNode) {
+          throw StateError(
+            'Foreign field in ${current.schemaName} must refer to a model '
+            'annotated with @Model(), found ${targetType.name ?? 'unknown'}.',
+          );
+        }
+
+        final ModelNaming target = ModelNaming(
+          name: targetName,
+          node: targetClass,
+        );
+        relations.add(_GeneratedRelation(
+          current: current,
+          target: target,
+          name: _symbolName(field.as) ?? _defaultRelationName(entry.key),
+          fieldName: entry.key,
+          inverse: false,
+          unique: field.unique,
+        ));
+
+        final String? inverseName = _symbolName(field.inverseAs);
+        if (inverseName != null) {
+          relations.add(_GeneratedRelation(
+            current: target,
+            target: current,
+            name: inverseName,
+            fieldName: entry.key,
+            inverse: true,
+            unique: field.unique,
+          ));
+        }
+      }
+    }
+    return relations;
+  }
+
+  String _relationPathCode(
+    List<ModelNaming> models,
+    List<_GeneratedRelation> relations,
+  ) {
+    final StringBuffer code = StringBuffer();
+    code.writeln('class DormRelations {');
+    code.writeln('  const DormRelations(this._dorm);');
+    code.writeln('  final Dorm _dorm;');
+    for (final ModelNaming model in models) {
+      code.writeln(
+        '  RelationPath<Dorm, ${model.modelName}, ${model.modelName}, Query> '
+        'get ${model.repositoryName} => RelationPath.root('
+        '_dorm.${model.repositoryName}.repository, context: _dorm);',
+      );
+    }
+    code.writeln('}');
+
+    final Map<String, List<_GeneratedRelation>> grouped = {};
+    for (final _GeneratedRelation relation in relations) {
+      grouped.putIfAbsent(relation.current.modelName, () => []).add(relation);
+    }
+
+    for (final ModelNaming model in models) {
+      final List<_GeneratedRelation> currentRelations =
+          grouped[model.modelName] ?? const [];
+      if (currentRelations.isEmpty) continue;
+
+      final Set<String> generatedNames = {};
+
+      code.writeln(
+        'extension ${model.modelName}RelationPaths<Root> on '
+        'RelationPath<Dorm, Root, ${model.modelName}, Query> {',
+      );
+      for (final _GeneratedRelation relation in currentRelations) {
+        final bool many = relation.inverse && !relation.unique;
+        final String currentEntity = '${relation.current.modelName}Entity';
+        final String sourceField = relation.inverse
+            ? '$currentEntity.fields.id'
+            : '$currentEntity.fields.${relation.fieldName}';
+        final String targetField = relation.inverse
+            ? '${relation.target.modelName}Entity.fields.${relation.fieldName}'
+            : '${relation.target.modelName}Entity.fields.id';
+        final String targetRepository =
+            'context.${relation.target.repositoryName}.repository';
+        final String callback = relation.inverse
+            ? 'BaseFilter.value(model.id, field: $targetField)'
+            : 'model.${relation.fieldName}';
+
+        void emit({
+          required String name,
+          required String method,
+          required String resultType,
+        }) {
+          if (!generatedNames.add(name)) {
+            throw StateError(
+              'Duplicate generated relationship path "$name" on '
+              '${model.modelName}. Use distinct ForeignField.as or '
+              'ForeignField.inverseAs values.',
+            );
+          }
+          code.writeln('  RelationPath<Dorm, Root, $resultType, Query> '
+              'get $name {');
+          code.writeln('    return $method(');
+          code.writeln('      $targetRepository,');
+          code.writeln('      spec: RelationSpec(');
+          code.writeln(
+            '        cardinality: RelationCardinality.${many ? 'many' : 'one'},',
+          );
+          code.writeln('        source: $sourceField,');
+          code.writeln('        target: $targetField,');
+          code.writeln('      ),');
+          code.writeln('      on: (model) => $callback,');
+          code.writeln('    );');
+          code.writeln('  }');
+        }
+
+        if (many) {
+          emit(
+            name: relation.name,
+            method: 'toMany',
+            resultType: relation.target.modelName,
+          );
+          emit(
+            name: '${relation.name}OrEmpty',
+            method: 'toManyOrEmpty',
+            resultType: 'List<${relation.target.modelName}>',
+          );
+        } else {
+          emit(
+            name: relation.name,
+            method: 'toOne',
+            resultType: relation.target.modelName,
+          );
+          emit(
+            name: '${relation.name}OrNull',
+            method: 'toOneOrNull',
+            resultType: '${relation.target.modelName}?',
+          );
+        }
+      }
+      code.writeln('}');
+    }
+    return code.toString();
+  }
+
   @override
   String? generate(LibraryReader library, BuildStep buildStep) {
     final Set<Uri> partUris = library.element.fragments
@@ -1538,6 +1725,8 @@ class OrmGenerator extends Generator {
             ModelNaming(name: entry.key, node: node),
       ];
       if (modelsNamings.isNotEmpty) {
+        final List<_GeneratedRelation> relations =
+            _relations(nodes, modelsNamings);
         b.body.add(cb.Class((b) {
           b.name = 'Dorm';
           b.fields.add(cb.Field((b) {
@@ -1585,7 +1774,19 @@ class OrmGenerator extends Generator {
               );
             });
           }));
+          if (relations.isNotEmpty) {
+            b.methods.add(cb.Method((b) {
+              b.returns = cb.Reference('DormRelations');
+              b.type = cb.MethodType.getter;
+              b.lambda = true;
+              b.name = 'relations';
+              b.body = expressionOf('DormRelations(this)').code;
+            }));
+          }
         }));
+        if (relations.isNotEmpty) {
+          b.body.add(cb.Code(_relationPathCode(modelsNamings, relations)));
+        }
       }
     });
 

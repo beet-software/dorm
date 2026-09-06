@@ -760,6 +760,34 @@ Relationship operands are `RelationSource`s. Repositories expose a
 `CompositeRelationPlan`. Database engines may use these plans to batch or optimize
 relationship reads; callback-based relationships remain supported as a fallback.
 
+The generator also emits a typed `DormRelations` navigator when models declare
+`ForeignField`s. Direct and explicitly named inverse relations can be composed without
+writing `on` callbacks:
+
+```dart
+final Stream<List<Join<User, Product>>> products =
+    dorm.relations.users.carts.items.product.pullAll();
+```
+
+Generated paths are lazy and currently flatten the result to the root and terminal model.
+Their `RelationSpec` metadata is available to future engine-specific planners. The current
+fallback evaluates each step through the target source. Use `on` for computed, custom, or
+otherwise non-inferable relationships.
+
+For a to-one path, the generated relation name is an inner join and keeps only matching
+targets. Its `${relation}OrNull` variant is a left join and returns `Target?`, preserving
+the source when the target is missing. For an inverse to-many path, the generated relation
+name is the flattened form; its `${relation}OrEmpty` variant is terminal and returns
+`Join<Root, List<Target>>`, including roots without targets. For example:
+
+```dart
+final Stream<List<Join<CartItem, Product?>>> items =
+    dorm.relations.cartItems.productOrNull.pullAll();
+
+final Future<List<Join<User, List<Cart>>>> carts =
+    dorm.relations.users.cartsOrEmpty.peekAll();
+```
+
 #### One-to-one
 
 An one-to-one relationship between two models refers to a unique and bidirectional association where

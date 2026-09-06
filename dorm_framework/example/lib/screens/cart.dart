@@ -1,4 +1,3 @@
-import 'package:dorm_bloc_database/dorm_bloc_database.dart';
 import 'package:dorm_framework/dorm_framework.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
@@ -20,13 +19,10 @@ class CartScreen extends StatelessWidget {
           initialData: const AsyncSnapshot.waiting(),
           create: (_) => GetIt.instance
               .get<Dorm>()
+              .relations
               .cartItems
-              .relationships
-              .oneToOne(
-                GetIt.instance.get<Dorm>().products.repository,
-                on: (item) => item.productId,
-              )
-              .pullAll(Filter.value(cartId, key: 'cart-id'))
+              .productOrNull
+              .pullAll(BaseFilter.value(cartId, key: 'cart-id'))
               .map((event) =>
                   AsyncSnapshot.withData(ConnectionState.active, event)),
         ),
@@ -48,7 +44,6 @@ class CartScreen extends StatelessWidget {
                 itemCount: joins.length,
                 itemBuilder: (context, i) {
                   final CartItem order = joins[i].left;
-                  // If `product` is removed during this query
                   final Product? product = joins[i].right;
                   return ListTile(
                     leading: const Icon(Icons.category),

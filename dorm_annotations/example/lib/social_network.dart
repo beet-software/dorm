@@ -29,7 +29,7 @@ abstract class _Post {
   @Field(name: 'creation-date')
   DateTime get creationDate;
 
-  @ForeignField(name: 'user-id', referTo: _User)
+  @ForeignField(name: 'user-id', referTo: _User, inverseAs: #posts)
   String get userId;
 }
 
@@ -41,9 +41,13 @@ abstract class _Message {
   @Field(name: 'creation-date')
   DateTime get creationDate;
 
-  @ForeignField(name: 'sender-id', referTo: _User)
+  @ForeignField(name: 'sender-id', referTo: _User, inverseAs: #sentMessages)
   String get senderId;
 
-  @ForeignField(name: 'receiver-id', referTo: _User)
+  @ForeignField(
+    name: 'receiver-id',
+    referTo: _User,
+    inverseAs: #receivedMessages,
+  )
   String get receiverId;
 }
