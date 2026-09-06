@@ -1,0 +1,188 @@
+# Framework contracts and abstractions
+
+The framework package defines engine-neutral types. Generated entities and
+repositories use these contracts; concrete engines provide the storage
+behavior.
+
+## Entity and schema contracts
+
+### Entity<Data, Model extends Data, I extends Object>
+
+An entity maps generated data/model values to an engine-neutral schema and
+identity:
+
+| Member | Signature shape | Result |
+| --- | --- | --- |
+| schema | EntitySchema get schema | Field, foreign-key, and primary-key metadata. |
+| primaryKeyCodec | PrimaryKeyCodec<I> get primaryKeyCodec | Identity-to-key-field conversion. |
+| fromJson | Model fromJson(I id, Map data) | Model reconstructed from stored data and identity. |
+| toJson | Map<String, Object?> toJson(Data data) | Data converted to stored field values. |
+| convert | Model convert(Model model, Data data) | Existing model updated from data. |
+| fromData | Model fromData(Dependency<Data>, I id, Data data) | Model constructed from dependency, identity, and data. |
+| identify | I identify(Model model) | Identity extracted from a model. |
+
+Generated entities implement this interface.
+
+### DatabaseEntity
+
+DatabaseEntity<Data, Model, I, Q> combines one Entity with a
+BaseEngine<Q>. It exposes:
+
+- repository;
+- relationships;
+- delegated entity conversion and identity methods.
+
+Generated Dorm classes create one DatabaseEntity accessor per annotated model.
+
+### Schema types
+
+| Type | Role |
+| --- | --- |
+| EntitySchema | Entity name, fields, primary-key fields, and foreign-key metadata. |
+| FieldSchema | Stored field name, Dart name/type metadata, and field properties. |
+| ForeignKeySchema | Foreign-field metadata, target entity, and uniqueness. |
+| PrimaryKeyCodec<I> | Encodes and decodes identity values. |
+| SinglePrimaryKeyCodec<I> | Encodes one identity value and requires one decoded value. |
+| CompositePrimaryKeyCodec | Encodes/decodes CompositeKey. |
+| CompositeKey | Ordered collection of composite identity values. |
+
+EntitySchema.primaryKey remains the first key field for simple-key
+compatibility. keyFields preserves the ordered composite-key fields.
+
+## Repository contracts
+
+Repository<Data, Model, I, Q> combines SingleReadOperation,
+BatchReadOperation, ModelRepository, and DataRepository.
+
+### Read contracts
+
+~~~dart
+Future<Model?> peek(I id);
+Future<List<Model>> peekAll([BaseFilter<Q> filter]);
+Stream<Model?> pull(I id);
+Stream<List<Model>> pullAll([BaseFilter<Q> filter]);
+Future<List<I>> peekAllKeys();
+~~~
+
+peek returns null for an absent identity. Collection reads return lists.
+Streams expose the corresponding single or collection result shape. The
+current MySQL implementation emits an initial read without a live database
+listener.
+
+### Write and removal contracts
+
+~~~dart
+Future<Model> put(Dependency<Data> dependency, Data data);
+Future<List<Model>> putAll(Dependency<Data> dependency, List<Data> datum);
+Future<void> push(Model model);
+Future<void> pushAll(List<Model> models);
+Future<void> patch(I id, Model? Function(Model?) update);
+Future<void> pop(I id);
+Future<void> popKeys(Iterable<I> ids);
+Future<void> popAll(BaseFilter<Q> filter);
+Future<void> purge();
+~~~
+
+put creates a model from data and dependency. push persists an already
+identified model. patch receives the current model or null; returning null
+removes the record.
+
+The framework documentation describes popKeys, popAll, pushAll, and patch as
+operations expected to be atomic, but the public API does not expose a general
+transaction object. Engine behavior can differ.
+
+## Filter and query contracts
+
+### BaseQuery<Q extends BaseQuery<Q>>
+
+Concrete queries implement:
+
+~~~dart
+Q whereValue(String key, Object? value);
+Q whereText(String key, String prefix);
+Q whereDate(String key, DateTime date, DateFilterUnit unit);
+Q whereRange<T>(String key, FilterRange<T> range);
+Q limit(int count);
+Q sorted(String key);
+~~~
+
+The concrete query determines how these operations become in-memory
+predicates, Firebase query clauses, or SQL.
+
+### BaseFilter<Q>
+
+A filter applies a condition or modifier through Q accept(Q query).
+Factories cover empty, value, text, text-range, numeric-range, date, and
+date-range filters. FilterModifier.limit and FilterModifier.sort append query
+modifiers.
+
+ValueFilter accepts either a string key or a FieldSchema; the current
+constructor requires exactly one of those addressing forms.
+
+## Relationship contracts
+
+### Sources and plans
+
+RelationSource combines single and batch readable operations with a
+RelationPlan and optional EntitySchema.
+
+| Type | Role |
+| --- | --- |
+| RelationPlan | Describes how an association source can be executed. |
+| TableRelationPlan | Describes a direct entity/table source and key decoding. |
+| CompositeRelationPlan | Marks a source produced by another relationship. |
+| RelationSpec | Describes one generated path step and its cardinality/fields. |
+| Join<L, R> | Carries a left model and related result. |
+
+### Associations
+
+The type aliases describe result cardinalities:
+
+~~~dart
+OneToOneAssociation<L, I, R, Q>  // R?
+OneToManyAssociation<L, I, R, Q> // List<R>
+ManyToOneAssociation<L, I, R, J, Q>
+ManyToManyAssociation<M, I, L, R, Q> // (L?, R?)
+~~~
+
+BaseRelationship<Q> creates the association forms from readable sources and
+callbacks that determine related identities or filters.
+
+### RelationPath
+
+RelationPath<Context, Root, Current, Q> accumulates generated relationship
+steps. It reads lazily: related data is requested when peekAll or pullAll is
+called. Results are Join<Root, Current> values.
+
+Generated path variants retain cardinality-specific behavior:
+
+- required to-one paths omit a root without a related value;
+- nullable to-one paths retain the root with null;
+- to-many paths flatten related values;
+- empty-preserving to-many paths retain an empty list.
+
+## Engine boundary
+
+~~~dart
+abstract class BaseEngine<Q extends BaseQuery<Q>> {
+  BaseReference<Q> createReference();
+  BaseRelationship<Q> createRelationship();
+}
+~~~
+
+BaseReference<Q> implements the storage operation surface, and
+BaseRelationship<Q> implements relationship associations. A custom engine
+implements these contracts and exposes a concrete Engine.
+
+See [Implement a custom engine](../04-advanced/01-custom-engine.md) for the
+extension boundary and [Engine capability reference](04-engine-capabilities.md)
+for concrete implementations.
+
+## Error contract
+
+There is no common dORM exception class. Contract users can observe ordinary
+Dart errors, engine SDK errors, database client errors, and stream errors.
+Identity codec mismatches produce StateError; Firebase identity conversion
+uses ArgumentError; current BLoC/MySQL composite-key put paths use
+UnsupportedError.
+

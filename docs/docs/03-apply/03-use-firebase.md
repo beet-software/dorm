@@ -1,0 +1,132 @@
+# Run the store with Firebase Realtime Database
+
+`dorm_firebase_database` connects generated dORM repositories to Firebase Realtime Database. This package depends on Flutter Firebase packages, so this setup is a Flutter/Firebase integration.
+
+The repository API remains the same after the engine changes. The setup adds Firebase initialization, a Firebase dependency object, and a database root path.
+
+## Add the Firebase packages
+
+From the Flutter application directory, run:
+
+```shell
+flutter pub add dorm_firebase_database
+flutter pub add firebase_core
+flutter pub add firebase_database
+flutter pub add firebase_auth
+flutter pub get
+```
+
+The Firebase engine uses Firebase Core, Realtime Database, and Authentication dependencies. A Firebase project configuration is required before the application can connect to a hosted database.
+
+## Initialize Firebase before creating the engine
+
+Initialize the Firebase app before accessing `FirebaseInstance`:
+
+```dart
+import 'package:dorm_firebase_database/dorm_firebase_database.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/widgets.dart';
+
+import 'models.dart';
+
+Future<Dorm> createDorm() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+
+  const FirebaseInstance instance = FirebaseInstance();
+  const Engine engine = Engine(instance, path: 'prod');
+  return Dorm(engine);
+}
+```
+
+`FirebaseInstance()` uses the default Firebase app and default Firebase Database/Auth instances. `FirebaseInstance.custom` selects another `FirebaseApp` and can receive a database URL. `Engine` accepts the instance and an optional root path; `path: 'prod'` stores the entity tables below that path.
+
+The Firebase platform configuration is supplied by the Flutter application. Use `[PLACEHOLDER: add the Firebase platform configuration for the target platforms]` before running the application if `Firebase.initializeApp()` cannot find a configured default app.
+
+## Use the repository with Firebase
+
+After `createDorm` completes, repository calls use Firebase storage:
+
+```dart
+final Dorm dorm = await createDorm();
+
+final User user = await dorm.users.repository.put(
+  const UserDependency(),
+  userData,
+);
+
+final User? loaded = await dorm.users.repository.peek(user.id);
+```
+
+Firebase creates the identity for `put` with a Firebase push key. The Firebase adapter accepts only `String` identities; passing another identity type to a Firebase reference raises `ArgumentError`.
+
+## Configure offline behavior
+
+`FirebaseInstance` accepts an `OfflineMode`:
+
+```dart
+const FirebaseInstance cached = FirebaseInstance(
+  offlineMode: OfflineMode.include,
+);
+
+const FirebaseInstance remoteOnly = FirebaseInstance(
+  offlineMode: OfflineMode.exclude,
+);
+```
+
+With `OfflineMode.include`, the adapter reads Firebase's local cache while offline. With `OfflineMode.exclude`, the Firebase query waits for online data; the source documentation states that `get` and `onValue` can hang indefinitely while offline.
+
+The default mode is `OfflineMode.include`.
+
+## Run against the local emulator
+
+From the Flutter application directory, configure the Firebase Database Emulator with port `9000`:
+
+```shell
+firebase init
+```
+
+Select Realtime Database and Emulators during initialization. Use `database.rules.json` for the Realtime Database rules and port `9000` for the Database Emulator.
+
+Start the emulator in a separate terminal:
+
+```shell
+firebase emulators:start --only database
+```
+
+Point the Firebase Database SDK at the emulator before creating the dORM engine:
+
+```dart
+await Firebase.initializeApp();
+FirebaseDatabase.instance.useDatabaseEmulator('localhost', 9000);
+
+const FirebaseInstance instance = FirebaseInstance();
+const Dorm dorm = Dorm(Engine(instance, path: 'prod'));
+```
+
+The emulator connection changes the Firebase endpoint. It does not change the generated repository API.
+
+## Subscribe to Firebase changes
+
+Firebase `pull` and `pullAll` are backed by Realtime Database value events:
+
+```dart
+final subscription = dorm.users.repository.pullAll().listen((users) {
+  print('Users: ${users.length}');
+});
+
+await subscription.cancel();
+```
+
+The selected `OfflineMode` affects how the adapter obtains snapshots while connectivity changes. Cancel subscriptions when the consuming application component is disposed.
+
+## Regenerate and run
+
+After changing annotated models, regenerate the generated parts before launching Flutter:
+
+```shell
+flutter pub run build_runner build
+flutter run
+```
+
+The Firebase initialization, database rules, and network/emulator connection are separate from dORM code generation.

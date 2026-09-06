@@ -1,0 +1,54 @@
+site_name: dORM
+theme: readthedocs
+nav:
+  - Home: index.md
+  - Start here:
+      - Quickstart: 01-start-here/01-quickstart.md
+      - Build the first model: 01-start-here/02-build-the-first-model.md
+      - Generate the model: 01-start-here/03-generate-the-model.md
+  - Build the store:
+      - Create, read, update, and remove: 02-build-the-store/01-crud.md
+      - Search and filter: 02-build-the-store/02-query-and-filter.md
+      - Add a cart and read related products: 02-build-the-store/03-relations-and-cart.md
+      - Add reviews and polymorphic content: 02-build-the-store/04-reviews-and-polymorphism.md
+      - Connect forms and live reads: 02-build-the-store/05-forms-and-live-reads.md
+      - Validate input and handle failures: 02-build-the-store/06-validation-and-errors.md
+  - Apply dORM:
+      - Choose an engine: 03-apply/01-choose-an-engine.md
+      - Run with BLoC: 03-apply/02-use-bloc.md
+      - Run with Firebase: 03-apply/03-use-firebase.md
+      - Run with MySQL: 03-apply/04-use-mysql.md
+      - Test the integration: 03-apply/05-test-the-integration.md
+      - Configure security boundaries: 03-apply/06-security-and-configuration.md
+      - Generate MySQL schema: 03-apply/07-generate-mysql-schema.md
+  - Understand dORM:
+      - How the pieces fit: 03-understand/01-how-the-pieces-fit.md
+      - Identity and dependencies: 03-understand/02-identity-and-dependencies.md
+      - Serialization and mapping: 03-understand/03-serialization-and-mapping.md
+      - Query and relationship details: 03-understand/04-query-and-relation-details.md
+      - Boundaries and compatibility: 03-understand/05-boundaries-and-compatibility.md
+      - Decisions and trade-offs: 03-understand/06-decisions-and-tradeoffs.md
+      - Documented principles: 03-understand/07-philosophy.md
+  - Advanced:
+      - Implement a custom engine: 04-advanced/01-custom-engine.md
+      - Understand performance: 04-advanced/02-performance.md
+  - Troubleshooting:
+      - Diagnose errors by layer: 05-troubleshooting/01-error-by-layer.md
+      - Diagnose code generation problems: 05-troubleshooting/02-code-generation-problems.md
+      - Behaviors that may surprise users: 05-troubleshooting/03-surprising-behaviors.md
+  - Reference:
+      - Public API: reference/01-public-api.md
+      - Annotations and generated API: reference/02-annotations-and-generated-api.md
+      - Framework contracts: reference/03-framework-contracts.md
+      - Engine capabilities: reference/04-engine-capabilities.md
+      - Glossary: reference/05-glossary.md
+      - Compatibility and release status: reference/06-compatibility-and-release-status.md
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
