@@ -48,7 +48,7 @@ jobs:
     needs: build
     strategy:
       matrix:
-        pkg: [dorm_generator, dorm_firebase_database, dorm_bloc_database, dorm_mysql_database, dorm_postgres_database]
+        pkg: [dorm_generator, dorm_firebase_database, dorm_bloc_database, dorm_mysql_database, dorm_postgres_database, dorm_mongo_database]
     steps:
       - uses: actions/checkout@v3
       - uses: subosito/flutter-action@v2
@@ -68,3 +68,32 @@ jobs:
           flutter: true
           skipTests: true
           suppressBuildRunner: true
+
+  verify-mongo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: subosito/flutter-action@v2
+
+      - name: Install workspace dependencies
+        run: dart pub get
+
+      - name: Analyze MongoDB package
+        working-directory: ./dorm_mongo_database
+        run: dart analyze
+
+      - name: Test MongoDB package
+        working-directory: ./dorm_mongo_database
+        run: dart test
+
+      - name: Install example dependencies
+        working-directory: ./dorm_mongo_database/example
+        run: dart pub get
+
+      - name: Generate example models
+        working-directory: ./dorm_mongo_database/example
+        run: dart run build_runner build
+
+      - name: Analyze MongoDB example
+        working-directory: ./dorm_mongo_database/example
+        run: dart analyze

@@ -21,14 +21,16 @@ but their event sources differ:
 | BLoC | Reads are backed by in-process state changes. |
 | Firebase | Reads are backed by Realtime Database value events. Offline configuration changes which local/remote events are available. |
 | MySQL | The current implementation performs an initial read and does not attach a live database-change listener. |
+| PostgreSQL | The current implementation performs an initial read and does not attach a PostgreSQL `LISTEN`/`NOTIFY` listener. |
+| MongoDB | The current implementation performs an initial read and does not call `watch` for change streams. |
 
 The MySQL result is therefore an initial stream event in the current
 implementation, not evidence of a live subscription to later MySQL changes.
 The common method name does not make all engines emit the same event sequence.
 
 See [Connect forms and live reads](../02-build-the-store/05-forms-and-live-reads.md)
-for application-level stream usage and [Run with MySQL](../03-apply/04-use-mysql.md)
-for the MySQL boundary.
+for application-level stream usage and the engine setup pages for backend-specific
+stream behavior.
 
 ## BLoC single reads and collection reads take different paths
 

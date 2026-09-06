@@ -6,19 +6,19 @@ requirements.
 
 ## Capability matrix
 
-| Capability | BLoC | Firebase | MySQL | PostgreSQL |
-| --- | --- | --- | --- | --- |
-| Storage | In-process state | Firebase Realtime Database | MySQL through mysql_client | PostgreSQL through postgres |
-| Public engine constructor | Engine() | Engine(FirebaseInstance, {String? path}) | Engine(MySQLConnection) | Engine(SessionExecutor) |
-| External service | None | Firebase app/database or emulator | MySQL server and schema | PostgreSQL server and schema |
-| Automatic identity | UUID-backed in-memory identity | Firebase push key | UUID-backed SQL identity | UUID-backed SQL identity |
-| Identity restriction | Composite-key put/putAll throw UnsupportedError | Reference identities must be String | Composite-key put throws UnsupportedError | Composite-key put throws UnsupportedError |
-| Collection filtering | In-memory query evaluation | Realtime Database query | SQL query | PostgreSQL SQL query |
-| Single reads | In-memory map lookup | Firebase SDK read | SQL read | SQL read |
-| Streams | State-backed | Firebase value events, with offline behavior | Initial read only in current implementation | Initial read only |
-| Relationships | Framework relationship implementation | Framework relationship implementation | Direct relation plans plus readable fallbacks | Direct relation plans plus readable fallbacks |
-| Public transaction API | None documented | None; patch uses a Firebase transaction internally | None; selected operations use MySQL transactions internally | None; selected operations use PostgreSQL transactions internally |
-| Pagination | Not supported by the common API | Not supported | Not supported | Not supported |
+| Capability | BLoC | Firebase | MySQL | PostgreSQL | MongoDB |
+| --- | --- | --- | --- | --- | --- |
+| Storage | In-process state | Firebase Realtime Database | MySQL through mysql_client | PostgreSQL through postgres | MongoDB through mongo_dart |
+| Public engine constructor | Engine() | Engine(FirebaseInstance, {String? path}) | Engine(MySQLConnection) | Engine(SessionExecutor) | Engine(Db) |
+| External service | None | Firebase app/database or emulator | MySQL server and schema | PostgreSQL server and schema | MongoDB server |
+| Automatic identity | UUID-backed in-memory identity | Firebase push key | UUID-backed SQL identity | UUID-backed SQL identity | UUID-backed String identity |
+| Identity restriction | Composite-key put/putAll throw UnsupportedError | Reference identities must be String | Composite-key put throws UnsupportedError | Composite-key put throws UnsupportedError | Composite-key put/putAll throw UnsupportedError |
+| Collection filtering | In-memory query evaluation | Realtime Database query | SQL query | PostgreSQL SQL query | MongoDB selectors |
+| Single reads | In-memory map lookup | Firebase SDK read | SQL read | SQL read | MongoDB collection read |
+| Streams | State-backed | Firebase value events, with offline behavior | Initial read only in current implementation | Initial read only | Initial read only |
+| Relationships | Framework relationship implementation | Framework relationship implementation | Direct relation plans plus readable fallbacks | Direct relation plans plus readable fallbacks | Direct relation plans plus readable fallbacks |
+| Public transaction API | None documented | None; patch uses a Firebase transaction internally | None; selected operations use MySQL transactions internally | None; selected operations use PostgreSQL transactions internally | None |
+| Pagination | Not supported by the common API | Not supported | Not supported | Not supported | Not supported |
 
 The matrix records current behavior. It does not create a future compatibility
 promise.
@@ -146,6 +146,36 @@ operations use driver transactions internally, while the common framework
 does not expose a transaction object.
 
 See [Run with PostgreSQL](../03-apply/08-use-postgres.md).
+
+## MongoDB engine
+
+Import:
+
+~~~dart
+import 'package:dorm_mongo_database/dorm_mongo_database.dart';
+import 'package:mongo_dart/mongo_dart.dart';
+~~~
+
+Construct it with an opened `Db`:
+
+~~~dart
+final Db database = Db(uri);
+await database.open();
+final Engine engine = Engine(database);
+final Dorm dorm = Dorm(engine);
+~~~
+
+The application owns the `Db` lifecycle. The engine uses the schema-declared
+identity fields in documents and does not convert identities to MongoDB
+`ObjectId` or use `_id` as the dORM identity field. Identified writes use
+replacement upserts. `pushAll` is sequential and has no atomicity guarantee.
+
+MongoDB filters support equality, escaped text-prefix matching, date/range
+conditions, ascending sort, and limits. `pull` and `pullAll` emit one initial
+read. The engine does not expose public transactions, change streams,
+aggregation, migrations, or native selector APIs.
+
+See [Run with MongoDB](../03-apply/09-use-mongo.md).
 
 ## Shared surface and engine-specific errors
 

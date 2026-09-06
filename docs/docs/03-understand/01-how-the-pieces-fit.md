@@ -32,7 +32,7 @@ UserData + UserDependency
 
 `UserData` contains field values. `UserDependency` contains creation dependencies. The generated `UserEntity.fromData` combines those values with the identity supplied by the engine and constructs `User`.
 
-The engine then serializes the model through the entity mapping and stores the resulting representation. BLoC stores model-derived values in memory, Firebase writes a Firebase map, and MySQL writes SQL values through its connection.
+The engine then serializes the model through the entity mapping and stores the resulting representation. BLoC stores model-derived values in memory, Firebase writes a Firebase map, MySQL writes SQL values through its connection, and MongoDB writes document values through its collection API.
 
 The exact identity generation and storage operation belong to the selected engine. The repository method and generated entity conversion are common framework boundaries.
 
@@ -91,7 +91,7 @@ For a generated relationship path, the path starts with a repository and adds `R
 
 ### Reasonable architectural interpretation
 
-The framework is the common application boundary. Generated entities are the mapping boundary between annotated Dart models and engine-neutral schema metadata. Engine packages are adapters that translate those contracts into in-memory, Firebase, or SQL operations.
+The framework is the common application boundary. Generated entities are the mapping boundary between annotated Dart models and engine-neutral schema metadata. Engine packages are adapters that translate those contracts into in-memory, Firebase, SQL, or MongoDB operations.
 
 ### Not determined
 

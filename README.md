@@ -14,6 +14,7 @@
 [![pub package](https://img.shields.io/pub/v/dorm_bloc_database.svg?label=dorm_bloc_database)](https://pub.dev/packages/dorm_bloc_database)
 [![pub package](https://img.shields.io/pub/v/dorm_mysql_database.svg?label=dorm_mysql_database)](https://pub.dev/packages/dorm_mysql_database)
 [![pub package](https://img.shields.io/pub/v/dorm_postgres_database.svg?label=dorm_postgres_database)](https://pub.dev/packages/dorm_postgres_database)
+[![pub package](https://img.shields.io/pub/v/dorm_mongo_database.svg?label=dorm_mongo_database)](https://pub.dev/packages/dorm_mongo_database)
 
 
 A language-agnostic Object Relational Mapper library for Dart.
@@ -38,9 +39,12 @@ dart pub add dorm_framework
 dart pub add dorm_annotations
 dart pub add dev:dorm_generator
 dart pub add dev:build_runner
-# Choose a dorm_*_database package to use as engine
-dart pub add dorm_postgres_database
-dart pub add postgres
+# Choose one engine package. For MongoDB:
+dart pub add dorm_mongo_database
+dart pub add mongo_dart
+# For PostgreSQL, use dorm_postgres_database and postgres instead:
+# dart pub add dorm_postgres_database
+# dart pub add postgres
 dart pub get
 ```
 
@@ -103,6 +107,7 @@ Here's a step-by-step guide:
    - Integrate using local memory and the BLoC pattern, explained by [`dorm_bloc_database`](https://pub.dev/packages/dorm_bloc_database)
    - Integrate using MySQL, explained by [`dorm_mysql_database`](https://pub.dev/packages/dorm_mysql_database)
    - Integrate using PostgreSQL, explained by [`dorm_postgres_database`](https://pub.dev/packages/dorm_postgres_database)
+   - Integrate using MongoDB, explained by [`dorm_mongo_database`](https://pub.dev/packages/dorm_mongo_database)
    - Using another engine? Take a look at the "Implementing your own engine" section below
 
 You can find an *example/* folder inside *every* package mentioned above, containing specific examples

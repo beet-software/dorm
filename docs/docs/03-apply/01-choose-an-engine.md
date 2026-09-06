@@ -10,6 +10,7 @@ Use the engine that matches the runtime and storage service required by your app
 | `dorm_firebase_database` | Firebase Realtime Database | Initialize Firebase, create `FirebaseInstance`, and configure Firebase access |
 | `dorm_mysql_database` | MySQL server through `mysql_client` | Open a `MySQLConnection` and pass it to `Engine` |
 | `dorm_postgres_database` | PostgreSQL server through `postgres` | Open a `Connection` or `Pool` and pass it to `Engine` |
+| `dorm_mongo_database` | MongoDB server through `mongo_dart` | Create and open a `Db`, then pass it to `Engine` |
 
 The framework does not select an engine automatically. The generated `Dorm` receives the concrete engine through its constructor.
 
@@ -121,21 +122,49 @@ engine does not use PostgreSQL `LISTEN`/`NOTIFY` for these operations.
 
 Continue with [Run the PostgreSQL example](08-use-postgres.md).
 
+## Use MongoDB for a document-backed runtime
+
+Add the MongoDB engine and driver:
+
+```shell
+dart pub add dorm_mongo_database
+dart pub add mongo_dart
+```
+
+Create and open a `Db`, then pass it to `Engine`:
+
+```dart
+final Db database = Db(
+  Platform.environment['MONGO_URI'] ??
+      'mongodb://127.0.0.1:27017/dorm_example',
+);
+await database.open();
+final Dorm dorm = Dorm(Engine(database));
+```
+
+The application owns the `Db` lifecycle. The engine stores identities in the
+schema-declared document fields, not in MongoDB `_id`, and does not convert
+them to `ObjectId`. It supports framework CRUD, filters, limits, relationships,
+and initial-read-only streams. It does not expose public transactions,
+aggregation, migrations, or change streams.
+
+Continue with [Run the store with MongoDB](09-use-mongo.md).
+
 ## Compare current capability boundaries
 
 The common repository API does not imply identical runtime behavior in every engine:
 
-| Capability | BLoC | Firebase | MySQL | PostgreSQL |
-| --- | --- | --- | --- | --- |
-| External server required | No | Firebase project or emulator | Yes | Yes |
-| Generated identity from `put` | UUID in memory | Firebase push key | UUID in SQL | UUID in SQL |
-| Composite identity with `put` | `UnsupportedError` | Firebase IDs must be `String` | `UnsupportedError` from `put` | `UnsupportedError` from `put` |
-| Single-record streams | State-backed | Firebase value events | Initial read only in current implementation | Initial read only |
-| Filter/query execution | In-memory query implementation | Firebase Realtime Database query | SQL query | PostgreSQL SQL query |
-| Transactions exposed by the public framework API | No documented transaction API | `patch` uses a Firebase transaction internally | Some batch and patch operations use MySQL transactions internally | Some batch and patch operations use PostgreSQL transactions internally |
+| Capability | BLoC | Firebase | MySQL | PostgreSQL | MongoDB |
+| --- | --- | --- | --- | --- | --- |
+| External server required | No | Firebase project or emulator | Yes | Yes | Yes |
+| Generated identity from `put` | UUID in memory | Firebase push key | UUID in SQL | UUID in SQL | UUID in a document field |
+| Composite identity with `put` | `UnsupportedError` | Firebase IDs must be `String` | `UnsupportedError` from `put` | `UnsupportedError` from `put` | `UnsupportedError` from `put` |
+| Single-record streams | State-backed | Firebase value events | Initial read only in current implementation | Initial read only | Initial read only |
+| Filter/query execution | In-memory query implementation | Firebase Realtime Database query | SQL query | PostgreSQL SQL query | MongoDB selector |
+| Transactions exposed by the public framework API | No documented transaction API | `patch` uses a Firebase transaction internally | Some batch and patch operations use MySQL transactions internally | Some batch and patch operations use PostgreSQL transactions internally | No |
 
 The matrix describes current implementation behavior. It is not a compatibility promise for a future release.
 
 ## Select the next setup step
 
-For a local Dart process, start with BLoC. For Firebase Realtime Database, continue with the Flutter/Firebase initialization page. For a SQL-backed application, prepare the MySQL connection and schema before issuing repository operations.
+For a local Dart process, start with BLoC. For Firebase Realtime Database, continue with the Flutter/Firebase initialization page. For a SQL-backed application, prepare the MySQL or PostgreSQL connection and schema before issuing repository operations. For MongoDB, prepare the URI and open the `Db` before constructing the engine.

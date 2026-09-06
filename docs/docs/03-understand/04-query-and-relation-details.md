@@ -15,7 +15,7 @@ Filter.value('ada', key: 'username')
 
 The framework provides filters for empty results, exact values, text prefixes, date units, and text/numeric/date ranges. Modifier filters add `limit` and `sort` by applying those operations to the query created by the wrapped filter.
 
-An engine's `Query` implements the same methods for its storage technology. MySQL creates SQL text and parameter maps. Firebase calls Realtime Database query methods. BLoC evaluates its query representation against serialized in-memory values.
+An engine's `Query` implements the same methods for its storage technology. MySQL creates SQL text and parameter maps. PostgreSQL creates SQL text and named parameters. Firebase calls Realtime Database query methods. BLoC evaluates its query representation against serialized in-memory values. MongoDB creates selector maps, sort values, and limits.
 
 ## Use generated derived fields
 
@@ -77,7 +77,7 @@ The framework's relation layer supports two execution inputs:
 1. a structured relation plan that an engine may batch or translate to a local join;
 2. readable repository operations that can resolve the relationship through ordinary reads.
 
-The MySQL engine checks for direct table plans and can use batched relationship reads. Its callback-based relationship tests use readable sources, which exercise the fallback form without requiring a live database server.
+The MySQL, PostgreSQL, and MongoDB engines check for direct table plans and can use grouped relationship reads. Their callback-based relationship tests use readable sources, which exercise the fallback form without requiring a live database server.
 
 This is an execution boundary, not a second public model schema. The generated relation names and result shapes remain the application-facing contract.
 

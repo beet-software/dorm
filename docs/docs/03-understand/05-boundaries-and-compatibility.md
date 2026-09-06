@@ -15,14 +15,14 @@ Some engine methods use internal transaction primitives. That does not create a 
 
 ## Engine-specific boundaries
 
-| Area | BLoC | Firebase | MySQL | PostgreSQL |
-| --- | --- | --- | --- | --- |
-| Runtime | In-process memory | Firebase Realtime Database | MySQL through `mysql_client` | PostgreSQL through `postgres` |
-| Automatic identity | UUID-backed current implementation | String push keys | UUID-backed current implementation | UUID-backed current implementation |
-| Identity restriction | Composite-key `put`/`putAll` throw `UnsupportedError` | IDs must be `String`; non-String IDs throw `ArgumentError` | Composite-key `put` throws `UnsupportedError` | Composite-key `put` throws `UnsupportedError` |
-| `pull`/`pullAll` | State-backed change events | Firebase value events and offline adapter | Initial read only in current reference | Initial read only |
-| `popAll` atomicity | In-memory state update | Current implementation reads matching models then removes keys | SQL delete operation | SQL delete operation |
-| External service | None | Firebase app, rules, and connectivity | MySQL server and schema | PostgreSQL server and schema |
+| Area | BLoC | Firebase | MySQL | PostgreSQL | MongoDB |
+| --- | --- | --- | --- | --- | --- |
+| Runtime | In-process memory | Firebase Realtime Database | MySQL through `mysql_client` | PostgreSQL through `postgres` | MongoDB through `mongo_dart` |
+| Automatic identity | UUID-backed current implementation | String push keys | UUID-backed current implementation | UUID-backed current implementation | UUID-backed String identity |
+| Identity restriction | Composite-key `put`/`putAll` throw `UnsupportedError` | IDs must be `String`; non-String IDs throw `ArgumentError` | Composite-key `put` throws `UnsupportedError` | Composite-key `put` throws `UnsupportedError` | Composite-key `put`/`putAll` throw `UnsupportedError` |
+| `pull`/`pullAll` | State-backed change events | Firebase value events and offline adapter | Initial read only in current reference | Initial read only | Initial read only |
+| `popAll` atomicity | In-memory state update | Current implementation reads matching models then removes keys | SQL delete operation | SQL delete operation | Direct delete or read-then-delete when modifiers are used |
+| External service | None | Firebase app, rules, and connectivity | MySQL server and schema | PostgreSQL server and schema | MongoDB server |
 
 The common method names therefore do not imply identical storage, event, or transaction behavior.
 
@@ -38,6 +38,7 @@ The following are current observations rather than future guarantees:
 - package barrel files are the confirmed import surface for the framework and engines;
 - direct imports from `lib/src` are not a confirmed compatibility contract;
 - MySQL server-version, SQL-mode, authentication, collation, and platform matrices are not specified;
+- MongoDB server-version, feature-compatibility, authentication, and platform matrices are not specified;
 - Firebase server, emulator, rules, and platform-plugin compatibility beyond package dependencies and demonstrated setup are not specified.
 
 ## Separate current behavior from intended status
@@ -73,6 +74,7 @@ Implemented tests provide evidence for the cases they exercise:
 - direct and nested relation paths in framework tests;
 - BLoC reference operations such as filtered removal;
 - MySQL CRUD/filter operations when configured with a live connection;
-- MySQL callback relationship forms without a live database.
+- MySQL callback relationship forms without a live database;
+- MongoDB selector construction and callback relationship forms without a live database. Integration evidence depends on `MONGO_URI`.
 
 The test suites are not a complete cross-engine compatibility matrix. A passing test run establishes current behavior for covered cases, not a promise for untested combinations.

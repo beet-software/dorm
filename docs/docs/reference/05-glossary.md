@@ -106,6 +106,9 @@ See [Generate the model and repository API](../01-start-here/03-generate-the-mod
 | Relation plan | In MySQL, direct table plans can enable grouped relationship reads; generic sources use readable operations. |
 | PostgreSQL engine | SQL engine that accepts a `postgres` `SessionExecutor` and maps framework operations to PostgreSQL statements. |
 | SessionExecutor | `postgres` driver abstraction accepted by the PostgreSQL engine; an opened `Connection` or `Pool` implements it. |
+| MongoDB engine | Engine that accepts an opened `mongo_dart` `Db` and maps framework operations to MongoDB collection operations. |
+| MongoDB selector | Map passed to `mongo_dart` collection reads and writes to match documents. The MongoDB `Query` builds selectors from framework filters. |
+| MongoDB `Db` | `mongo_dart` database object supplied to `dorm_mongo_database.Engine`; opening and closing it remain application operations. |
 
 See [Engine capability reference](04-engine-capabilities.md).
 
