@@ -12,6 +12,21 @@ class ItemDependency extends Dependency<ItemData> {
 }
 
 void main() {
+  test('creation factories return their specialized request types', () {
+    final AutoCreation<ItemData, String> automatic = Creation.auto(
+      dependency: ItemDependency(),
+      data: ItemData('value'),
+    );
+    final ExplicitCreation<ItemData, String> explicit = Creation.explicit(
+      dependency: const ItemDependency(),
+      data: const ItemData('value'),
+      identity: 'id',
+    );
+
+    expect(automatic, isA<SimpleCreation<ItemData, String>>());
+    expect(explicit, isA<SimpleCreation<ItemData, String>>());
+  });
+
   test('auto creation requests do not carry an identity', () {
     final Creation<ItemData, String> creation = Creation.auto(
       dependency: ItemDependency(),

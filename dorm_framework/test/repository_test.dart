@@ -146,9 +146,129 @@ void main() {
       mockito.verifyZeroInteractions(entityMock);
       mockito.verifyZeroInteractions(relationshipMock);
     });
-    test('pull', () {});
-    test('peekAll', () {});
-    test('pullAll', () {});
-    test('peekAllKeys', () {});
+    test('pull', () async {
+      mockito
+          .when(referenceMock.pull(entityMock, '1'))
+          .thenAnswer((_) => Stream.value(const Model(1, id: '1')));
+
+      expect(await repository.pull('1').single, const Model(1, id: '1'));
+
+      mockito.verify(referenceMock.pull(entityMock, '1')).called(1);
+      mockito.verifyNoMoreInteractions(referenceMock);
+      mockito.verifyZeroInteractions(entityMock);
+      mockito.verifyZeroInteractions(relationshipMock);
+    });
+    test('peekAll', () async {
+      const BaseFilter<Query> filter = BaseFilter.value(1, key: 'value');
+      mockito
+          .when(referenceMock.peekAll(entityMock, filter))
+          .thenAnswer((_) async => [const Model(1, id: '1')]);
+
+      expect(await repository.peekAll(filter), [const Model(1, id: '1')]);
+
+      mockito.verify(referenceMock.peekAll(entityMock, filter)).called(1);
+      mockito.verifyNoMoreInteractions(referenceMock);
+      mockito.verifyZeroInteractions(entityMock);
+      mockito.verifyZeroInteractions(relationshipMock);
+    });
+    test('pullAll', () async {
+      const BaseFilter<Query> filter = BaseFilter.value(1, key: 'value');
+      mockito
+          .when(referenceMock.pullAll(entityMock, filter))
+          .thenAnswer((_) => Stream.value([const Model(1, id: '1')]));
+
+      expect(await repository.pullAll(filter).single, [
+        const Model(1, id: '1'),
+      ]);
+
+      mockito.verify(referenceMock.pullAll(entityMock, filter)).called(1);
+      mockito.verifyNoMoreInteractions(referenceMock);
+      mockito.verifyZeroInteractions(entityMock);
+      mockito.verifyZeroInteractions(relationshipMock);
+    });
+    test('peekAllKeys', () async {
+      mockito
+          .when(referenceMock.peekAllKeys(entityMock))
+          .thenAnswer((_) async => ['1', '2']);
+
+      expect(await repository.peekAllKeys(), ['1', '2']);
+
+      mockito.verify(referenceMock.peekAllKeys(entityMock)).called(1);
+      mockito.verifyNoMoreInteractions(referenceMock);
+      mockito.verifyZeroInteractions(entityMock);
+      mockito.verifyZeroInteractions(relationshipMock);
+    });
+  });
+
+  group('write', () {
+    test('pop', () async {
+      await repository.pop('1');
+
+      mockito.verify(referenceMock.pop(entityMock, '1')).called(1);
+      mockito.verifyNoMoreInteractions(referenceMock);
+      mockito.verifyZeroInteractions(entityMock);
+      mockito.verifyZeroInteractions(relationshipMock);
+    });
+    test('popKeys', () async {
+      final List<String> ids = ['1', '2'];
+
+      await repository.popKeys(ids);
+
+      mockito.verify(referenceMock.popKeys(entityMock, ids)).called(1);
+      mockito.verifyNoMoreInteractions(referenceMock);
+      mockito.verifyZeroInteractions(entityMock);
+      mockito.verifyZeroInteractions(relationshipMock);
+    });
+    test('popAll', () async {
+      const BaseFilter<Query> filter = BaseFilter.value(1, key: 'value');
+
+      await repository.popAll(filter);
+
+      mockito.verify(referenceMock.popAll(entityMock, filter)).called(1);
+      mockito.verifyNoMoreInteractions(referenceMock);
+      mockito.verifyZeroInteractions(entityMock);
+      mockito.verifyZeroInteractions(relationshipMock);
+    });
+    test('push', () async {
+      const Model model = Model(1, id: '1');
+
+      await repository.push(model);
+
+      mockito.verify(referenceMock.push(entityMock, model)).called(1);
+      mockito.verifyNoMoreInteractions(referenceMock);
+      mockito.verifyZeroInteractions(entityMock);
+      mockito.verifyZeroInteractions(relationshipMock);
+    });
+    test('pushAll', () async {
+      final List<Model> models = [
+        const Model(1, id: '1'),
+        const Model(2, id: '2'),
+      ];
+
+      await repository.pushAll(models);
+
+      mockito.verify(referenceMock.pushAll(entityMock, models)).called(1);
+      mockito.verifyNoMoreInteractions(referenceMock);
+      mockito.verifyZeroInteractions(entityMock);
+      mockito.verifyZeroInteractions(relationshipMock);
+    });
+    test('patch', () async {
+      Model? update(Model? model) => model;
+
+      await repository.patch('1', update);
+
+      mockito.verify(referenceMock.patch(entityMock, '1', update)).called(1);
+      mockito.verifyNoMoreInteractions(referenceMock);
+      mockito.verifyZeroInteractions(entityMock);
+      mockito.verifyZeroInteractions(relationshipMock);
+    });
+    test('purge', () async {
+      await repository.purge();
+
+      mockito.verify(referenceMock.purge(entityMock)).called(1);
+      mockito.verifyNoMoreInteractions(referenceMock);
+      mockito.verifyZeroInteractions(entityMock);
+      mockito.verifyZeroInteractions(relationshipMock);
+    });
   });
 }

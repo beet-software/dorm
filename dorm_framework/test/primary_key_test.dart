@@ -17,6 +17,21 @@ void main() {
     expect(codec.decode(codec.encode(key)), equals(key));
   });
 
+  test('composite keys preserve their values from later input changes', () {
+    final List<Object?> values = ['tenant', 7];
+    final CompositeKey key = CompositeKey(values);
+    values[1] = 8;
+
+    expect(key.values, ['tenant', 7]);
+  });
+
+  test('single codec rejects a value count different from one', () {
+    const SinglePrimaryKeyCodec<String> codec = SinglePrimaryKeyCodec();
+
+    expect(() => codec.decode(const []), throwsStateError);
+    expect(() => codec.decode(['a', 'b']), throwsStateError);
+  });
+
   test('schema exposes ordered composite key fields', () {
     const FieldSchema tenant = FieldSchema(
       fieldName: 'tenantId',
