@@ -35,6 +35,19 @@ enum DerivedTransform {
   /// for [Enum]s and objects whose [Object.toString] representation is
   /// formatted as `ClassName.value`.
   enumeration,
+
+  /// Applies the [$normalizeDate] transformation.
+  ///
+  /// This transformation should only be applied to [DateTime]s. It keeps the
+  /// calendar date as a fixed-width `YYYYMMDD` value.
+  date,
+
+  /// Applies the [$normalizeDateTime] transformation.
+  ///
+  /// This transformation should only be applied to [DateTime]s. It keeps the
+  /// local calendar date and time as a fixed-width
+  /// `YYYYMMDDHHmmssSSS` value.
+  datetime,
 }
 
 /// Defines a persisted value derived from other fields in a model class.

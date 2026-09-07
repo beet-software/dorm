@@ -1938,6 +1938,12 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
                     case DerivedTransform.enumeration:
                       callExpression = expressionOf('\$normalizeEnum');
                       break;
+                    case DerivedTransform.date:
+                      callExpression = expressionOf('\$normalizeDate');
+                      break;
+                    case DerivedTransform.datetime:
+                      callExpression = expressionOf('\$normalizeDateTime');
+                      break;
                     case null:
                       callExpression = null;
                       break;

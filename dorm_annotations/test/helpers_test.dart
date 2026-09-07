@@ -23,6 +23,14 @@ void main() {
     expect($normalizeDate(null), isNull);
   });
 
+  test('normalizeDateTime returns a zero-padded local date and time', () {
+    expect(
+      $normalizeDateTime(DateTime(2024, 2, 3, 4, 5, 6, 7)),
+      '20240203040506007',
+    );
+    expect($normalizeDateTime(null), isNull);
+  });
+
   test('normalizeEnum handles enum values', () {
     expect($normalizeEnum(_State.ready), 'ready');
   });

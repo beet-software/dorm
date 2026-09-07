@@ -209,6 +209,11 @@ abstract class _Student {
 Applying `Filter.text('school7319004#Paul', key: '_query_sbn')` compares the materialized value for
 the selected school and name prefix.
 
+`DerivedTransform.date` normalizes a `DateTime` token as `YYYYMMDD`, and
+`DerivedTransform.datetime` normalizes it as `YYYYMMDDHHmmssSSS`. Both values
+use the local date and time components and can be joined with other tokens in
+a derived field.
+
 ### Composite fields
 
 The `ModelField` annotation is used to link a database composite column to a Dart field within a

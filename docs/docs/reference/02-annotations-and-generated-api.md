@@ -34,13 +34,16 @@ generator.
 
 | Type | Constructor | Meaning |
 | --- | --- | --- |
-| `DerivedTransform` | `text`, `enumeration` | Transformation category for a derived token. |
+| `DerivedTransform` | `text`, `enumeration`, `date`, `datetime` | Transformation category for a derived token. |
 | `DerivedField` | `const DerivedField({String? name, required List<DerivedToken> referTo, String joinBy = '_'})` | Creates a persisted value from other fields. When `name` is omitted, the annotated getter name is used. |
 | `DerivedToken` | `const DerivedToken(Symbol field, [DerivedTransform? transform])` | Selects one annotated field and an optional transformation. |
 
-`DerivedTransform.text` applies text normalization; `DerivedTransform.enumeration`
-applies enum-style normalization. Derived values are generated on `Model` and
-are available through generated field metadata for filters.
+`DerivedTransform.text` applies text normalization;
+`DerivedTransform.enumeration` applies enum-style normalization;
+`DerivedTransform.date` formats a `DateTime` as `YYYYMMDD`; and
+`DerivedTransform.datetime` formats a `DateTime` as
+`YYYYMMDDHHmmssSSS`. Derived values are generated on `Model` and are available
+through generated field metadata for filters.
 
 ## Polymorphism annotations
 

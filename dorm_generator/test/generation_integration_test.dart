@@ -104,6 +104,23 @@ part 'models.g.dart';
 abstract class _User {
   @Field()
   String get name;
+
+  @Field()
+  DateTime get createdAt;
+
+  @DerivedField(
+    name: '_query/created-date',
+    referTo: [DerivedToken(#createdAt, DerivedTransform.date)],
+  )
+  // ignore: unused_element
+  String get _createdDate;
+
+  @DerivedField(
+    name: '_query/created-datetime',
+    referTo: [DerivedToken(#createdAt, DerivedTransform.datetime)],
+  )
+  // ignore: unused_element
+  String get _createdDateTime;
 }
 
 @Model(name: 'posts', as: #posts)
@@ -131,6 +148,8 @@ abstract class _Post {
         expect(generatedCode, contains('class PostEntity'));
         expect(generatedCode, contains('SimpleCreation<UserData, String>'));
         expect(generatedCode, contains('toMany('));
+        expect(generatedCode, contains(r'$normalizeDate(createdAt)'));
+        expect(generatedCode, contains(r'$normalizeDateTime(createdAt)'));
 
         _expectSuccess(await _runDart(project, ['analyze']), 'dart analyze');
       } finally {

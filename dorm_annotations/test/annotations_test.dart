@@ -84,17 +84,21 @@ void main() {
       referTo: [
         DerivedToken(#firstName, DerivedTransform.text),
         DerivedToken(#status, DerivedTransform.enumeration),
+        DerivedToken(#createdAt, DerivedTransform.date),
+        DerivedToken(#createdAt, DerivedTransform.datetime),
       ],
       joinBy: '|',
     );
 
     expect(annotation.name, 'search_name');
     expect(annotation.joinBy, '|');
-    expect(annotation.referTo, hasLength(2));
+    expect(annotation.referTo, hasLength(4));
     expect(annotation.referTo[0].field, #firstName);
     expect(annotation.referTo[0].transform, DerivedTransform.text);
     expect(annotation.referTo[1].field, #status);
     expect(annotation.referTo[1].transform, DerivedTransform.enumeration);
+    expect(annotation.referTo[2].transform, DerivedTransform.date);
+    expect(annotation.referTo[3].transform, DerivedTransform.datetime);
   });
 
   test('Polymorphic annotations preserve pivot and discriminator metadata', () {
