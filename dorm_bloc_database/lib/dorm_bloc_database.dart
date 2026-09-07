@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-library dorm_bloc_database;
-
 export 'package:bloc/bloc.dart';
 
 export 'src/engine.dart' show Engine;

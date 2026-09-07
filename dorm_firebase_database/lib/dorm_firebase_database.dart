@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-library dorm_firebase_database;
-
 export 'package:firebase_core/firebase_core.dart'
     show Firebase, FirebaseOptions;
 export 'package:firebase_database/firebase_database.dart' show FirebaseDatabase;

@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-library dorm_annotations;
-
 export 'package:copy_with_extension/copy_with_extension.dart';
 export 'package:json_annotation/json_annotation.dart';
 

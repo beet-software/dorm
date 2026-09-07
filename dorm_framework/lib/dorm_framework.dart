@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-library dorm_framework;
-
 export 'src/dependency.dart';
 export 'src/creation.dart';
 export 'src/engine.dart';

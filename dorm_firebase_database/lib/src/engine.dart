@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import 'package:dorm_firebase_database/dorm_firebase_database.dart';
 import 'package:dorm_framework/dorm_framework.dart';
 
+import 'firebase_instance.dart';
 import 'query.dart';
 import 'reference.dart';
 import 'relationship.dart';
