@@ -867,44 +867,34 @@ class UserReviewContent implements ReviewContent, _UserReviewContent {
   Map<String, Object?> toJson() => _$UserReviewContentToJson(this);
 }
 
-class Dorm {
+class Dorm<Q extends BaseQuery<Q>, P extends PageRequest> {
   const Dorm(this._engine);
 
-  final BaseEngine<Query> _engine;
+  final BaseEngine<Q, P> _engine;
 
-  DatabaseEntity<
-    UserData,
-    User,
-    String,
-    Query,
-    SimpleCreation<UserData, String>
-  >
+  DatabaseEntity<UserData, User, String, Q, SimpleCreation<UserData, String>, P>
   get users => DatabaseEntity(const UserEntity(), engine: _engine);
 
   DatabaseEntity<
     ProductData,
     Product,
     String,
-    Query,
-    SimpleCreation<ProductData, String>
+    Q,
+    SimpleCreation<ProductData, String>,
+    P
   >
   get products => DatabaseEntity(const ProductEntity(), engine: _engine);
 
-  DatabaseEntity<
-    CartData,
-    Cart,
-    String,
-    Query,
-    SimpleCreation<CartData, String>
-  >
+  DatabaseEntity<CartData, Cart, String, Q, SimpleCreation<CartData, String>, P>
   get carts => DatabaseEntity(const CartEntity(), engine: _engine);
 
   DatabaseEntity<
     CartItemData,
     CartItem,
     String,
-    Query,
-    SimpleCreation<CartItemData, String>
+    Q,
+    SimpleCreation<CartItemData, String>,
+    P
   >
   get cartItems => DatabaseEntity(const CartItemEntity(), engine: _engine);
 
@@ -912,37 +902,39 @@ class Dorm {
     ReviewData,
     Review,
     String,
-    Query,
-    SimpleCreation<ReviewData, String>
+    Q,
+    SimpleCreation<ReviewData, String>,
+    P
   >
   get reviews => DatabaseEntity(const ReviewEntity(), engine: _engine);
 
-  DormRelations get relations => DormRelations(this);
+  DormRelations<Q, P> get relations => DormRelations<Q, P>(this);
 }
 
-class DormRelations {
+class DormRelations<Q extends BaseQuery<Q>, P extends PageRequest> {
   const DormRelations(this._dorm);
 
-  final Dorm _dorm;
+  final Dorm<Q, P> _dorm;
 
-  RelationPath<Dorm, User, User, Query> get users =>
+  RelationPath<Dorm<Q, P>, User, User, Q> get users =>
       RelationPath.root(_dorm.users.repository, context: _dorm);
 
-  RelationPath<Dorm, Product, Product, Query> get products =>
+  RelationPath<Dorm<Q, P>, Product, Product, Q> get products =>
       RelationPath.root(_dorm.products.repository, context: _dorm);
 
-  RelationPath<Dorm, Cart, Cart, Query> get carts =>
+  RelationPath<Dorm<Q, P>, Cart, Cart, Q> get carts =>
       RelationPath.root(_dorm.carts.repository, context: _dorm);
 
-  RelationPath<Dorm, CartItem, CartItem, Query> get cartItems =>
+  RelationPath<Dorm<Q, P>, CartItem, CartItem, Q> get cartItems =>
       RelationPath.root(_dorm.cartItems.repository, context: _dorm);
 
-  RelationPath<Dorm, Review, Review, Query> get reviews =>
+  RelationPath<Dorm<Q, P>, Review, Review, Q> get reviews =>
       RelationPath.root(_dorm.reviews.repository, context: _dorm);
 }
 
-extension UserRelationPaths<Root> on RelationPath<Dorm, Root, User, Query> {
-  RelationPath<Dorm, Root, Cart, Query> get carts {
+extension UserRelationPaths<Root, Q extends BaseQuery<Q>, P extends PageRequest>
+    on RelationPath<Dorm<Q, P>, Root, User, Q> {
+  RelationPath<Dorm<Q, P>, Root, Cart, Q> get carts {
     return toMany(
       context.carts.repository,
       spec: RelationSpec(
@@ -955,7 +947,7 @@ extension UserRelationPaths<Root> on RelationPath<Dorm, Root, User, Query> {
     );
   }
 
-  RelationPath<Dorm, Root, List<Cart>, Query> get cartsOrEmpty {
+  RelationPath<Dorm<Q, P>, Root, List<Cart>, Q> get cartsOrEmpty {
     return toManyOrEmpty(
       context.carts.repository,
       spec: RelationSpec(
@@ -968,7 +960,7 @@ extension UserRelationPaths<Root> on RelationPath<Dorm, Root, User, Query> {
     );
   }
 
-  RelationPath<Dorm, Root, Review, Query> get reviews {
+  RelationPath<Dorm<Q, P>, Root, Review, Q> get reviews {
     return toMany(
       context.reviews.repository,
       spec: RelationSpec(
@@ -981,7 +973,7 @@ extension UserRelationPaths<Root> on RelationPath<Dorm, Root, User, Query> {
     );
   }
 
-  RelationPath<Dorm, Root, List<Review>, Query> get reviewsOrEmpty {
+  RelationPath<Dorm<Q, P>, Root, List<Review>, Q> get reviewsOrEmpty {
     return toManyOrEmpty(
       context.reviews.repository,
       spec: RelationSpec(
@@ -995,9 +987,13 @@ extension UserRelationPaths<Root> on RelationPath<Dorm, Root, User, Query> {
   }
 }
 
-extension ProductRelationPaths<Root>
-    on RelationPath<Dorm, Root, Product, Query> {
-  RelationPath<Dorm, Root, CartItem, Query> get cartItems {
+extension ProductRelationPaths<
+  Root,
+  Q extends BaseQuery<Q>,
+  P extends PageRequest
+>
+    on RelationPath<Dorm<Q, P>, Root, Product, Q> {
+  RelationPath<Dorm<Q, P>, Root, CartItem, Q> get cartItems {
     return toMany(
       context.cartItems.repository,
       spec: RelationSpec(
@@ -1010,7 +1006,7 @@ extension ProductRelationPaths<Root>
     );
   }
 
-  RelationPath<Dorm, Root, List<CartItem>, Query> get cartItemsOrEmpty {
+  RelationPath<Dorm<Q, P>, Root, List<CartItem>, Q> get cartItemsOrEmpty {
     return toManyOrEmpty(
       context.cartItems.repository,
       spec: RelationSpec(
@@ -1024,8 +1020,9 @@ extension ProductRelationPaths<Root>
   }
 }
 
-extension CartRelationPaths<Root> on RelationPath<Dorm, Root, Cart, Query> {
-  RelationPath<Dorm, Root, User, Query> get user {
+extension CartRelationPaths<Root, Q extends BaseQuery<Q>, P extends PageRequest>
+    on RelationPath<Dorm<Q, P>, Root, Cart, Q> {
+  RelationPath<Dorm<Q, P>, Root, User, Q> get user {
     return toOne(
       context.users.repository,
       spec: RelationSpec(
@@ -1037,7 +1034,7 @@ extension CartRelationPaths<Root> on RelationPath<Dorm, Root, Cart, Query> {
     );
   }
 
-  RelationPath<Dorm, Root, User?, Query> get userOrNull {
+  RelationPath<Dorm<Q, P>, Root, User?, Q> get userOrNull {
     return toOneOrNull(
       context.users.repository,
       spec: RelationSpec(
@@ -1049,7 +1046,7 @@ extension CartRelationPaths<Root> on RelationPath<Dorm, Root, Cart, Query> {
     );
   }
 
-  RelationPath<Dorm, Root, CartItem, Query> get items {
+  RelationPath<Dorm<Q, P>, Root, CartItem, Q> get items {
     return toMany(
       context.cartItems.repository,
       spec: RelationSpec(
@@ -1062,7 +1059,7 @@ extension CartRelationPaths<Root> on RelationPath<Dorm, Root, Cart, Query> {
     );
   }
 
-  RelationPath<Dorm, Root, List<CartItem>, Query> get itemsOrEmpty {
+  RelationPath<Dorm<Q, P>, Root, List<CartItem>, Q> get itemsOrEmpty {
     return toManyOrEmpty(
       context.cartItems.repository,
       spec: RelationSpec(
@@ -1076,9 +1073,13 @@ extension CartRelationPaths<Root> on RelationPath<Dorm, Root, Cart, Query> {
   }
 }
 
-extension CartItemRelationPaths<Root>
-    on RelationPath<Dorm, Root, CartItem, Query> {
-  RelationPath<Dorm, Root, Product, Query> get product {
+extension CartItemRelationPaths<
+  Root,
+  Q extends BaseQuery<Q>,
+  P extends PageRequest
+>
+    on RelationPath<Dorm<Q, P>, Root, CartItem, Q> {
+  RelationPath<Dorm<Q, P>, Root, Product, Q> get product {
     return toOne(
       context.products.repository,
       spec: RelationSpec(
@@ -1090,7 +1091,7 @@ extension CartItemRelationPaths<Root>
     );
   }
 
-  RelationPath<Dorm, Root, Product?, Query> get productOrNull {
+  RelationPath<Dorm<Q, P>, Root, Product?, Q> get productOrNull {
     return toOneOrNull(
       context.products.repository,
       spec: RelationSpec(
@@ -1102,7 +1103,7 @@ extension CartItemRelationPaths<Root>
     );
   }
 
-  RelationPath<Dorm, Root, Cart, Query> get cart {
+  RelationPath<Dorm<Q, P>, Root, Cart, Q> get cart {
     return toOne(
       context.carts.repository,
       spec: RelationSpec(
@@ -1114,7 +1115,7 @@ extension CartItemRelationPaths<Root>
     );
   }
 
-  RelationPath<Dorm, Root, Cart?, Query> get cartOrNull {
+  RelationPath<Dorm<Q, P>, Root, Cart?, Q> get cartOrNull {
     return toOneOrNull(
       context.carts.repository,
       spec: RelationSpec(
@@ -1127,8 +1128,13 @@ extension CartItemRelationPaths<Root>
   }
 }
 
-extension ReviewRelationPaths<Root> on RelationPath<Dorm, Root, Review, Query> {
-  RelationPath<Dorm, Root, User, Query> get user {
+extension ReviewRelationPaths<
+  Root,
+  Q extends BaseQuery<Q>,
+  P extends PageRequest
+>
+    on RelationPath<Dorm<Q, P>, Root, Review, Q> {
+  RelationPath<Dorm<Q, P>, Root, User, Q> get user {
     return toOne(
       context.users.repository,
       spec: RelationSpec(
@@ -1140,7 +1146,7 @@ extension ReviewRelationPaths<Root> on RelationPath<Dorm, Root, Review, Query> {
     );
   }
 
-  RelationPath<Dorm, Root, User?, Query> get userOrNull {
+  RelationPath<Dorm<Q, P>, Root, User?, Q> get userOrNull {
     return toOneOrNull(
       context.users.repository,
       spec: RelationSpec(

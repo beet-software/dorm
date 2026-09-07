@@ -44,7 +44,7 @@ List<String> shellSplit(String string) {
   return tokens;
 }
 
-Future<void> run(Dorm dorm) async {
+Future<void> run(Dorm<Query, OffsetPageRequest> dorm) async {
   final ArgParser parser = ArgParser();
   parser.addCommand('peek');
   parser.addCommand('peekAll');
@@ -171,7 +171,7 @@ void main() async {
   await connection.execute("USE test;");
   try {
     final Engine engine = Engine(connection);
-    final Dorm dorm = Dorm(engine);
+    final Dorm<Query, OffsetPageRequest> dorm = Dorm(engine);
     await run(dorm);
   } finally {
     await connection.close();

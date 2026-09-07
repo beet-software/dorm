@@ -98,17 +98,11 @@ extension UserProperties on User {
   }
 }
 
-class Dorm {
+class Dorm<Q extends BaseQuery<Q>, P extends PageRequest> {
   const Dorm(this._engine);
 
-  final BaseEngine<Query> _engine;
+  final BaseEngine<Q, P> _engine;
 
-  DatabaseEntity<
-    UserData,
-    User,
-    String,
-    Query,
-    SimpleCreation<UserData, String>
-  >
+  DatabaseEntity<UserData, User, String, Q, SimpleCreation<UserData, String>, P>
   get users => DatabaseEntity(const UserEntity(), engine: _engine);
 }

@@ -8,7 +8,7 @@ import 'error.dart';
 import 'mapping.dart';
 import 'query.dart';
 
-class Reference implements BaseReference<Query> {
+class Reference implements BaseReference<Query, OffsetPageRequest> {
   final http.Client client;
   final Uri baseUri;
   final HttpMapping mapping;
@@ -21,13 +21,14 @@ class Reference implements BaseReference<Query> {
     required this.headers,
   });
 
-  HttpResourceMapping _resource(EntitySchema schema) => mapping.resource(schema);
+  HttpResourceMapping _resource(EntitySchema schema) =>
+      mapping.resource(schema);
 
   Uri _uri(String path, {Map<String, String> query = const {}}) {
     final String relative = path.startsWith('/') ? path.substring(1) : path;
-    return baseUri.resolve(relative).replace(
-      queryParameters: query.isEmpty ? null : query,
-    );
+    return baseUri
+        .resolve(relative)
+        .replace(queryParameters: query.isEmpty ? null : query);
   }
 
   String _path(String path, Object? id) {
@@ -106,7 +107,8 @@ class Reference implements BaseReference<Query> {
         .toList(growable: false);
   }
 
-  Map<String, Object?> _bodyForModel<Data, Model extends Data, I extends Object>(
+  Map<String, Object?>
+  _bodyForModel<Data, Model extends Data, I extends Object>(
     Entity<Data, Model, I, Creation<Data, I>> entity,
     Model model,
     HttpResourceMapping resource,
@@ -189,11 +191,15 @@ class Reference implements BaseReference<Query> {
     }
   }
 
-  Map<String, String> _queryParameters<Data, Model extends Data, I extends Object>(
+  Map<String, String>
+  _queryParameters<Data, Model extends Data, I extends Object>(
     Entity<Data, Model, I, Creation<Data, I>> entity,
-    BaseFilter<Query> filter,
-  ) {
-    final Query query = filter.accept(Query(schema: entity.schema));
+    BaseFilter<Query> filter, {
+    QueryOptions options = const QueryOptions(),
+  }) {
+    final Query query = options.apply(
+      filter.accept(Query(schema: entity.schema)),
+    );
     return mapping.queryCodec.encode(query, entity.schema);
   }
 
@@ -222,15 +228,37 @@ class Reference implements BaseReference<Query> {
   @override
   Future<List<Model>> peekAll<Data, Model extends Data, I extends Object>(
     Entity<Data, Model, I, Creation<Data, I>> entity,
-    BaseFilter<Query> filter,
-  ) async {
+    BaseFilter<Query> filter, [
+    QueryOptions options = const QueryOptions(),
+  ]) async {
     final HttpResourceMapping resource = _resource(entity.schema);
     final http.Response response = await _request(
       resource.collection,
       entity.schema,
-      query: _queryParameters(entity, filter),
+      query: _queryParameters(entity, filter, options: options),
     );
     return _decodeModels(entity, _decode(response));
+  }
+
+  @override
+  Future<Page<Model>> peekPage<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    BaseFilter<Query> filter,
+    OffsetPageRequest request,
+  ) async {
+    final List<Model> models = await peekAll(
+      entity,
+      filter,
+      QueryOptions(
+        orderBy: request.orderBy,
+        limit: request.size + 1,
+        offset: request.offset,
+      ),
+    );
+    return Page(
+      items: models.take(request.size).toList(),
+      hasNext: models.length > request.size,
+    );
   }
 
   @override
@@ -241,12 +269,14 @@ class Reference implements BaseReference<Query> {
     final http.Response response = await _request(resource.keys, entity.schema);
     final Object? body = mapping.jsonCodec.keys(_decode(response));
     if (body is! List) throw const FormatException('Expected a JSON list.');
-    return body.map((value) {
-      if (value is Map) {
-        return _decodeIdentity(entity, _map(value));
-      }
-      return value as I;
-    }).toList(growable: false);
+    return body
+        .map((value) {
+          if (value is Map) {
+            return _decodeIdentity(entity, _map(value));
+          }
+          return value as I;
+        })
+        .toList(growable: false);
   }
 
   @override
@@ -399,7 +429,9 @@ class Reference implements BaseReference<Query> {
     final http.Response response = await _request(
       endpoint,
       entity.schema,
-      body: models.map((model) => _bodyForModel(entity, model, resource)).toList(),
+      body: models
+          .map((model) => _bodyForModel(entity, model, resource))
+          .toList(),
     );
     final Object? body = _decode(response);
     if (body == null) return models;
@@ -424,8 +456,9 @@ class Reference implements BaseReference<Query> {
   @override
   Stream<List<Model>> pullAll<Data, Model extends Data, I extends Object>(
     Entity<Data, Model, I, Creation<Data, I>> entity,
-    BaseFilter<Query> filter,
-  ) async* {
-    yield await peekAll(entity, filter);
+    BaseFilter<Query> filter, [
+    QueryOptions options = const QueryOptions(),
+  ]) async* {
+    yield await peekAll(entity, filter, options);
   }
 }

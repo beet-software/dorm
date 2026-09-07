@@ -21,7 +21,7 @@ The framework does not select an engine automatically. The generated `Dorm` rece
 The application code keeps the same shape after changing engines:
 
 ```dart
-final Dorm dorm = Dorm(engine);
+final Dorm<Query, OffsetPageRequest> dorm = Dorm(engine);
 
 final User created = await dorm.users.repository.put(
   Creation.auto(
@@ -57,7 +57,7 @@ in-process store:
 import 'package:dorm_memory_database/dorm_memory_database.dart';
 
 final Engine engine = Engine();
-final Dorm dorm = Dorm(engine);
+final Dorm<Query, OffsetPageRequest> dorm = Dorm(engine);
 ```
 
 The engine generates UUID string identities for simple generated keys and
@@ -76,7 +76,7 @@ Construct the engine directly:
 
 ```dart
 final Engine engine = Engine();
-final Dorm dorm = Dorm(engine);
+final Dorm<Query, OffsetPageRequest> dorm = Dorm(engine);
 ```
 
 This engine keeps records in process memory. It does not require a database server or network configuration. Its state belongs to the engine instance, so create one instance and pass the same generated `Dorm` through the application code that needs the shared store.
@@ -117,7 +117,7 @@ final MySQLConnection connection = await MySQLConnection.createConnection(
 );
 
 await connection.connect();
-final Dorm dorm = Dorm(Engine(connection));
+final Dorm<Query, OffsetPageRequest> dorm = Dorm(Engine(connection));
 ```
 
 The MySQL engine executes SQL against the connection. Tables must exist before CRUD operations succeed. The package includes a separate schema-generation command for the subset of model declarations it understands.
@@ -138,7 +138,7 @@ engine:
 
 ```dart
 final Connection connection = await Connection.open(endpoint);
-final Dorm dorm = Dorm(Engine(connection));
+final Dorm<Query, OffsetPageRequest> dorm = Dorm(Engine(connection));
 ```
 
 The PostgreSQL engine executes parameterized SQL, supports generated CRUD,
@@ -168,7 +168,7 @@ final Db database = Db(
       'mongodb://127.0.0.1:27017/dorm_example',
 );
 await database.open();
-final Dorm dorm = Dorm(Engine(database));
+final Dorm<Query, OffsetPageRequest> dorm = Dorm(Engine(database));
 ```
 
 The application owns the `Db` lifecycle. The engine stores identities in the
@@ -200,7 +200,7 @@ final Engine engine = Engine(
     'users': HttpResourceMapping(path: 'users'),
   }),
 );
-final Dorm dorm = Dorm(engine);
+final Dorm<Query, OffsetPageRequest> dorm = Dorm(engine);
 ```
 
 The base URI should end with `/` so relative resource paths resolve as
@@ -233,7 +233,7 @@ The common repository API does not imply identical runtime behavior in every eng
 | Streams | State-backed | State-backed | Firebase value events | Initial read only | Initial read only | Initial read only | Initial read only |
 | Filter/query execution | In-memory query | In-memory query | Firebase query | SQL query | PostgreSQL SQL query | MongoDB selector | URL parameters |
 | Public transaction API | No | No | No | No | No | No | No |
-| Pagination | Not supported | Not supported | Not supported | Not supported | Not supported | Not supported | Not supported |
+| Pagination | Offset pages | Offset pages | Offset pages with client-side skipping | Offset pages | Offset pages | Offset pages | Offset pages |
 | Composite identity with `put` | `Creation.explicit`; automatic generation is rejected | `Creation.explicit`; automatic generation is rejected | Composite identities unsupported | `Creation.explicit`; automatic generation is rejected | `Creation.explicit`; automatic generation is rejected | `Creation.explicit`; automatic generation is rejected | `Creation.explicit`; automatic generation is rejected |
 
 The matrix describes current implementation behavior. It is not a compatibility promise for a future release.

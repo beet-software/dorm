@@ -1,5 +1,6 @@
 import 'package:decimal/intl.dart';
 import 'package:dorm_framework/dorm_framework.dart';
+import 'package:dorm_bloc_database/dorm_bloc_database.dart' as dorm_bloc;
 import 'package:flutter/material.dart';
 import 'package:flutter_form_bloc/flutter_form_bloc.dart' as ffb;
 import 'package:flutter_spinbox/flutter_spinbox.dart';
@@ -54,8 +55,12 @@ class OrderScreen extends StatelessWidget {
       providers: [
         StreamProvider<AsyncSnapshot<List<Product>>>(
           initialData: const AsyncSnapshot.waiting(),
-          create: (_) =>
-              GetIt.instance.get<Dorm>().products.repository.pullAll().map(
+          create: (_) => GetIt.instance
+              .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
+              .products
+              .repository
+              .pullAll()
+              .map(
                 (event) =>
                     AsyncSnapshot.withData(ConnectionState.active, event),
               ),
@@ -190,7 +195,9 @@ class OrderScreen extends StatelessWidget {
                                       );
                                   if (data == null) return;
                                   await GetIt.instance
-                                      .get<Dorm>()
+                                      .get<
+                                        Dorm<dorm_bloc.Query, OffsetPageRequest>
+                                      >()
                                       .products
                                       .repository
                                       .put(
@@ -268,14 +275,16 @@ class _ProductList extends StatelessWidget {
                               );
                           if (data == null) return;
                           await GetIt.instance
-                              .get<Dorm>()
+                              .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
                               .products
                               .repository
                               .push(
-                                GetIt.instance.get<Dorm>().products.convert(
-                                  product,
-                                  data,
-                                ),
+                                GetIt.instance
+                                    .get<
+                                      Dorm<dorm_bloc.Query, OffsetPageRequest>
+                                    >()
+                                    .products
+                                    .convert(product, data),
                               );
                         } else {
                           final bool? confirm = await showDialog(
@@ -306,7 +315,7 @@ class _ProductList extends StatelessWidget {
                           if (!(confirm ?? false)) return;
 
                           await GetIt.instance
-                              .get<Dorm>()
+                              .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
                               .products
                               .repository
                               .pop(product.id);

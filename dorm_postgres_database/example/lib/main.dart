@@ -40,7 +40,7 @@ Future<void> main() async {
       )
     ''');
 
-    final Dorm dorm = Dorm(Engine(connection));
+    final Dorm<Query, OffsetPageRequest> dorm = Dorm(Engine(connection));
     final User user = await dorm.users.repository.put(
       Creation.auto<UserData, String>(
         dependency: const UserDependency(),

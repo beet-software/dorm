@@ -1,4 +1,5 @@
 import 'package:dorm_framework/dorm_framework.dart';
+import 'package:dorm_bloc_database/dorm_bloc_database.dart' as dorm_bloc;
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
@@ -20,7 +21,7 @@ class DashboardScreen extends StatelessWidget {
         StreamProvider<AsyncSnapshot<_OrderView>>(
           initialData: const AsyncSnapshot.waiting(),
           create: (_) => GetIt.instance
-              .get<Dorm>()
+              .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
               .relations
               .users
               .carts
@@ -36,7 +37,7 @@ class DashboardScreen extends StatelessWidget {
         StreamProvider<AsyncSnapshot<_CountView>>(
           initialData: const AsyncSnapshot.waiting(),
           create: (_) => GetIt.instance
-              .get<Dorm>()
+              .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
               .relations
               .products
               .cartItems

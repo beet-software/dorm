@@ -5,13 +5,14 @@ import 'query.dart';
 import 'reference.dart';
 import 'relationship.dart';
 
-class Engine implements BaseEngine<Query> {
+class Engine implements BaseEngine<Query, OffsetPageRequest> {
   final SessionExecutor executor;
 
   const Engine(this.executor);
 
   @override
-  BaseReference<Query> createReference() => Reference(executor);
+  BaseReference<Query, OffsetPageRequest> createReference() =>
+      Reference(executor);
 
   @override
   BaseRelationship<Query> createRelationship() => Relationship(executor);

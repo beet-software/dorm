@@ -26,7 +26,7 @@ import 'offline.dart';
 import 'query.dart';
 
 /// A [BaseReference] that uses Firebase Realtime Database as engine.
-class Reference implements BaseReference<Query> {
+class Reference implements BaseReference<Query, OffsetPageRequest> {
   final FirebaseInstance instance;
   final fd.DatabaseReference _ref;
 
@@ -68,10 +68,14 @@ class Reference implements BaseReference<Query> {
   @override
   Future<List<Model>> peekAll<Data, Model extends Data, I extends Object>(
     Entity<Data, Model, I, Creation<Data, I>> entity,
-    BaseFilter<Query> filter,
-  ) {
-    final Query query = filter.accept(Query(_refOf(entity)));
-    return query.query
+    BaseFilter<Query> filter, [
+    QueryOptions options = const QueryOptions(),
+  ]) {
+    final Query query = QueryOptions(
+      orderBy: options.orderBy,
+      limit: options.limit == null ? null : options.limit! + options.offset,
+    ).apply(filter.accept(Query(_refOf(entity))));
+    final Future<List<Model>> read = query.query
         .get()
         .then((snapshot) {
           return {
@@ -87,6 +91,36 @@ class Reference implements BaseReference<Query> {
             return entity.fromJson(key, value);
           }).toList();
         });
+    return read.then(
+      (models) => models
+          .skip(options.offset)
+          .take(options.limit ?? models.length)
+          .toList(),
+    );
+  }
+
+  @override
+  Future<Page<Model>> peekPage<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    BaseFilter<Query> filter,
+    OffsetPageRequest request,
+  ) async {
+    final List<Model> models = await peekAll(
+      entity,
+      filter,
+      QueryOptions(
+        orderBy: request.orderBy,
+        limit: request.size + request.offset + 1,
+      ),
+    );
+    final List<Model> page = models
+        .skip(request.offset)
+        .take(request.size + 1)
+        .toList();
+    return Page(
+      items: page.take(request.size).toList(),
+      hasNext: page.length > request.size,
+    );
   }
 
   @override
@@ -169,9 +203,10 @@ class Reference implements BaseReference<Query> {
   @override
   Stream<List<Model>> pullAll<Data, Model extends Data, I extends Object>(
     Entity<Data, Model, I, Creation<Data, I>> entity,
-    BaseFilter<Query> filter,
-  ) {
-    final Query query = filter.accept(Query(_refOf(entity)));
+    BaseFilter<Query> filter, [
+    QueryOptions options = const QueryOptions(),
+  ]) {
+    final Query query = options.apply(filter.accept(Query(_refOf(entity))));
     return _onValueOf(query.query)
         .map((snapshot) {
           return {

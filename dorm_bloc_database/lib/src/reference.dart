@@ -188,7 +188,8 @@ class _EntityReference<Data, Model extends Data, I extends Object>
 }
 
 /// A [BaseReference] implementation backed by a [Bloc].
-class Reference extends Cubit<_State> implements BaseReference<Query> {
+class Reference extends Cubit<_State>
+    implements BaseReference<Query, OffsetPageRequest> {
   Reference() : super(const _State({}));
 
   _EntityReference<Data, Model, I>
@@ -217,17 +218,44 @@ class Reference extends Cubit<_State> implements BaseReference<Query> {
 
   @override
   Future<List<Model>> peekAll<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I, Creation<Data, I>> entity,
-    BaseFilter<Query> filter,
-  ) async {
+      Entity<Data, Model, I, Creation<Data, I>> entity,
+      BaseFilter<Query> filter,
+      [QueryOptions options = const QueryOptions()]) async {
     final _EntityReference<Data, Model, I> bloc = _access(entity);
-    final Query query = filter.accept(const Query());
+    final Query query = QueryOptions(
+      orderBy: options.orderBy,
+      limit: options.limit == null ? null : options.limit! + options.offset,
+    ).apply(filter.accept(const Query()));
     return query
         .operator(bloc.state.models
             .map((key, value) => MapEntry(key, entity.toJson(value))))
         .entries
+        .skip(options.offset)
+        .take(options.limit ?? bloc.state.models.length)
         .map((entry) => entity.fromJson(entry.key as I, entry.value))
         .toList();
+  }
+
+  @override
+  Future<Page<Model>> peekPage<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    BaseFilter<Query> filter,
+    OffsetPageRequest request,
+  ) async {
+    final List<Model> models = await peekAll(
+      entity,
+      filter,
+      QueryOptions(
+        orderBy: request.orderBy,
+        limit: request.size + request.offset + 1,
+      ),
+    );
+    final List<Model> page =
+        models.skip(request.offset).take(request.size + 1).toList();
+    return Page(
+      items: page.take(request.size).toList(),
+      hasNext: page.length > request.size,
+    );
   }
 
   @override
@@ -277,15 +305,20 @@ class Reference extends Cubit<_State> implements BaseReference<Query> {
 
   @override
   Stream<List<Model>> pullAll<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I, Creation<Data, I>> entity,
-    BaseFilter<Query> filter,
-  ) {
+      Entity<Data, Model, I, Creation<Data, I>> entity,
+      BaseFilter<Query> filter,
+      [QueryOptions options = const QueryOptions()]) {
     final _EntityReference<Data, Model, I> bloc = _access(entity);
-    final Query query = filter.accept(const Query());
+    final Query query = QueryOptions(
+      orderBy: options.orderBy,
+      limit: options.limit == null ? null : options.limit! + options.offset,
+    ).apply(filter.accept(const Query()));
     return bloc.dataStream.map((models) => query
         .operator(
             models.map((key, value) => MapEntry(key, entity.toJson(value))))
         .entries
+        .skip(options.offset)
+        .take(options.limit ?? models.length)
         .map((entry) => entity.fromJson(entry.key as I, entry.value))
         .toList());
   }

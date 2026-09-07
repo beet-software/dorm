@@ -102,19 +102,52 @@ The range classes correspond to the value being compared:
 
 The `from` and `to` values are nullable. A supplied bound limits that side of the range.
 
-## Limit and sort a result
+## Sort and limit a result
 
-Apply `limit` and `sort` to a filter before passing it to the repository:
+Pass read options as the second argument to `peekAll`:
 
 ```dart
 final List<Product> firstProducts = await dorm.products.repository.peekAll(
-  Filter.empty()
-      .sort(key: 'name')
-      .limit(10),
+  Filter.empty(),
+  const QueryOptions(
+    orderBy: [OrderBy('name')],
+    limit: 10,
+  ),
 );
 ```
 
-`sort` supplies the field used for ordering. `limit` restricts the number of records returned by the operation. Both modifiers are part of the filter passed to the engine.
+`Filter` describes which records match. `QueryOptions` describes ordering
+and the maximum number of records returned. Use
+`SortDirection.descending` for a descending order.
+
+## Read an offset page
+
+Use `peekPage` when the caller needs a page together with continuation
+metadata:
+
+```dart
+final Page<Product> page = await dorm.products.repository.peekPage(
+  Filter.empty(),
+  const OffsetPageRequest(
+    size: 10,
+    offset: 20,
+    orderBy: [OrderBy('name')],
+  ),
+);
+
+final List<Product> products = page.items;
+final bool hasMore = page.hasNext;
+```
+
+`size` is the maximum number of items in the page. `offset` skips that
+many matching records before the page starts. The engine reads one extra item
+when needed to calculate `hasNext`; that item is not included in `items`.
+
+Offset pages are supported by the current engines through their native query
+mechanisms or a client-side equivalent. The generated `Dorm<Q, P>` and repository
+types use the engine's supported page-request type. Current engines expose
+`OffsetPageRequest`, so passing `CursorPageRequest` is rejected by the analyzer
+when that type is preserved.
 
 ## Filter a relation source
 

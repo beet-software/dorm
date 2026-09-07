@@ -38,7 +38,7 @@ final Connection connection = await Connection.open(
   ),
 );
 
-final Dorm dorm = Dorm(Engine(connection));
+final Dorm<Query, OffsetPageRequest> dorm = Dorm(Engine(connection));
 ```
 
 To use pooling, open a `Pool` instead. `Connection` and `Pool` both satisfy

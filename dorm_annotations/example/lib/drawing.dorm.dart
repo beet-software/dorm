@@ -225,17 +225,18 @@ class Circle implements Shape, _Circle {
   Map<String, Object?> toJson() => _$CircleToJson(this);
 }
 
-class Dorm {
+class Dorm<Q extends BaseQuery<Q>, P extends PageRequest> {
   const Dorm(this._engine);
 
-  final BaseEngine<Query> _engine;
+  final BaseEngine<Q, P> _engine;
 
   DatabaseEntity<
     DrawingData,
     Drawing,
     String,
-    Query,
-    SimpleCreation<DrawingData, String>
+    Q,
+    SimpleCreation<DrawingData, String>,
+    P
   >
   get drawings => DatabaseEntity(const DrawingEntity(), engine: _engine);
 }

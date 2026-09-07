@@ -29,4 +29,15 @@ void main() {
     );
     expect(query.params, {'prefix': 'ada'});
   });
+
+  test('adds ordering and offset clauses', () {
+    final Query query = const Query(
+      'SELECT * FROM users',
+    ).sorted('created-at', ascending: false).limit(10).offset(20);
+
+    expect(
+      query.query,
+      'SELECT * FROM users ORDER BY created-at DESC LIMIT 10 OFFSET 20',
+    );
+  });
 }

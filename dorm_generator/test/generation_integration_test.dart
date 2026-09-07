@@ -94,7 +94,6 @@ dependency_overrides:
           '${lib.path}${Platform.pathSeparator}models.dart',
         ).writeAsString('''
 import 'package:dorm_annotations/dorm_annotations.dart';
-import 'package:dorm_bloc_database/dorm_bloc_database.dart';
 import 'package:dorm_framework/dorm_framework.dart';
 
 part 'models.dorm.dart';
@@ -146,12 +145,72 @@ abstract class _Post {
         expect(generatedCode, contains('class UserData'));
         expect(generatedCode, contains('class UserEntity'));
         expect(generatedCode, contains('class PostEntity'));
+        expect(
+          generatedCode,
+          contains('class Dorm<Q extends BaseQuery<Q>, P extends PageRequest>'),
+        );
+        expect(generatedCode, contains('BaseEngine<Q, P>'));
+        expect(generatedCode, contains('DormRelations<Q, P>'));
+        expect(generatedCode, contains('RelationPath<Dorm<Q, P>'));
+        expect(generatedCode, isNot(contains('BaseEngine<Query, P>')));
         expect(generatedCode, contains('SimpleCreation<UserData, String>'));
         expect(generatedCode, contains('toMany('));
         expect(generatedCode, contains(r'$normalizeDate(createdAt)'));
         expect(generatedCode, contains(r'$normalizeDateTime(createdAt)'));
 
         _expectSuccess(await _runDart(project, ['analyze']), 'dart analyze');
+
+        await File(
+          '${lib.path}${Platform.pathSeparator}valid_page.dart',
+        ).writeAsString('''
+import 'package:dorm_framework/dorm_framework.dart';
+import 'package:dorm_bloc_database/dorm_bloc_database.dart' as dorm_bloc;
+
+import 'models.dart';
+
+Future<Page<User>> readPage(
+  Dorm<dorm_bloc.Query, OffsetPageRequest> dorm,
+) {
+  return dorm.users.repository.peekPage(
+    const BaseFilter.empty(),
+    const OffsetPageRequest(size: 1),
+  );
+}
+
+Dorm<dorm_bloc.Query, OffsetPageRequest> createDorm() {
+  return Dorm(dorm_bloc.Engine());
+}
+''');
+        _expectSuccess(
+          await _runDart(project, ['analyze']),
+          'dart analyze with an offset page request',
+        );
+
+        await File(
+          '${lib.path}${Platform.pathSeparator}invalid_cursor_page.dart',
+        ).writeAsString('''
+import 'package:dorm_framework/dorm_framework.dart';
+import 'package:dorm_bloc_database/dorm_bloc_database.dart' as dorm_bloc;
+
+import 'models.dart';
+
+Future<Page<User>> readCursor(
+  Dorm<dorm_bloc.Query, OffsetPageRequest> dorm,
+) {
+  return dorm.users.repository.peekPage(
+    const BaseFilter.empty(),
+    const CursorPageRequest(size: 1),
+  );
+}
+''');
+        final ProcessResult invalidPageAnalysis = await _runDart(project, [
+          'analyze',
+        ]);
+        expect(invalidPageAnalysis.exitCode, isNot(0));
+        expect(
+          '${invalidPageAnalysis.stdout}\n${invalidPageAnalysis.stderr}',
+          contains('CursorPageRequest'),
+        );
       } finally {
         await project.delete(recursive: true);
       }

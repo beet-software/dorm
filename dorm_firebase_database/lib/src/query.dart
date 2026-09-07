@@ -114,7 +114,23 @@ class Query implements BaseQuery<Query> {
   }
 
   @override
-  Query sorted(String key) {
+  Query offset(int count) {
+    if (count < 0) {
+      throw ArgumentError.value(count, 'count', 'Offset must be non-negative.');
+    }
+    if (count == 0) return this;
+    throw UnsupportedError(
+      'Firebase Realtime Database does not provide an offset query.',
+    );
+  }
+
+  @override
+  Query sorted(String key, {bool ascending = true}) {
+    if (!ascending) {
+      throw UnsupportedError(
+        'Firebase Realtime Database does not provide descending queries.',
+      );
+    }
     return Query(query.orderByChild(key));
   }
 }

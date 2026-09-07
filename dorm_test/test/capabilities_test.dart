@@ -6,7 +6,6 @@ void main() {
     const EngineCapabilities capabilities = EngineCapabilities();
 
     expect(capabilities.compositeIdentities, isFalse);
-    expect(capabilities.negativeLimits, isFalse);
     expect(capabilities.reactiveStreams, isFalse);
     expect(capabilities.atomicBatchWrites, isFalse);
     expect(capabilities.atomicPatch, isFalse);

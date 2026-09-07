@@ -486,14 +486,15 @@ class ComplianceLinkEntity
 }
 
 class ComplianceFixtures<Q extends BaseQuery<Q>> {
-  final BaseEngine<Q> engine;
+  final BaseEngine<Q, OffsetPageRequest> engine;
 
   late final DatabaseEntity<
     ComplianceItemData,
     ComplianceItem,
     String,
     Q,
-    SimpleCreation<ComplianceItemData, String>
+    SimpleCreation<ComplianceItemData, String>,
+    OffsetPageRequest
   >
   items = DatabaseEntity(const ComplianceItemEntity(), engine: engine);
 
@@ -502,7 +503,8 @@ class ComplianceFixtures<Q extends BaseQuery<Q>> {
     ComplianceParent,
     String,
     Q,
-    SimpleCreation<ComplianceParentData, String>
+    SimpleCreation<ComplianceParentData, String>,
+    OffsetPageRequest
   >
   parents = DatabaseEntity(const ComplianceParentEntity(), engine: engine);
 
@@ -511,7 +513,8 @@ class ComplianceFixtures<Q extends BaseQuery<Q>> {
     ComplianceProfile,
     String,
     Q,
-    SimpleCreation<ComplianceProfileData, String>
+    SimpleCreation<ComplianceProfileData, String>,
+    OffsetPageRequest
   >
   profiles = DatabaseEntity(const ComplianceProfileEntity(), engine: engine);
 
@@ -520,7 +523,8 @@ class ComplianceFixtures<Q extends BaseQuery<Q>> {
     ComplianceChild,
     String,
     Q,
-    SimpleCreation<ComplianceChildData, String>
+    SimpleCreation<ComplianceChildData, String>,
+    OffsetPageRequest
   >
   children = DatabaseEntity(const ComplianceChildEntity(), engine: engine);
 
@@ -529,7 +533,8 @@ class ComplianceFixtures<Q extends BaseQuery<Q>> {
     ComplianceLink,
     String,
     Q,
-    SimpleCreation<ComplianceLinkData, String>
+    SimpleCreation<ComplianceLinkData, String>,
+    OffsetPageRequest
   >
   links = DatabaseEntity(const ComplianceLinkEntity(), engine: engine);
 
@@ -538,7 +543,8 @@ class ComplianceFixtures<Q extends BaseQuery<Q>> {
     ComplianceComposite,
     CompositeKey,
     Q,
-    ExplicitCreation<ComplianceCompositeData, CompositeKey>
+    ExplicitCreation<ComplianceCompositeData, CompositeKey>,
+    OffsetPageRequest
   >
   composites = DatabaseEntity(
     const ComplianceCompositeEntity(),

@@ -1,4 +1,5 @@
 import 'package:dorm_framework/dorm_framework.dart';
+import 'package:dorm_bloc_database/dorm_bloc_database.dart' as dorm_bloc;
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
@@ -18,7 +19,7 @@ class CartScreen extends StatelessWidget {
         StreamProvider<AsyncSnapshot<List<Join<CartItem, Product?>>>>(
           initialData: const AsyncSnapshot.waiting(),
           create: (_) => GetIt.instance
-              .get<Dorm>()
+              .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
               .relations
               .cartItems
               .productOrNull
@@ -64,15 +65,19 @@ class CartScreen extends StatelessWidget {
               ).push(MaterialPageRoute(builder: (_) => const OrderScreen()));
               if (result == null) return;
 
-              await GetIt.instance.get<Dorm>().cartItems.repository.put(
-                Creation.auto(
-                  dependency: CartItemDependency(
-                    productId: result.productId,
-                    cartId: cartId,
-                  ),
-                  data: CartItemData(amount: result.amount),
-                ),
-              );
+              await GetIt.instance
+                  .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
+                  .cartItems
+                  .repository
+                  .put(
+                    Creation.auto(
+                      dependency: CartItemDependency(
+                        productId: result.productId,
+                        cartId: cartId,
+                      ),
+                      data: CartItemData(amount: result.amount),
+                    ),
+                  );
             },
           ),
         ),

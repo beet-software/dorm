@@ -29,7 +29,7 @@ import 'package:flutter/widgets.dart';
 
 import 'models.dart';
 
-Future<Dorm> createDorm() async {
+Future<Dorm<Query, OffsetPageRequest>> createDorm() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
@@ -48,7 +48,7 @@ The Firebase platform configuration is supplied by the Flutter application. Use 
 After `createDorm` completes, repository calls use Firebase storage:
 
 ```dart
-final Dorm dorm = await createDorm();
+final Dorm<Query, OffsetPageRequest> dorm = await createDorm();
 
 final User user = await dorm.users.repository.put(
   Creation.auto(
@@ -103,7 +103,7 @@ await Firebase.initializeApp();
 FirebaseDatabase.instance.useDatabaseEmulator('localhost', 9000);
 
 const FirebaseInstance instance = FirebaseInstance();
-const Dorm dorm = Dorm(Engine(instance, path: 'prod'));
+const Dorm<Query, OffsetPageRequest> dorm = Dorm(Engine(instance, path: 'prod'));
 ```
 
 The emulator connection changes the Firebase endpoint. It does not change the generated repository API.

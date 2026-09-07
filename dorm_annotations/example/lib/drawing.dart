@@ -1,8 +1,6 @@
 import 'package:dorm_annotations/dorm_annotations.dart';
 import 'package:dorm_framework/dorm_framework.dart';
 
-import 'query.dart';
-
 part 'drawing.dorm.dart';
 
 part 'drawing.g.dart';

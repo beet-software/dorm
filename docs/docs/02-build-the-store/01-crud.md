@@ -13,7 +13,7 @@ import 'package:dorm_memory_database/dorm_memory_database.dart';
 
 import 'package:dorm_store/models.dart';
 
-final Dorm dorm = Dorm(Engine());
+final Dorm<Query, OffsetPageRequest> dorm = Dorm(Engine());
 
 final userRepository = dorm.users.repository;
 final productRepository = dorm.products.repository;

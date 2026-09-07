@@ -21,13 +21,14 @@ import 'query.dart';
 import 'reference.dart';
 import 'relationship.dart';
 
-class Engine implements BaseEngine<Query> {
+class Engine implements BaseEngine<Query, OffsetPageRequest> {
   final MySQLConnection connection;
 
   const Engine(this.connection);
 
   @override
-  BaseReference<Query> createReference() => Reference(connection);
+  BaseReference<Query, OffsetPageRequest> createReference() =>
+      Reference(connection);
 
   @override
   BaseRelationship<Query> createRelationship() => Relationship(connection);

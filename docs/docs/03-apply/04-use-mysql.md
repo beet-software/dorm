@@ -58,7 +58,7 @@ Future<void> main() async {
 
   await connection.connect();
   try {
-    final Dorm dorm = Dorm(Engine(connection));
+    final Dorm<Query, OffsetPageRequest> dorm = Dorm(Engine(connection));
     await runStoreFlow(dorm);
   } finally {
     await connection.close();

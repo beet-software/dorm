@@ -75,6 +75,17 @@ void main() {
     expect(query.limitCount, 5);
   });
 
+  test('stores descending sort and offset', () {
+    final Query query = const Query()
+        .sorted('price', ascending: false)
+        .limit(5)
+        .offset(10);
+
+    expect(query.sort, {'price': -1});
+    expect(query.limitCount, 5);
+    expect(query.offsetCount, 10);
+  });
+
   test('rejects negative limits', () {
     expect(() => const Query().limit(-1), throwsArgumentError);
   });

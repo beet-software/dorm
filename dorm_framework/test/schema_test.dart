@@ -25,7 +25,10 @@ class _Query extends BaseQuery<_Query> {
   _Query limit(int count) => this;
 
   @override
-  _Query sorted(String key) => this;
+  _Query offset(int count) => this;
+
+  @override
+  _Query sorted(String key, {bool ascending = true}) => this;
 }
 
 void main() {

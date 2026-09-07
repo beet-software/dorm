@@ -20,11 +20,11 @@ import 'reference.dart';
 import 'query.dart';
 import 'relationship.dart';
 
-class Engine implements BaseEngine<Query> {
+class Engine implements BaseEngine<Query, OffsetPageRequest> {
   final Reference _reference = Reference();
 
   @override
-  BaseReference<Query> createReference() => _reference;
+  BaseReference<Query, OffsetPageRequest> createReference() => _reference;
 
   @override
   BaseRelationship<Query> createRelationship() => const Relationship();

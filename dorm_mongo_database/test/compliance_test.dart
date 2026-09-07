@@ -38,7 +38,7 @@ class _MongoSession implements EngineTestSession<Query> {
   ];
 
   @override
-  BaseEngine<Query> get engine => _engine;
+  BaseEngine<Query, OffsetPageRequest> get engine => _engine;
 
   @override
   EngineCapabilities get capabilities =>

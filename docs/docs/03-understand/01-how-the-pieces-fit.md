@@ -7,8 +7,8 @@ After using generated repositories, filters, and relation paths, it helps to see
 Application code starts with a generated `Dorm` and reaches an entity repository through an accessor:
 
 ```dart
-final Dorm dorm = Dorm(Engine());
-final Repository<UserData, User, String, Query> users =
+final Dorm<Query, OffsetPageRequest> dorm = Dorm(Engine());
+final Repository<UserData, User, String, Query, SimpleCreation<UserData, String>, OffsetPageRequest> users =
     dorm.users.repository;
 ```
 
@@ -71,11 +71,16 @@ The entity is the engine-independent mapping object. It knows the model's table 
 
 The engine implements three backend-facing contracts:
 
-- `BaseReference<Q>` performs CRUD and read operations;
-- `BaseQuery<Q>` receives filter operations such as value, text, date, range, limit, and sort;
+- `BaseReference<Q, P>` performs CRUD and read operations, where `P` is the
+  page-request type accepted by the engine;
+- `BaseQuery<Q>` receives filter operations such as value, text, date, and range; read options apply ordering and windows, and page requests represent offset pages;
 - `BaseRelationship<Q>` resolves relationship associations.
 
-`BaseEngine<Q>` creates the reference and relationship implementations. `DatabaseEntity` keeps those implementations and passes them into each repository. A repository therefore combines generated entity metadata with the engine's reference and relationship behavior.
+`BaseEngine<Q, P>` creates the reference and relationship implementations.
+`DatabaseEntity` keeps those implementations and passes them into each
+repository. A repository therefore combines generated entity metadata with the
+engine's reference and relationship behavior, including the page-request type
+`P`.
 
 For a generated relationship path, the path starts with a repository and adds `RelationSpec` steps. The first read happens when `peekAll` or `pullAll` is called. An engine may use the path's relation plan for a direct table source or fall back to readable repository operations.
 

@@ -32,7 +32,10 @@ class _Query extends BaseQuery<_Query> {
   _Query limit(int count) => _record('limit:$count');
 
   @override
-  _Query sorted(String key) => _record('sort:$key');
+  _Query offset(int count) => _record('offset:$count');
+
+  @override
+  _Query sorted(String key, {bool ascending = true}) => _record('sort:$key');
 }
 
 void main() {
@@ -115,11 +118,11 @@ void main() {
     expect(query.operations, ['date:created_at=$value:month']);
   });
 
-  test('filter modifiers are applied after the wrapped filter', () {
-    final _Query query = const BaseFilter<_Query>.value(
-      true,
-      key: 'active',
-    ).sort(key: 'name').limit(5).accept(_Query());
+  test('query options are applied after the filter', () {
+    final _Query query =
+        const QueryOptions(orderBy: [OrderBy('name')], limit: 5).apply(
+          const BaseFilter<_Query>.value(true, key: 'active').accept(_Query()),
+        );
 
     expect(query.operations, ['value:active=true', 'sort:name', 'limit:5']);
   });

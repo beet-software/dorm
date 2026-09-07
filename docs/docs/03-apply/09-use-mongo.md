@@ -32,7 +32,7 @@ final Db database = Db(
 );
 await database.open();
 
-final Dorm dorm = Dorm(Engine(database));
+final Dorm<Query, OffsetPageRequest> dorm = Dorm(Engine(database));
 ```
 
 Keep the `Db` open while generated repositories can issue operations. Close it

@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:dorm_annotations/dorm_annotations.dart';
-import 'package:dorm_bloc_database/dorm_bloc_database.dart';
+import 'package:dorm_bloc_database/dorm_bloc_database.dart' as dorm_bloc;
 import 'package:dorm_framework/dorm_framework.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
@@ -18,7 +18,7 @@ class _Query extends ValueNotifier<AsyncSnapshot<List<User>>> {
 
   _Query() : super(const AsyncSnapshot.waiting()) {
     _subscription = GetIt.instance
-        .get<Dorm>()
+        .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
         .users
         .repository
         .pullAll()
@@ -37,10 +37,10 @@ class _Query extends ValueNotifier<AsyncSnapshot<List<User>>> {
       // Waits one second without user input to evaluate the query
       final String query = $normalizeText(text) ?? text;
       _subscription = GetIt.instance
-          .get<Dorm>()
+          .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
           .users
           .repository
-          .pullAll(Filter.text(query, key: '_q-username'))
+          .pullAll(dorm_bloc.Filter.text(query, key: '_q-username'))
           .map((users) => AsyncSnapshot.withData(ConnectionState.active, users))
           .listen((snapshot) => value = snapshot);
 
@@ -138,9 +138,16 @@ class UsersScreen extends StatelessWidget {
                 ),
               );
               if (data == null) return;
-              await GetIt.instance.get<Dorm>().users.repository.put(
-                Creation.auto(dependency: const UserDependency(), data: data),
-              );
+              await GetIt.instance
+                  .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
+                  .users
+                  .repository
+                  .put(
+                    Creation.auto(
+                      dependency: const UserDependency(),
+                      data: data,
+                    ),
+                  );
             },
           ),
         ),

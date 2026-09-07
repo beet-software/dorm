@@ -16,8 +16,8 @@
 
 import 'package:dorm_framework/dorm_framework.dart';
 
-abstract class BaseEngine<Q extends BaseQuery<Q>> {
-  BaseReference<Q> createReference();
+abstract class BaseEngine<Q extends BaseQuery<Q>, P extends PageRequest> {
+  BaseReference<Q, P> createReference();
 
   BaseRelationship<Q> createRelationship();
 }

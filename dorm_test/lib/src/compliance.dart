@@ -32,7 +32,8 @@ void defineEngineComplianceTests<Q extends BaseQuery<Q>>(
           ComplianceItem,
           String,
           Q,
-          SimpleCreation<ComplianceItemData, String>
+          SimpleCreation<ComplianceItemData, String>,
+          OffsetPageRequest
         >
         repository = fixtures.items.repository;
 
@@ -139,7 +140,8 @@ void defineEngineComplianceTests<Q extends BaseQuery<Q>>(
         ]);
 
         final List<ComplianceItem> result = await repository.peekAll(
-          BaseFilter<Q>.text('alph', key: 'name').sort(key: 'value').limit(1),
+          BaseFilter<Q>.text('alph', key: 'name'),
+          const QueryOptions(orderBy: [OrderBy('value')], limit: 1),
         );
         expect(result.map((model) => model.id), ['c']);
 
@@ -149,6 +151,27 @@ void defineEngineComplianceTests<Q extends BaseQuery<Q>>(
           )).map((model) => model.id),
           containsAll(['a', 'b']),
         );
+      });
+
+      test('reads an offset page with continuation metadata', () async {
+        final repository = fixtures.items.repository;
+        await repository.pushAll(const [
+          ComplianceItem(id: 'a', name: 'a', value: 1, active: true),
+          ComplianceItem(id: 'b', name: 'b', value: 2, active: true),
+          ComplianceItem(id: 'c', name: 'c', value: 3, active: true),
+        ]);
+
+        final Page<ComplianceItem> page = await repository.peekPage(
+          BaseFilter<Q>.empty(),
+          const OffsetPageRequest(
+            size: 1,
+            offset: 1,
+            orderBy: [OrderBy('value')],
+          ),
+        );
+
+        expect(page.items.map((model) => model.id), ['b']);
+        expect(page.hasNext, isTrue);
       });
 
       test('supports empty reads, batch deletion, and purge', () async {
@@ -211,21 +234,6 @@ void defineEngineComplianceTests<Q extends BaseQuery<Q>>(
         ),
       );
       expect((await emissions).last.single.id, 'reactive');
-    });
-
-    test('supports negative limits', () async {
-      if (!session.capabilities.negativeLimits) {
-        markTestSkipped('Negative limits are not supported by this session.');
-      }
-      final repository = fixtures.items.repository;
-      await repository.pushAll(const [
-        ComplianceItem(id: 'a', name: 'a', value: 1, active: true),
-        ComplianceItem(id: 'b', name: 'b', value: 2, active: true),
-      ]);
-      expect(
-        (await repository.peekAll(BaseFilter<Q>.empty().limit(-1))).length,
-        1,
-      );
     });
 
     test('supports explicit composite identities', () async {

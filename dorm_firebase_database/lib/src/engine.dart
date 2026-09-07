@@ -21,14 +21,15 @@ import 'query.dart';
 import 'reference.dart';
 import 'relationship.dart';
 
-class Engine implements BaseEngine<Query> {
+class Engine implements BaseEngine<Query, OffsetPageRequest> {
   final FirebaseInstance instance;
   final String? path;
 
   const Engine(this.instance, {this.path});
 
   @override
-  BaseReference<Query> createReference() => Reference(instance, path);
+  BaseReference<Query, OffsetPageRequest> createReference() =>
+      Reference(instance, path);
 
   @override
   BaseRelationship<Query> createRelationship() => const Relationship();

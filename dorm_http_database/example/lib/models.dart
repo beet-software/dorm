@@ -1,6 +1,5 @@
 import 'package:dorm_annotations/dorm_annotations.dart';
 import 'package:dorm_framework/dorm_framework.dart';
-import 'package:dorm_http_database/dorm_http_database.dart';
 
 part 'models.dorm.dart';
 part 'models.g.dart';

@@ -143,16 +143,17 @@ class DatabaseEntity<
   Model extends Data,
   I extends Object,
   Q extends BaseQuery<Q>,
-  C extends Creation<Data, I>
+  C extends Creation<Data, I>,
+  P extends PageRequest
 >
     implements Entity<Data, Model, I, C> {
   final Entity<Data, Model, I, C> _entity;
-  final BaseReference<Q> _reference;
+  final BaseReference<Q, P> _reference;
   final BaseRelationship<Q> _relationship;
 
   DatabaseEntity(
     Entity<Data, Model, I, C> entity, {
-    required BaseEngine<Q> engine,
+    required BaseEngine<Q, P> engine,
   }) : _entity = entity,
        _reference = engine.createReference(),
        _relationship = engine.createRelationship();
@@ -162,7 +163,7 @@ class DatabaseEntity<
   }
 
   /// The controller of this entity.
-  Repository<Data, Model, I, Q, C> get repository {
+  Repository<Data, Model, I, Q, C, P> get repository {
     return Repository(
       entity: _entity,
       reference: _reference,

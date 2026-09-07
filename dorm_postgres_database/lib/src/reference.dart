@@ -74,7 +74,7 @@ Map<String, Object?> _encodeDerived(
   return result;
 }
 
-class Reference implements BaseReference<Query> {
+class Reference implements BaseReference<Query, OffsetPageRequest> {
   final SessionExecutor executor;
 
   const Reference(this.executor);
@@ -170,13 +170,16 @@ class Reference implements BaseReference<Query> {
   @override
   Future<List<Model>> peekAll<Data, Model extends Data, I extends Object>(
     Entity<Data, Model, I, Creation<Data, I>> entity,
-    BaseFilter<Query> filter,
-  ) {
+    BaseFilter<Query> filter, [
+    QueryOptions options = const QueryOptions(),
+  ]) {
     return _run((session) async {
-      final Query query = filter.accept(
-        Query(
-          'SELECT * FROM ${entity.schema.tableName}',
-          schema: entity.schema,
+      final Query query = options.apply(
+        filter.accept(
+          Query(
+            'SELECT * FROM ${entity.schema.tableName}',
+            schema: entity.schema,
+          ),
         ),
       );
       final Result result = await _execute(session, query.query, query.params);
@@ -188,6 +191,27 @@ class Reference implements BaseReference<Query> {
         return entity.fromJson(id, data);
       }).toList();
     });
+  }
+
+  @override
+  Future<Page<Model>> peekPage<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    BaseFilter<Query> filter,
+    OffsetPageRequest request,
+  ) async {
+    final List<Model> models = await peekAll(
+      entity,
+      filter,
+      QueryOptions(
+        orderBy: request.orderBy,
+        limit: request.size + 1,
+        offset: request.offset,
+      ),
+    );
+    return Page(
+      items: models.take(request.size).toList(),
+      hasNext: models.length > request.size,
+    );
   }
 
   @override
@@ -461,8 +485,9 @@ class Reference implements BaseReference<Query> {
   @override
   Stream<List<Model>> pullAll<Data, Model extends Data, I extends Object>(
     Entity<Data, Model, I, Creation<Data, I>> entity,
-    BaseFilter<Query> filter,
-  ) async* {
-    yield await peekAll(entity, filter);
+    BaseFilter<Query> filter, [
+    QueryOptions options = const QueryOptions(),
+  ]) async* {
+    yield await peekAll(entity, filter, options);
   }
 }

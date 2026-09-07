@@ -62,7 +62,7 @@ for operation-level details.
 | Relationships | Implemented in the common framework and engine adapters; direct and fallback paths differ. |
 | Streams | Memory, BLoC, and Firebase currently provide state/value events; MySQL, PostgreSQL, MongoDB, and HTTP currently perform an initial read only. |
 | Transactions | No general public transaction API. Some engine operations use backend transactions internally. |
-| Pagination | Explicitly unsupported by the current public scope. |
+| Pagination | Current engines expose `OffsetPageRequest` as their page type; cursor requests are rejected by the typed repository surface. |
 | Polymorphic serialization across every engine | Current serialized behavior exists, but universal cross-engine compatibility is not established. |
 | MongoDB change streams | Not exposed by the current MongoDB engine. |
 | MongoDB aggregation and migrations | Not exposed by the current MongoDB package. |

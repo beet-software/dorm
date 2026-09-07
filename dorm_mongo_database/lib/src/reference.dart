@@ -67,7 +67,7 @@ Map<String, dynamic> _withIdentity<Data, Model extends Data, I extends Object>(
   return data;
 }
 
-class Reference implements BaseReference<Query> {
+class Reference implements BaseReference<Query, OffsetPageRequest> {
   final Db database;
 
   const Reference(this.database);
@@ -103,6 +103,7 @@ class Reference implements BaseReference<Query> {
         .modernFind(
           filter: _document(query.filter),
           sort: query.sort.isEmpty ? null : query.sort,
+          skip: query.offsetCount,
           limit: query.limitCount,
         );
     final List<Model> models = [];
@@ -154,9 +155,34 @@ class Reference implements BaseReference<Query> {
   @override
   Future<List<Model>> peekAll<Data, Model extends Data, I extends Object>(
     Entity<Data, Model, I, Creation<Data, I>> entity,
+    BaseFilter<Query> filter, [
+    QueryOptions options = const QueryOptions(),
+  ]) {
+    return _find(
+      entity,
+      options.apply(filter.accept(Query(schema: entity.schema))),
+    );
+  }
+
+  @override
+  Future<Page<Model>> peekPage<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     BaseFilter<Query> filter,
-  ) {
-    return _find(entity, filter.accept(Query(schema: entity.schema)));
+    OffsetPageRequest request,
+  ) async {
+    final List<Model> models = await peekAll(
+      entity,
+      filter,
+      QueryOptions(
+        orderBy: request.orderBy,
+        limit: request.size + 1,
+        offset: request.offset,
+      ),
+    );
+    return Page(
+      items: models.take(request.size).toList(),
+      hasNext: models.length > request.size,
+    );
   }
 
   @override
@@ -378,8 +404,9 @@ class Reference implements BaseReference<Query> {
   @override
   Stream<List<Model>> pullAll<Data, Model extends Data, I extends Object>(
     Entity<Data, Model, I, Creation<Data, I>> entity,
-    BaseFilter<Query> filter,
-  ) async* {
-    yield await peekAll(entity, filter);
+    BaseFilter<Query> filter, [
+    QueryOptions options = const QueryOptions(),
+  ]) async* {
+    yield await peekAll(entity, filter, options);
   }
 }

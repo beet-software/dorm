@@ -21,6 +21,7 @@ import 'entity.dart';
 import 'filter.dart';
 import 'reference.dart';
 import 'relationship.dart';
+import 'read_options.dart';
 
 /// Represents reading a single model from the database engine.
 abstract class SingleReadOperation<Model, I extends Object> {
@@ -59,6 +60,7 @@ abstract class BatchReadOperation<Model, Q extends BaseQuery<Q>> {
   /// If there are no models, this method will return an empty list.
   Future<List<Model>> peekAll([
     BaseFilter<Q> filter = const BaseFilter.empty(),
+    QueryOptions options = const QueryOptions(),
   ]);
 
   /// Listens for all the models in this table matching [filter] and their changes.
@@ -70,17 +72,26 @@ abstract class BatchReadOperation<Model, Q extends BaseQuery<Q>> {
   /// If there are no models, this method will yield an empty list.
   Stream<List<Model>> pullAll([
     BaseFilter<Q> filter = const BaseFilter.empty(),
+    QueryOptions options = const QueryOptions(),
   ]);
 }
 
 /// Represents the operations available for a [Model] in a database.
-abstract class ModelRepository<Model, I extends Object, Q extends BaseQuery<Q>>
+abstract class ModelRepository<
+  Model,
+  I extends Object,
+  Q extends BaseQuery<Q>,
+  P extends PageRequest
+>
     implements RelationSource<Model, I, Q> {
   @override
   RelationPlan<Model, I> get plan;
 
   @override
   EntitySchema? get schema;
+
+  /// Selects one page of models matching [filter].
+  Future<Page<Model>> peekPage(BaseFilter<Q> filter, P request);
 
   /// Selects all the ids from the models of this table.
   ///
@@ -213,9 +224,10 @@ abstract class DataRepository<
   Model extends Data,
   I extends Object,
   Q extends BaseQuery<Q>,
-  C extends Creation<Data, I>
+  C extends Creation<Data, I>,
+  P extends PageRequest
 >
-    implements ModelRepository<Model, I, Q> {
+    implements ModelRepository<Model, I, Q, P> {
   /// Converts [creation] into a model and inserts it into its respective table
   /// on the database engine.
   ///
@@ -235,17 +247,18 @@ class Repository<
   Model extends Data,
   I extends Object,
   Q extends BaseQuery<Q>,
-  C extends Creation<Data, I>
+  C extends Creation<Data, I>,
+  P extends PageRequest
 >
     implements
-        DataRepository<Data, Model, I, Q, C>,
+        DataRepository<Data, Model, I, Q, C, P>,
         RelationSource<Model, I, Q> {
-  final BaseReference<Q> _reference;
+  final BaseReference<Q, P> _reference;
   final Entity<Data, Model, I, C> _entity;
 
   /// Creates a repository by its attributes.
   const Repository({
-    required BaseReference<Q> reference,
+    required BaseReference<Q, P> reference,
     required BaseRelationship<Q> relationship,
     required Entity<Data, Model, I, C> entity,
   }) : _reference = reference,
@@ -270,8 +283,14 @@ class Repository<
   @override
   Future<List<Model>> peekAll([
     BaseFilter<Q> filter = const BaseFilter.empty(),
+    QueryOptions options = const QueryOptions(),
   ]) {
-    return _reference.peekAll<Data, Model, I>(_entity, filter);
+    return _reference.peekAll<Data, Model, I>(_entity, filter, options);
+  }
+
+  @override
+  Future<Page<Model>> peekPage(BaseFilter<Q> filter, P request) {
+    return _reference.peekPage<Data, Model, I>(_entity, filter, request);
   }
 
   @override
@@ -302,8 +321,9 @@ class Repository<
   @override
   Stream<List<Model>> pullAll([
     BaseFilter<Q> filter = const BaseFilter.empty(),
+    QueryOptions options = const QueryOptions(),
   ]) {
-    return _reference.pullAll<Data, Model, I>(_entity, filter);
+    return _reference.pullAll<Data, Model, I>(_entity, filter, options);
   }
 
   @override

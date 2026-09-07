@@ -17,7 +17,9 @@ Future<void> main() async {
     await database.collection('users').deleteMany({});
     await database.collection('posts').deleteMany({});
 
-    final Dorm context = Dorm(dorm.Engine(database));
+    final Dorm<dorm.Query, OffsetPageRequest> context = Dorm(
+      dorm.Engine(database),
+    );
     final User user = await context.users.repository.put(
       Creation.auto<UserData, String>(
         dependency: const UserDependency(),

@@ -131,7 +131,12 @@ Batch methods also differ internally:
 - Firebase batches multiple serialized values into one `update` call for `putAll`/`pushAll`;
 - MySQL uses one transaction for `putAll`/`pushAll` but one SQL execution per model.
 
-The framework does not expose a general query cache, relationship cache, prepared-statement cache, pagination mechanism, or application-controlled transaction API. Driver-level connection behavior is outside the code described here and is `UNKNOWN`.
+The framework does not expose a general query cache, relationship cache,
+prepared-statement cache, or application-controlled transaction API. Offset
+pages are exposed by the common read surface; current engine types accept
+`OffsetPageRequest`, while cursor requests are rejected by the typed surface.
+Driver-level connection behavior is outside the code described
+here and is `UNKNOWN`.
 
 ## Current performance boundaries
 
@@ -144,6 +149,6 @@ The following facts affect the amount of work an operation can perform:
 - Firebase `popAll` reads matching models before deleting their keys;
 - MySQL batch writes execute one SQL statement per item inside a transaction;
 - MySQL streams do not perform repeated reads after the initial result;
-- pagination is not handled by the current framework.
+- cursor pagination is not handled by the current framework.
 
 No benchmark in the project turns these observations into a latency, throughput, memory, or collection-size guarantee.

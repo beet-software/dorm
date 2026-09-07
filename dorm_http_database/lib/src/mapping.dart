@@ -85,10 +85,14 @@ class DefaultHttpQueryCodec implements HttpQueryCodec {
           if (to != null) {
             result['${key}__lte'] = _encodeRangeBound(to, unit, lower: false);
           }
-        case SortCondition(:final key):
-          result['sort'] = key;
+        case SortCondition(:final key, :final ascending):
+          final String value = ascending ? key : '-$key';
+          final String? current = result['sort'];
+          result['sort'] = current == null ? value : '$current,$value';
         case LimitCondition(:final count):
           result['limit'] = '$count';
+        case OffsetCondition(:final count):
+          result['offset'] = '$count';
       }
     }
     return result;
@@ -145,14 +149,18 @@ DateTime _startOf(DateTime value, DateFilterUnit unit) {
 
 DateTime _endOf(DateTime value, DateFilterUnit unit) {
   return switch (unit) {
-    DateFilterUnit.year => DateTime(value.year + 1).subtract(
-      const Duration(milliseconds: 1),
-    ),
-    DateFilterUnit.month => DateTime(value.year, value.month + 1).subtract(
-      const Duration(milliseconds: 1),
-    ),
-    DateFilterUnit.day => DateTime(value.year, value.month, value.day + 1)
-        .subtract(const Duration(milliseconds: 1)),
+    DateFilterUnit.year => DateTime(
+      value.year + 1,
+    ).subtract(const Duration(milliseconds: 1)),
+    DateFilterUnit.month => DateTime(
+      value.year,
+      value.month + 1,
+    ).subtract(const Duration(milliseconds: 1)),
+    DateFilterUnit.day => DateTime(
+      value.year,
+      value.month,
+      value.day + 1,
+    ).subtract(const Duration(milliseconds: 1)),
     DateFilterUnit.hour => DateTime(
       value.year,
       value.month,

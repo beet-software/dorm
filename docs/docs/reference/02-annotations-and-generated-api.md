@@ -91,8 +91,9 @@ It supplies:
 - `toJson(data)`;
 - `convert(model, data)`.
 
-The generated `Dorm` receives a `BaseEngine<Query>` and exposes a
-`DatabaseEntity` for each annotated model. Application code normally reaches
+The generated `Dorm<Q extends BaseQuery<Q>, P extends PageRequest>` receives a
+`BaseEngine<Q, P>` and exposes a `DatabaseEntity` for each annotated model.
+Application code normally reaches
 the operations through `dorm.users.repository`, not through the generated
 entity conversion methods directly.
 

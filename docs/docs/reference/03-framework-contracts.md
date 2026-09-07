@@ -26,9 +26,9 @@ Generated entities implement this interface.
 
 ### DatabaseEntity
 
-DatabaseEntity<Data, Model, I, Q, C> combines one Entity with a
-BaseEngine<Q>. It exposes the repository whose `put` and `putAll` methods
-accept `C`, together with:
+DatabaseEntity<Data, Model, I, Q, C, P> combines one Entity with a
+BaseEngine<Q, P>. It exposes the repository whose `put` and `putAll` methods
+accept `C` and whose `peekPage` accepts `P`, together with:
 
 - repository;
 - relationships;
@@ -53,17 +53,24 @@ one item for a simple key and multiple items for a composite key.
 
 ## Repository contracts
 
-Repository<Data, Model, I, Q, C> combines SingleReadOperation,
+Repository<Data, Model, I, Q, C, P> combines SingleReadOperation,
 BatchReadOperation, ModelRepository, and DataRepository. `C` is the creation
-type accepted by that entity.
+type and `P` is the page-request type accepted by that entity.
 
 ### Read contracts
 
 ~~~dart
 Future<Model?> peek(I id);
-Future<List<Model>> peekAll([BaseFilter<Q> filter]);
+Future<List<Model>> peekAll([
+  BaseFilter<Q> filter,
+  QueryOptions options,
+]);
+Future<Page<Model>> peekPage(BaseFilter<Q> filter, P request);
 Stream<Model?> pull(I id);
-Stream<List<Model>> pullAll([BaseFilter<Q> filter]);
+Stream<List<Model>> pullAll([
+  BaseFilter<Q> filter,
+  QueryOptions options,
+]);
 Future<List<I>> peekAllKeys();
 ~~~
 
@@ -110,7 +117,8 @@ Q whereText(String key, String prefix);
 Q whereDate(String key, DateTime date, DateFilterUnit unit);
 Q whereRange<T>(String key, FilterRange<T> range);
 Q limit(int count);
-Q sorted(String key);
+Q offset(int count);
+Q sorted(String key, {bool ascending = true});
 ~~~
 
 The concrete query determines how these operations become in-memory
@@ -120,8 +128,11 @@ predicates, Firebase query clauses, or SQL.
 
 A filter applies a condition or modifier through Q accept(Q query).
 Factories cover empty, value, text, text-range, numeric-range, date, and
-date-range filters. FilterModifier.limit and FilterModifier.sort append query
-modifiers.
+date-range filters. QueryOptions applies OrderBy, limit, and offset to a
+query. PageRequest describes an offset or cursor page, and Page contains the
+returned items and continuation metadata. Current engine contracts use
+`OffsetPageRequest` as `P`. A `CursorPageRequest` passed through a statically
+typed current engine repository is rejected by the analyzer.
 
 ValueFilter accepts either a string key or a FieldSchema; the current
 constructor requires exactly one of those addressing forms.
@@ -171,13 +182,13 @@ Generated path variants retain cardinality-specific behavior:
 ## Engine boundary
 
 ~~~dart
-abstract class BaseEngine<Q extends BaseQuery<Q>> {
-  BaseReference<Q> createReference();
+abstract class BaseEngine<Q extends BaseQuery<Q>, P extends PageRequest> {
+  BaseReference<Q, P> createReference();
   BaseRelationship<Q> createRelationship();
 }
 ~~~
 
-BaseReference<Q> implements the storage operation surface, and
+BaseReference<Q, P> implements the storage operation surface, and
 BaseRelationship<Q> implements relationship associations. A custom engine
 implements these contracts and exposes a concrete Engine.
 

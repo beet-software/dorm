@@ -83,6 +83,17 @@ void main() {
     expect(query.query, 'SELECT * FROM products ORDER BY price ASC LIMIT 5');
   });
 
+  test('adds descending sort and offset clauses', () {
+    final Query query = const Query(
+      'SELECT * FROM products',
+    ).sorted('price', ascending: false).limit(5).offset(10);
+
+    expect(
+      query.query,
+      'SELECT * FROM products ORDER BY price DESC LIMIT 5 OFFSET 10',
+    );
+  });
+
   test('rejects negative PostgreSQL limits', () {
     expect(
       () => const Query('SELECT * FROM products').limit(-1),

@@ -41,7 +41,7 @@ final Engine engine = Engine(
     ),
   }),
 );
-final Dorm dorm = Dorm(engine);
+final Dorm<Query, OffsetPageRequest> dorm = Dorm(engine);
 ```
 
 The default endpoints are:
@@ -78,8 +78,9 @@ final HttpMapping mapping = HttpMapping.byTableName(
 );
 ```
 
-The default query codec maps filters to parameters such as
-`name__startsWith`, `created_at__gte`, `created_at__lte`, `sort`, and `limit`.
+The default query codec maps filters and read windows to parameters such as
+`name__startsWith`, `created_at__gte`, `created_at__lte`, `sort`,
+`limit`, and `offset`.
 Replace it with an `HttpQueryCodec` when the API uses different parameter
 names or formats.
 

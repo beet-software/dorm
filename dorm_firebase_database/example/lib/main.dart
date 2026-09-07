@@ -36,7 +36,9 @@ void main() async {
   // It's recommended to have a way to access a global instance of the generated
   // `Dorm` class. Here, we are using dependency injection with a great solution
   // called `get_it`, but you are free to use `provider` or any other method.
-  GetIt.instance.registerSingleton<Dorm>(const Dorm(engine));
+  GetIt.instance.registerSingleton<Dorm<Query, OffsetPageRequest>>(
+    const Dorm(engine),
+  );
 
   runApp(
     DevicePreview(
@@ -77,8 +79,12 @@ class HomeScreen extends StatelessWidget {
       providers: [
         StreamProvider<AsyncSnapshot<List<User>>>(
           initialData: const AsyncSnapshot.waiting(),
-          create: (_) =>
-              GetIt.instance.get<Dorm>().users.repository.pullAll().map(
+          create: (_) => GetIt.instance
+              .get<Dorm<Query, OffsetPageRequest>>()
+              .users
+              .repository
+              .pullAll()
+              .map(
                 (event) =>
                     AsyncSnapshot.withData(ConnectionState.active, event),
               ),
@@ -116,7 +122,7 @@ class HomeScreen extends StatelessWidget {
                             );
                             if (updatedName == null) return;
                             await GetIt.instance
-                                .get<Dorm>()
+                                .get<Dorm<Query, OffsetPageRequest>>()
                                 .users
                                 .repository
                                 .push(User(id: user.id, name: updatedName));
@@ -127,7 +133,7 @@ class HomeScreen extends StatelessWidget {
                         OutlinedButton(
                           onPressed: () async {
                             await GetIt.instance
-                                .get<Dorm>()
+                                .get<Dorm<Query, OffsetPageRequest>>()
                                 .users
                                 .repository
                                 .pop(user.id);
@@ -151,12 +157,16 @@ class HomeScreen extends StatelessWidget {
                 builder: (_) => const TextInputDialog(title: 'Create user'),
               );
               if (name == null) return;
-              await GetIt.instance.get<Dorm>().users.repository.put(
-                Creation.auto(
-                  dependency: const UserDependency(),
-                  data: UserData(name: name),
-                ),
-              );
+              await GetIt.instance
+                  .get<Dorm<Query, OffsetPageRequest>>()
+                  .users
+                  .repository
+                  .put(
+                    Creation.auto(
+                      dependency: const UserDependency(),
+                      data: UserData(name: name),
+                    ),
+                  );
             },
             child: const Icon(Icons.add),
           ),

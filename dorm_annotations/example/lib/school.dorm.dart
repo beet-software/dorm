@@ -877,17 +877,18 @@ extension ClassProperties on Class {
   }
 }
 
-class Dorm {
+class Dorm<Q extends BaseQuery<Q>, P extends PageRequest> {
   const Dorm(this._engine);
 
-  final BaseEngine<Query> _engine;
+  final BaseEngine<Q, P> _engine;
 
   DatabaseEntity<
     SchoolData,
     School,
     String,
-    Query,
-    SimpleCreation<SchoolData, String>
+    Q,
+    SimpleCreation<SchoolData, String>,
+    P
   >
   get schools => DatabaseEntity(const SchoolEntity(), engine: _engine);
 
@@ -895,8 +896,9 @@ class Dorm {
     StudentData,
     Student,
     String,
-    Query,
-    SimpleCreation<StudentData, String>
+    Q,
+    SimpleCreation<StudentData, String>,
+    P
   >
   get students => DatabaseEntity(const StudentEntity(), engine: _engine);
 
@@ -904,8 +906,9 @@ class Dorm {
     TeacherData,
     Teacher,
     String,
-    Query,
-    SimpleCreation<TeacherData, String>
+    Q,
+    SimpleCreation<TeacherData, String>,
+    P
   >
   get teachers => DatabaseEntity(const TeacherEntity(), engine: _engine);
 
@@ -913,8 +916,9 @@ class Dorm {
     HistoryData,
     History,
     String,
-    Query,
-    SimpleCreation<HistoryData, String>
+    Q,
+    SimpleCreation<HistoryData, String>,
+    P
   >
   get histories => DatabaseEntity(const HistoryEntity(), engine: _engine);
 
@@ -922,8 +926,9 @@ class Dorm {
     TeachingData,
     Teaching,
     String,
-    Query,
-    SimpleCreation<TeachingData, String>
+    Q,
+    SimpleCreation<TeachingData, String>,
+    P
   >
   get teachings => DatabaseEntity(const TeachingEntity(), engine: _engine);
 
@@ -931,40 +936,46 @@ class Dorm {
     ClassData,
     Class,
     String,
-    Query,
-    SimpleCreation<ClassData, String>
+    Q,
+    SimpleCreation<ClassData, String>,
+    P
   >
   get classes => DatabaseEntity(const ClassEntity(), engine: _engine);
 
-  DormRelations get relations => DormRelations(this);
+  DormRelations<Q, P> get relations => DormRelations<Q, P>(this);
 }
 
-class DormRelations {
+class DormRelations<Q extends BaseQuery<Q>, P extends PageRequest> {
   const DormRelations(this._dorm);
 
-  final Dorm _dorm;
+  final Dorm<Q, P> _dorm;
 
-  RelationPath<Dorm, School, School, Query> get schools =>
+  RelationPath<Dorm<Q, P>, School, School, Q> get schools =>
       RelationPath.root(_dorm.schools.repository, context: _dorm);
 
-  RelationPath<Dorm, Student, Student, Query> get students =>
+  RelationPath<Dorm<Q, P>, Student, Student, Q> get students =>
       RelationPath.root(_dorm.students.repository, context: _dorm);
 
-  RelationPath<Dorm, Teacher, Teacher, Query> get teachers =>
+  RelationPath<Dorm<Q, P>, Teacher, Teacher, Q> get teachers =>
       RelationPath.root(_dorm.teachers.repository, context: _dorm);
 
-  RelationPath<Dorm, History, History, Query> get histories =>
+  RelationPath<Dorm<Q, P>, History, History, Q> get histories =>
       RelationPath.root(_dorm.histories.repository, context: _dorm);
 
-  RelationPath<Dorm, Teaching, Teaching, Query> get teachings =>
+  RelationPath<Dorm<Q, P>, Teaching, Teaching, Q> get teachings =>
       RelationPath.root(_dorm.teachings.repository, context: _dorm);
 
-  RelationPath<Dorm, Class, Class, Query> get classes =>
+  RelationPath<Dorm<Q, P>, Class, Class, Q> get classes =>
       RelationPath.root(_dorm.classes.repository, context: _dorm);
 }
 
-extension SchoolRelationPaths<Root> on RelationPath<Dorm, Root, School, Query> {
-  RelationPath<Dorm, Root, Student, Query> get students {
+extension SchoolRelationPaths<
+  Root,
+  Q extends BaseQuery<Q>,
+  P extends PageRequest
+>
+    on RelationPath<Dorm<Q, P>, Root, School, Q> {
+  RelationPath<Dorm<Q, P>, Root, Student, Q> get students {
     return toMany(
       context.students.repository,
       spec: RelationSpec(
@@ -977,7 +988,7 @@ extension SchoolRelationPaths<Root> on RelationPath<Dorm, Root, School, Query> {
     );
   }
 
-  RelationPath<Dorm, Root, List<Student>, Query> get studentsOrEmpty {
+  RelationPath<Dorm<Q, P>, Root, List<Student>, Q> get studentsOrEmpty {
     return toManyOrEmpty(
       context.students.repository,
       spec: RelationSpec(
@@ -990,7 +1001,7 @@ extension SchoolRelationPaths<Root> on RelationPath<Dorm, Root, School, Query> {
     );
   }
 
-  RelationPath<Dorm, Root, Teaching, Query> get teachings {
+  RelationPath<Dorm<Q, P>, Root, Teaching, Q> get teachings {
     return toMany(
       context.teachings.repository,
       spec: RelationSpec(
@@ -1003,7 +1014,7 @@ extension SchoolRelationPaths<Root> on RelationPath<Dorm, Root, School, Query> {
     );
   }
 
-  RelationPath<Dorm, Root, List<Teaching>, Query> get teachingsOrEmpty {
+  RelationPath<Dorm<Q, P>, Root, List<Teaching>, Q> get teachingsOrEmpty {
     return toManyOrEmpty(
       context.teachings.repository,
       spec: RelationSpec(
@@ -1017,9 +1028,13 @@ extension SchoolRelationPaths<Root> on RelationPath<Dorm, Root, School, Query> {
   }
 }
 
-extension StudentRelationPaths<Root>
-    on RelationPath<Dorm, Root, Student, Query> {
-  RelationPath<Dorm, Root, School, Query> get school {
+extension StudentRelationPaths<
+  Root,
+  Q extends BaseQuery<Q>,
+  P extends PageRequest
+>
+    on RelationPath<Dorm<Q, P>, Root, Student, Q> {
+  RelationPath<Dorm<Q, P>, Root, School, Q> get school {
     return toOne(
       context.schools.repository,
       spec: RelationSpec(
@@ -1031,7 +1046,7 @@ extension StudentRelationPaths<Root>
     );
   }
 
-  RelationPath<Dorm, Root, School?, Query> get schoolOrNull {
+  RelationPath<Dorm<Q, P>, Root, School?, Q> get schoolOrNull {
     return toOneOrNull(
       context.schools.repository,
       spec: RelationSpec(
@@ -1043,7 +1058,7 @@ extension StudentRelationPaths<Root>
     );
   }
 
-  RelationPath<Dorm, Root, History, Query> get histories {
+  RelationPath<Dorm<Q, P>, Root, History, Q> get histories {
     return toMany(
       context.histories.repository,
       spec: RelationSpec(
@@ -1056,7 +1071,7 @@ extension StudentRelationPaths<Root>
     );
   }
 
-  RelationPath<Dorm, Root, List<History>, Query> get historiesOrEmpty {
+  RelationPath<Dorm<Q, P>, Root, List<History>, Q> get historiesOrEmpty {
     return toManyOrEmpty(
       context.histories.repository,
       spec: RelationSpec(
@@ -1069,7 +1084,7 @@ extension StudentRelationPaths<Root>
     );
   }
 
-  RelationPath<Dorm, Root, Class, Query> get classes {
+  RelationPath<Dorm<Q, P>, Root, Class, Q> get classes {
     return toMany(
       context.classes.repository,
       spec: RelationSpec(
@@ -1082,7 +1097,7 @@ extension StudentRelationPaths<Root>
     );
   }
 
-  RelationPath<Dorm, Root, List<Class>, Query> get classesOrEmpty {
+  RelationPath<Dorm<Q, P>, Root, List<Class>, Q> get classesOrEmpty {
     return toManyOrEmpty(
       context.classes.repository,
       spec: RelationSpec(
@@ -1096,9 +1111,13 @@ extension StudentRelationPaths<Root>
   }
 }
 
-extension TeacherRelationPaths<Root>
-    on RelationPath<Dorm, Root, Teacher, Query> {
-  RelationPath<Dorm, Root, Teaching, Query> get teachings {
+extension TeacherRelationPaths<
+  Root,
+  Q extends BaseQuery<Q>,
+  P extends PageRequest
+>
+    on RelationPath<Dorm<Q, P>, Root, Teacher, Q> {
+  RelationPath<Dorm<Q, P>, Root, Teaching, Q> get teachings {
     return toMany(
       context.teachings.repository,
       spec: RelationSpec(
@@ -1111,7 +1130,7 @@ extension TeacherRelationPaths<Root>
     );
   }
 
-  RelationPath<Dorm, Root, List<Teaching>, Query> get teachingsOrEmpty {
+  RelationPath<Dorm<Q, P>, Root, List<Teaching>, Q> get teachingsOrEmpty {
     return toManyOrEmpty(
       context.teachings.repository,
       spec: RelationSpec(
@@ -1124,7 +1143,7 @@ extension TeacherRelationPaths<Root>
     );
   }
 
-  RelationPath<Dorm, Root, Class, Query> get classes {
+  RelationPath<Dorm<Q, P>, Root, Class, Q> get classes {
     return toMany(
       context.classes.repository,
       spec: RelationSpec(
@@ -1137,7 +1156,7 @@ extension TeacherRelationPaths<Root>
     );
   }
 
-  RelationPath<Dorm, Root, List<Class>, Query> get classesOrEmpty {
+  RelationPath<Dorm<Q, P>, Root, List<Class>, Q> get classesOrEmpty {
     return toManyOrEmpty(
       context.classes.repository,
       spec: RelationSpec(
@@ -1151,9 +1170,13 @@ extension TeacherRelationPaths<Root>
   }
 }
 
-extension HistoryRelationPaths<Root>
-    on RelationPath<Dorm, Root, History, Query> {
-  RelationPath<Dorm, Root, Student, Query> get student {
+extension HistoryRelationPaths<
+  Root,
+  Q extends BaseQuery<Q>,
+  P extends PageRequest
+>
+    on RelationPath<Dorm<Q, P>, Root, History, Q> {
+  RelationPath<Dorm<Q, P>, Root, Student, Q> get student {
     return toOne(
       context.students.repository,
       spec: RelationSpec(
@@ -1165,7 +1188,7 @@ extension HistoryRelationPaths<Root>
     );
   }
 
-  RelationPath<Dorm, Root, Student?, Query> get studentOrNull {
+  RelationPath<Dorm<Q, P>, Root, Student?, Q> get studentOrNull {
     return toOneOrNull(
       context.students.repository,
       spec: RelationSpec(
@@ -1178,9 +1201,13 @@ extension HistoryRelationPaths<Root>
   }
 }
 
-extension TeachingRelationPaths<Root>
-    on RelationPath<Dorm, Root, Teaching, Query> {
-  RelationPath<Dorm, Root, Teacher, Query> get teacher {
+extension TeachingRelationPaths<
+  Root,
+  Q extends BaseQuery<Q>,
+  P extends PageRequest
+>
+    on RelationPath<Dorm<Q, P>, Root, Teaching, Q> {
+  RelationPath<Dorm<Q, P>, Root, Teacher, Q> get teacher {
     return toOne(
       context.teachers.repository,
       spec: RelationSpec(
@@ -1192,7 +1219,7 @@ extension TeachingRelationPaths<Root>
     );
   }
 
-  RelationPath<Dorm, Root, Teacher?, Query> get teacherOrNull {
+  RelationPath<Dorm<Q, P>, Root, Teacher?, Q> get teacherOrNull {
     return toOneOrNull(
       context.teachers.repository,
       spec: RelationSpec(
@@ -1204,7 +1231,7 @@ extension TeachingRelationPaths<Root>
     );
   }
 
-  RelationPath<Dorm, Root, School, Query> get school {
+  RelationPath<Dorm<Q, P>, Root, School, Q> get school {
     return toOne(
       context.schools.repository,
       spec: RelationSpec(
@@ -1216,7 +1243,7 @@ extension TeachingRelationPaths<Root>
     );
   }
 
-  RelationPath<Dorm, Root, School?, Query> get schoolOrNull {
+  RelationPath<Dorm<Q, P>, Root, School?, Q> get schoolOrNull {
     return toOneOrNull(
       context.schools.repository,
       spec: RelationSpec(
@@ -1229,8 +1256,13 @@ extension TeachingRelationPaths<Root>
   }
 }
 
-extension ClassRelationPaths<Root> on RelationPath<Dorm, Root, Class, Query> {
-  RelationPath<Dorm, Root, Teacher, Query> get teacher {
+extension ClassRelationPaths<
+  Root,
+  Q extends BaseQuery<Q>,
+  P extends PageRequest
+>
+    on RelationPath<Dorm<Q, P>, Root, Class, Q> {
+  RelationPath<Dorm<Q, P>, Root, Teacher, Q> get teacher {
     return toOne(
       context.teachers.repository,
       spec: RelationSpec(
@@ -1242,7 +1274,7 @@ extension ClassRelationPaths<Root> on RelationPath<Dorm, Root, Class, Query> {
     );
   }
 
-  RelationPath<Dorm, Root, Teacher?, Query> get teacherOrNull {
+  RelationPath<Dorm<Q, P>, Root, Teacher?, Q> get teacherOrNull {
     return toOneOrNull(
       context.teachers.repository,
       spec: RelationSpec(
@@ -1254,7 +1286,7 @@ extension ClassRelationPaths<Root> on RelationPath<Dorm, Root, Class, Query> {
     );
   }
 
-  RelationPath<Dorm, Root, Student, Query> get student {
+  RelationPath<Dorm<Q, P>, Root, Student, Q> get student {
     return toOne(
       context.students.repository,
       spec: RelationSpec(
@@ -1266,7 +1298,7 @@ extension ClassRelationPaths<Root> on RelationPath<Dorm, Root, Class, Query> {
     );
   }
 
-  RelationPath<Dorm, Root, Student?, Query> get studentOrNull {
+  RelationPath<Dorm<Q, P>, Root, Student?, Q> get studentOrNull {
     return toOneOrNull(
       context.students.repository,
       spec: RelationSpec(

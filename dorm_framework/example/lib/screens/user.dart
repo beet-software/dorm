@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:dorm_annotations/dorm_annotations.dart';
-import 'package:dorm_bloc_database/dorm_bloc_database.dart';
+import 'package:dorm_bloc_database/dorm_bloc_database.dart' as dorm_bloc;
 import 'package:dorm_framework/dorm_framework.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_bloc/flutter_form_bloc.dart';
@@ -19,10 +19,10 @@ class _Query extends ValueNotifier<AsyncSnapshot<List<Review>>> {
 
   _Query({required this.userId}) : super(const AsyncSnapshot.waiting()) {
     _subscription = GetIt.instance
-        .get<Dorm>()
+        .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
         .reviews
         .repository
-        .pullAll(Filter.value(userId, key: 'user-id'))
+        .pullAll(dorm_bloc.Filter.value(userId, key: 'user-id'))
         .map((users) => AsyncSnapshot.withData(ConnectionState.active, users))
         .listen((snapshot) => value = snapshot);
   }
@@ -40,10 +40,10 @@ class _Query extends ValueNotifier<AsyncSnapshot<List<Review>>> {
 
     value = const AsyncSnapshot.waiting();
     _subscription = GetIt.instance
-        .get<Dorm>()
+        .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
         .reviews
         .repository
-        .pullAll(Filter.text(query, key: '_q-type'))
+        .pullAll(dorm_bloc.Filter.text(query, key: '_q-type'))
         .map((users) => AsyncSnapshot.withData(ConnectionState.active, users))
         .listen((snapshot) => value = snapshot);
   }
@@ -67,7 +67,7 @@ class UserScreen extends StatelessWidget {
         StreamProvider<AsyncSnapshot<User?>>(
           initialData: const AsyncSnapshot.waiting(),
           create: (_) => GetIt.instance
-              .get<Dorm>()
+              .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
               .users
               .repository
               .pull(userId)
@@ -79,7 +79,7 @@ class UserScreen extends StatelessWidget {
         StreamProvider<AsyncSnapshot<Cart?>>(
           initialData: const AsyncSnapshot.waiting(),
           create: (_) => GetIt.instance
-              .get<Dorm>()
+              .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
               .carts
               .repository
               .pull(userId)
@@ -106,12 +106,16 @@ class UserScreen extends StatelessWidget {
                         ),
                       );
                       if (data == null) return;
-                      await GetIt.instance.get<Dorm>().reviews.repository.put(
-                        Creation.auto(
-                          dependency: ReviewDependency(userId: userId),
-                          data: data,
-                        ),
-                      );
+                      await GetIt.instance
+                          .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
+                          .reviews
+                          .repository
+                          .put(
+                            Creation.auto(
+                              dependency: ReviewDependency(userId: userId),
+                              data: data,
+                            ),
+                          );
                     },
                     icon: const Icon(Icons.reviews),
                   ),
@@ -182,7 +186,12 @@ class UserScreen extends StatelessWidget {
                                                 ),
                                                 onPressed: () async {
                                                   await GetIt.instance
-                                                      .get<Dorm>()
+                                                      .get<
+                                                        Dorm<
+                                                          dorm_bloc.Query,
+                                                          OffsetPageRequest
+                                                        >
+                                                      >()
                                                       .reviews
                                                       .repository
                                                       .pop(review.id);
@@ -273,9 +282,16 @@ class _UserCard extends StatelessWidget {
                         ),
                       );
                       if (data == null) return;
-                      await GetIt.instance.get<Dorm>().users.repository.push(
-                        GetIt.instance.get<Dorm>().users.convert(user, data),
-                      );
+                      await GetIt.instance
+                          .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
+                          .users
+                          .repository
+                          .push(
+                            GetIt.instance
+                                .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
+                                .users
+                                .convert(user, data),
+                          );
                     },
                   ),
                   const SizedBox(width: 10),
@@ -306,9 +322,11 @@ class _UserCard extends StatelessWidget {
                       );
                       if (!(confirm ?? false)) return;
 
-                      await GetIt.instance.get<Dorm>().users.repository.pop(
-                        user.id,
-                      );
+                      await GetIt.instance
+                          .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
+                          .users
+                          .repository
+                          .pop(user.id);
                       if (context.mounted) {
                         Navigator.of(context).pop();
                       }
@@ -345,12 +363,16 @@ class _CartCard extends StatelessWidget {
         trailing: IconButton(
           icon: const Icon(Icons.add_circle),
           onPressed: () async {
-            await GetIt.instance.get<Dorm>().carts.repository.put(
-              Creation.auto(
-                dependency: CartDependency(userId: userId),
-                data: CartData(timestamp: DateTime.now()),
-              ),
-            );
+            await GetIt.instance
+                .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
+                .carts
+                .repository
+                .put(
+                  Creation.auto(
+                    dependency: CartDependency(userId: userId),
+                    data: CartData(timestamp: DateTime.now()),
+                  ),
+                );
           },
         ),
       );
@@ -392,7 +414,11 @@ class _CartCard extends StatelessWidget {
           );
           if (!(confirm ?? false)) return;
 
-          await GetIt.instance.get<Dorm>().carts.repository.pop(cart.id);
+          await GetIt.instance
+              .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
+              .carts
+              .repository
+              .pop(cart.id);
         },
       ),
     );

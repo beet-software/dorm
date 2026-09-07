@@ -198,7 +198,8 @@ class RelationSpec {
 /// terminal model, so a path can be extended without exposing intermediate
 /// [Join] types.
 class RelationPath<Context, Root, Current, Q extends BaseQuery<Q>> {
-  final Future<List<Join<Root, Current>>> Function(BaseFilter<Q>) _load;
+  final Future<List<Join<Root, Current>>> Function(BaseFilter<Q>, QueryOptions)
+  _load;
 
   /// The generated database context used to resolve the next source.
   final Context context;
@@ -208,7 +209,11 @@ class RelationPath<Context, Root, Current, Q extends BaseQuery<Q>> {
   final List<RelationSpec> specs;
 
   const RelationPath._({
-    required Future<List<Join<Root, Current>>> Function(BaseFilter<Q>) load,
+    required Future<List<Join<Root, Current>>> Function(
+      BaseFilter<Q>,
+      QueryOptions,
+    )
+    load,
     required this.context,
     required this.specs,
   }) : _load = load;
@@ -219,8 +224,8 @@ class RelationPath<Context, Root, Current, Q extends BaseQuery<Q>> {
     required Context context,
   }) {
     return RelationPath._(
-      load: (filter) async {
-        final List<Root> models = await source.peekAll(filter);
+      load: (filter, options) async {
+        final List<Root> models = await source.peekAll(filter, options);
         return [
           for (final Root model in models)
             Join(left: model, right: model as Current),
@@ -239,8 +244,11 @@ class RelationPath<Context, Root, Current, Q extends BaseQuery<Q>> {
   }) {
     final RelationPath<Context, Root, Current, Q> parent = this;
     return RelationPath._(
-      load: (filter) async {
-        final List<Join<Root, Current>> parents = await parent._load(filter);
+      load: (filter, options) async {
+        final List<Join<Root, Current>> parents = await parent._load(
+          filter,
+          options,
+        );
         final List<Target?> models = await Future.wait(
           parents.map((parentJoin) async {
             final I? id = on(parentJoin.right);
@@ -266,8 +274,11 @@ class RelationPath<Context, Root, Current, Q extends BaseQuery<Q>> {
   }) {
     final RelationPath<Context, Root, Current, Q> parent = this;
     return RelationPath._(
-      load: (filter) async {
-        final List<Join<Root, Current>> parents = await parent._load(filter);
+      load: (filter, options) async {
+        final List<Join<Root, Current>> parents = await parent._load(
+          filter,
+          options,
+        );
         final List<Target?> models = await Future.wait(
           parents.map((parentJoin) async {
             final I? id = on(parentJoin.right);
@@ -292,8 +303,11 @@ class RelationPath<Context, Root, Current, Q extends BaseQuery<Q>> {
   }) {
     final RelationPath<Context, Root, Current, Q> parent = this;
     return RelationPath._(
-      load: (filter) async {
-        final List<Join<Root, Current>> parents = await parent._load(filter);
+      load: (filter, options) async {
+        final List<Join<Root, Current>> parents = await parent._load(
+          filter,
+          options,
+        );
         final List<List<Join<Root, Target>>> groups = await Future.wait(
           parents.map((parentJoin) async {
             final List<Target> models = await target.peekAll(
@@ -326,8 +340,11 @@ class RelationPath<Context, Root, Current, Q extends BaseQuery<Q>> {
   }) {
     final RelationPath<Context, Root, Current, Q> parent = this;
     return RelationPath._(
-      load: (filter) async {
-        final List<Join<Root, Current>> parents = await parent._load(filter);
+      load: (filter, options) async {
+        final List<Join<Root, Current>> parents = await parent._load(
+          filter,
+          options,
+        );
         final List<List<Target>> groups = await Future.wait(
           parents.map((parentJoin) => target.peekAll(on(parentJoin.right))),
         );
@@ -343,14 +360,16 @@ class RelationPath<Context, Root, Current, Q extends BaseQuery<Q>> {
 
   Future<List<Join<Root, Current>>> peekAll([
     BaseFilter<Q> filter = const BaseFilter.empty(),
+    QueryOptions options = const QueryOptions(),
   ]) {
-    return _load(filter);
+    return _load(filter, options);
   }
 
   Stream<List<Join<Root, Current>>> pullAll([
     BaseFilter<Q> filter = const BaseFilter.empty(),
+    QueryOptions options = const QueryOptions(),
   ]) async* {
-    yield await _load(filter);
+    yield await _load(filter, options);
   }
 }
 
@@ -499,8 +518,9 @@ class RelationshipDefinedAssociation<
   @override
   Future<List<Join<L, R>>> peekAll([
     BaseFilter<Q> filter = const BaseFilter.empty(),
+    QueryOptions options = const QueryOptions(),
   ]) {
-    return _association.peekAll(filter);
+    return _association.peekAll(filter, options);
   }
 
   /// Evaluates the underlying association's [SingleReadOperation.pull] method.
@@ -513,8 +533,9 @@ class RelationshipDefinedAssociation<
   @override
   Stream<List<Join<L, R>>> pullAll([
     BaseFilter<Q> filter = const BaseFilter.empty(),
+    QueryOptions options = const QueryOptions(),
   ]) {
-    return _association.pullAll(filter);
+    return _association.pullAll(filter, options);
   }
 
   /// Associates the underlying association with a [readable] using a 1:1

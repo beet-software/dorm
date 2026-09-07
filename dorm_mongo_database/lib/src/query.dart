@@ -83,12 +83,14 @@ Map<String, Object?> _and(
 class Query implements BaseQuery<Query> {
   final Map<String, Object?> filter;
   final Map<String, Object> sort;
+  final int offsetCount;
   final int? limitCount;
   final EntitySchema? schema;
 
   const Query({
     this.filter = const {},
     this.sort = const {},
+    this.offsetCount = 0,
     this.limitCount,
     this.schema,
   });
@@ -108,6 +110,7 @@ class Query implements BaseQuery<Query> {
     return Query(
       filter: _and(filter, expression),
       sort: sort,
+      offsetCount: offsetCount,
       limitCount: limitCount,
       schema: schema,
     );
@@ -150,7 +153,6 @@ class Query implements BaseQuery<Query> {
 
   @override
   Query limit(int count) {
-    if (count == 0) return this;
     if (count < 0) {
       throw ArgumentError.value(
         count,
@@ -158,14 +160,41 @@ class Query implements BaseQuery<Query> {
         'MongoDB limits must be non-negative.',
       );
     }
-    return Query(filter: filter, sort: sort, limitCount: count, schema: schema);
+    if (count == 0) return this;
+    return Query(
+      filter: filter,
+      sort: sort,
+      offsetCount: offsetCount,
+      limitCount: count,
+      schema: schema,
+    );
   }
 
   @override
-  Query sorted(String key) {
+  Query offset(int count) {
+    if (count < 0) {
+      throw ArgumentError.value(
+        count,
+        'count',
+        'MongoDB offsets must be non-negative.',
+      );
+    }
+    if (count == 0) return this;
     return Query(
       filter: filter,
-      sort: {...sort, _field(key): 1},
+      sort: sort,
+      offsetCount: count,
+      limitCount: limitCount,
+      schema: schema,
+    );
+  }
+
+  @override
+  Query sorted(String key, {bool ascending = true}) {
+    return Query(
+      filter: filter,
+      sort: {...sort, _field(key): ascending ? 1 : -1},
+      offsetCount: offsetCount,
       limitCount: limitCount,
       schema: schema,
     );

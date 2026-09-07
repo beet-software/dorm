@@ -207,46 +207,35 @@ extension PostProperties on Post {
   }
 }
 
-class Dorm {
+class Dorm<Q extends BaseQuery<Q>, P extends PageRequest> {
   const Dorm(this._engine);
 
-  final BaseEngine<Query> _engine;
+  final BaseEngine<Q, P> _engine;
 
-  DatabaseEntity<
-    UserData,
-    User,
-    String,
-    Query,
-    SimpleCreation<UserData, String>
-  >
+  DatabaseEntity<UserData, User, String, Q, SimpleCreation<UserData, String>, P>
   get users => DatabaseEntity(const UserEntity(), engine: _engine);
 
-  DatabaseEntity<
-    PostData,
-    Post,
-    String,
-    Query,
-    SimpleCreation<PostData, String>
-  >
+  DatabaseEntity<PostData, Post, String, Q, SimpleCreation<PostData, String>, P>
   get posts => DatabaseEntity(const PostEntity(), engine: _engine);
 
-  DormRelations get relations => DormRelations(this);
+  DormRelations<Q, P> get relations => DormRelations<Q, P>(this);
 }
 
-class DormRelations {
+class DormRelations<Q extends BaseQuery<Q>, P extends PageRequest> {
   const DormRelations(this._dorm);
 
-  final Dorm _dorm;
+  final Dorm<Q, P> _dorm;
 
-  RelationPath<Dorm, User, User, Query> get users =>
+  RelationPath<Dorm<Q, P>, User, User, Q> get users =>
       RelationPath.root(_dorm.users.repository, context: _dorm);
 
-  RelationPath<Dorm, Post, Post, Query> get posts =>
+  RelationPath<Dorm<Q, P>, Post, Post, Q> get posts =>
       RelationPath.root(_dorm.posts.repository, context: _dorm);
 }
 
-extension UserRelationPaths<Root> on RelationPath<Dorm, Root, User, Query> {
-  RelationPath<Dorm, Root, Post, Query> get posts {
+extension UserRelationPaths<Root, Q extends BaseQuery<Q>, P extends PageRequest>
+    on RelationPath<Dorm<Q, P>, Root, User, Q> {
+  RelationPath<Dorm<Q, P>, Root, Post, Q> get posts {
     return toMany(
       context.posts.repository,
       spec: RelationSpec(
@@ -259,7 +248,7 @@ extension UserRelationPaths<Root> on RelationPath<Dorm, Root, User, Query> {
     );
   }
 
-  RelationPath<Dorm, Root, List<Post>, Query> get postsOrEmpty {
+  RelationPath<Dorm<Q, P>, Root, List<Post>, Q> get postsOrEmpty {
     return toManyOrEmpty(
       context.posts.repository,
       spec: RelationSpec(
@@ -273,8 +262,9 @@ extension UserRelationPaths<Root> on RelationPath<Dorm, Root, User, Query> {
   }
 }
 
-extension PostRelationPaths<Root> on RelationPath<Dorm, Root, Post, Query> {
-  RelationPath<Dorm, Root, User, Query> get user {
+extension PostRelationPaths<Root, Q extends BaseQuery<Q>, P extends PageRequest>
+    on RelationPath<Dorm<Q, P>, Root, Post, Q> {
+  RelationPath<Dorm<Q, P>, Root, User, Q> get user {
     return toOne(
       context.users.repository,
       spec: RelationSpec(
@@ -286,7 +276,7 @@ extension PostRelationPaths<Root> on RelationPath<Dorm, Root, Post, Query> {
     );
   }
 
-  RelationPath<Dorm, Root, User?, Query> get userOrNull {
+  RelationPath<Dorm<Q, P>, Root, User?, Q> get userOrNull {
     return toOneOrNull(
       context.users.repository,
       spec: RelationSpec(

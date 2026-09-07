@@ -102,18 +102,28 @@ class Query<I extends Object> implements BaseQuery<Query<I>> {
   }
 
   @override
-  Query<I> sorted(String key) {
+  Query<I> offset(int count) {
+    if (count < 0) {
+      throw ArgumentError.value(count, 'count', 'Offset must be non-negative.');
+    }
+    if (count == 0) return this;
+    return _operate((table) => Map.fromEntries(table.entries.skip(count)));
+  }
+
+  @override
+  Query<I> sorted(String key, {bool ascending = true}) {
     return _operate((table) {
-      return LinkedHashMap.fromEntries(
-        table.entries.toList()..sort((left, right) {
+      final entries = table.entries.toList()
+        ..sort((left, right) {
           final Object? leftValue = left.value[key];
           final Object? rightValue = right.value[key];
-          return Comparable.compare(
+          final int result = Comparable.compare(
             leftValue is Comparable<Object> ? leftValue : 0,
             rightValue is Comparable<Object> ? rightValue : 0,
           );
-        }),
-      );
+          return ascending ? result : -result;
+        });
+      return LinkedHashMap.fromEntries(entries);
     });
   }
 }

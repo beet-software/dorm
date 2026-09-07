@@ -159,7 +159,6 @@ class Query implements BaseQuery<Query> {
 
   @override
   Query limit(int count) {
-    if (count == 0) return this;
     if (count < 0) {
       throw ArgumentError.value(
         count,
@@ -167,13 +166,31 @@ class Query implements BaseQuery<Query> {
         'PostgreSQL limits must be non-negative.',
       );
     }
+    if (count == 0) return this;
     return Query('$query LIMIT $count', params: {...params}, schema: schema);
   }
 
   @override
+  Query offset(int count) {
+    if (count < 0) {
+      throw ArgumentError.value(
+        count,
+        'count',
+        'PostgreSQL offsets must be non-negative.',
+      );
+    }
+    if (count == 0) return this;
+    return Query('$query OFFSET $count', params: {...params}, schema: schema);
+  }
+
+  @override
   Query sorted(String key, {bool ascending = true}) {
+    final String separator =
+        RegExp(r'\bORDER\s+BY\b', caseSensitive: false).hasMatch(query)
+        ? ', '
+        : ' ORDER BY ';
     return Query(
-      '$query ORDER BY ${_field(key)} ${ascending ? 'ASC' : 'DESC'}',
+      '$query$separator${_field(key)} ${ascending ? 'ASC' : 'DESC'}',
       params: {...params},
       nextParameter: _nextParameter,
       schema: schema,

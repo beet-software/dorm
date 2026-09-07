@@ -19,7 +19,8 @@ class _Model extends _Data {
   const _Model({required this.id, required String name}) : super(name);
 }
 
-class _Entity implements Entity<_Data, _Model, String, Creation<_Data, String>> {
+class _Entity
+    implements Entity<_Data, _Model, String, Creation<_Data, String>> {
   const _Entity();
 
   @override
@@ -36,16 +37,12 @@ class _Entity implements Entity<_Data, _Model, String, Creation<_Data, String>> 
   bool get supportsAutomaticIdentity => true;
 
   @override
-  _Model fromData(ResolvedCreation<_Data, String> creation) => _Model(
-    id: creation.id,
-    name: creation.data.name,
-  );
+  _Model fromData(ResolvedCreation<_Data, String> creation) =>
+      _Model(id: creation.id, name: creation.data.name);
 
   @override
-  _Model fromJson(String id, Map data) => _Model(
-    id: id,
-    name: data['name'] as String,
-  );
+  _Model fromJson(String id, Map data) =>
+      _Model(id: id, name: data['name'] as String);
 
   @override
   String identify(_Model model) => model.id;
@@ -54,10 +51,8 @@ class _Entity implements Entity<_Data, _Model, String, Creation<_Data, String>> 
   Map<String, Object?> toJson(_Data data) => {'name': data.name};
 
   @override
-  _Model convert(_Model model, _Data data) => _Model(
-    id: model.id,
-    name: data.name,
-  );
+  _Model convert(_Model model, _Data data) =>
+      _Model(id: model.id, name: data.name);
 }
 
 void main() {
@@ -136,10 +131,9 @@ void main() {
     final Reference reference = Reference(
       client: client,
       baseUri: Uri.parse('https://example.test/api/'),
-      mapping: HttpMapping.byTableName(
-        {'users': HttpResourceMapping(path: 'users')},
-        jsonCodec: HttpJsonCodec.envelope(),
-      ),
+      mapping: HttpMapping.byTableName({
+        'users': HttpResourceMapping(path: 'users'),
+      }, jsonCodec: HttpJsonCodec.envelope()),
       headers: const {},
     );
 

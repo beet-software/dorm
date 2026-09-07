@@ -10,9 +10,9 @@ The adapter owns backend setup, cleanup, and connection lifecycle. The session
 returned by the adapter declares the capabilities supported by that session.
 
 The portable suite checks CRUD, filters, ordering, limits, initial stream
-values, and relationships. Reactive streams, negative limits, composite
-identities, and atomicity are separate capabilities because their behavior is
-not identical across the current engines.
+values, and relationships. Reactive streams, composite identities, and
+atomicity are separate capabilities because their behavior is not identical
+across the current engines.
 
 Database-backed adapters are opt-in. Their compliance tests are skipped until
 the environment variables required by the corresponding backend are set.

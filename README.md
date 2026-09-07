@@ -117,14 +117,12 @@ You can find an *example/* folder inside *every* package mentioned above, contai
 on how to use them. Note that you will not learn the framework just by reading this document or exploring
 just one of the packages above. Each documentation complements the other.
 
-## Disclaimers
+## Current scope
 
-dORM does not yet handle
-
-- transactions
-- paginations
-
-These features may be supported in future releases.
+dORM does not expose a general public transaction API. Repository reads support
+offset-based pages through `peekPage`. Current engines declare
+`OffsetPageRequest` as their accepted page type, so a statically typed
+`CursorPageRequest` call is rejected by the analyzer.
 
 ## Implementing your own engine
 

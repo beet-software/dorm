@@ -9,7 +9,7 @@ The root package documentation explicitly states that these common features are 
 | Capability | Current status |
 | --- | --- |
 | Application-controlled transactions | No public transaction API |
-| Portable pagination | No pagination abstraction |
+| Portable pagination | Current engines expose offset pages through `OffsetPageRequest`; cursor requests are rejected by their static page type |
 
 Some engine methods use internal transaction primitives. That does not create a public transaction boundary for application code.
 
@@ -54,7 +54,7 @@ The current design records several behaviors that are not equivalent to permanen
 | Filter portability | Intended semantic direction; current API may need improvement |
 | `DerivedField` | Generated persisted value with engine-specific storage mapping |
 | Polymorphic serialization | Existing Firebase-origin representation requiring review for non-JSON engines |
-| Pagination | Limitation; intended portable capability currently absent |
+| Pagination | Offset pages implemented; current engine contracts do not accept `CursorPageRequest` |
 
 These classifications prevent an implementation gap or historical artifact from being presented as a permanent design principle.
 

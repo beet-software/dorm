@@ -25,7 +25,10 @@ class _Query extends BaseQuery<_Query> {
   _Query limit(int count) => this;
 
   @override
-  _Query sorted(String key) => this;
+  _Query offset(int count) => this;
+
+  @override
+  _Query sorted(String key, {bool ascending = true}) => this;
 }
 
 class _User {
@@ -83,6 +86,7 @@ class _Source<Model> implements RelationSource<Model, String, _Query> {
   @override
   Future<List<Model>> peekAll([
     BaseFilter<_Query> filter = const BaseFilter.empty(),
+    QueryOptions options = const QueryOptions(),
   ]) async {
     if (filter is! ValueFilter<_Query>) return values;
     return values
@@ -98,8 +102,9 @@ class _Source<Model> implements RelationSource<Model, String, _Query> {
   @override
   Stream<List<Model>> pullAll([
     BaseFilter<_Query> filter = const BaseFilter.empty(),
+    QueryOptions options = const QueryOptions(),
   ]) async* {
-    yield await peekAll(filter);
+    yield await peekAll(filter, options);
   }
 }
 

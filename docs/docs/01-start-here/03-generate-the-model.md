@@ -130,12 +130,12 @@ The complete generated entity also contains `fromJson`, `convert`, and `toJson` 
 The generator creates a `Dorm` class that receives the engine and exposes a `DatabaseEntity` for each annotated model:
 
 ```dart
-class Dorm {
+class Dorm<Q extends BaseQuery<Q>, P extends PageRequest> {
   const Dorm(this._engine);
 
-  final BaseEngine<Query> _engine;
+  final BaseEngine<Q, P> _engine;
 
-  DatabaseEntity<UserData, User, String, Query> get users =>
+  DatabaseEntity<UserData, User, String, Q, SimpleCreation<UserData, String>, P> get users =>
       DatabaseEntity(const UserEntity(), engine: _engine);
 }
 ```

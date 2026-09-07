@@ -81,7 +81,7 @@ Map<String, Object?> _decodeDerived(
 }
 
 /// A [BaseReference] that uses MySQL as engine.
-class Reference implements BaseReference<Query> {
+class Reference implements BaseReference<Query, OffsetPageRequest> {
   final MySQLConnection connection;
 
   const Reference(this.connection);
@@ -142,14 +142,15 @@ class Reference implements BaseReference<Query> {
   @override
   Future<List<Model>> peekAll<Data, Model extends Data, I extends Object>(
     Entity<Data, Model, I, Creation<Data, I>> entity,
-    BaseFilter<Query> filter,
-  ) {
+    BaseFilter<Query> filter, [
+    QueryOptions options = const QueryOptions(),
+  ]) {
     final StringBuffer preBuffer = StringBuffer()
       ..write('SELECT * FROM ')
       ..write(entity.schema.tableName);
 
-    final Query query = filter.accept(
-      Query('$preBuffer', schema: entity.schema),
+    final Query query = options.apply(
+      filter.accept(Query('$preBuffer', schema: entity.schema)),
     );
     final StringBuffer buffer = StringBuffer()
       ..write(query.query)
@@ -172,6 +173,27 @@ class Reference implements BaseReference<Query> {
               )
               .toList(),
         );
+  }
+
+  @override
+  Future<Page<Model>> peekPage<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    BaseFilter<Query> filter,
+    OffsetPageRequest request,
+  ) async {
+    final List<Model> models = await peekAll(
+      entity,
+      filter,
+      QueryOptions(
+        orderBy: request.orderBy,
+        limit: request.size + 1,
+        offset: request.offset,
+      ),
+    );
+    return Page(
+      items: models.take(request.size).toList(),
+      hasNext: models.length > request.size,
+    );
   }
 
   @override
@@ -307,12 +329,13 @@ class Reference implements BaseReference<Query> {
   @override
   Stream<List<Model>> pullAll<Data, Model extends Data, I extends Object>(
     Entity<Data, Model, I, Creation<Data, I>> entity,
-    BaseFilter<Query> filter,
-  ) {
+    BaseFilter<Query> filter, [
+    QueryOptions options = const QueryOptions(),
+  ]) {
     // TODO: make pullAll realtime somehow
     final StreamController<List<Model>> controller =
         StreamController.broadcast();
-    peekAll(entity, filter).then(controller.add);
+    peekAll(entity, filter, options).then(controller.add);
     return controller.stream;
   }
 

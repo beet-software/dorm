@@ -62,16 +62,31 @@ class Query implements BaseQuery<Query> {
 
   @override
   Query limit(int count) {
-    if (count == 0) {
-      return this;
-    }
+    if (count == 0) return this;
     return Query('$query LIMIT $count', params: {...params}, schema: schema);
   }
 
   @override
+  Query offset(int count) {
+    if (count < 0) {
+      throw ArgumentError.value(count, 'count', 'Offset must be non-negative.');
+    }
+    if (count == 0) return this;
+    final String sql =
+        RegExp(r'\bLIMIT\b', caseSensitive: false).hasMatch(query)
+        ? '$query OFFSET $count'
+        : '$query LIMIT 18446744073709551615 OFFSET $count';
+    return Query(sql, params: {...params}, schema: schema);
+  }
+
+  @override
   Query sorted(String key, {bool ascending = true}) {
+    final String separator =
+        RegExp(r'\bORDER\s+BY\b', caseSensitive: false).hasMatch(query)
+        ? ', '
+        : ' ORDER BY ';
     return Query(
-      '$query ORDER BY ${_field(key)} ${ascending ? '' : 'DESC'}',
+      '$query$separator${_field(key)} ${ascending ? '' : 'DESC'}',
       params: {...params},
       schema: schema,
     );

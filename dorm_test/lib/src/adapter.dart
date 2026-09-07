@@ -14,7 +14,7 @@ abstract interface class EngineTestAdapter<Q extends BaseQuery<Q>> {
 /// A configured engine session used by the conformance suite.
 abstract interface class EngineTestSession<Q extends BaseQuery<Q>> {
   /// The engine under test.
-  BaseEngine<Q> get engine;
+  BaseEngine<Q, OffsetPageRequest> get engine;
 
   /// Behaviors that are supported by this engine and session.
   EngineCapabilities get capabilities;

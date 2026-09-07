@@ -13,9 +13,16 @@ Filter.value('ada', key: 'username')
         -> engine-specific Query
 ```
 
-The framework provides filters for empty results, exact values, text prefixes, date units, and text/numeric/date ranges. Modifier filters add `limit` and `sort` by applying those operations to the query created by the wrapped filter.
+The framework provides filters for empty results, exact values, text prefixes,
+date units, and text/numeric/date ranges. `QueryOptions` applies ordering,
+limits, and offsets after the filter. The older modifier filters still add
+`limit` and `sort` by applying those operations to the wrapped query.
 
-An engine's `Query` implements the same methods for its storage technology. MySQL creates SQL text and parameter maps. PostgreSQL creates SQL text and named parameters. Firebase calls Realtime Database query methods. BLoC evaluates its query representation against serialized in-memory values. MongoDB creates selector maps, sort values, and limits.
+An engine's `Query` implements the same methods for its storage technology.
+MySQL creates SQL text and parameter maps. PostgreSQL creates SQL text and
+named parameters. Firebase calls Realtime Database query methods. BLoC
+evaluates its query representation against serialized in-memory values.
+MongoDB creates selector maps, sort values, offsets, and limits.
 
 ## Use generated derived fields
 

@@ -13,7 +13,7 @@ void main() {
         .accept(const Query(schema: schema))
         .whereText('name', 'Al')
         .whereRange('score', const FilterRange<double>(from: 1, to: 3))
-        .sorted('name')
+        .sorted('name', ascending: false)
         .limit(10);
 
     final Map<String, String> parameters = const DefaultHttpQueryCodec().encode(
@@ -26,17 +26,26 @@ void main() {
       'name__startsWith': 'Al',
       'score__gte': '1.0',
       'score__lte': '3.0',
-      'sort': 'name',
+      'sort': '-name',
       'limit': '10',
     });
   });
 
-  test('encodes date filters as ISO-8601 bounds', () {
-    final Query query = const Query(schema: schema).whereDate(
-      'created-at',
-      DateTime(2025, 3, 4, 12, 30),
-      DateFilterUnit.day,
+  test('encodes an offset condition', () {
+    final Query query = const Query(schema: schema).offset(20);
+
+    final Map<String, String> parameters = const DefaultHttpQueryCodec().encode(
+      query,
+      schema,
     );
+
+    expect(parameters, {'offset': '20'});
+  });
+
+  test('encodes date filters as ISO-8601 bounds', () {
+    final Query query = const Query(
+      schema: schema,
+    ).whereDate('created-at', DateTime(2025, 3, 4, 12, 30), DateFilterUnit.day);
 
     final Map<String, String> parameters = const DefaultHttpQueryCodec().encode(
       query,

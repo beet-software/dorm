@@ -93,8 +93,9 @@ class _OneToOne<L, I extends Object, R, J extends Object>
   @override
   Future<List<Join<L, R?>>> peekAll([
     BaseFilter<Query> filter = const BaseFilter.empty(),
+    QueryOptions options = const QueryOptions(),
   ]) async {
-    final List<L> leftModels = await left.peekAll(filter);
+    final List<L> leftModels = await left.peekAll(filter, options);
     final List<Join<L, R?>> joins = [];
     for (L leftModel in leftModels) {
       final R? rightModel = await right.peek(on(leftModel));
@@ -114,9 +115,10 @@ class _OneToOne<L, I extends Object, R, J extends Object>
   @override
   Stream<List<Join<L, R?>>> pullAll([
     BaseFilter<Query> filter = const BaseFilter.empty(),
+    QueryOptions options = const QueryOptions(),
   ]) {
     return OneToOneBatchMerge<L, R?>(
-      left: left.pullAll(filter),
+      left: left.pullAll(filter, options),
       map: (leftModel) => right.pull(on(leftModel)),
     ).stream;
   }
@@ -141,8 +143,9 @@ class _OneToMany<L, I extends Object, R, J extends Object>
   @override
   Future<List<Join<L, List<R>>>> peekAll([
     BaseFilter<Query> filter = const BaseFilter.empty(),
+    QueryOptions options = const QueryOptions(),
   ]) async {
-    final List<L> leftModels = await left.peekAll(filter);
+    final List<L> leftModels = await left.peekAll(filter, options);
     final List<List<R>> associatedModels = await Future.wait(
       leftModels.map((leftModel) => right.peekAll(on(leftModel))).toList(),
     );
@@ -167,9 +170,10 @@ class _OneToMany<L, I extends Object, R, J extends Object>
   @override
   Stream<List<Join<L, List<R>>>> pullAll([
     BaseFilter<Query> filter = const BaseFilter.empty(),
+    QueryOptions options = const QueryOptions(),
   ]) {
     return OneToOneBatchMerge<L, List<R>>(
-      left: left.pullAll(filter),
+      left: left.pullAll(filter, options),
       map: (leftModel) => right.pullAll(on(leftModel)),
     ).stream;
   }
@@ -195,8 +199,9 @@ class _ManyToOne<L, I extends Object, R, J extends Object>
   @override
   Future<List<Join<R, List<L>>>> peekAll([
     BaseFilter<Query> filter = const BaseFilter.empty(),
+    QueryOptions options = const QueryOptions(),
   ]) async {
-    final List<L> leftModels = await left.peekAll(filter);
+    final List<L> leftModels = await left.peekAll(filter, options);
     final Map<J, List<L>> groups = {};
     for (L leftModel in leftModels) {
       groups.putIfAbsent(on(leftModel), () => []).add(leftModel);
@@ -228,9 +233,10 @@ class _ManyToOne<L, I extends Object, R, J extends Object>
   @override
   Stream<List<Join<R, List<L>>>> pullAll([
     BaseFilter<Query> filter = const BaseFilter.empty(),
+    QueryOptions options = const QueryOptions(),
   ]) {
     return ManyToOneBatchMerge<R, L, J>(
-      left: left.pullAll(filter),
+      left: left.pullAll(filter, options),
       onLeft: (leftModel) => on(leftModel),
       onRight: (rightId) => right.pull(rightId),
     ).stream;
@@ -280,8 +286,9 @@ class _ManyToMany<M, I extends Object, L, J extends Object, R, K extends Object>
   @override
   Future<List<Join<M, (L?, R?)>>> peekAll([
     BaseFilter<Query> filter = const BaseFilter.empty(),
+    QueryOptions options = const QueryOptions(),
   ]) async {
-    final List<M> middleModels = await middle.peekAll(filter);
+    final List<M> middleModels = await middle.peekAll(filter, options);
     final List<J> leftIds = middleModels.map(onLeft).toSet().toList();
     final List<K> rightIds = middleModels.map(onRight).toSet().toList();
 
@@ -316,9 +323,10 @@ class _ManyToMany<M, I extends Object, L, J extends Object, R, K extends Object>
   @override
   Stream<List<Join<M, (L?, R?)>>> pullAll([
     BaseFilter<Query> filter = const BaseFilter.empty(),
+    QueryOptions options = const QueryOptions(),
   ]) {
     return ManyToManyBatchMerge<M, L?, R?>(
-      left: middle.pullAll(filter),
+      left: middle.pullAll(filter, options),
       onLeft: (model) => left.pull(onLeft(model)),
       onRight: (model) => right.pull(onRight(model)),
     ).stream;

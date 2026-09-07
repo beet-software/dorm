@@ -54,13 +54,12 @@ abstract class BaseQuery<Q extends BaseQuery<Q>> {
   /// that can be used to delimit the comparison.
   Q whereRange<R>(String key, FilterRange<R> range);
 
-  /// From previous queries, includes only a [count] number of the rows.
-  ///
-  /// If [count] is positive, only the first [count] rows are included.
-  /// If [count] is negative, only the last abs([count]) rows are included.
-  /// If [count] is zero, no row is filtered (all rows are included).
+  /// From previous queries, includes only the first [count] rows.
   Q limit(int count);
 
+  /// From previous queries, skips the first [count] rows.
+  Q offset(int count);
+
   /// From previous queries, sorts the query by the field [key].
-  Q sorted(String key);
+  Q sorted(String key, {bool ascending = true});
 }

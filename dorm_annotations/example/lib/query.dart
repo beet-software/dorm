@@ -7,7 +7,12 @@ class Query implements BaseQuery<Query> {
   }
 
   @override
-  Query sorted(String key) {
+  Query offset(int count) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Query sorted(String key, {bool ascending = true}) {
     throw UnimplementedError();
   }
 

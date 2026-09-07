@@ -754,10 +754,16 @@ For any filter, you can use its `limit` method to evaluate the only first or las
 ```dart
 void main(Repository<SchoolData, School> repository) async {
   // Peek first 10 schools
-  await repository.peekAll(const Filter.empty().limit(10));
+  await repository.peekAll(
+    const Filter.empty(),
+    const QueryOptions(limit: 10),
+  );
 
-  // Peek last 20 schools with name prefixed with DEF
-  await repository.peekAll(Filter.text('DEF', key: 'name').limit(-20));
+  // Peek 20 schools with a name prefixed with DEF
+  await repository.peekAll(
+    Filter.text('DEF', key: 'name'),
+    const QueryOptions(limit: 20),
+  );
 }
 ```
 

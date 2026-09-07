@@ -62,9 +62,10 @@ Generated repositories expose these operation families:
 | Method | Signature shape | Result |
 | --- | --- | --- |
 | `peek` | `Future<Model?> peek(I id)` | One model or `null`. |
-| `peekAll` | `Future<List<Model>> peekAll([BaseFilter<Q> filter])` | Matching models. |
+| `peekAll` | `Future<List<Model>> peekAll([BaseFilter<Q> filter, QueryOptions options])` | Matching models with optional ordering and read window options. |
+| `peekPage` | `Future<Page<Model>> peekPage(BaseFilter<Q>, PageRequest)` | One offset page with `items` and `hasNext`. |
 | `pull` | `Stream<Model?> pull(I id)` | A stream of one model or `null`. |
-| `pullAll` | `Stream<List<Model>> pullAll([BaseFilter<Q> filter])` | A stream of matching lists. |
+| `pullAll` | `Stream<List<Model>> pullAll([BaseFilter<Q> filter, QueryOptions options])` | A stream of matching lists with optional read options. |
 | `peekAllKeys` | `Future<List<I>> peekAllKeys()` | Stored identities. |
 | `put` | `Future<Model> put(C creation)` | Constructs and persists one model from a creation request accepted by the entity. |
 | `putAll` | `Future<List<Model>> putAll(List<C> creations)` | Constructs and persists one model per creation request accepted by the entity. |
@@ -129,7 +130,9 @@ Common filter factories include:
 | `Filter.date(...)` | Date comparison at a `DateFilterUnit`. |
 | `Filter.dateRange(...)` | Date bounds. |
 
-The `limit` and `sort` extensions add query modifiers to a filter. See
+`QueryOptions`, `OrderBy`, `OffsetPageRequest`, and `Page` provide
+ordering, read windows, and offset-page metadata. The older `limit` and
+`sort` extensions remain available for existing filter-based calls. See
 [Search and filter](../02-build-the-store/02-query-and-filter.md).
 
 ## Relationship APIs

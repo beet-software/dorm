@@ -62,11 +62,11 @@ class _FirebaseSession implements EngineTestSession<Query> {
   ];
 
   @override
-  BaseEngine<Query> get engine => _engine;
+  BaseEngine<Query, OffsetPageRequest> get engine => _engine;
 
   @override
   EngineCapabilities get capabilities =>
-      const EngineCapabilities(negativeLimits: true, reactiveStreams: true);
+      const EngineCapabilities(reactiveStreams: true);
 
   @override
   Future<void> reset() async {

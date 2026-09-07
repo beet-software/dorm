@@ -221,37 +221,3 @@ class _DateRangeFilter<Q extends BaseQuery<Q>>
     extends _RangeFilter<DateTime?, Q> {
   const _DateRangeFilter(super.range, {required super.key});
 }
-
-extension FilterModifier<Q extends BaseQuery<Q>> on BaseFilter<Q> {
-  BaseFilter<Q> limit(int count) {
-    return _LimitModifier(this, count: count);
-  }
-
-  BaseFilter<Q> sort({required String key}) {
-    return _SortModifier(this, key: key);
-  }
-}
-
-class _LimitModifier<Q extends BaseQuery<Q>> implements BaseFilter<Q> {
-  final BaseFilter<Q> filter;
-  final int count;
-
-  const _LimitModifier(this.filter, {required this.count});
-
-  @override
-  Q accept(Q query) {
-    return filter.accept(query).limit(count);
-  }
-}
-
-class _SortModifier<Q extends BaseQuery<Q>> implements BaseFilter<Q> {
-  final BaseFilter<Q> filter;
-  final String key;
-
-  const _SortModifier(this.filter, {required this.key});
-
-  @override
-  Q accept(Q query) {
-    return filter.accept(query).sorted(key);
-  }
-}

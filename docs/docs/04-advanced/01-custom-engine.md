@@ -25,23 +25,25 @@ The official extension boundary is the set of framework contracts:
 
 ```text
 BaseQuery<Q>
-BaseReference<Q>
+BaseReference<Q, P>
 BaseRelationship<Q>
-BaseEngine<Q>
+BaseEngine<Q, P>
 ```
 
-The same query type `Q` is used by the engine's filters, reference, and relationship implementations.
+The same query type `Q` is used by the engine's filters, reference, and
+relationship implementations. `P extends PageRequest` declares which page
+request types the engine accepts.
 
 The engine entry point supplies the latter two implementations to generated `Dorm` code:
 
 ```dart
-class Engine implements BaseEngine<Query> {
+class Engine implements BaseEngine<Query, OffsetPageRequest> {
   final BackendConnection connection;
 
   const Engine(this.connection);
 
   @override
-  BaseReference<Query> createReference() {
+  BaseReference<Query, OffsetPageRequest> createReference() {
     return Reference(connection);
   }
 
@@ -90,8 +92,13 @@ class Query implements BaseQuery<Query> {
   }
 
   @override
-  Query sorted(String key) {
-    return Query(this.value.sorted(key));
+  Query offset(int count) {
+    return Query(this.value.offset(count));
+  }
+
+  @override
+  Query sorted(String key, {bool ascending = true}) {
+    return Query(this.value.sorted(key, ascending: ascending));
   }
 }
 ```
@@ -108,10 +115,11 @@ The current implementations return a new query value when applying an operation.
 
 ## Implement the reference
 
-Implement `BaseReference<Query>` for the backend's direct entity operations:
+Implement `BaseReference<Query, OffsetPageRequest>` for the backend's direct
+entity operations when the backend supports offset pages:
 
 ```dart
-class Reference implements BaseReference<Query> {
+class Reference implements BaseReference<Query, OffsetPageRequest> {
   final BackendConnection connection;
 
   const Reference(this.connection);
@@ -218,4 +226,6 @@ Framework relationship-path tests and MySQL relationship tests demonstrate the k
 | Import another package's `lib/src` classes or rely on generated normalization helper names | Incidental implementation use; not guaranteed |
 | Depend on a backend's private transaction, cache, or driver behavior through an internal class | Incidental and backend-specific |
 
-The current common framework has no public transaction or pagination contract. A custom engine can have internal backend mechanisms for those features, but those mechanisms do not become common dORM APIs automatically.
+The current common framework has no public transaction contract. Offset pages
+are part of the common read surface; cursor requests remain unsupported by the
+current engines.

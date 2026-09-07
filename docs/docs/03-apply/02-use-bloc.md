@@ -26,7 +26,7 @@ import 'package:dorm_bloc_database/dorm_bloc_database.dart';
 import 'models.dart';
 
 final Engine engine = Engine();
-final Dorm dorm = Dorm(engine);
+final Dorm<Query, OffsetPageRequest> dorm = Dorm(engine);
 ```
 
 `Engine()` creates the in-memory reference used by the generated `Dorm`. Reuse this `Dorm` instance when different parts of the application need to observe the same records. A separate `Engine()` creates a separate in-memory store.

@@ -14,26 +14,27 @@ class _HttpSession implements EngineTestSession<Query> {
     : engine = Engine(
         client: client,
         baseUri: Uri.parse('https://example.test/'),
-        mapping: HttpMapping.byTableName({
-          for (final String table in [
-            'dorm_compliance_items',
-            'dorm_compliance_parents',
-            'dorm_compliance_profiles',
-            'dorm_compliance_children',
-            'dorm_compliance_links',
-            'dorm_compliance_composites',
-          ])
-            table: HttpResourceMapping(
-              path: table,
-              createAll: HttpEndpoint('POST', '$table/batch'),
-              updateAll: HttpEndpoint('PUT', '$table/batch'),
-              deleteKeys: HttpEndpoint('POST', '$table/delete'),
-            ),
-        },
-        encodeIdentity: (identity) => switch (identity) {
-          CompositeKey(:final values) => values.join('|'),
-          _ => '$identity',
-        },
+        mapping: HttpMapping.byTableName(
+          {
+            for (final String table in [
+              'dorm_compliance_items',
+              'dorm_compliance_parents',
+              'dorm_compliance_profiles',
+              'dorm_compliance_children',
+              'dorm_compliance_links',
+              'dorm_compliance_composites',
+            ])
+              table: HttpResourceMapping(
+                path: table,
+                createAll: HttpEndpoint('POST', '$table/batch'),
+                updateAll: HttpEndpoint('PUT', '$table/batch'),
+                deleteKeys: HttpEndpoint('POST', '$table/delete'),
+              ),
+          },
+          encodeIdentity: (identity) => switch (identity) {
+            CompositeKey(:final values) => values.join('|'),
+            _ => '$identity',
+          },
         ),
       );
 
@@ -43,7 +44,6 @@ class _HttpSession implements EngineTestSession<Query> {
   @override
   final EngineCapabilities capabilities = const EngineCapabilities(
     compositeIdentities: true,
-    negativeLimits: true,
   );
 
   @override
@@ -148,6 +148,11 @@ class _HttpBackend {
     if (sort != null) {
       result.sort((left, right) => '${left[sort]}'.compareTo('${right[sort]}'));
     }
+    final int offset = int.tryParse(parameters['offset'] ?? '') ?? 0;
+    if (offset > 0) {
+      final int end = offset > result.length ? result.length : offset;
+      result.removeRange(0, end);
+    }
     final int? limit = int.tryParse(parameters['limit'] ?? '');
     if (limit == null || limit == 0) return result;
     return limit > 0
@@ -158,7 +163,7 @@ class _HttpBackend {
   bool _matches(Map<String, Object?> row, Map<String, String> parameters) {
     for (final MapEntry<String, String> entry in parameters.entries) {
       final String key = entry.key;
-      if (key == 'sort' || key == 'limit') continue;
+      if (key == 'sort' || key == 'limit' || key == 'offset') continue;
       if (key.endsWith('__startsWith')) {
         final String field = key.substring(0, key.length - 12);
         if (!'${row[field]}'.startsWith(entry.value)) return false;
@@ -199,9 +204,8 @@ class _HttpBackend {
     return row['id'] == id;
   }
 
-  Map<String, Object?> _map(Object? value) => (value as Map).map(
-    (key, value) => MapEntry('$key', value),
-  );
+  Map<String, Object?> _map(Object? value) =>
+      (value as Map).map((key, value) => MapEntry('$key', value));
 
   http.Response _response(int status, Object? body) => http.Response(
     body == null ? '' : jsonEncode(body),

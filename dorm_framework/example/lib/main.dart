@@ -11,8 +11,11 @@ const bool useFirebase = true;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final BaseEngine<dorm_bloc.Query> engine = dorm_bloc.Engine();
-  GetIt.instance.registerSingleton<Dorm>(Dorm(engine));
+  final BaseEngine<dorm_bloc.Query, OffsetPageRequest> engine =
+      dorm_bloc.Engine();
+  GetIt.instance.registerSingleton<Dorm<dorm_bloc.Query, OffsetPageRequest>>(
+    Dorm(engine),
+  );
   runApp(
     DevicePreview(
       defaultDevice: DeviceInfo.genericPhone(

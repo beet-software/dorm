@@ -78,7 +78,7 @@ class _MySqlSession implements EngineTestSession<Query> {
   final Engine _engine;
 
   @override
-  BaseEngine<Query> get engine => _engine;
+  BaseEngine<Query, OffsetPageRequest> get engine => _engine;
 
   @override
   EngineCapabilities get capabilities =>

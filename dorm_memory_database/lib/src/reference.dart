@@ -163,7 +163,7 @@ class _EntityReference<
 }
 
 /// A [BaseReference] implementation backed by Dart maps and streams.
-class Reference implements BaseReference<Query> {
+class Reference implements BaseReference<Query, OffsetPageRequest> {
   final Map<String, Object> _references = {};
 
   _EntityReference<Data, Model, I, C> _access<
@@ -195,20 +195,51 @@ class Reference implements BaseReference<Query> {
   @override
   Future<List<Model>> peekAll<Data, Model extends Data, I extends Object>(
     Entity<Data, Model, I, Creation<Data, I>> entity,
-    BaseFilter<Query> filter,
-  ) async {
+    BaseFilter<Query> filter, [
+    QueryOptions options = const QueryOptions(),
+  ]) async {
     final _EntityReference<Data, Model, I, Creation<Data, I>> reference =
         _access(entity);
-    final Query<I> query = filter.accept(Query<I>()) as Query<I>;
-    return query
+    final Query<I> query = QueryOptions(
+      orderBy: options.orderBy,
+      limit: options.limit == null ? null : options.limit! + options.offset,
+    ).apply(filter.accept(Query<I>()) as Query<I>);
+    final Iterable<MapEntry<I, TableRow>> entries = query
         .operator(
           reference.models.map(
             (key, value) => MapEntry(key, entity.toJson(value)),
           ),
         )
         .entries
+        .skip(options.offset)
+        .take(options.limit ?? reference.models.length);
+    return entries
         .map((entry) => entity.fromJson(entry.key, entry.value))
         .toList();
+  }
+
+  @override
+  Future<Page<Model>> peekPage<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    BaseFilter<Query> filter,
+    OffsetPageRequest request,
+  ) async {
+    final List<Model> models = await peekAll(
+      entity,
+      filter,
+      QueryOptions(
+        orderBy: request.orderBy,
+        limit: request.size + request.offset + 1,
+      ),
+    );
+    final List<Model> page = models
+        .skip(request.offset)
+        .take(request.size + 1)
+        .toList();
+    return Page(
+      items: page.take(request.size).toList(),
+      hasNext: page.length > request.size,
+    );
   }
 
   @override
@@ -254,15 +285,21 @@ class Reference implements BaseReference<Query> {
   @override
   Stream<List<Model>> pullAll<Data, Model extends Data, I extends Object>(
     Entity<Data, Model, I, Creation<Data, I>> entity,
-    BaseFilter<Query> filter,
-  ) {
-    final Query<I> query = filter.accept(Query<I>()) as Query<I>;
+    BaseFilter<Query> filter, [
+    QueryOptions options = const QueryOptions(),
+  ]) {
+    final Query<I> query = QueryOptions(
+      orderBy: options.orderBy,
+      limit: options.limit == null ? null : options.limit! + options.offset,
+    ).apply(filter.accept(Query<I>()) as Query<I>);
     return _access(entity).dataStream.map(
       (models) => query
           .operator(
             models.map((key, value) => MapEntry(key, entity.toJson(value))),
           )
           .entries
+          .skip(options.offset)
+          .take(options.limit ?? models.length)
           .map((entry) => entity.fromJson(entry.key, entry.value))
           .toList(),
     );

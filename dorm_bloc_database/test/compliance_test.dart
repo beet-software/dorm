@@ -8,12 +8,11 @@ class _BlocSession implements EngineTestSession<Query> {
   final Engine _engine;
 
   @override
-  BaseEngine<Query> get engine => _engine;
+  BaseEngine<Query, OffsetPageRequest> get engine => _engine;
 
   @override
   final EngineCapabilities capabilities = const EngineCapabilities(
     compositeIdentities: true,
-    negativeLimits: true,
     reactiveStreams: true,
   );
 

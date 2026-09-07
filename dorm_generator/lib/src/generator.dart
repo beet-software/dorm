@@ -2122,10 +2122,12 @@ class OrmGenerator extends Generator {
     final List<cb.Spec> specs = [
       cb.Class((b) {
         b.name = 'DormRelations';
+        b.types.add(_queryTypeParameter());
+        b.types.add(_pageTypeParameter());
         b.fields.add(
           cb.Field((b) {
             b.modifier = cb.FieldModifier.final$;
-            b.type = cb.Reference('Dorm');
+            b.type = _dormType();
             b.name = '_dorm';
           }),
         );
@@ -2183,6 +2185,8 @@ class OrmGenerator extends Generator {
         cb.Extension((b) {
           b.name = '${model.modelName}RelationPaths';
           b.types.add(cb.Reference('Root'));
+          b.types.add(_queryTypeParameter());
+          b.types.add(_pageTypeParameter());
           b.on = _relationPathType('Root', cb.Reference(model.modelName));
 
           for (final _GeneratedRelation relation in currentRelations) {
@@ -2251,11 +2255,37 @@ class OrmGenerator extends Generator {
     return cb.TypeReference((b) {
       b.symbol = 'RelationPath';
       b.types.addAll([
-        cb.Reference('Dorm'),
+        _dormType(),
         cb.Reference(rootType),
         resultType,
-        cb.Reference('Query'),
+        cb.Reference('Q'),
       ]);
+    });
+  }
+
+  cb.TypeReference _dormType() {
+    return cb.TypeReference((b) {
+      b.symbol = 'Dorm';
+      b.types.add(cb.Reference('Q'));
+      b.types.add(cb.Reference('P'));
+    });
+  }
+
+  cb.TypeReference _queryTypeParameter() {
+    return cb.TypeReference((b) {
+      b.symbol = 'Q';
+      b.bound = cb.TypeReference((b) {
+        b.symbol = 'BaseQuery';
+        b.url = '$_dormUrl';
+        b.types.add(cb.Reference('Q'));
+      });
+    });
+  }
+
+  cb.TypeReference _pageTypeParameter() {
+    return cb.TypeReference((b) {
+      b.symbol = 'P';
+      b.bound = cb.Reference('PageRequest', '$_dormUrl');
     });
   }
 
@@ -2470,13 +2500,16 @@ class OrmGenerator extends Generator {
         b.body.add(
           cb.Class((b) {
             b.name = 'Dorm';
+            b.types.add(_queryTypeParameter());
+            b.types.add(_pageTypeParameter());
             b.fields.add(
               cb.Field((b) {
                 b.modifier = cb.FieldModifier.final$;
                 b.type = cb.TypeReference((b) {
                   b.symbol = 'BaseEngine';
                   b.url = '$_dormUrl';
-                  b.types.add(cb.Reference('Query'));
+                  b.types.add(cb.Reference('Q'));
+                  b.types.add(cb.Reference('P'));
                 });
                 b.name = '_engine';
               }),
@@ -2501,8 +2534,9 @@ class OrmGenerator extends Generator {
                     b.types.add(cb.Reference(naming.dataName));
                     b.types.add(cb.Reference(naming.modelName));
                     b.types.add(naming.idReference);
-                    b.types.add(cb.Reference('Query'));
+                    b.types.add(cb.Reference('Q'));
                     b.types.add(naming.creationReference);
+                    b.types.add(cb.Reference('P'));
                   });
                   b.type = cb.MethodType.getter;
                   b.lambda = true;
@@ -2525,11 +2559,15 @@ class OrmGenerator extends Generator {
             if (relations.isNotEmpty) {
               b.methods.add(
                 cb.Method((b) {
-                  b.returns = cb.Reference('DormRelations');
+                  b.returns = cb.TypeReference((b) {
+                    b.symbol = 'DormRelations';
+                    b.types.add(cb.Reference('Q'));
+                    b.types.add(cb.Reference('P'));
+                  });
                   b.type = cb.MethodType.getter;
                   b.lambda = true;
                   b.name = 'relations';
-                  b.body = expressionOf('DormRelations(this)').code;
+                  b.body = expressionOf('DormRelations<Q, P>(this)').code;
                 }),
               );
             }

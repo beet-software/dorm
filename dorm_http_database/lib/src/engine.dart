@@ -7,7 +7,7 @@ import 'reference.dart';
 import 'relationship.dart';
 
 /// An HTTP/JSON engine for REST-shaped APIs.
-class Engine implements BaseEngine<Query> {
+class Engine implements BaseEngine<Query, OffsetPageRequest> {
   final http.Client client;
   final Uri baseUri;
   final HttpMapping mapping;
@@ -22,7 +22,7 @@ class Engine implements BaseEngine<Query> {
   });
 
   @override
-  BaseReference<Query> createReference() => Reference(
+  BaseReference<Query, OffsetPageRequest> createReference() => Reference(
     client: client,
     baseUri: baseUri,
     mapping: mapping,

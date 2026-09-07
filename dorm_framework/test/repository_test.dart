@@ -60,7 +60,7 @@ class Query extends MockBaseQuery<Query> {}
 void main() {
   const Dependency<ModelData> dependency = ModelDependency();
 
-  late MockBaseReference<Query> referenceMock;
+  late MockBaseReference<Query, OffsetPageRequest> referenceMock;
   late MockBaseRelationship<Query> relationshipMock;
   late MockEntity<ModelData, Model, String, SimpleCreation<ModelData, String>>
   entityMock;
@@ -69,7 +69,8 @@ void main() {
     Model,
     String,
     Query,
-    SimpleCreation<ModelData, String>
+    SimpleCreation<ModelData, String>,
+    OffsetPageRequest
   >
   repository;
 

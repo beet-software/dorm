@@ -88,7 +88,7 @@ import 'package:dorm_memory_database/dorm_memory_database.dart';
 
 import 'package:dorm_store/models.dart';
 
-final Dorm dorm = Dorm(Engine());
+final Dorm<Query, OffsetPageRequest> dorm = Dorm(Engine());
 ```
 
 `Dorm.users` is generated from `as: #users`. It exposes the `User` database entity, and `.repository` provides the model operations for that entity.
@@ -103,7 +103,7 @@ import 'package:dorm_memory_database/dorm_memory_database.dart';
 import 'package:dorm_store/models.dart';
 
 Future<void> main() async {
-  final Dorm dorm = Dorm(Engine());
+  final Dorm<Query, OffsetPageRequest> dorm = Dorm(Engine());
   final User created = await dorm.users.repository.put(
     Creation.auto(
       dependency: UserDependency(),

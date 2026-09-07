@@ -19,7 +19,7 @@ requirements.
 | Streams | State-backed | State-backed | Firebase value events, with offline behavior | Initial read only in current implementation | Initial read only | Initial read only | Initial read only |
 | Relationships | Framework relationship implementation | Framework relationship implementation | Framework relationship implementation | Direct relation plans plus readable fallbacks | Direct relation plans plus readable fallbacks | Direct relation plans plus readable fallbacks | Readable-operation fallback |
 | Public transaction API | None documented | None documented | None; patch uses a Firebase transaction internally | None; selected operations use MySQL transactions internally | None; selected operations use PostgreSQL transactions internally | None | None |
-| Pagination | Not supported by the common API | Not supported | Not supported | Not supported | Not supported | Not supported | Not supported |
+| Pagination | Offset pages | Offset pages | Offset pages with client-side skipping | Offset pages | Offset pages | Offset pages | Offset pages |
 
 The matrix records current behavior. It does not create a future compatibility
 promise.
@@ -198,7 +198,7 @@ identity fields in documents and does not convert identities to MongoDB
 replacement upserts. `pushAll` is sequential and has no atomicity guarantee.
 
 MongoDB filters support equality, escaped text-prefix matching, date/range
-conditions, ascending sort, and limits. `pull` and `pullAll` emit one initial
+conditions, ascending/descending sort, limits, and offsets. `pull` and `pullAll` emit one initial
 read. The engine does not expose public transactions, change streams,
 aggregation, migrations, or native selector APIs.
 
@@ -220,7 +220,7 @@ query parameters, and JSON envelopes.
 The engine sends JSON bodies using generated entity serialization and decodes
 JSON objects/lists with generated entity deserialization. It emits an initial
 read for `pull` and `pullAll`, uses readable operations for relationships, and
-does not expose transactions, pagination, polling, or server-event streams.
+does not expose transactions, cursor pagination, polling, or server-event streams.
 
 Batch operations require configured endpoints. Missing batch endpoints produce
 `UnsupportedError` instead of being emulated with multiple independent

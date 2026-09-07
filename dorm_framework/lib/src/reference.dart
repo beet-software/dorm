@@ -17,7 +17,7 @@
 import 'package:dorm_framework/dorm_framework.dart';
 
 /// Represents how to operate rows within a given database engine.
-abstract class BaseReference<Q extends BaseQuery<Q>> {
+abstract class BaseReference<Q extends BaseQuery<Q>, P extends PageRequest> {
   /// Defines how the database engine reads a single model, given its [id].
   Future<Model?> peek<Data, Model extends Data, I extends Object>(
     Entity<Data, Model, I, Creation<Data, I>> entity,
@@ -34,15 +34,23 @@ abstract class BaseReference<Q extends BaseQuery<Q>> {
   /// Defines how the database engine reads multiple models matching a [filter].
   Future<List<Model>> peekAll<Data, Model extends Data, I extends Object>(
     Entity<Data, Model, I, Creation<Data, I>> entity,
+    BaseFilter<Q> filter, [
+    QueryOptions options = const QueryOptions(),
+  ]);
+
+  Future<Page<Model>> peekPage<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     BaseFilter<Q> filter,
+    P request,
   );
 
   /// Defines how the database engine listen to the changes of multiple models
   /// matching a [filter].
   Stream<List<Model>> pullAll<Data, Model extends Data, I extends Object>(
     Entity<Data, Model, I, Creation<Data, I>> entity,
-    BaseFilter<Q> filter,
-  );
+    BaseFilter<Q> filter, [
+    QueryOptions options = const QueryOptions(),
+  ]);
 
   /// Defines how the database engine reads all the keys from the table.
   Future<List<I>> peekAllKeys<Data, Model extends Data, I extends Object>(
