@@ -19,7 +19,8 @@ class ItemDependency extends Dependency<ItemData> {
 }
 
 class ItemEntity
-    implements Entity<ItemData, Item, String, SimpleCreation<ItemData, String>> {
+    implements
+        Entity<ItemData, Item, String, SimpleCreation<ItemData, String>> {
   @override
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
@@ -74,12 +75,8 @@ class CompositeItemDependency extends Dependency<CompositeItemData> {
 
 class CompositeItemEntity
     implements
-        Entity<
-          CompositeItemData,
-          CompositeItem,
-          CompositeKey,
-          ExplicitCreation<CompositeItemData, CompositeKey>
-        > {
+        Entity<CompositeItemData, CompositeItem, CompositeKey,
+            ExplicitCreation<CompositeItemData, CompositeKey>> {
   @override
   PrimaryKeyCodec<CompositeKey> get primaryKeyCodec =>
       const CompositePrimaryKeyCodec();
@@ -119,22 +116,12 @@ class CompositeItemEntity
 }
 
 void main() {
-  late Repository<
-    ItemData,
-    Item,
-    String,
-    Query,
-    SimpleCreation<ItemData, String>
-  > repository;
+  late Repository<ItemData, Item, String, Query,
+      SimpleCreation<ItemData, String>> repository;
 
   setUp(() {
-    final DatabaseEntity<
-      ItemData,
-      Item,
-      String,
-      Query,
-      SimpleCreation<ItemData, String>
-    > entity = DatabaseEntity(
+    final DatabaseEntity<ItemData, Item, String, Query,
+        SimpleCreation<ItemData, String>> entity = DatabaseEntity(
       ItemEntity(),
       engine: Engine(),
     );
@@ -165,13 +152,9 @@ void main() {
   });
 
   test('put accepts an explicit composite identity', () async {
-    final DatabaseEntity<
-      CompositeItemData,
-      CompositeItem,
-      CompositeKey,
-      Query,
-      ExplicitCreation<CompositeItemData, CompositeKey>
-    > entity = DatabaseEntity(
+    final DatabaseEntity<CompositeItemData, CompositeItem, CompositeKey, Query,
+            ExplicitCreation<CompositeItemData, CompositeKey>> entity =
+        DatabaseEntity(
       CompositeItemEntity(),
       engine: Engine(),
     );
@@ -188,13 +171,9 @@ void main() {
   });
 
   test('put rejects automatic identity for composite entities', () {
-    final DatabaseEntity<
-      CompositeItemData,
-      CompositeItem,
-      CompositeKey,
-      Query,
-      ExplicitCreation<CompositeItemData, CompositeKey>
-    > entity = DatabaseEntity(
+    final DatabaseEntity<CompositeItemData, CompositeItem, CompositeKey, Query,
+            ExplicitCreation<CompositeItemData, CompositeKey>> entity =
+        DatabaseEntity(
       CompositeItemEntity(),
       engine: Engine(),
     );
@@ -211,13 +190,9 @@ void main() {
   });
 
   test('put rejects an explicit identity with the wrong number of values', () {
-    final DatabaseEntity<
-      CompositeItemData,
-      CompositeItem,
-      CompositeKey,
-      Query,
-      ExplicitCreation<CompositeItemData, CompositeKey>
-    > entity = DatabaseEntity(
+    final DatabaseEntity<CompositeItemData, CompositeItem, CompositeKey, Query,
+            ExplicitCreation<CompositeItemData, CompositeKey>> entity =
+        DatabaseEntity(
       CompositeItemEntity(),
       engine: Engine(),
     );
@@ -235,13 +210,8 @@ void main() {
   });
 
   test('putAll resolves each creation independently', () async {
-    final DatabaseEntity<
-      ItemData,
-      Item,
-      String,
-      Query,
-      SimpleCreation<ItemData, String>
-    > entity = DatabaseEntity(
+    final DatabaseEntity<ItemData, Item, String, Query,
+        SimpleCreation<ItemData, String>> entity = DatabaseEntity(
       ItemEntity(),
       engine: Engine(),
     );

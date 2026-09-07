@@ -62,9 +62,7 @@ class UsersScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-      providers: [
-        ChangeNotifierProvider<_Query>(create: (_) => _Query()),
-      ],
+      providers: [ChangeNotifierProvider<_Query>(create: (_) => _Query())],
       child: SafeArea(
         child: Scaffold(
           appBar: AppBar(
@@ -72,8 +70,9 @@ class UsersScreen extends StatelessWidget {
             actions: [
               IconButton(
                 onPressed: () async {
-                  await Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => const DashboardScreen()));
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const DashboardScreen()),
+                  );
                 },
                 icon: const Icon(Icons.dataset),
               ),
@@ -113,10 +112,12 @@ class UsersScreen extends StatelessWidget {
                                 leading: const Icon(Icons.person),
                                 title: Text(user.profile.name),
                                 onTap: () async {
-                                  await Navigator.of(context)
-                                      .push(MaterialPageRoute(
-                                    builder: (_) => UserScreen(userId: user.id),
-                                  ));
+                                  await Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          UserScreen(userId: user.id),
+                                    ),
+                                  );
                                 },
                                 subtitle: Text('@${user.username}'),
                                 trailing: const Icon(Icons.chevron_right),
@@ -131,21 +132,15 @@ class UsersScreen extends StatelessWidget {
           floatingActionButton: FloatingActionButton(
             child: const Icon(Icons.add),
             onPressed: () async {
-              final UserData? data =
-                  await Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => UserFormScreen(form: UserForm()),
-              ));
+              final UserData? data = await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => UserFormScreen(form: UserForm()),
+                ),
+              );
               if (data == null) return;
-              await GetIt.instance
-                  .get<Dorm>()
-                  .users
-                  .repository
-                  .put(
-                    Creation.auto(
-                      dependency: const UserDependency(),
-                      data: data,
-                    ),
-                  );
+              await GetIt.instance.get<Dorm>().users.repository.put(
+                Creation.auto(dependency: const UserDependency(), data: data),
+              );
             },
           ),
         ),

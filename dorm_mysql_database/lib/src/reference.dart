@@ -33,11 +33,12 @@ String _primaryKeyPredicate(EntitySchema schema, {String prefix = 'id'}) {
       .join(' AND ');
 }
 
-Map<String, Object?> _primaryKeyParameters<
-  Data,
-  Model extends Data,
-  I extends Object
- >(Entity<Data, Model, I, Creation<Data, I>> entity, I id, {String prefix = 'id'}) {
+Map<String, Object?>
+_primaryKeyParameters<Data, Model extends Data, I extends Object>(
+  Entity<Data, Model, I, Creation<Data, I>> entity,
+  I id, {
+  String prefix = 'id',
+}) {
   final List<Object?> values = entity.primaryKeyCodec.encode(id);
   final List<FieldSchema> fields = entity.schema.keyFields;
   if (values.length != fields.length) {
@@ -353,12 +354,8 @@ class Reference implements BaseReference<Query> {
   }
 
   @override
-  Future<Model> put<
-    Data,
-    Model extends Data,
-    I extends Object,
-    C extends Creation<Data, I>
-  >(
+  Future<Model>
+  put<Data, Model extends Data, I extends Object, C extends Creation<Data, I>>(
     Entity<Data, Model, I, C> entity,
     C creation, {
     MySQLConnection? connection,
@@ -377,11 +374,11 @@ class Reference implements BaseReference<Query> {
         .then((_) => model);
   }
 
-  ResolvedCreation<Data, I> _resolveCreation<
-    Data,
-    Model extends Data,
-    I extends Object
-  >(Entity<Data, Model, I, Creation<Data, I>> entity, Creation<Data, I> creation) {
+  ResolvedCreation<Data, I>
+  _resolveCreation<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    Creation<Data, I> creation,
+  ) {
     return switch (creation.identity) {
       AutoIdentity<I>() => _resolveAutoCreation(entity, creation),
       ExplicitIdentity<I>(:final value) => _resolveExplicitCreation(
@@ -392,11 +389,12 @@ class Reference implements BaseReference<Query> {
     };
   }
 
-  ResolvedCreation<Data, I> _resolveExplicitCreation<
-    Data,
-    Model extends Data,
-    I extends Object
-  >(Entity<Data, Model, I, Creation<Data, I>> entity, Creation<Data, I> creation, I id) {
+  ResolvedCreation<Data, I>
+  _resolveExplicitCreation<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    Creation<Data, I> creation,
+    I id,
+  ) {
     _validateIdentity(entity, id);
     return ResolvedCreation(
       dependency: creation.dependency,
@@ -406,11 +404,11 @@ class Reference implements BaseReference<Query> {
     );
   }
 
-  ResolvedCreation<Data, I> _resolveAutoCreation<
-    Data,
-    Model extends Data,
-    I extends Object
-  >(Entity<Data, Model, I, Creation<Data, I>> entity, Creation<Data, I> creation) {
+  ResolvedCreation<Data, I>
+  _resolveAutoCreation<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    Creation<Data, I> creation,
+  ) {
     if (entity.schema.isCompositePrimaryKey ||
         !entity.supportsAutomaticIdentity) {
       throw UnsupportedError(
@@ -455,18 +453,17 @@ class Reference implements BaseReference<Query> {
     Model extends Data,
     I extends Object,
     C extends Creation<Data, I>
-  >(
-    Entity<Data, Model, I, C> entity,
-    List<C> creations,
-  ) async {
+  >(Entity<Data, Model, I, C> entity, List<C> creations) async {
     final List<Model> models = [];
     await connection.transactional((connection) async {
       for (final C creation in creations) {
-        models.add(await put<Data, Model, I, C>(
-          entity,
-          creation,
-          connection: connection,
-        ));
+        models.add(
+          await put<Data, Model, I, C>(
+            entity,
+            creation,
+            connection: connection,
+          ),
+        );
       }
     });
     return models;

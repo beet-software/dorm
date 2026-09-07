@@ -25,7 +25,8 @@ class _ItemDependency extends Dependency<_ItemData> {
 }
 
 class _ItemEntity
-    implements Entity<_ItemData, _Item, String, SimpleCreation<_ItemData, String>> {
+    implements
+        Entity<_ItemData, _Item, String, SimpleCreation<_ItemData, String>> {
   const _ItemEntity();
 
   @override

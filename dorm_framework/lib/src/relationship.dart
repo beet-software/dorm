@@ -36,8 +36,12 @@ class Join<LeftModel, RightModel> {
 
 /// A type that can evaluate [SingleReadModel] given a [String] and a list of
 /// [BatchReadModel]s given a [Filter].
-abstract class Readable2<SingleReadModel, I extends Object, BatchReadModel,
-        Q extends BaseQuery<Q>>
+abstract class Readable2<
+  SingleReadModel,
+  I extends Object,
+  BatchReadModel,
+  Q extends BaseQuery<Q>
+>
     implements
         SingleReadOperation<SingleReadModel, I>,
         BatchReadOperation<BatchReadModel, Q> {}
@@ -46,7 +50,8 @@ abstract class Readable2<SingleReadModel, I extends Object, BatchReadModel,
 /// given a [Filter].
 ///
 /// This is a special case of [Readable2].
-typedef Readable<Model, I extends Object, Q extends BaseQuery<Q>> = Readable2<Model, I, Model, Q>;
+typedef Readable<Model, I extends Object, Q extends BaseQuery<Q>> =
+    Readable2<Model, I, Model, Q>;
 
 /// A readable model source with a backend-neutral relationship plan.
 ///
@@ -55,7 +60,10 @@ typedef Readable<Model, I extends Object, Q extends BaseQuery<Q>> = Readable2<Mo
 /// to optimize execution, while sources that cannot be optimized still use
 /// the regular [Readable] operations.
 abstract interface class RelationSource<
-        Model, I extends Object, Q extends BaseQuery<Q>>
+  Model,
+  I extends Object,
+  Q extends BaseQuery<Q>
+>
     implements Readable<Model, I, Q> {
   RelationPlan<Model, I> get plan;
 
@@ -83,8 +91,8 @@ abstract interface class TableRelationPlanBase {
 }
 
 /// A plan for a source backed directly by an [EntitySchema].
-class TableRelationPlan<Model, I extends Object>
-    extends RelationPlan<Model, I> implements TableRelationPlanBase {
+class TableRelationPlan<Model, I extends Object> extends RelationPlan<Model, I>
+    implements TableRelationPlanBase {
   final Model Function(I id, Map data) fromJson;
 
   final PrimaryKeyCodec<I> primaryKeyCodec;
@@ -125,27 +133,47 @@ class CompositeRelationPlan<Model, I extends Object>
 
 /// A type that can evaluate a [Join] between [L] and [SingleR] given a
 /// [String] and a list of [Join]s between [L] and [BatchR] given a [Filter].
-typedef Association2<L, I extends Object, SingleR, BatchR, Q extends BaseQuery<Q>>
-    = Readable2<Join<L, SingleR>, I, Join<L, BatchR>, Q>;
+typedef Association2<
+  L,
+  I extends Object,
+  SingleR,
+  BatchR,
+  Q extends BaseQuery<Q>
+> = Readable2<Join<L, SingleR>, I, Join<L, BatchR>, Q>;
 
 /// A type that can evaluate *V* given a [String] and to a list of *V* given a
 /// [Filter], where *V* is a [Join] between [L] and [R].
 ///
 /// This is a special case of [Association2].
-typedef Association<L, I extends Object, R, Q extends BaseQuery<Q>> = Association2<L, I, R, R, Q>;
+typedef Association<L, I extends Object, R, Q extends BaseQuery<Q>> =
+    Association2<L, I, R, R, Q>;
 
 /// An association that evaluates joins between [L] to [R]?.
-typedef OneToOneAssociation<L, I extends Object, R, Q extends BaseQuery<Q>> = Association<L, I, R?, Q>;
+typedef OneToOneAssociation<L, I extends Object, R, Q extends BaseQuery<Q>> =
+    Association<L, I, R?, Q>;
 
 /// An association that evaluates joins between [L] and a list of [R]s.
-typedef OneToManyAssociation<L, I extends Object, R, Q extends BaseQuery<Q>> = Association<L, I, List<R>, Q>;
+typedef OneToManyAssociation<L, I extends Object, R, Q extends BaseQuery<Q>> =
+    Association<L, I, List<R>, Q>;
 
 /// An association that evaluates a join between [R] and [L] given a [String]
 /// and joins between [R] and a list of [L] given a [Filter].
-typedef ManyToOneAssociation<L, I extends Object, R, J extends Object, Q extends BaseQuery<Q>> = Association2<R, I, L, List<L>, Q>;
+typedef ManyToOneAssociation<
+  L,
+  I extends Object,
+  R,
+  J extends Object,
+  Q extends BaseQuery<Q>
+> = Association2<R, I, L, List<L>, Q>;
 
 /// An association that evaluates joins between [M] and a tuple of [L] and [R].
-typedef ManyToManyAssociation<M, I extends Object, L, R, Q extends BaseQuery<Q>> = Association<M, I, (L?, R?), Q>;
+typedef ManyToManyAssociation<
+  M,
+  I extends Object,
+  L,
+  R,
+  Q extends BaseQuery<Q>
+> = Association<M, I, (L?, R?), Q>;
 
 /// Describes the cardinality of a generated relationship path step.
 enum RelationCardinality { one, many }
@@ -259,8 +287,8 @@ class RelationPath<Context, Root, Current, Q extends BaseQuery<Q>> {
   /// Appends a to-many relationship.
   RelationPath<Context, Root, Target, Q> toMany<Target, I extends Object>(
     RelationSource<Target, I, Q> target, {
-      required RelationSpec spec,
-      required BaseFilter<Q> Function(Current) on,
+    required RelationSpec spec,
+    required BaseFilter<Q> Function(Current) on,
   }) {
     final RelationPath<Context, Root, Current, Q> parent = this;
     return RelationPath._(
@@ -268,7 +296,9 @@ class RelationPath<Context, Root, Current, Q extends BaseQuery<Q>> {
         final List<Join<Root, Current>> parents = await parent._load(filter);
         final List<List<Join<Root, Target>>> groups = await Future.wait(
           parents.map((parentJoin) async {
-            final List<Target> models = await target.peekAll(on(parentJoin.right));
+            final List<Target> models = await target.peekAll(
+              on(parentJoin.right),
+            );
             return [
               for (final Target model in models)
                 Join(left: parentJoin.left, right: model),
@@ -288,9 +318,8 @@ class RelationPath<Context, Root, Current, Q extends BaseQuery<Q>> {
   /// equivalent to the previous `oneToMany` API:
   /// `Join<Root, List<Target>>` is emitted once for every root model,
   /// including models whose target list is empty.
-  RelationPath<Context, Root, List<Target>, Q> toManyOrEmpty<
-      Target,
-      I extends Object>(
+  RelationPath<Context, Root, List<Target>, Q>
+  toManyOrEmpty<Target, I extends Object>(
     RelationSource<Target, I, Q> target, {
     required RelationSpec spec,
     required BaseFilter<Q> Function(Current) on,
@@ -345,7 +374,8 @@ abstract class BaseRelationship<Q extends BaseQuery<Q>> {
   /// final Stream<List<Join<School, Principal?>>> result = association
   ///     .pullAll(const Filter.value(true, key: 'active'));
   /// ```
-  OneToOneAssociation<L, I, R, Q> oneToOne<L, I extends Object, R, J extends Object>(
+  OneToOneAssociation<L, I, R, Q>
+  oneToOne<L, I extends Object, R, J extends Object>(
     RelationSource<L, I, Q> left,
     RelationSource<R, J, Q> right,
     J Function(L) on,
@@ -369,7 +399,8 @@ abstract class BaseRelationship<Q extends BaseQuery<Q>> {
   /// final Stream<List<Join<School, List<Student>>>> result = association
   ///     .pullAll(const Filter.value(true, key: 'active'));
   /// ```
-  OneToManyAssociation<L, I, R, Q> oneToMany<L, I extends Object, R, J extends Object>(
+  OneToManyAssociation<L, I, R, Q>
+  oneToMany<L, I extends Object, R, J extends Object>(
     RelationSource<L, I, Q> left,
     RelationSource<R, J, Q> right,
     BaseFilter<Q> Function(L) on,
@@ -396,7 +427,8 @@ abstract class BaseRelationship<Q extends BaseQuery<Q>> {
   /// final Stream<List<Join<School, List<Student>>>> result = association
   ///     .pullAll(Filter.date(DateTime(2018), key: 'birth-date', unit: DateFilterUnit.year));
   /// ```
-  ManyToOneAssociation<L, I, R, J, Q> manyToOne<L, I extends Object, R, J extends Object>(
+  ManyToOneAssociation<L, I, R, J, Q>
+  manyToOne<L, I extends Object, R, J extends Object>(
     RelationSource<L, I, Q> left,
     RelationSource<R, J, Q> right,
     J Function(L) on,
@@ -424,7 +456,8 @@ abstract class BaseRelationship<Q extends BaseQuery<Q>> {
   /// final Stream<List<Join<Teaching, (School?, Student?)>>> result = association
   ///     .pullAll(Filter.value(true, key: 'active'));
   /// ```
-  ManyToManyAssociation<M, I, L, R, Q> manyToMany<M, I extends Object, L, J extends Object, R, K extends Object>(
+  ManyToManyAssociation<M, I, L, R, Q>
+  manyToMany<M, I extends Object, L, J extends Object, R, K extends Object>(
     RelationSource<M, I, Q> middle,
     RelationSource<L, J, Q> left,
     J Function(M) onLeft,
@@ -434,7 +467,12 @@ abstract class BaseRelationship<Q extends BaseQuery<Q>> {
 }
 
 /// Declares join-oriented reading and relationship assignment.
-class RelationshipDefinedAssociation<L, I extends Object, R, Q extends BaseQuery<Q>>
+class RelationshipDefinedAssociation<
+  L,
+  I extends Object,
+  R,
+  Q extends BaseQuery<Q>
+>
     implements Association<L, I, R, Q>, RelationSource<Join<L, R>, I, Q> {
   final BaseRelationship<Q> _relationship;
   final Association<L, I, R, Q> _association;
@@ -481,10 +519,10 @@ class RelationshipDefinedAssociation<L, I extends Object, R, Q extends BaseQuery
 
   /// Associates the underlying association with a [readable] using a 1:1
   /// relationship given by [on].
-  RelationshipDefinedAssociation<Join<L, R>, I, T?, Q> oneToOne<T, J extends Object>(
-    RelationSource<T, J, Q> readable, {
-    required J Function(Join<L, R>) on,
-  }) {
+  RelationshipDefinedAssociation<Join<L, R>, I, T?, Q> oneToOne<
+    T,
+    J extends Object
+  >(RelationSource<T, J, Q> readable, {required J Function(Join<L, R>) on}) {
     return RelationshipDefinedAssociation(
       _relationship,
       association: _relationship.oneToOne(this, readable, on),
@@ -493,7 +531,8 @@ class RelationshipDefinedAssociation<L, I extends Object, R, Q extends BaseQuery
 
   /// Associates the underlying association with a [readable] using a 1:N
   /// relationship given by [on].
-  RelationshipDefinedAssociation<Join<L, R>, I, List<T>, Q> oneToMany<T, J extends Object>(
+  RelationshipDefinedAssociation<Join<L, R>, I, List<T>, Q>
+  oneToMany<T, J extends Object>(
     RelationSource<T, J, Q> readable, {
     required BaseFilter<Q> Function(Join<L, R>) on,
   }) {
@@ -514,7 +553,8 @@ class RelationshipDefinedAssociation<L, I extends Object, R, Q extends BaseQuery
 
   /// Associates the underlying association with a [readable] through [middle]
   /// using a M:N relationship given by [onJoin] and [on].
-  RelationshipDefinedAssociation<M, J, (Join<L, R>?, T?), Q> manyToMany<M, J extends Object, T, K extends Object>({
+  RelationshipDefinedAssociation<M, J, (Join<L, R>?, T?), Q>
+  manyToMany<M, J extends Object, T, K extends Object>({
     required RelationSource<M, J, Q> middle,
     required J Function(M p1) onJoin,
     required RelationSource<T, K, Q> readable,
@@ -522,13 +562,7 @@ class RelationshipDefinedAssociation<L, I extends Object, R, Q extends BaseQuery
   }) {
     return RelationshipDefinedAssociation(
       _relationship,
-      association: _relationship.manyToMany(
-        middle,
-        this,
-        onJoin,
-        readable,
-        on,
-      ),
+      association: _relationship.manyToMany(middle, this, onJoin, readable, on),
     );
   }
 }
@@ -559,10 +593,7 @@ class ModelRelationship<L, I extends Object, Q extends BaseQuery<Q>> {
   final RelationSource<L, I, Q> left;
 
   /// Creates a [ModelRelationship] from its attributes.
-  const ModelRelationship({
-    required this.relationship,
-    required this.left,
-  });
+  const ModelRelationship({required this.relationship, required this.left});
 
   /// Represents an one-to-one .
   ///
@@ -608,10 +639,10 @@ class ModelRelationship<L, I extends Object, Q extends BaseQuery<Q>> {
   /// final Stream<List<Join<School, List<Student>>>> result = association
   ///     .pullAll(const Filter.value(true, key: 'active'));
   /// ```
-  RelationshipDefinedAssociation<L, I, List<R>, Q> oneToMany<R, J extends Object>(
-    RelationSource<R, J, Q> right, {
-    required BaseFilter<Q> Function(L) on,
-  }) {
+  RelationshipDefinedAssociation<L, I, List<R>, Q> oneToMany<
+    R,
+    J extends Object
+  >(RelationSource<R, J, Q> right, {required BaseFilter<Q> Function(L) on}) {
     return RelationshipDefinedAssociation(
       relationship,
       association: relationship.oneToMany(left, right, on),
@@ -666,7 +697,8 @@ class ModelRelationship<L, I extends Object, Q extends BaseQuery<Q>> {
   /// final Stream<List<Join<Teaching, (School?, Student?)>>> result = association
   ///     .pullAll(Filter.value(true, key: 'active'));
   /// ```
-  RelationshipDefinedAssociation<L, I, (RL?, RR?), Q> manyToMany<RL, J extends Object, RR, K extends Object>({
+  RelationshipDefinedAssociation<L, I, (RL?, RR?), Q>
+  manyToMany<RL, J extends Object, RR, K extends Object>({
     required RelationSource<RL, J, Q> left,
     required J Function(L) onLeft,
     required RelationSource<RR, K, Q> right,

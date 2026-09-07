@@ -26,7 +26,12 @@ class IntegerDependency extends Dependency<IntegerData> {
 
 class IntegerEntity
     implements
-        Entity<IntegerData, Integer, String, SimpleCreation<IntegerData, String>> {
+        Entity<
+          IntegerData,
+          Integer,
+          String,
+          SimpleCreation<IntegerData, String>
+        > {
   const IntegerEntity();
 
   @override
@@ -79,7 +84,8 @@ class DateDependency extends Dependency<DateData> {
 }
 
 class DateEntity
-    implements Entity<DateData, Date, String, SimpleCreation<DateData, String>> {
+    implements
+        Entity<DateData, Date, String, SimpleCreation<DateData, String>> {
   const DateEntity();
 
   @override
@@ -132,7 +138,8 @@ class TextDependency extends Dependency<TextData> {
 }
 
 class TextEntity
-    implements Entity<TextData, Text, String, SimpleCreation<TextData, String>> {
+    implements
+        Entity<TextData, Text, String, SimpleCreation<TextData, String>> {
   const TextEntity();
 
   @override

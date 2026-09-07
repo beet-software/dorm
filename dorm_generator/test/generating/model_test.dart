@@ -31,8 +31,11 @@ void testFailure(String name, ParsingContext context, DormError error) {
             .having((e) => e.summary, 'summary', error.summary)
             .having((e) => e.description, 'description', error.description)
             .having((e) => e.hint, 'hint', error.hint)
-            .having((e) => e.exampleCode, 'exampleCode',
-                orderedEquals(error.exampleCode)),
+            .having(
+              (e) => e.exampleCode,
+              'exampleCode',
+              orderedEquals(error.exampleCode),
+            ),
       ),
     );
   });
@@ -46,10 +49,7 @@ void main() {
       ParsingContext(
         polymorphicGroups: {},
         monomorphicNodes: {
-          '_User': ModelOrmNode(
-            annotation: Model(),
-            fields: {},
-          ),
+          '_User': ModelOrmNode(annotation: Model(), fields: {}),
         },
       ),
     );
@@ -98,17 +98,15 @@ void main() {
         polymorphicGroups: {},
         monomorphicNodes: {
           '_User': ModelOrmNode(
-            annotation: Model(
-              name: '___user',
-              primaryKeyGenerator: _foo,
-            ),
+            annotation: Model(name: '___user', primaryKeyGenerator: _foo),
             fields: {},
           ),
         },
       ),
       DormError(
         summary: 'Invalid primary key generator function signature.',
-        description: 'The class _User annotated with @Model() references a '
+        description:
+            'The class _User annotated with @Model() references a '
             'function with an incorrect signature: Closure: (int, String) => int '
             'from Function \'_foo@20402049\': static.. The primary key generator '
             'function must accept exactly two parameters: the abstract class '

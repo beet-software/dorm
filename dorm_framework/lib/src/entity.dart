@@ -153,10 +153,9 @@ class DatabaseEntity<
   DatabaseEntity(
     Entity<Data, Model, I, C> entity, {
     required BaseEngine<Q> engine,
-  })
-    : _entity = entity,
-      _reference = engine.createReference(),
-      _relationship = engine.createRelationship();
+  }) : _entity = entity,
+       _reference = engine.createReference(),
+       _relationship = engine.createRelationship();
 
   ModelRelationship<Model, I, Q> get relationships {
     return ModelRelationship(left: repository, relationship: _relationship);

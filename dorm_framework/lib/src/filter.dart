@@ -113,8 +113,8 @@ class ValueFilter<Q extends BaseQuery<Q>> implements BaseFilter<Q> {
   final FieldSchema? field;
 
   const ValueFilter(this.value, {String? key, this.field})
-      : assert((key == null) != (field == null)),
-        _key = key;
+    : assert((key == null) != (field == null)),
+      _key = key;
 
   String get key => _key ?? field!.columnName;
 

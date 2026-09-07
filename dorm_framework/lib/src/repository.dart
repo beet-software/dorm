@@ -236,7 +236,8 @@ class Repository<
   Q extends BaseQuery<Q>,
   C extends Creation<Data, I>
 >
-    implements DataRepository<Data, Model, I, Q, C>,
+    implements
+        DataRepository<Data, Model, I, Q, C>,
         RelationSource<Model, I, Q> {
   final BaseReference<Q> _reference;
   final Entity<Data, Model, I, C> _entity;

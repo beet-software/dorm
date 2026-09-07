@@ -85,22 +85,28 @@ class ReviewForm extends ffb.FormBloc<ReviewData, void> {
       ),
     );
 
-    addFieldBlocs(fieldBlocs: [
-      text,
-      type,
-      if (data != null) ..._access(data.type).flatFieldBlocs,
-    ]);
-    _subscriptions.add(type.onValueChanges(onData: (_, state) async* {
-      removeFieldBlocs(
-        fieldBlocs: ReviewContentType.values
-            .map(_access)
-            .expand((bloc) => bloc.flatFieldBlocs)
-            .toList(),
-      );
-      final ReviewContentType? type = state.value;
-      if (type == null) return;
-      addFieldBlocs(fieldBlocs: _access(type).flatFieldBlocs.toList());
-    }));
+    addFieldBlocs(
+      fieldBlocs: [
+        text,
+        type,
+        if (data != null) ..._access(data.type).flatFieldBlocs,
+      ],
+    );
+    _subscriptions.add(
+      type.onValueChanges(
+        onData: (_, state) async* {
+          removeFieldBlocs(
+            fieldBlocs: ReviewContentType.values
+                .map(_access)
+                .expand((bloc) => bloc.flatFieldBlocs)
+                .toList(),
+          );
+          final ReviewContentType? type = state.value;
+          if (type == null) return;
+          addFieldBlocs(fieldBlocs: _access(type).flatFieldBlocs.toList());
+        },
+      ),
+    );
   }
 
   _FormGroup<ReviewContent> _access(ReviewContentType type) {
@@ -130,7 +136,8 @@ class ReviewForm extends ffb.FormBloc<ReviewData, void> {
   @override
   Future<void> close() async {
     await Future.wait(
-        _subscriptions.map((subscription) => subscription.cancel()));
+      _subscriptions.map((subscription) => subscription.cancel()),
+    );
     return super.close();
   }
 }
@@ -186,39 +193,48 @@ class ReviewFormScreen extends StatelessWidget {
               // ),
               ffb.CanShowFieldBlocBuilder(
                 fieldBloc: form._productRole.rating,
-                builder: (context, _) => ffb.BlocBuilder<
-                    ffb.InputFieldBloc<int, void>,
-                    ffb.InputFieldBlocState<int, void>>(
-                  bloc: form._productRole.rating,
-                  builder: (context, state) => Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Padding(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        child: Text('How do you rate it?'),
+                builder: (context, _) =>
+                    ffb.BlocBuilder<
+                      ffb.InputFieldBloc<int, void>,
+                      ffb.InputFieldBlocState<int, void>
+                    >(
+                      bloc: form._productRole.rating,
+                      builder: (context, state) => Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            child: Text('How do you rate it?'),
+                          ),
+                          Center(
+                            child: RatingBar.builder(
+                              initialRating: state.value.toDouble(),
+                              minRating: 1,
+                              direction: Axis.horizontal,
+                              itemCount: 5,
+                              itemPadding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                              ),
+                              itemBuilder: (context, _) {
+                                return const Icon(
+                                  Icons.star,
+                                  color: Colors.amber,
+                                );
+                              },
+                              onRatingUpdate: (rating) {
+                                form._productRole.rating.updateValue(
+                                  rating.toInt(),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                        ],
                       ),
-                      Center(
-                        child: RatingBar.builder(
-                          initialRating: state.value.toDouble(),
-                          minRating: 1,
-                          direction: Axis.horizontal,
-                          itemCount: 5,
-                          itemPadding:
-                              const EdgeInsets.symmetric(horizontal: 4),
-                          itemBuilder: (context, _) {
-                            return const Icon(Icons.star, color: Colors.amber);
-                          },
-                          onRatingUpdate: (rating) {
-                            form._productRole.rating
-                                .updateValue(rating.toInt());
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                    ],
-                  ),
-                ),
+                    ),
               ),
               ffb.RadioButtonGroupFieldBlocBuilder<ReviewSatisfaction>(
                 selectFieldBloc: form._serviceRole.rating,
@@ -243,7 +259,7 @@ class ReviewFormScreen extends StatelessWidget {
                   'submit',
                   style: TextStyle(color: Colors.white),
                 ),
-              )
+              ),
             ],
           ),
         ),

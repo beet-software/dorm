@@ -81,8 +81,7 @@ sealed class Creation<Data, I extends Object> {
 }
 
 /// A creation request accepted by entities with a single primary key.
-sealed class SimpleCreation<Data, I extends Object>
-    extends Creation<Data, I> {
+sealed class SimpleCreation<Data, I extends Object> extends Creation<Data, I> {
   const SimpleCreation._({
     required super.dependency,
     required super.data,
@@ -93,15 +92,12 @@ sealed class SimpleCreation<Data, I extends Object>
 /// A creation request that delegates identity generation to an engine.
 final class AutoCreation<Data, I extends Object>
     extends SimpleCreation<Data, I> {
-  const AutoCreation._({
-    required super.dependency,
-    required super.data,
-  }) : super._(identity: const AutoIdentity());
+  const AutoCreation._({required super.dependency, required super.data})
+    : super._(identity: const AutoIdentity());
 }
 
 /// A creation request that supplies the final identity explicitly.
-final class ExplicitCreation<Data, I extends Object>
-    extends Creation<Data, I> {
+final class ExplicitCreation<Data, I extends Object> extends Creation<Data, I> {
   ExplicitCreation._({
     required super.dependency,
     required super.data,

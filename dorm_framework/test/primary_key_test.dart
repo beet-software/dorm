@@ -3,11 +3,11 @@ import 'package:test/test.dart';
 
 void main() {
   test('composite keys compare by ordered values', () {
+    expect(CompositeKey(['tenant', 7]), equals(CompositeKey(['tenant', 7])));
     expect(
       CompositeKey(['tenant', 7]),
-      equals(CompositeKey(['tenant', 7])),
+      isNot(equals(CompositeKey([7, 'tenant']))),
     );
-    expect(CompositeKey(['tenant', 7]), isNot(equals(CompositeKey([7, 'tenant']))));
   });
 
   test('composite codec round-trips values', () {

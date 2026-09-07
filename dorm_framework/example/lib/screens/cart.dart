@@ -23,8 +23,10 @@ class CartScreen extends StatelessWidget {
               .cartItems
               .productOrNull
               .pullAll(BaseFilter.value(cartId, key: 'cart-id'))
-              .map((event) =>
-                  AsyncSnapshot.withData(ConnectionState.active, event)),
+              .map(
+                (event) =>
+                    AsyncSnapshot.withData(ConnectionState.active, event),
+              ),
         ),
       ],
       child: SafeArea(
@@ -57,19 +59,20 @@ class CartScreen extends StatelessWidget {
           floatingActionButton: FloatingActionButton(
             child: const Icon(Icons.add),
             onPressed: () async {
-              final OrderResult? result = await Navigator.of(context)
-                  .push(MaterialPageRoute(builder: (_) => const OrderScreen()));
+              final OrderResult? result = await Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const OrderScreen()));
               if (result == null) return;
 
               await GetIt.instance.get<Dorm>().cartItems.repository.put(
-                    Creation.auto(
-                      dependency: CartItemDependency(
-                        productId: result.productId,
-                        cartId: cartId,
-                      ),
-                      data: CartItemData(amount: result.amount),
-                    ),
-                  );
+                Creation.auto(
+                  dependency: CartItemDependency(
+                    productId: result.productId,
+                    cartId: cartId,
+                  ),
+                  data: CartItemData(amount: result.amount),
+                ),
+              );
             },
           ),
         ),

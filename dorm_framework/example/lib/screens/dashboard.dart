@@ -27,8 +27,10 @@ class DashboardScreen extends StatelessWidget {
               .items
               .productOrNull
               .pullAll()
-              .map((event) =>
-                  AsyncSnapshot.withData(ConnectionState.active, event)),
+              .map(
+                (event) =>
+                    AsyncSnapshot.withData(ConnectionState.active, event),
+              ),
         ),
         // Allows reading how many times a product was included in a order
         StreamProvider<AsyncSnapshot<_CountView>>(
@@ -39,8 +41,10 @@ class DashboardScreen extends StatelessWidget {
               .products
               .cartItems
               .pullAll()
-              .map((event) =>
-                  AsyncSnapshot.withData(ConnectionState.active, event)),
+              .map(
+                (event) =>
+                    AsyncSnapshot.withData(ConnectionState.active, event),
+              ),
         ),
       ],
       child: DefaultTabController(
@@ -50,7 +54,10 @@ class DashboardScreen extends StatelessWidget {
             appBar: AppBar(
               title: const Text('Dashboard'),
               bottom: const TabBar(
-                tabs: [Tab(text: 'By users'), Tab(text: 'By products')],
+                tabs: [
+                  Tab(text: 'By users'),
+                  Tab(text: 'By products'),
+                ],
               ),
             ),
             body: TabBarView(
@@ -66,10 +73,13 @@ class DashboardScreen extends StatelessWidget {
                     for (final Join<User, Product?> join in joins) {
                       final Product? product = join.right;
                       if (product == null) continue;
-                      grouped.putIfAbsent(join.left, () => {}).add(product.name);
+                      grouped
+                          .putIfAbsent(join.left, () => {})
+                          .add(product.name);
                     }
-                    final List<MapEntry<User, Set<String>>> entries =
-                        grouped.entries.toList();
+                    final List<MapEntry<User, Set<String>>> entries = grouped
+                        .entries
+                        .toList();
                     return ListView.builder(
                       itemCount: entries.length,
                       itemBuilder: (context, i) {
@@ -79,9 +89,7 @@ class DashboardScreen extends StatelessWidget {
                         return ListTile(
                           leading: const Icon(Icons.person_search),
                           title: Text('@${user.username}'),
-                          subtitle: Text(
-                            products.join(', '),
-                          ),
+                          subtitle: Text(products.join(', ')),
                         );
                       },
                     );
@@ -105,8 +113,10 @@ class DashboardScreen extends StatelessWidget {
                       itemBuilder: (context, i) {
                         final Product product = entries[i].key;
                         final List<CartItem> items = entries[i].value;
-                        final int count =
-                            items.map((item) => item.cartId).toSet().length;
+                        final int count = items
+                            .map((item) => item.cartId)
+                            .toSet()
+                            .length;
                         return ListTile(
                           leading: const Icon(Icons.shopping_bag),
                           title: Text(product.name),

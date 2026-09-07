@@ -319,12 +319,8 @@ class Reference extends Cubit<_State> implements BaseReference<Query> {
   }
 
   @override
-  Future<Model> put<
-    Data,
-    Model extends Data,
-    I extends Object,
-    C extends Creation<Data, I>
-  >(
+  Future<Model> put<Data, Model extends Data, I extends Object,
+      C extends Creation<Data, I>>(
     Entity<Data, Model, I, C> entity,
     C creation,
   ) async {
@@ -341,12 +337,8 @@ class Reference extends Cubit<_State> implements BaseReference<Query> {
   }
 
   @override
-  Future<List<Model>> putAll<
-    Data,
-    Model extends Data,
-    I extends Object,
-    C extends Creation<Data, I>
-  >(
+  Future<List<Model>> putAll<Data, Model extends Data, I extends Object,
+      C extends Creation<Data, I>>(
     Entity<Data, Model, I, C> entity,
     List<C> creations,
   ) async {

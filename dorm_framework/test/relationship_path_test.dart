@@ -104,67 +104,72 @@ class _Source<Model> implements RelationSource<Model, String, _Query> {
 }
 
 void main() {
-  test('navigates generated-style paths without exposing on callbacks', () async {
-    final _Source<_User> users = _Source(
-      values: const [_User('u1')],
-      identify: (model) => model.id,
-      fields: (model) => {'id': model.id},
-    );
-    final _Source<_Cart> carts = _Source(
-      values: const [_Cart('c1', 'u1')],
-      identify: (model) => model.id,
-      fields: (model) => {'id': model.id, 'user-id': model.userId},
-    );
-    final _Source<_CartItem> items = _Source(
-      values: const [_CartItem('i1', 'c1', 'p1')],
-      identify: (model) => model.id,
-      fields: (model) => {
-        'id': model.id,
-        'cart-id': model.cartId,
-      },
-    );
-    final _Source<_Product> products = _Source(
-      values: const [_Product('p1')],
-      identify: (model) => model.id,
-      fields: (model) => {'id': model.id},
-    );
+  test(
+    'navigates generated-style paths without exposing on callbacks',
+    () async {
+      final _Source<_User> users = _Source(
+        values: const [_User('u1')],
+        identify: (model) => model.id,
+        fields: (model) => {'id': model.id},
+      );
+      final _Source<_Cart> carts = _Source(
+        values: const [_Cart('c1', 'u1')],
+        identify: (model) => model.id,
+        fields: (model) => {'id': model.id, 'user-id': model.userId},
+      );
+      final _Source<_CartItem> items = _Source(
+        values: const [_CartItem('i1', 'c1', 'p1')],
+        identify: (model) => model.id,
+        fields: (model) => {'id': model.id, 'cart-id': model.cartId},
+      );
+      final _Source<_Product> products = _Source(
+        values: const [_Product('p1')],
+        identify: (model) => model.id,
+        fields: (model) => {'id': model.id},
+      );
 
-    final RelationPath<Object, _User, _User, _Query> path =
-        RelationPath.root(users, context: Object());
-    final List<Join<_User, _Product>> result = await path
-        .toMany(
-          carts,
-          spec: const RelationSpec(
-            cardinality: RelationCardinality.many,
-            source: FieldSchema(fieldName: 'id', columnName: 'id'),
-            target: FieldSchema(fieldName: 'userId', columnName: 'user-id'),
-          ),
-          on: (user) => const BaseFilter.value('u1', key: 'user-id'),
-        )
-        .toMany(
-          items,
-          spec: const RelationSpec(
-            cardinality: RelationCardinality.many,
-            source: FieldSchema(fieldName: 'id', columnName: 'id'),
-            target: FieldSchema(fieldName: 'cartId', columnName: 'cart-id'),
-          ),
-          on: (cart) => BaseFilter.value(cart.id, key: 'cart-id'),
-        )
-        .toOne(
-          products,
-          spec: const RelationSpec(
-            cardinality: RelationCardinality.one,
-            source: FieldSchema(fieldName: 'productId', columnName: 'product-id'),
-            target: FieldSchema(fieldName: 'id', columnName: 'id'),
-          ),
-          on: (_) => 'p1',
-        )
-        .peekAll();
+      final RelationPath<Object, _User, _User, _Query> path = RelationPath.root(
+        users,
+        context: Object(),
+      );
+      final List<Join<_User, _Product>> result = await path
+          .toMany(
+            carts,
+            spec: const RelationSpec(
+              cardinality: RelationCardinality.many,
+              source: FieldSchema(fieldName: 'id', columnName: 'id'),
+              target: FieldSchema(fieldName: 'userId', columnName: 'user-id'),
+            ),
+            on: (user) => const BaseFilter.value('u1', key: 'user-id'),
+          )
+          .toMany(
+            items,
+            spec: const RelationSpec(
+              cardinality: RelationCardinality.many,
+              source: FieldSchema(fieldName: 'id', columnName: 'id'),
+              target: FieldSchema(fieldName: 'cartId', columnName: 'cart-id'),
+            ),
+            on: (cart) => BaseFilter.value(cart.id, key: 'cart-id'),
+          )
+          .toOne(
+            products,
+            spec: const RelationSpec(
+              cardinality: RelationCardinality.one,
+              source: FieldSchema(
+                fieldName: 'productId',
+                columnName: 'product-id',
+              ),
+              target: FieldSchema(fieldName: 'id', columnName: 'id'),
+            ),
+            on: (_) => 'p1',
+          )
+          .peekAll();
 
-    expect(result, hasLength(1));
-    expect(result.single.left.id, 'u1');
-    expect(result.single.right.id, 'p1');
-  });
+      expect(result, hasLength(1));
+      expect(result.single.left.id, 'u1');
+      expect(result.single.right.id, 'p1');
+    },
+  );
 
   test('distinguishes inner and left to-one paths', () async {
     final _Source<_CartItem> items = _Source(
@@ -188,8 +193,9 @@ void main() {
       target: FieldSchema(fieldName: 'id', columnName: 'id'),
     );
 
-    final List<Join<_CartItem, _Product>> inner =
-        await path.toOne(products, spec: spec, on: (item) => item.productId).peekAll();
+    final List<Join<_CartItem, _Product>> inner = await path
+        .toOne(products, spec: spec, on: (item) => item.productId)
+        .peekAll();
     final List<Join<_CartItem, _Product?>> left = await path
         .toOneOrNull(products, spec: spec, on: (item) => item.productId)
         .peekAll();
@@ -213,18 +219,18 @@ void main() {
       fields: (model) => {'id': model.id, 'user-id': model.userId},
     );
 
-    final List<Join<_User, List<_Cart>>> result = await RelationPath.root(
-      users,
-      context: Object(),
-    ).toManyOrEmpty(
-      carts,
-      spec: const RelationSpec(
-        cardinality: RelationCardinality.many,
-        source: FieldSchema(fieldName: 'id', columnName: 'id'),
-        target: FieldSchema(fieldName: 'userId', columnName: 'user-id'),
-      ),
-      on: (user) => BaseFilter.value(user.id, key: 'user-id'),
-    ).peekAll();
+    final List<Join<_User, List<_Cart>>> result =
+        await RelationPath.root(users, context: Object())
+            .toManyOrEmpty(
+              carts,
+              spec: const RelationSpec(
+                cardinality: RelationCardinality.many,
+                source: FieldSchema(fieldName: 'id', columnName: 'id'),
+                target: FieldSchema(fieldName: 'userId', columnName: 'user-id'),
+              ),
+              on: (user) => BaseFilter.value(user.id, key: 'user-id'),
+            )
+            .peekAll();
 
     expect(result, hasLength(2));
     expect(result.first.right, hasLength(1));

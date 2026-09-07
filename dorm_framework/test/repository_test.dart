@@ -62,19 +62,16 @@ void main() {
 
   late MockBaseReference<Query> referenceMock;
   late MockBaseRelationship<Query> relationshipMock;
-  late MockEntity<
-    ModelData,
-    Model,
-    String,
-    SimpleCreation<ModelData, String>
-  > entityMock;
+  late MockEntity<ModelData, Model, String, SimpleCreation<ModelData, String>>
+  entityMock;
   late Repository<
     ModelData,
     Model,
     String,
     Query,
     SimpleCreation<ModelData, String>
-  > repository;
+  >
+  repository;
 
   setUp(() {
     referenceMock = MockBaseReference();

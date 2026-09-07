@@ -26,6 +26,9 @@ melos:
       includeScopes: true
       linkToCommits: true
   scripts:
+    format:
+      description: Format all workspace packages.
+      exec: dart format .
     analyze:
       description: Analyze all workspace packages.
       exec: dart analyze .

@@ -21,11 +21,7 @@ abstract class _SchoolAddress {
   int get number;
 }
 
-@Model(
-  name: 'escola',
-  as: #schools,
-  primaryKeyGenerator: _School._generate,
-)
+@Model(name: 'escola', as: #schools, primaryKeyGenerator: _School._generate)
 abstract class _School {
   static String _generate(_School school, String id) => school.name;
 

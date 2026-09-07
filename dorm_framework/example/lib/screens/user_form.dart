@@ -28,9 +28,7 @@ class UserForm extends ffb.FormBloc<UserData, void> {
     );
     profileName = ffb.TextFieldBloc(
       initialValue: data?.profile.name ?? '',
-      validators: [
-        ffb.FieldBlocValidators.required,
-      ],
+      validators: [ffb.FieldBlocValidators.required],
     );
     profileBirthDate = ffb.TextFieldBloc(
       initialValue: data == null
@@ -48,16 +46,10 @@ class UserForm extends ffb.FormBloc<UserData, void> {
         },
       ],
     );
-    profileBio = ffb.TextFieldBloc(
-      initialValue: data?.profile.bio ?? '',
+    profileBio = ffb.TextFieldBloc(initialValue: data?.profile.bio ?? '');
+    addFieldBlocs(
+      fieldBlocs: [username, email, profileName, profileBirthDate, profileBio],
     );
-    addFieldBlocs(fieldBlocs: [
-      username,
-      email,
-      profileName,
-      profileBirthDate,
-      profileBio,
-    ]);
   }
 
   UserData? get response {
@@ -134,9 +126,7 @@ class UserFormScreen extends StatelessWidget {
                 textFieldBloc: form.profileBirthDate,
                 keyboardType: TextInputType.datetime,
                 autofillHints: const [AutofillHints.birthday],
-                inputFormatters: [
-                  LengthLimitingTextInputFormatter(10),
-                ],
+                inputFormatters: [LengthLimitingTextInputFormatter(10)],
                 decoration: const InputDecoration(
                   labelText: 'Birth date',
                   border: OutlineInputBorder(),

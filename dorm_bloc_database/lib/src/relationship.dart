@@ -26,7 +26,8 @@ class Relationship implements BaseRelationship<Query> {
   const Relationship();
 
   @override
-  OneToOneAssociation<L, I, R, Query> oneToOne<L, I extends Object, R, J extends Object>(
+  OneToOneAssociation<L, I, R, Query>
+      oneToOne<L, I extends Object, R, J extends Object>(
     RelationSource<L, I, Query> left,
     RelationSource<R, J, Query> right,
     J Function(L p1) on,
@@ -35,7 +36,8 @@ class Relationship implements BaseRelationship<Query> {
   }
 
   @override
-  OneToManyAssociation<L, I, R, Query> oneToMany<L, I extends Object, R, J extends Object>(
+  OneToManyAssociation<L, I, R, Query>
+      oneToMany<L, I extends Object, R, J extends Object>(
     RelationSource<L, I, Query> left,
     RelationSource<R, J, Query> right,
     BaseFilter<Query> Function(L p1) on,
@@ -44,7 +46,8 @@ class Relationship implements BaseRelationship<Query> {
   }
 
   @override
-  ManyToOneAssociation<L, I, R, J, Query> manyToOne<L, I extends Object, R, J extends Object>(
+  ManyToOneAssociation<L, I, R, J, Query>
+      manyToOne<L, I extends Object, R, J extends Object>(
     RelationSource<L, I, Query> left,
     RelationSource<R, J, Query> right,
     J Function(L p1) on,
@@ -53,7 +56,8 @@ class Relationship implements BaseRelationship<Query> {
   }
 
   @override
-  ManyToManyAssociation<M, I, L, R, Query> manyToMany<M, I extends Object, L, J extends Object, R, K extends Object>(
+  ManyToManyAssociation<M, I, L, R, Query>
+      manyToMany<M, I extends Object, L, J extends Object, R, K extends Object>(
     RelationSource<M, I, Query> middle,
     RelationSource<L, J, Query> left,
     J Function(M p1) onLeft,
@@ -70,7 +74,8 @@ class Relationship implements BaseRelationship<Query> {
   }
 }
 
-class _OneToOne<L, I extends Object, R, J extends Object> implements OneToOneAssociation<L, I, R, Query> {
+class _OneToOne<L, I extends Object, R, J extends Object>
+    implements OneToOneAssociation<L, I, R, Query> {
   final RelationSource<L, I, Query> left;
   final RelationSource<R, J, Query> right;
   final J Function(L) on;
@@ -121,7 +126,8 @@ class _OneToOne<L, I extends Object, R, J extends Object> implements OneToOneAss
   }
 }
 
-class _OneToMany<L, I extends Object, R, J extends Object> implements OneToManyAssociation<L, I, R, Query> {
+class _OneToMany<L, I extends Object, R, J extends Object>
+    implements OneToManyAssociation<L, I, R, Query> {
   final RelationSource<L, I, Query> left;
   final RelationSource<R, J, Query> right;
   final BaseFilter<Query> Function(L) on;
@@ -176,7 +182,8 @@ class _OneToMany<L, I extends Object, R, J extends Object> implements OneToManyA
   }
 }
 
-class _ManyToOne<L, I extends Object, R, J extends Object> implements ManyToOneAssociation<L, I, R, J, Query> {
+class _ManyToOne<L, I extends Object, R, J extends Object>
+    implements ManyToOneAssociation<L, I, R, J, Query> {
   final RelationSource<L, I, Query> left;
   final RelationSource<R, J, Query> right;
   final J Function(L) on;
@@ -240,7 +247,8 @@ class _ManyToOne<L, I extends Object, R, J extends Object> implements ManyToOneA
   }
 }
 
-class _ManyToMany<M, I extends Object, L, J extends Object, R, K extends Object> implements ManyToManyAssociation<M, I, L, R, Query> {
+class _ManyToMany<M, I extends Object, L, J extends Object, R, K extends Object>
+    implements ManyToManyAssociation<M, I, L, R, Query> {
   final RelationSource<M, I, Query> middle;
   final RelationSource<L, J, Query> left;
   final RelationSource<R, K, Query> right;
@@ -290,8 +298,7 @@ class _ManyToMany<M, I extends Object, L, J extends Object, R, K extends Object>
     final List<J> leftIds = middleModels.map(onLeft).toSet().toList();
     final List<K> rightIds = middleModels.map(onRight).toSet().toList();
 
-    final Map<J, L?> leftModels =
-        await _waitAssociateWith(leftIds, left.peek);
+    final Map<J, L?> leftModels = await _waitAssociateWith(leftIds, left.peek);
     final Map<K, R?> rightModels =
         await _waitAssociateWith(rightIds, right.peek);
 
@@ -327,7 +334,3 @@ class _ManyToMany<M, I extends Object, L, J extends Object, R, K extends Object>
     ).stream;
   }
 }
-
-
-
-

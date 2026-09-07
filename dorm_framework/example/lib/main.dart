@@ -13,16 +13,18 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final BaseEngine<dorm_bloc.Query> engine = dorm_bloc.Engine();
   GetIt.instance.registerSingleton<Dorm>(Dorm(engine));
-  runApp(DevicePreview(
-    defaultDevice: DeviceInfo.genericPhone(
-      platform: TargetPlatform.android,
-      id: 'dorm_example',
-      name: 'dorm_example',
-      screenSize: const Size(360, 800),
+  runApp(
+    DevicePreview(
+      defaultDevice: DeviceInfo.genericPhone(
+        platform: TargetPlatform.android,
+        id: 'dorm_example',
+        name: 'dorm_example',
+        screenSize: const Size(360, 800),
+      ),
+      isToolbarVisible: false,
+      builder: (_) => const MyApp(),
     ),
-    isToolbarVisible: false,
-    builder: (_) => const MyApp(),
-  ));
+  );
 }
 
 class MyApp extends StatelessWidget {

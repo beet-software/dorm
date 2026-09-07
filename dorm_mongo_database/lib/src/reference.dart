@@ -262,10 +262,7 @@ class Reference implements BaseReference<Query> {
     Model extends Data,
     I extends Object,
     C extends Creation<Data, I>
-  >(
-    Entity<Data, Model, I, C> entity,
-    C creation,
-  ) async {
+  >(Entity<Data, Model, I, C> entity, C creation) async {
     final Model model = entity.fromData(_resolveCreation(entity, creation));
     await _collection(entity.schema).insertOne(_withIdentity(entity, model));
     return model;
@@ -277,10 +274,7 @@ class Reference implements BaseReference<Query> {
     Model extends Data,
     I extends Object,
     C extends Creation<Data, I>
-  >(
-    Entity<Data, Model, I, C> entity,
-    List<C> creations,
-  ) async {
+  >(Entity<Data, Model, I, C> entity, List<C> creations) async {
     final List<Model> models = [
       for (final C creation in creations)
         entity.fromData(_resolveCreation(entity, creation)),
@@ -293,11 +287,11 @@ class Reference implements BaseReference<Query> {
     return models;
   }
 
-  ResolvedCreation<Data, I> _resolveCreation<
-    Data,
-    Model extends Data,
-    I extends Object
-  >(Entity<Data, Model, I, Creation<Data, I>> entity, Creation<Data, I> creation) {
+  ResolvedCreation<Data, I>
+  _resolveCreation<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    Creation<Data, I> creation,
+  ) {
     return switch (creation.identity) {
       AutoIdentity<I>() => _resolveAutoCreation(entity, creation),
       ExplicitIdentity<I>(:final value) => _resolveExplicitCreation(
@@ -308,11 +302,12 @@ class Reference implements BaseReference<Query> {
     };
   }
 
-  ResolvedCreation<Data, I> _resolveExplicitCreation<
-    Data,
-    Model extends Data,
-    I extends Object
-  >(Entity<Data, Model, I, Creation<Data, I>> entity, Creation<Data, I> creation, I id) {
+  ResolvedCreation<Data, I>
+  _resolveExplicitCreation<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    Creation<Data, I> creation,
+    I id,
+  ) {
     _validateIdentity(entity, id);
     return ResolvedCreation(
       dependency: creation.dependency,
@@ -322,11 +317,11 @@ class Reference implements BaseReference<Query> {
     );
   }
 
-  ResolvedCreation<Data, I> _resolveAutoCreation<
-    Data,
-    Model extends Data,
-    I extends Object
-  >(Entity<Data, Model, I, Creation<Data, I>> entity, Creation<Data, I> creation) {
+  ResolvedCreation<Data, I>
+  _resolveAutoCreation<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    Creation<Data, I> creation,
+  ) {
     if (entity.schema.isCompositePrimaryKey ||
         !entity.supportsAutomaticIdentity) {
       throw UnsupportedError(

@@ -29,4 +29,3 @@ class Engine implements BaseEngine<Query> {
   @override
   BaseRelationship<Query> createRelationship() => const Relationship();
 }
-

@@ -38,16 +38,18 @@ void main() async {
   // called `get_it`, but you are free to use `provider` or any other method.
   GetIt.instance.registerSingleton<Dorm>(const Dorm(engine));
 
-  runApp(DevicePreview(
-    defaultDevice: DeviceInfo.genericPhone(
-      platform: TargetPlatform.android,
-      id: '',
-      name: '',
-      screenSize: const Size(360, 800),
+  runApp(
+    DevicePreview(
+      defaultDevice: DeviceInfo.genericPhone(
+        platform: TargetPlatform.android,
+        id: '',
+        name: '',
+        screenSize: const Size(360, 800),
+      ),
+      isToolbarVisible: false,
+      builder: (_) => const MyApp(),
     ),
-    isToolbarVisible: false,
-    builder: (_) => const MyApp(),
-  ));
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -75,13 +77,11 @@ class HomeScreen extends StatelessWidget {
       providers: [
         StreamProvider<AsyncSnapshot<List<User>>>(
           initialData: const AsyncSnapshot.waiting(),
-          create: (_) => GetIt.instance
-              .get<Dorm>()
-              .users
-              .repository
-              .pullAll()
-              .map((event) =>
-                  AsyncSnapshot.withData(ConnectionState.active, event)),
+          create: (_) =>
+              GetIt.instance.get<Dorm>().users.repository.pullAll().map(
+                (event) =>
+                    AsyncSnapshot.withData(ConnectionState.active, event),
+              ),
         ),
       ],
       child: SafeArea(
@@ -111,9 +111,8 @@ class HomeScreen extends StatelessWidget {
                           onPressed: () async {
                             final String? updatedName = await showDialog(
                               context: context,
-                              builder: (_) => const TextInputDialog(
-                                title: 'Update user',
-                              ),
+                              builder: (_) =>
+                                  const TextInputDialog(title: 'Update user'),
                             );
                             if (updatedName == null) return;
                             await GetIt.instance
@@ -149,21 +148,15 @@ class HomeScreen extends StatelessWidget {
             onPressed: () async {
               final String? name = await showDialog(
                 context: context,
-                builder: (_) => const TextInputDialog(
-                  title: 'Create user',
-                ),
+                builder: (_) => const TextInputDialog(title: 'Create user'),
               );
               if (name == null) return;
-              await GetIt.instance
-                  .get<Dorm>()
-                  .users
-                  .repository
-                  .put(
-                    Creation.auto(
-                      dependency: const UserDependency(),
-                      data: UserData(name: name),
-                    ),
-                  );
+              await GetIt.instance.get<Dorm>().users.repository.put(
+                Creation.auto(
+                  dependency: const UserDependency(),
+                  data: UserData(name: name),
+                ),
+              );
             },
             child: const Icon(Icons.add),
           ),

@@ -94,10 +94,7 @@ abstract class BaseReference<Q extends BaseQuery<Q>> {
     Model extends Data,
     I extends Object,
     C extends Creation<Data, I>
-  >(
-    Entity<Data, Model, I, C> entity,
-    C creation,
-  );
+  >(Entity<Data, Model, I, C> entity, C creation);
 
   /// Defines how the database engine creates multiple models from
   /// [creations].
@@ -106,10 +103,7 @@ abstract class BaseReference<Q extends BaseQuery<Q>> {
     Model extends Data,
     I extends Object,
     C extends Creation<Data, I>
-  >(
-    Entity<Data, Model, I, C> entity,
-    List<C> creations,
-  );
+  >(Entity<Data, Model, I, C> entity, List<C> creations);
 
   /// Defines how the database engine drops a table.
   Future<void> purge<Data, Model extends Data, I extends Object>(

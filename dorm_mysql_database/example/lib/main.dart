@@ -86,10 +86,7 @@ Future<void> run(Dorm dorm) async {
             age: int.parse(command['age']),
           );
           final User user = await dorm.users.repository.put(
-            Creation.auto(
-              dependency: const UserDependency(),
-              data: data,
-            ),
+            Creation.auto(dependency: const UserDependency(), data: data),
           );
           print({'id': user.id, ...user.toJson()});
         }

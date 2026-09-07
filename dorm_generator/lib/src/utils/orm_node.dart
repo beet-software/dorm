@@ -36,23 +36,24 @@ class FieldedOrmNode<T> extends ClassOrmNode<ClassOrmNode<T>> {
     required Map<String, FieldOrmNode> fields,
   }) : _fields = fields;
 
-  Map<String, FieldOrmNode> get fields =>
-      Map.fromEntries(_fields.entries.expand((entry) sync* {
-        final Field field = entry.value.annotation;
-        if (field is PolymorphicField) {
-          final $ConcreteSymbol pivotSymbol = field.pivotAs as $ConcreteSymbol;
-          final String pivotKey = field.pivotName;
-          yield MapEntry(
-            pivotSymbol.name,
-            FieldOrmNode(
-              annotation: Field(name: pivotKey),
-              required: true,
-              type: '${entry.value.type.substring(1)}Type',
-            ),
-          );
-        }
-        yield entry;
-      }));
+  Map<String, FieldOrmNode> get fields => Map.fromEntries(
+    _fields.entries.expand((entry) sync* {
+      final Field field = entry.value.annotation;
+      if (field is PolymorphicField) {
+        final $ConcreteSymbol pivotSymbol = field.pivotAs as $ConcreteSymbol;
+        final String pivotKey = field.pivotName;
+        yield MapEntry(
+          pivotSymbol.name,
+          FieldOrmNode(
+            annotation: Field(name: pivotKey),
+            required: true,
+            type: '${entry.value.type.substring(1)}Type',
+          ),
+        );
+      }
+      yield entry;
+    }),
+  );
 }
 
 class DataOrmNode extends ClassOrmNode<Data> {
@@ -60,19 +61,14 @@ class DataOrmNode extends ClassOrmNode<Data> {
 }
 
 class ModelOrmNode extends ClassOrmNode<Model> {
-  const ModelOrmNode({
-    required super.annotation,
-  });
+  const ModelOrmNode({required super.annotation});
 }
 
 class PolymorphicDataTag {
   final String value;
   final bool isSealed;
 
-  const PolymorphicDataTag({
-    required this.value,
-    required this.isSealed,
-  });
+  const PolymorphicDataTag({required this.value, required this.isSealed});
 
   @override
   bool operator ==(Object other) =>
@@ -89,10 +85,7 @@ class PolymorphicDataTag {
 class PolymorphicDataOrmNode extends ClassOrmNode<PolymorphicData> {
   final PolymorphicDataTag tag;
 
-  const PolymorphicDataOrmNode({
-    required super.annotation,
-    required this.tag,
-  });
+  const PolymorphicDataOrmNode({required super.annotation, required this.tag});
 }
 
 class FieldOrmNode extends OrmNode<Field> {
@@ -105,4 +98,3 @@ class FieldOrmNode extends OrmNode<Field> {
     required this.required,
   });
 }
-

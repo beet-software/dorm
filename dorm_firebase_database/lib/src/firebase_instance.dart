@@ -25,9 +25,8 @@ abstract class FirebaseInstance {
   /// Creates the default Firebase dependencies.
   ///
   /// Each dependency is created by calling its `instance` static getter.
-  const factory FirebaseInstance({
-    OfflineMode offlineMode,
-  }) = _DefaultFirebaseInstance;
+  const factory FirebaseInstance({OfflineMode offlineMode}) =
+      _DefaultFirebaseInstance;
 
   /// Creates custom Firebase dependencies.
   ///

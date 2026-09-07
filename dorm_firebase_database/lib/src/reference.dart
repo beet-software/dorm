@@ -195,10 +195,7 @@ class Reference implements BaseReference<Query> {
     Model extends Data,
     I extends Object,
     C extends Creation<Data, I>
-  >(
-    Entity<Data, Model, I, C> entity,
-    C creation,
-  ) {
+  >(Entity<Data, Model, I, C> entity, C creation) {
     return putAll(entity, [creation]).then((models) => models.single);
   }
 
@@ -208,10 +205,7 @@ class Reference implements BaseReference<Query> {
     Model extends Data,
     I extends Object,
     C extends Creation<Data, I>
-  >(
-    Entity<Data, Model, I, C> entity,
-    List<C> creations,
-  ) async {
+  >(Entity<Data, Model, I, C> entity, List<C> creations) async {
     final List<Model> models = [];
     for (final C creation in creations) {
       final ResolvedCreation<Data, I> resolved = _resolveCreation(
@@ -228,11 +222,8 @@ class Reference implements BaseReference<Query> {
     return models;
   }
 
-  ResolvedCreation<Data, I> _resolveCreation<
-    Data,
-    Model extends Data,
-    I extends Object
-  >(
+  ResolvedCreation<Data, I>
+  _resolveCreation<Data, Model extends Data, I extends Object>(
     Entity<Data, Model, I, Creation<Data, I>> entity,
     Creation<Data, I> creation,
   ) {
@@ -246,11 +237,8 @@ class Reference implements BaseReference<Query> {
     };
   }
 
-  ResolvedCreation<Data, I> _resolveAutoCreation<
-    Data,
-    Model extends Data,
-    I extends Object
-  >(
+  ResolvedCreation<Data, I>
+  _resolveAutoCreation<Data, Model extends Data, I extends Object>(
     Entity<Data, Model, I, Creation<Data, I>> entity,
     Creation<Data, I> creation,
   ) {
@@ -269,11 +257,8 @@ class Reference implements BaseReference<Query> {
     );
   }
 
-  ResolvedCreation<Data, I> _resolveExplicitCreation<
-    Data,
-    Model extends Data,
-    I extends Object
-  >(
+  ResolvedCreation<Data, I>
+  _resolveExplicitCreation<Data, Model extends Data, I extends Object>(
     Entity<Data, Model, I, Creation<Data, I>> entity,
     Creation<Data, I> creation,
     I id,

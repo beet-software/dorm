@@ -72,25 +72,17 @@ void main() {
     fieldName: 'parentId',
     columnName: 'parent-id',
   );
-  final _Readable<_Parent, String> parents = _Readable(
-    {
-      'parent-1': const _Parent('parent-1'),
-      'parent-2': const _Parent('parent-2'),
-    },
-    (model) => {'id': model.id},
-  );
-  final _Readable<_Child, String> children = _Readable(
-    {
-      'child-1': const _Child('child-1', 'parent-1'),
-      'child-2': const _Child('child-2', 'parent-1'),
-      'child-3': const _Child('child-3', 'parent-2'),
-    },
-    (model) => {'id': model.id, 'parent-id': model.parentId},
-  );
+  final _Readable<_Parent, String> parents = _Readable({
+    'parent-1': const _Parent('parent-1'),
+    'parent-2': const _Parent('parent-2'),
+  }, (model) => {'id': model.id});
+  final _Readable<_Child, String> children = _Readable({
+    'child-1': const _Child('child-1', 'parent-1'),
+    'child-2': const _Child('child-2', 'parent-1'),
+    'child-3': const _Child('child-3', 'parent-2'),
+  }, (model) => {'id': model.id, 'parent-id': model.parentId});
   final _Readable<_Link, String> links = _Readable(
-    {
-      'link-1': const _Link('link-1', 'parent-1', 'child-1'),
-    },
+    {'link-1': const _Link('link-1', 'parent-1', 'child-1')},
     (model) => {
       'id': model.id,
       'parent-id': model.parentId,
@@ -116,34 +108,39 @@ void main() {
   test('resolves one-to-many relationships with schema fields', () async {
     final OneToManyAssociation<_Parent, String, _Child, Query> association =
         relationship.oneToMany(
-      parents,
-      children,
-      (parent) => Filter.value(parent.id, field: parentField),
-    );
+          parents,
+          children,
+          (parent) => Filter.value(parent.id, field: parentField),
+        );
 
-    final Join<_Parent, List<_Child>>? result =
-        await association.peek('parent-1');
+    final Join<_Parent, List<_Child>>? result = await association.peek(
+      'parent-1',
+    );
 
     expect(result?.right.map((child) => child.id), ['child-1', 'child-2']);
   });
 
   test('resolves many-to-one relationships', () async {
     final ManyToOneAssociation<_Child, String, _Parent, String, Query>
-        association =
-        relationship.manyToOne(children, parents, (child) => child.parentId);
+    association = relationship.manyToOne(
+      children,
+      parents,
+      (child) => child.parentId,
+    );
 
-    final List<Join<_Parent, List<_Child>>> result =
-        await association.peekAll();
+    final List<Join<_Parent, List<_Child>>> result = await association
+        .peekAll();
 
     expect(result, hasLength(2));
-    expect(result.firstWhere((join) => join.left.id == 'parent-1').right,
-        hasLength(2));
+    expect(
+      result.firstWhere((join) => join.left.id == 'parent-1').right,
+      hasLength(2),
+    );
   });
 
   test('resolves many-to-many relationships', () async {
     final ManyToManyAssociation<_Link, String, _Parent, _Child, Query>
-        association =
-        relationship.manyToMany(
+    association = relationship.manyToMany(
       links,
       parents,
       (link) => link.parentId,
@@ -151,8 +148,9 @@ void main() {
       (link) => link.childId,
     );
 
-    final Join<_Link, (_Parent?, _Child?)>? result =
-        await association.peek('link-1');
+    final Join<_Link, (_Parent?, _Child?)>? result = await association.peek(
+      'link-1',
+    );
 
     expect(result?.right.$1?.id, 'parent-1');
     expect(result?.right.$2?.id, 'child-1');

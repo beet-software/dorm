@@ -333,10 +333,7 @@ class Reference implements BaseReference<Query> {
     Model extends Data,
     I extends Object,
     C extends Creation<Data, I>
-  >(
-    Entity<Data, Model, I, C> entity,
-    C creation,
-  ) {
+  >(Entity<Data, Model, I, C> entity, C creation) {
     final ResolvedCreation<Data, I> resolved = _resolveCreation(
       entity,
       creation,
@@ -353,10 +350,7 @@ class Reference implements BaseReference<Query> {
     Model extends Data,
     I extends Object,
     C extends Creation<Data, I>
-  >(
-    Entity<Data, Model, I, C> entity,
-    C creation,
-  ) {
+  >(Entity<Data, Model, I, C> entity, C creation) {
     return switch (creation.identity) {
       AutoIdentity<I>() => _resolveAutoCreation(entity, creation),
       ExplicitIdentity<I>(:final value) => _resolveExplicitCreation(
@@ -367,11 +361,8 @@ class Reference implements BaseReference<Query> {
     };
   }
 
-  ResolvedCreation<Data, I> _resolveExplicitCreation<
-    Data,
-    Model extends Data,
-    I extends Object
-  >(
+  ResolvedCreation<Data, I>
+  _resolveExplicitCreation<Data, Model extends Data, I extends Object>(
     Entity<Data, Model, I, Creation<Data, I>> entity,
     Creation<Data, I> creation,
     I id,
@@ -385,11 +376,8 @@ class Reference implements BaseReference<Query> {
     );
   }
 
-  ResolvedCreation<Data, I> _resolveAutoCreation<
-    Data,
-    Model extends Data,
-    I extends Object
-  >(
+  ResolvedCreation<Data, I>
+  _resolveAutoCreation<Data, Model extends Data, I extends Object>(
     Entity<Data, Model, I, Creation<Data, I>> entity,
     Creation<Data, I> creation,
   ) {
@@ -437,10 +425,7 @@ class Reference implements BaseReference<Query> {
     Model extends Data,
     I extends Object,
     C extends Creation<Data, I>
-  >(
-    Entity<Data, Model, I, C> entity,
-    List<C> creations,
-  ) {
+  >(Entity<Data, Model, I, C> entity, List<C> creations) {
     return executor.runTx((session) async {
       final List<Model> models = [];
       for (final C creation in creations) {
