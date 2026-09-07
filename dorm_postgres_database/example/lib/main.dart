@@ -42,9 +42,9 @@ Future<void> main() async {
 
     final Dorm dorm = Dorm(Engine(connection));
     final User user = await dorm.users.repository.put(
-      const Creation.auto(
-        dependency: UserDependency(),
-        data: UserData(name: 'Ada'),
+      Creation.auto<UserData, String>(
+        dependency: const UserDependency(),
+        data: const UserData(name: 'Ada'),
       ),
     );
     await dorm.posts.repository.push(

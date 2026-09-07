@@ -1,0 +1,16 @@
+name: dorm_test
+publish_to: none
+version: 1.0.0-alpha.5
+resolution: workspace
+description: Shared conformance tests for dORM database engines.
+repository: https://github.com/beet-software/dorm.git
+
+environment:
+  sdk: '>=3.11.5 <4.0.0'
+
+dependencies:
+  dorm_framework: ^1.0.0-alpha.3
+  test: ^1.32.0
+
+dev_dependencies:
+  lints: ^5.0.0

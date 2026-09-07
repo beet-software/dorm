@@ -97,7 +97,8 @@ final class AutoCreation<Data, I extends Object>
 }
 
 /// A creation request that supplies the final identity explicitly.
-final class ExplicitCreation<Data, I extends Object> extends Creation<Data, I> {
+final class ExplicitCreation<Data, I extends Object>
+    extends SimpleCreation<Data, I> {
   ExplicitCreation._({
     required super.dependency,
     required super.data,

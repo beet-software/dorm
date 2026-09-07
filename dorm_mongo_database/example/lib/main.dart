@@ -19,9 +19,9 @@ Future<void> main() async {
 
     final Dorm context = Dorm(dorm.Engine(database));
     final User user = await context.users.repository.put(
-      const Creation.auto(
-        dependency: UserDependency(),
-        data: UserData(name: 'Ada'),
+      Creation.auto<UserData, String>(
+        dependency: const UserDependency(),
+        data: const UserData(name: 'Ada'),
       ),
     );
     await context.posts.repository.push(

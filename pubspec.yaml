@@ -15,6 +15,7 @@ workspace:
   - dorm_mysql_database
   - dorm_postgres_database
   - dorm_mongo_database
+  - dorm_test
 
 dev_dependencies:
   melos: ^8.6.0
@@ -37,6 +38,13 @@ melos:
       exec: dart test
       packageFilters:
         dirExists: test
+        ignore:
+          - dorm_firebase_database
+    test:flutter:
+      description: Run Flutter-based workspace tests.
+      exec: flutter test
+      packageFilters:
+        scope: dorm_firebase_database
     generate:
       description: Run build_runner in workspace packages that depend on it.
       run: melos exec -c 1 --depends-on build_runner -- "dart run build_runner build"
