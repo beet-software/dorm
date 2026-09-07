@@ -1,0 +1,115 @@
+# Work on dORM locally
+
+Use this section when you are contributing to dORM itself, developing a new
+engine, or checking a change across the workspace. Application projects should
+start with [Quickstart](../quickstart/index.md) or [Choose an engine](../apply/choose-an-engine.md).
+
+## Clone the source
+
+Install Git and the Dart SDK, then clone the project and enter its directory:
+
+```shell title="Clone dORM"
+git clone https://github.com/beet-software/dorm.git
+cd dorm
+```
+
+The root directory contains the Pub Workspace and the Melos configuration. Run
+workspace commands from this directory unless a page gives a package or
+example directory explicitly.
+
+## Resolve workspace dependencies
+
+Install the repository's Melos version and resolve the workspace packages:
+
+```shell title="Prepare the Dart workspace"
+dart pub global activate melos 8.6.0
+dart pub get
+melos bootstrap
+```
+
+`dart pub get` resolves the root Pub Workspace. `melos bootstrap` applies the
+workspace package setup used by the repository's scripts and package links.
+
+Check the packages that Melos sees with:
+
+```shell
+melos list --long
+```
+
+## Work on one package
+
+Move into the package you are changing before running package commands:
+
+```shell title="Check a package"
+cd dorm_framework
+dart analyze
+dart test
+```
+
+Use the package's own `pubspec.yaml` as the command boundary. The Firebase
+package and its Flutter example use Flutter commands; the other package and
+example workflows are pure Dart.
+
+## Run workspace checks
+
+After a change that affects more than one package, run the workspace checks
+from the root:
+
+```shell title="Check the workspace"
+melos run analyze
+melos run test --no-select
+```
+
+Use `melos run generate` when the change affects generated source. Generated
+files are outputs: edit annotations, source models, or generator code, then
+regenerate them instead of editing the generated files directly.
+
+## Work with generated files
+
+Annotated source files can produce both `*.dorm.dart` and `*.g.dart` parts. Run
+the generator from the package or example directory that owns the annotated
+source:
+
+```shell
+dart pub get
+dart run build_runner build --delete-conflicting-outputs
+```
+
+The `dorm_generator` builder writes the dORM part, and `json_serializable`
+writes the JSON part. Analyze the same directory after generation:
+
+```shell
+dart analyze
+```
+
+Do not hand-edit `.dorm.dart`, `.g.dart`, `.dart_tool/`, or `build/` files.
+
+## Update the documentation
+
+The documentation project is under `docs/` and uses Poetry for its Python
+dependencies:
+
+```shell title="Install documentation dependencies"
+cd docs
+poetry install
+```
+
+Edit Markdown files under `docs/docs/` and the navigation in `docs/mkdocs.yml`.
+Use static link and formatting checks when editing documentation. Do not use
+the documentation build as a substitute for Dart package analysis.
+
+## Prepare a package for release checks
+
+The repository contains a preparation script for package metadata and license
+headers:
+
+```shell
+dart run tool/prepare_package.dart --package dorm_framework
+```
+
+This is a release-preparation command. Do not run publication or versioning
+commands as part of an ordinary package change.
+
+Continue with [Implement a custom engine](custom-engine.md) when the change is
+a new backend, or [Test an engine](test-an-engine.md) when the change needs
+cross-engine contract coverage.

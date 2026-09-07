@@ -16,4 +16,5 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.group.dev.dependencies]
 pymdown-extensions = "^11.0.2"
+mkdocs-swan = "^0.4.0"
 
