@@ -6,22 +6,48 @@ requirements.
 
 ## Capability matrix
 
-| Capability | BLoC | Firebase | MySQL | PostgreSQL | MongoDB |
-| --- | --- | --- | --- | --- | --- |
-| Storage | In-process state | Firebase Realtime Database | MySQL through mysql_client | PostgreSQL through postgres | MongoDB through mongo_dart |
-| Public engine constructor | Engine() | Engine(FirebaseInstance, {String? path}) | Engine(MySQLConnection) | Engine(SessionExecutor) | Engine(Db) |
-| External service | None | Firebase app/database or emulator | MySQL server and schema | PostgreSQL server and schema | MongoDB server |
-| Automatic identity | UUID-backed in-memory identity | Firebase push key | UUID-backed SQL identity | UUID-backed SQL identity | UUID-backed String identity |
-| Identity restriction | Generated composite-key repositories accept only `Creation.explicit`; bypassed automatic creation throws `UnsupportedError` | Reference identities must be String; composite identities are unsupported | Generated composite-key repositories accept only `Creation.explicit`; bypassed automatic creation throws `UnsupportedError` | Generated composite-key repositories accept only `Creation.explicit`; bypassed automatic creation throws `UnsupportedError` | Generated composite-key repositories accept only `Creation.explicit`; bypassed automatic creation throws `UnsupportedError` |
-| Collection filtering | In-memory query evaluation | Realtime Database query | SQL query | PostgreSQL SQL query | MongoDB selectors |
-| Single reads | In-memory map lookup | Firebase SDK read | SQL read | SQL read | MongoDB collection read |
-| Streams | State-backed | Firebase value events, with offline behavior | Initial read only in current implementation | Initial read only | Initial read only |
-| Relationships | Framework relationship implementation | Framework relationship implementation | Direct relation plans plus readable fallbacks | Direct relation plans plus readable fallbacks | Direct relation plans plus readable fallbacks |
-| Public transaction API | None documented | None; patch uses a Firebase transaction internally | None; selected operations use MySQL transactions internally | None; selected operations use PostgreSQL transactions internally | None |
-| Pagination | Not supported by the common API | Not supported | Not supported | Not supported | Not supported |
+| Capability | Memory | BLoC | Firebase | MySQL | PostgreSQL | MongoDB |
+| --- | --- | --- | --- | --- | --- | --- |
+| Storage | Dart maps | In-process state | Firebase Realtime Database | MySQL through mysql_client | PostgreSQL through postgres | MongoDB through mongo_dart |
+| Public engine constructor | Engine() | Engine() | Engine(FirebaseInstance, {String? path}) | Engine(MySQLConnection) | Engine(SessionExecutor) | Engine(Db) |
+| External service | None | None | Firebase app/database or emulator | MySQL server and schema | PostgreSQL server and schema | MongoDB server |
+| Runtime dependencies | dorm_framework, uuid | bloc, rxdart, uuid | Firebase packages | mysql_client, uuid | postgres, uuid | mongo_dart, uuid |
+| Automatic identity | UUID-backed in-memory identity | UUID-backed in-memory identity | Firebase push key | UUID-backed SQL identity | UUID-backed SQL identity | UUID-backed String identity |
+| Identity restriction | Composite creation requires `Creation.explicit` | Composite creation requires `Creation.explicit` | Reference identities must be String; composite identities are unsupported | Composite creation requires `Creation.explicit` | Composite creation requires `Creation.explicit` | Composite creation requires `Creation.explicit` |
+| Collection filtering | In-memory query evaluation | In-memory query evaluation | Realtime Database query | SQL query | PostgreSQL SQL query | MongoDB selectors |
+| Single reads | In-memory map lookup | In-memory map lookup | Firebase SDK read | SQL read | SQL read | MongoDB collection read |
+| Streams | State-backed | State-backed | Firebase value events, with offline behavior | Initial read only in current implementation | Initial read only | Initial read only |
+| Relationships | Framework relationship implementation | Framework relationship implementation | Framework relationship implementation | Direct relation plans plus readable fallbacks | Direct relation plans plus readable fallbacks | Direct relation plans plus readable fallbacks |
+| Public transaction API | None documented | None documented | None; patch uses a Firebase transaction internally | None; selected operations use MySQL transactions internally | None; selected operations use PostgreSQL transactions internally | None |
+| Pagination | Not supported by the common API | Not supported | Not supported | Not supported | Not supported | Not supported |
 
 The matrix records current behavior. It does not create a future compatibility
 promise.
+
+## Memory engine
+
+Import:
+
+~~~dart
+import 'package:dorm_memory_database/dorm_memory_database.dart';
+~~~
+
+Construct it without a server or connection:
+
+~~~dart
+final Engine engine = Engine();
+final Dorm dorm = Dorm(engine);
+~~~
+
+The engine stores models in Dart maps owned by the `Engine` instance. It uses
+Dart streams to emit the current value when a subscription starts and later
+values after writes. It generates UUID string identities for simple generated
+keys and requires explicit identities for composite keys.
+
+The package has no runtime dependency on BLoC or RxDart. Its runtime
+dependencies are `dorm_framework` and `uuid`.
+
+See [Choose a dORM engine](../03-apply/01-choose-an-engine.md).
 
 ## BLoC engine
 

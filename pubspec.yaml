@@ -15,6 +15,7 @@ workspace:
   - dorm_mysql_database
   - dorm_postgres_database
   - dorm_mongo_database
+  - dorm_memory_database
   - dorm_test
 
 dev_dependencies:

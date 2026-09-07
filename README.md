@@ -103,6 +103,7 @@ Here's a step-by-step guide:
 2. Fit your schema into dORM's framework, explained by [`dorm_generator`](https://pub.dev/packages/dorm_generator)
 3. Manipulate the generated code using filters and joins, explained by [`dorm_framework`](https://pub.dev/packages/dorm_framework)
 4. Discover what database engines are available to integrate with dORM
+   - Start with pure Dart in-memory storage, explained by [`dorm_memory_database`](https://pub.dev/packages/dorm_memory_database)
    - Integrate using Firebase Realtime Database, explained by [`dorm_firebase_database`](https://pub.dev/packages/dorm_firebase_database)
    - Integrate using local memory and the BLoC pattern, explained by [`dorm_bloc_database`](https://pub.dev/packages/dorm_bloc_database)
    - Integrate using MySQL, explained by [`dorm_mysql_database`](https://pub.dev/packages/dorm_mysql_database)

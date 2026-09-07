@@ -2,7 +2,7 @@
 
 dORM is a Dart ORM that turns annotated Dart classes into generated model and repository APIs. A generated `Dorm` object connects those APIs to a database engine.
 
-This quickstart uses the BLoC engine from `dorm_bloc_database`. It stores data in memory, so the first workflow needs no external database server.
+This quickstart uses the pure Dart memory engine from `dorm_memory_database`. It stores data in memory, so the first workflow needs no external database server or Flutter setup.
 
 ## What this quickstart builds
 
@@ -11,7 +11,7 @@ Follow these steps to create a small store model with one `User` record:
 1. add the dORM packages;
 2. declare an annotated model;
 3. generate the dORM files;
-4. create a BLoC engine and a generated `Dorm` object;
+4. create a memory engine and a generated `Dorm` object;
 5. create and read a user through its repository.
 
 ## Prerequisites
@@ -32,7 +32,7 @@ From the project directory, add the packages used by this workflow:
 ```shell
 dart pub add dorm_framework
 dart pub add dorm_annotations
-dart pub add dorm_bloc_database
+dart pub add dorm_memory_database
 dart pub add json_annotation
 
 dart pub add --dev dorm_generator
@@ -40,7 +40,7 @@ dart pub add --dev build_runner
 dart pub add --dev json_serializable
 ```
 
-`dorm_framework` provides the engine-independent ORM contracts. `dorm_annotations` provides the annotations in the source model. `dorm_bloc_database` provides the in-memory engine. `dorm_generator` and `build_runner` generate the dORM part file, while `json_serializable` and `json_annotation` generate and support JSON conversion.
+`dorm_framework` provides the engine-independent ORM contracts. `dorm_annotations` provides the annotations in the source model. `dorm_memory_database` provides the pure Dart in-memory engine. `dorm_generator` and `build_runner` generate the dORM part file, while `json_serializable` and `json_annotation` generate and support JSON conversion.
 
 ## 2. Declare a user model
 
@@ -48,7 +48,7 @@ Create `lib/models.dart`:
 
 ```dart
 import 'package:dorm_annotations/dorm_annotations.dart';
-import 'package:dorm_bloc_database/dorm_bloc_database.dart';
+import 'package:dorm_memory_database/dorm_memory_database.dart';
 import 'package:dorm_framework/dorm_framework.dart';
 
 part 'models.g.dart';
@@ -81,10 +81,10 @@ The generator writes the ORM types to `models.dorm.dart`. The file supplies the 
 
 ## 4. Create the engine and generated database object
 
-Create the in-memory engine and pass it to the generated `Dorm` class:
+Create the memory engine and pass it to the generated `Dorm` class:
 
 ```dart
-import 'package:dorm_bloc_database/dorm_bloc_database.dart';
+import 'package:dorm_memory_database/dorm_memory_database.dart';
 
 import 'package:dorm_store/models.dart';
 
@@ -98,7 +98,7 @@ final Dorm dorm = Dorm(Engine());
 Replace `bin/dorm_store.dart` with a small Dart application that creates a user, reads it back, and prints the result:
 
 ```dart
-import 'package:dorm_bloc_database/dorm_bloc_database.dart';
+import 'package:dorm_memory_database/dorm_memory_database.dart';
 
 import 'package:dorm_store/models.dart';
 

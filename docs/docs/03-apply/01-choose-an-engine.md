@@ -6,6 +6,7 @@ Use the engine that matches the runtime and storage service required by your app
 
 | Engine | Storage/runtime | Main setup boundary |
 | --- | --- | --- |
+| `dorm_memory_database` | Pure Dart in-process memory | Construct `Engine()` and reuse it while the application runs |
 | `dorm_bloc_database` | In-memory state managed by BLoC | Construct `Engine()` and reuse it while the application runs |
 | `dorm_firebase_database` | Firebase Realtime Database | Initialize Firebase, create `FirebaseInstance`, and configure Firebase access |
 | `dorm_mysql_database` | MySQL server through `mysql_client` | Open a `MySQLConnection` and pass it to `Engine` |
@@ -36,6 +37,31 @@ final List<Product> products = await dorm.products.repository.peekAll(
 `Dorm`, generated entity accessors, repositories, filters, and relation paths are generated or framework-level APIs. The concrete engine changes how those operations reach storage.
 
 The `Data`/`Model`/`Dependency` split remains the same. `UserData` is input, `User` carries its identity, and `UserDependency` supplies the values required to construct it.
+
+## Use the memory engine for a pure Dart local store
+
+Use `dorm_memory_database` when the application needs an in-process store
+without a database server, Flutter, BLoC, or RxDart.
+
+Add the package:
+
+```shell
+dart pub add dorm_memory_database
+```
+
+Construct the engine and reuse the same instance for the lifetime of the
+in-process store:
+
+```dart
+import 'package:dorm_memory_database/dorm_memory_database.dart';
+
+final Engine engine = Engine();
+final Dorm dorm = Dorm(engine);
+```
+
+The engine generates UUID string identities for simple generated keys and
+emits the current value followed by later changes through `pull` and
+`pullAll`. Its records are lost when the process stops.
 
 ## Use the BLoC engine for local in-memory state
 
@@ -156,17 +182,23 @@ Continue with [Run the store with MongoDB](09-use-mongo.md).
 
 The common repository API does not imply identical runtime behavior in every engine:
 
-| Capability | BLoC | Firebase | MySQL | PostgreSQL | MongoDB |
-| --- | --- | --- | --- | --- | --- |
-| External server required | No | Firebase project or emulator | Yes | Yes | Yes |
-| Generated identity from `put` | UUID in memory | Firebase push key | UUID in SQL | UUID in SQL | UUID in a document field |
-| Composite identity with `put` | Generated repository accepts `Creation.explicit`; bypassed automatic creation throws `UnsupportedError` | Firebase IDs must be `String` | Generated repository accepts `Creation.explicit`; bypassed automatic creation throws `UnsupportedError` | Generated repository accepts `Creation.explicit`; bypassed automatic creation throws `UnsupportedError` | Generated repository accepts `Creation.explicit`; bypassed automatic creation throws `UnsupportedError` |
-| Single-record streams | State-backed | Firebase value events | Initial read only in current implementation | Initial read only | Initial read only |
-| Filter/query execution | In-memory query implementation | Firebase Realtime Database query | SQL query | PostgreSQL SQL query | MongoDB selector |
-| Transactions exposed by the public framework API | No documented transaction API | `patch` uses a Firebase transaction internally | Some batch and patch operations use MySQL transactions internally | Some batch and patch operations use PostgreSQL transactions internally | No |
+| Capability | Memory | BLoC | Firebase | MySQL | PostgreSQL | MongoDB |
+| --- | --- | --- | --- | --- | --- | --- |
+| External server required | No | No | Firebase project or emulator | Yes | Yes | Yes |
+| Generated identity from `put` | UUID in memory | UUID in memory | Firebase push key | UUID in SQL | UUID in SQL | UUID in a document field |
+| Streams | State-backed | State-backed | Firebase value events | Initial read only | Initial read only | Initial read only |
+| Filter/query execution | In-memory query | In-memory query | Firebase query | SQL query | PostgreSQL SQL query | MongoDB selector |
+| Public transaction API | No | No | No | No | No | No |
+| Pagination | Not supported | Not supported | Not supported | Not supported | Not supported | Not supported |
+| Composite identity with `put` | `Creation.explicit`; automatic generation is rejected | `Creation.explicit`; automatic generation is rejected | Composite identities unsupported | `Creation.explicit`; automatic generation is rejected | `Creation.explicit`; automatic generation is rejected | `Creation.explicit`; automatic generation is rejected |
 
 The matrix describes current implementation behavior. It is not a compatibility promise for a future release.
 
 ## Select the next setup step
 
-For a local Dart process, start with BLoC. For Firebase Realtime Database, continue with the Flutter/Firebase initialization page. For a SQL-backed application, prepare the MySQL or PostgreSQL connection and schema before issuing repository operations. For MongoDB, prepare the URI and open the `Db` before constructing the engine.
+For a local Dart process, start with the memory engine. Use BLoC when the
+application specifically needs its BLoC integration. For Firebase Realtime
+Database, continue with the Flutter/Firebase initialization page. For a
+SQL-backed application, prepare the MySQL or PostgreSQL connection and schema
+before issuing repository operations. For MongoDB, prepare the URI and open
+the `Db` before constructing the engine.

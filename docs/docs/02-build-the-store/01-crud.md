@@ -9,7 +9,7 @@ This guide assumes that `lib/models.dart` already contains the generated `User` 
 Create the engine and the generated database object in the application code:
 
 ```dart
-import 'package:dorm_bloc_database/dorm_bloc_database.dart';
+import 'package:dorm_memory_database/dorm_memory_database.dart';
 
 import 'package:dorm_store/models.dart';
 
