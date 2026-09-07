@@ -32,7 +32,7 @@ void main() {
   test('exposes foreign-key metadata without engine details', () {
     const EntitySchema schema = EntitySchema(
       tableName: 'students',
-      primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
+      primaryKeys: [FieldSchema(fieldName: 'id', columnName: 'id')],
       fields: [
         ForeignKeySchema(
           fieldName: 'schoolId',

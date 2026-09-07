@@ -50,7 +50,7 @@ Future<Map<Object, Object>> readByIds(
 ) async {
   final List<Object> values = ids.toSet().toList();
   if (values.isEmpty) return {};
-  final List<FieldSchema> fields = plan.schema.keyFields;
+  final List<FieldSchema> fields = plan.schema.primaryKeys;
   final Map<String, Object?> params = {};
   final String where;
   if (fields.length == 1) {

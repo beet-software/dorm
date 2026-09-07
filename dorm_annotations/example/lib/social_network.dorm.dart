@@ -95,7 +95,7 @@ class UserEntity
 
   static final EntitySchema _schema = EntitySchema(
     tableName: 'user',
-    primaryKey: fields.id,
+    primaryKeys: [fields.id],
     fields: [fields.name, fields.birthDate, fields.email, fields.pictureUrl],
     derivedFields: [],
   );
@@ -225,7 +225,7 @@ class PostEntity
 
   static final EntitySchema _schema = EntitySchema(
     tableName: 'post',
-    primaryKey: fields.id,
+    primaryKeys: [fields.id],
     fields: [fields.contents, fields.creationDate, fields.userId],
     derivedFields: [],
   );
@@ -374,7 +374,7 @@ class MessageEntity
 
   static final EntitySchema _schema = EntitySchema(
     tableName: 'message',
-    primaryKey: fields.id,
+    primaryKeys: [fields.id],
     fields: [
       fields.contents,
       fields.creationDate,

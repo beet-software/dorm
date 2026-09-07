@@ -24,7 +24,7 @@ import 'package:uuid/uuid.dart';
 import 'query.dart';
 
 String _primaryKeyPredicate(EntitySchema schema, {String prefix = 'id'}) {
-  final List<FieldSchema> fields = schema.keyFields;
+  final List<FieldSchema> fields = schema.primaryKeys;
   if (fields.length == 1) return '${fields.single.columnName} = :$prefix';
   return fields
       .asMap()
@@ -40,7 +40,7 @@ _primaryKeyParameters<Data, Model extends Data, I extends Object>(
   String prefix = 'id',
 }) {
   final List<Object?> values = entity.primaryKeyCodec.encode(id);
-  final List<FieldSchema> fields = entity.schema.keyFields;
+  final List<FieldSchema> fields = entity.schema.primaryKeys;
   if (values.length != fields.length) {
     throw StateError(
       'The primary-key codec returned ${values.length} values for '
@@ -163,7 +163,7 @@ class Reference implements BaseReference<Query> {
               .map(
                 (json) => entity.fromJson(
                   entity.primaryKeyCodec.decode(
-                    entity.schema.keyFields.map(
+                    entity.schema.primaryKeys.map(
                       (field) => json[field.columnName],
                     ),
                   ),
@@ -180,7 +180,10 @@ class Reference implements BaseReference<Query> {
   ) {
     final StringBuffer buffer = StringBuffer()
       ..write('SELECT ')
-      ..writeAll(entity.schema.keyFields.map((field) => field.columnName), ', ')
+      ..writeAll(
+        entity.schema.primaryKeys.map((field) => field.columnName),
+        ', ',
+      )
       ..write(' FROM ')
       ..write(entity.schema.tableName)
       ..write(';');
@@ -191,7 +194,7 @@ class Reference implements BaseReference<Query> {
           (result) => result.rows
               .map(
                 (row) => entity.primaryKeyCodec.decode(
-                  entity.schema.keyFields.map(
+                  entity.schema.primaryKeys.map(
                     (field) => row.typedAssoc()[field.columnName],
                   ),
                 ),
@@ -244,7 +247,7 @@ class Reference implements BaseReference<Query> {
   ) {
     final List<I> keys = ids.toList();
     if (keys.isEmpty) return Future.value();
-    final List<FieldSchema> fields = entity.schema.keyFields;
+    final List<FieldSchema> fields = entity.schema.primaryKeys;
     final Map<String, Object?> params = {};
     final StringBuffer buffer = StringBuffer()
       ..write('DELETE FROM ')
@@ -437,12 +440,12 @@ class Reference implements BaseReference<Query> {
         'Identity cannot be encoded for this schema.',
       );
     }
-    if (values.length != entity.schema.keyFields.length) {
+    if (values.length != entity.schema.primaryKeys.length) {
       throw ArgumentError.value(
         id,
         'identity',
         'Identity has ${values.length} values, but the schema requires '
-            '${entity.schema.keyFields.length}.',
+            '${entity.schema.primaryKeys.length}.',
       );
     }
   }
@@ -485,7 +488,7 @@ class _QueryBuilder<Data, Model extends Data, I extends Object> {
       entity.toJson(model),
     );
     final List<String> columns = json.keys.toList();
-    final List<FieldSchema> primaryKeyFields = entity.schema.keyFields;
+    final List<FieldSchema> primaryKeyFields = entity.schema.primaryKeys;
     final List<Object?> primaryKeyValues = entity.primaryKeyCodec.encode(
       entity.identify(model),
     );

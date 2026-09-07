@@ -170,12 +170,12 @@ class _EntityReference<Data, Model extends Data, I extends Object>
       throw ArgumentError.value(
           id, 'identity', 'Identity cannot be encoded for this schema.');
     }
-    if (values.length != entity.schema.keyFields.length) {
+    if (values.length != entity.schema.primaryKeys.length) {
       throw ArgumentError.value(
         id,
         'identity',
         'Identity has ${values.length} values, but the schema requires '
-            '${entity.schema.keyFields.length}.',
+            '${entity.schema.primaryKeys.length}.',
       );
     }
   }

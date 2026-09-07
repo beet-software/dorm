@@ -38,7 +38,7 @@ class _ItemEntity
   @override
   final EntitySchema schema = const EntitySchema(
     tableName: 'dorm_mongo_test_items',
-    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
+    primaryKeys: [FieldSchema(fieldName: 'id', columnName: 'id')],
   );
 
   @override
@@ -111,7 +111,6 @@ class _CompositeEntity
   @override
   final EntitySchema schema = const EntitySchema(
     tableName: 'dorm_mongo_test_composite_items',
-    primaryKey: FieldSchema(fieldName: 'first', columnName: 'first'),
     primaryKeys: [
       FieldSchema(fieldName: 'first', columnName: 'first'),
       FieldSchema(fieldName: 'second', columnName: 'second'),

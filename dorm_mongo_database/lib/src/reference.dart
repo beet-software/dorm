@@ -17,17 +17,17 @@ List<Object?> _keyValues<Data, Model extends Data, I extends Object>(
   I id,
 ) {
   final List<Object?> values = entity.primaryKeyCodec.encode(id);
-  if (values.length != entity.schema.keyFields.length) {
+  if (values.length != entity.schema.primaryKeys.length) {
     throw StateError(
       'The primary-key codec returned ${values.length} values for '
-      '${entity.schema.keyFields.length} schema fields.',
+      '${entity.schema.primaryKeys.length} schema fields.',
     );
   }
   return values;
 }
 
 Map<String, Object?> _keySelector(EntitySchema schema, List<Object?> values) {
-  final List<FieldSchema> fields = schema.keyFields;
+  final List<FieldSchema> fields = schema.primaryKeys;
   if (fields.length == 1) return {fields.single.columnName: values.single};
   return {
     r'$and': [
@@ -40,7 +40,7 @@ Map<String, Object?> _keysSelector(
   EntitySchema schema,
   List<List<Object?>> values,
 ) {
-  final List<FieldSchema> fields = schema.keyFields;
+  final List<FieldSchema> fields = schema.primaryKeys;
   if (fields.length == 1) {
     return {
       fields.single.columnName: {
@@ -61,8 +61,8 @@ Map<String, dynamic> _withIdentity<Data, Model extends Data, I extends Object>(
 ) {
   final Map<String, dynamic> data = _document(entity.toJson(model));
   final List<Object?> values = _keyValues(entity, entity.identify(model));
-  for (int i = 0; i < entity.schema.keyFields.length; i++) {
-    data[entity.schema.keyFields[i].columnName] = values[i];
+  for (int i = 0; i < entity.schema.primaryKeys.length; i++) {
+    data[entity.schema.primaryKeys[i].columnName] = values[i];
   }
   return data;
 }
@@ -90,7 +90,7 @@ class Reference implements BaseReference<Query> {
     if (document == null) return null;
     final Map<String, Object?> data = _data(document);
     final I id = entity.primaryKeyCodec.decode(
-      entity.schema.keyFields.map((field) => data[field.columnName]),
+      entity.schema.primaryKeys.map((field) => data[field.columnName]),
     );
     return entity.fromJson(id, data);
   }
@@ -119,7 +119,7 @@ class Reference implements BaseReference<Query> {
     I extends Object
   >(Entity<Data, Model, I, Creation<Data, I>> entity, Query query) async {
     final Map<String, Object> projection = {
-      for (final FieldSchema field in entity.schema.keyFields)
+      for (final FieldSchema field in entity.schema.primaryKeys)
         field.columnName: 1,
     };
     final Stream<Map<String, dynamic>> documents = _collection(entity.schema)
@@ -133,7 +133,7 @@ class Reference implements BaseReference<Query> {
     await for (final Map<String, dynamic> document in documents) {
       final Map<String, Object?> data = _data(document);
       values.add([
-        for (final FieldSchema field in entity.schema.keyFields)
+        for (final FieldSchema field in entity.schema.primaryKeys)
           data[field.columnName],
       ]);
     }
@@ -350,12 +350,12 @@ class Reference implements BaseReference<Query> {
         'Identity cannot be encoded for this schema.',
       );
     }
-    if (values.length != entity.schema.keyFields.length) {
+    if (values.length != entity.schema.primaryKeys.length) {
       throw ArgumentError.value(
         id,
         'identity',
         'Identity has ${values.length} values, but the schema requires '
-            '${entity.schema.keyFields.length}.',
+            '${entity.schema.primaryKeys.length}.',
       );
     }
   }

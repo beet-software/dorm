@@ -7,7 +7,7 @@ import 'package:uuid/uuid.dart';
 import 'query.dart';
 
 String _keyPredicate(EntitySchema schema, {String prefix = 'id'}) {
-  final List<FieldSchema> fields = schema.keyFields;
+  final List<FieldSchema> fields = schema.primaryKeys;
   if (fields.length == 1) {
     return '${fields.single.columnName} = @$prefix';
   }
@@ -24,7 +24,7 @@ Map<String, Object?> _keyParameters<Data, Model extends Data, I extends Object>(
   String prefix = 'id',
 }) {
   final List<Object?> values = entity.primaryKeyCodec.encode(id);
-  final List<FieldSchema> fields = entity.schema.keyFields;
+  final List<FieldSchema> fields = entity.schema.primaryKeys;
   if (values.length != fields.length) {
     throw StateError(
       'The primary-key codec returned ${values.length} values for '
@@ -109,22 +109,22 @@ class Reference implements BaseReference<Query> {
       entity.schema,
       entity.toJson(model),
     );
-    final List<FieldSchema> keyFields = entity.schema.keyFields;
+    final List<FieldSchema> primaryKeys = entity.schema.primaryKeys;
     final List<Object?> keyValues = entity.primaryKeyCodec.encode(
       entity.identify(model),
     );
-    if (keyValues.length != keyFields.length) {
+    if (keyValues.length != primaryKeys.length) {
       throw StateError('Primary-key codec returned an invalid value count.');
     }
     final Set<String> keyNames = {
-      for (final FieldSchema field in keyFields) field.columnName,
+      for (final FieldSchema field in primaryKeys) field.columnName,
     };
     final Map<String, Object?> data = {
       for (final MapEntry<String, Object?> entry in json.entries)
         if (!keyNames.contains(entry.key)) entry.key: entry.value,
     };
     final List<String> columns = [
-      ...keyFields.map((field) => field.columnName),
+      ...primaryKeys.map((field) => field.columnName),
       ...data.keys,
     ];
     final Map<String, Object?> params = {
@@ -144,7 +144,7 @@ class Reference implements BaseReference<Query> {
     if (upsert) {
       sql
         ..write(' ON CONFLICT (')
-        ..write(keyFields.map((field) => field.columnName).join(', '))
+        ..write(primaryKeys.map((field) => field.columnName).join(', '))
         ..write(') ');
       if (data.isEmpty) {
         sql.write('DO NOTHING');
@@ -183,7 +183,7 @@ class Reference implements BaseReference<Query> {
       return result.map((row) {
         final Map<String, Object?> data = _row(entity.schema, row);
         final I id = entity.primaryKeyCodec.decode(
-          entity.schema.keyFields.map((field) => data[field.columnName]),
+          entity.schema.primaryKeys.map((field) => data[field.columnName]),
         );
         return entity.fromJson(id, data);
       }).toList();
@@ -197,13 +197,13 @@ class Reference implements BaseReference<Query> {
     return _run((session) async {
       final Result result = await _execute(
         session,
-        'SELECT ${entity.schema.keyFields.map((field) => field.columnName).join(', ')} '
+        'SELECT ${entity.schema.primaryKeys.map((field) => field.columnName).join(', ')} '
         'FROM ${entity.schema.tableName}',
       );
       return result.map((row) {
         final Map<String, Object?> data = _row(entity.schema, row);
         return entity.primaryKeyCodec.decode(
-          entity.schema.keyFields.map((field) => data[field.columnName]),
+          entity.schema.primaryKeys.map((field) => data[field.columnName]),
         );
       }).toList();
     });
@@ -232,7 +232,7 @@ class Reference implements BaseReference<Query> {
     final List<I> keys = ids.toList();
     if (keys.isEmpty) return Future.value();
     return _run((session) async {
-      final List<FieldSchema> fields = entity.schema.keyFields;
+      final List<FieldSchema> fields = entity.schema.primaryKeys;
       final Map<String, Object?> params = {};
       final String where;
       if (fields.length == 1) {
@@ -409,12 +409,12 @@ class Reference implements BaseReference<Query> {
         'Identity cannot be encoded for this schema.',
       );
     }
-    if (values.length != entity.schema.keyFields.length) {
+    if (values.length != entity.schema.primaryKeys.length) {
       throw ArgumentError.value(
         id,
         'identity',
         'Identity has ${values.length} values, but the schema requires '
-            '${entity.schema.keyFields.length}.',
+            '${entity.schema.primaryKeys.length}.',
       );
     }
   }

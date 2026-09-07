@@ -5,7 +5,7 @@ import 'package:test/test.dart';
 void main() {
   const EntitySchema schema = EntitySchema(
     tableName: 'users',
-    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
+    primaryKeys: [FieldSchema(fieldName: 'id', columnName: 'id')],
     derivedFields: [
       DerivedFieldSchema(
         fieldName: 'searchName',

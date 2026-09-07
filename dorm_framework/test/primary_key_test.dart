@@ -28,11 +28,10 @@ void main() {
     );
     const EntitySchema schema = EntitySchema(
       tableName: 'memberships',
-      primaryKey: tenant,
       primaryKeys: [tenant, user],
     );
 
     expect(schema.isCompositePrimaryKey, isTrue);
-    expect(schema.keyFields, [tenant, user]);
+    expect(schema.primaryKeys, [tenant, user]);
   });
 }

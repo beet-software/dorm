@@ -169,7 +169,8 @@ class _OneToMany<L, I extends Object, R, J extends Object>
             relationFilters.first.field! as ForeignKeySchema;
         final bool targetsLeft =
             field.targetTableName == leftPlan.schema.tableName &&
-            field.targetColumnName == leftPlan.schema.primaryKey.columnName;
+            field.targetColumnName ==
+                leftPlan.schema.primaryKeys.first.columnName;
         final bool sameField = relationFilters.every((relationFilter) {
           final ForeignKeySchema current =
               relationFilter.field! as ForeignKeySchema;

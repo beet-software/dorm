@@ -30,7 +30,7 @@ class ItemEntity
   @override
   EntitySchema get schema => const EntitySchema(
         tableName: 'items',
-        primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
+        primaryKeys: [FieldSchema(fieldName: 'id', columnName: 'id')],
       );
 
   @override
@@ -87,7 +87,6 @@ class CompositeItemEntity
   @override
   EntitySchema get schema => const EntitySchema(
         tableName: 'composite-items',
-        primaryKey: FieldSchema(fieldName: 'tenant', columnName: 'tenant'),
         primaryKeys: [
           FieldSchema(fieldName: 'tenant', columnName: 'tenant'),
           FieldSchema(fieldName: 'number', columnName: 'number'),

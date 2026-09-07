@@ -288,7 +288,9 @@ class SchoolEntity implements Entity<SchoolData, School> {
   @override
   EntitySchema get schema => const EntitySchema(
         tableName: 'schools',
-        primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
+        primaryKeys: [
+          FieldSchema(fieldName: 'id', columnName: 'id'),
+        ],
       );
 
   // This represents the UPDATE method, see the previous section

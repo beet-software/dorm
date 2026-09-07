@@ -114,7 +114,7 @@ class TableRelationPlan<Model, I extends Object> extends RelationPlan<Model, I>
   @override
   Object? decodeKey(Map<String, Object?> data) {
     return primaryKeyCodec.decode(
-      schema.keyFields.map((field) => data[field.columnName]),
+      schema.primaryKeys.map((field) => data[field.columnName]),
     );
   }
 

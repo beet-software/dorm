@@ -120,7 +120,7 @@ class UserEntity
 
   static final EntitySchema _schema = EntitySchema(
     tableName: 'Users',
-    primaryKey: fields.id,
+    primaryKeys: [fields.id],
     fields: [fields.username, fields.email, fields.profile],
     derivedFields: [fields.qUsername],
   );
@@ -261,7 +261,7 @@ class ProductEntity
 
   static final EntitySchema _schema = EntitySchema(
     tableName: 'Products',
-    primaryKey: fields.id,
+    primaryKeys: [fields.id],
     fields: [fields.name, fields.description, fields.price],
     derivedFields: [fields.qName],
   );
@@ -393,7 +393,7 @@ class CartEntity
 
   static final EntitySchema _schema = EntitySchema(
     tableName: 'Carts',
-    primaryKey: fields.id,
+    primaryKeys: [fields.id],
     fields: [fields.timestamp, fields.userId],
     derivedFields: [],
   );
@@ -535,7 +535,7 @@ class CartItemEntity
 
   static final EntitySchema _schema = EntitySchema(
     tableName: 'CartItems',
-    primaryKey: fields.id,
+    primaryKeys: [fields.id],
     fields: [fields.amount, fields.productId, fields.cartId],
     derivedFields: [],
   );
@@ -734,7 +734,7 @@ class ReviewEntity
 
   static final EntitySchema _schema = EntitySchema(
     tableName: 'Reviews',
-    primaryKey: fields.id,
+    primaryKeys: [fields.id],
     fields: [
       fields.text,
       fields.timestamp,

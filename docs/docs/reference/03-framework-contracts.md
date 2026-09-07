@@ -48,8 +48,8 @@ Generated Dorm classes create one DatabaseEntity accessor per annotated model.
 | CompositePrimaryKeyCodec | Encodes/decodes CompositeKey. |
 | CompositeKey | Ordered collection of composite identity values. |
 
-EntitySchema.primaryKey remains the first key field for simple-key
-compatibility. keyFields preserves the ordered composite-key fields.
+EntitySchema.primaryKeys is the ordered list of primary-key fields. It contains
+one item for a simple key and multiple items for a composite key.
 
 ## Repository contracts
 

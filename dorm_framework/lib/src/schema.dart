@@ -69,17 +69,13 @@ class EntitySchema {
   /// The model's storage name.
   final String tableName;
 
-  /// The first primary-key field.
-  ///
-  /// For composite keys, use [keyFields] to access the complete ordered key.
-  final FieldSchema primaryKey;
-
   /// The ordered fields that make up the primary key.
   ///
-  /// An empty list means [primaryKey] is a single-field key.
+  /// A single-field key contains one item; a composite key contains multiple
+  /// items.
   final List<FieldSchema> primaryKeys;
 
-  /// The model's persisted fields, excluding [primaryKey].
+  /// The model's persisted fields, excluding [primaryKeys].
   final List<FieldSchema> fields;
 
   /// The model's generated persisted fields.
@@ -88,18 +84,13 @@ class EntitySchema {
   /// Creates an [EntitySchema].
   const EntitySchema({
     required this.tableName,
-    required this.primaryKey,
-    this.primaryKeys = const [],
+    required this.primaryKeys,
     this.fields = const [],
     this.derivedFields = const [],
   });
 
-  /// Returns the ordered fields that make up the primary key.
-  List<FieldSchema> get keyFields =>
-      primaryKeys.isEmpty ? [primaryKey] : primaryKeys;
-
   /// Whether this schema contains more than one primary-key field.
-  bool get isCompositePrimaryKey => keyFields.length > 1;
+  bool get isCompositePrimaryKey => primaryKeys.length > 1;
 
   /// Returns the foreign-key fields declared by [fields].
   Iterable<ForeignKeySchema> get foreignKeys =>

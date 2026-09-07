@@ -48,7 +48,7 @@ The current design records several behaviors that are not equivalent to permanen
 | Behavior | Current classification |
 | --- | --- |
 | Composite-key generator and generated-relationship restrictions | Accidental behavior |
-| Scalar `EntitySchema.primaryKey` compatibility shape | Accidental behavior; ordered `primaryKeys` is the stated canonical direction |
+| `EntitySchema.primaryKeys` | Current ordered schema representation; one field for simple keys and multiple fields for composite keys |
 | Batch atomicity across all engines | Limitation; desired behavior is incomplete |
 | Public transactions | Limitation; intended but currently blocked |
 | Filter portability | Intended semantic direction; current API may need improvement |

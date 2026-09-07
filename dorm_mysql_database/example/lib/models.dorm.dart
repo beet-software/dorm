@@ -81,7 +81,7 @@ class UserEntity
 
   static final EntitySchema _schema = EntitySchema(
     tableName: 'Users',
-    primaryKey: fields.id,
+    primaryKeys: [fields.id],
     fields: [fields.name, fields.active, fields.age],
     derivedFields: [],
   );

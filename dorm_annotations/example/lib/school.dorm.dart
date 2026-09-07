@@ -157,7 +157,7 @@ class SchoolEntity
 
   static final EntitySchema _schema = EntitySchema(
     tableName: 'escola',
-    primaryKey: fields.id,
+    primaryKeys: [fields.id],
     fields: [fields.name, fields.address, fields.phoneNumbers],
     derivedFields: [fields.q0],
   );
@@ -321,7 +321,7 @@ class StudentEntity
 
   static final EntitySchema _schema = EntitySchema(
     tableName: 'aluno',
-    primaryKey: fields.id,
+    primaryKeys: [fields.id],
     fields: [fields.name, fields.hasDisabilities, fields.schoolId],
     derivedFields: [fields.q0, fields.q1],
   );
@@ -448,7 +448,7 @@ class TeacherEntity
 
   static final EntitySchema _schema = EntitySchema(
     tableName: 'professor',
-    primaryKey: fields.id,
+    primaryKeys: [fields.id],
     fields: [fields.name, fields.ssn],
     derivedFields: [fields.q0],
   );
@@ -551,7 +551,7 @@ class HistoryEntity
 
   static final EntitySchema _schema = EntitySchema(
     tableName: 'historico',
-    primaryKey: fields.id,
+    primaryKeys: [fields.id],
     fields: [fields.studentId],
     derivedFields: [],
   );
@@ -678,7 +678,7 @@ class TeachingEntity
 
   static final EntitySchema _schema = EntitySchema(
     tableName: 'cadastro-professor',
-    primaryKey: fields.id,
+    primaryKeys: [fields.id],
     fields: [fields.teacherId, fields.schoolId, fields.code],
     derivedFields: [],
   );
@@ -822,7 +822,7 @@ class ClassEntity
 
   static final EntitySchema _schema = EntitySchema(
     tableName: 'aula',
-    primaryKey: fields.id,
+    primaryKeys: [fields.id],
     fields: [
       fields.patron,
       fields.teacherId,

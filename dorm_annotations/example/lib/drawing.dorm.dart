@@ -121,7 +121,7 @@ class DrawingEntity
 
   static final EntitySchema _schema = EntitySchema(
     tableName: 'desenho',
-    primaryKey: fields.id,
+    primaryKeys: [fields.id],
     fields: [fields.color, fields.type, fields.shape],
     derivedFields: [],
   );

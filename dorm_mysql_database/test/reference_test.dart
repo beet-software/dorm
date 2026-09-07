@@ -43,7 +43,7 @@ class IntegerEntity
   @override
   final EntitySchema schema = const EntitySchema(
     tableName: 'Integers',
-    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
+    primaryKeys: [FieldSchema(fieldName: 'id', columnName: 'id')],
   );
 
   @override
@@ -97,7 +97,7 @@ class DateEntity
   @override
   final EntitySchema schema = const EntitySchema(
     tableName: 'Dates',
-    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
+    primaryKeys: [FieldSchema(fieldName: 'id', columnName: 'id')],
   );
 
   @override
@@ -151,7 +151,7 @@ class TextEntity
   @override
   final EntitySchema schema = const EntitySchema(
     tableName: 'Texts',
-    primaryKey: FieldSchema(fieldName: 'id', columnName: 'id'),
+    primaryKeys: [FieldSchema(fieldName: 'id', columnName: 'id')],
   );
 
   @override

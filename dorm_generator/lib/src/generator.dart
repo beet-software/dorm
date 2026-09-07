@@ -1196,15 +1196,11 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
       [],
       {
         'tableName': cb.literalString(naming.tableName),
-        'primaryKey': expressionOf(
-          'fields.${naming.primaryKeyFieldNames.first}',
-        ),
-        if (naming.isCompositePrimaryKey)
-          'primaryKeys': cb.literalList(
-            naming.primaryKeyFieldNames.map(
-              (fieldName) => expressionOf('fields.$fieldName'),
-            ),
+        'primaryKeys': cb.literalList(
+          naming.primaryKeyFieldNames.map(
+            (fieldName) => expressionOf('fields.$fieldName'),
           ),
+        ),
         'fields': cb.literalList([
           for (MapEntry<String, FieldOrmNode> entry in fields.entries.where(
             (entry) =>

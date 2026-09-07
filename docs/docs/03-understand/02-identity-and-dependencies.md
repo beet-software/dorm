@@ -110,7 +110,9 @@ final List<Object?> values = codec.encode(key);
 final CompositeKey decoded = codec.decode(values);
 ```
 
-`EntitySchema.keyFields` preserves the ordered fields that make up the identity. `primaryKey` remains the first key field for the current compatibility shape, while `primaryKeys` and `keyFields` represent the complete ordered key.
+`EntitySchema.primaryKeys` preserves the ordered fields that make up the
+identity. It contains one field for a simple identity and multiple fields for
+a composite identity.
 
 The generator accepts one generated identity or existing identity fields for composite declarations. Composite generated keys are not supported by the annotation contract. Current restrictions involving composite-key generators and generated relationships are classified as accidental behavior rather than as a confirmed permanent design rule.
 
