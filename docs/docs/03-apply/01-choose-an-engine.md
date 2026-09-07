@@ -12,6 +12,7 @@ Use the engine that matches the runtime and storage service required by your app
 | `dorm_mysql_database` | MySQL server through `mysql_client` | Open a `MySQLConnection` and pass it to `Engine` |
 | `dorm_postgres_database` | PostgreSQL server through `postgres` | Open a `Connection` or `Pool` and pass it to `Engine` |
 | `dorm_mongo_database` | MongoDB server through `mongo_dart` | Create and open a `Db`, then pass it to `Engine` |
+| `dorm_http_database` | REST-shaped HTTP/JSON API through `package:http` | Create an owned `http.Client`, configure resources, and pass them to `Engine` |
 
 The framework does not select an engine automatically. The generated `Dorm` receives the concrete engine through its constructor.
 
@@ -178,19 +179,62 @@ aggregation, migrations, or change streams.
 
 Continue with [Run the store with MongoDB](09-use-mongo.md).
 
+## Use HTTP/JSON for a REST-shaped API
+
+Add the HTTP engine:
+
+```shell
+dart pub add dorm_http_database
+dart pub add http
+```
+
+Create an application-owned `http.Client`, configure one resource mapping per
+entity, and pass the HTTP configuration to `Engine`:
+
+```dart
+final http.Client client = http.Client();
+final Engine engine = Engine(
+  client: client,
+  baseUri: Uri.parse('https://api.example.test/'),
+  mapping: HttpMapping.byTableName({
+    'users': HttpResourceMapping(path: 'users'),
+  }),
+);
+final Dorm dorm = Dorm(engine);
+```
+
+The base URI should end with `/` so relative resource paths resolve as
+expected. The default query codec sends equality, prefix, range, date, sort,
+and limit conditions as URL parameters. Use `HttpJsonCodec.envelope()` when
+the API wraps response data in a JSON field such as `data`.
+
+Batch operations require batch endpoints in the corresponding
+`HttpResourceMapping`. The engine does not silently replace one batch request
+with multiple requests. `pull` and `pullAll` emit one HTTP read only, and
+relationships use readable repository operations, which can produce multiple
+HTTP requests.
+
+Close the client from the application lifecycle:
+
+```dart
+client.close();
+```
+
+Continue with [Run with HTTP/JSON](10-use-http.md).
+
 ## Compare current capability boundaries
 
 The common repository API does not imply identical runtime behavior in every engine:
 
-| Capability | Memory | BLoC | Firebase | MySQL | PostgreSQL | MongoDB |
-| --- | --- | --- | --- | --- | --- | --- |
-| External server required | No | No | Firebase project or emulator | Yes | Yes | Yes |
-| Generated identity from `put` | UUID in memory | UUID in memory | Firebase push key | UUID in SQL | UUID in SQL | UUID in a document field |
-| Streams | State-backed | State-backed | Firebase value events | Initial read only | Initial read only | Initial read only |
-| Filter/query execution | In-memory query | In-memory query | Firebase query | SQL query | PostgreSQL SQL query | MongoDB selector |
-| Public transaction API | No | No | No | No | No | No |
-| Pagination | Not supported | Not supported | Not supported | Not supported | Not supported | Not supported |
-| Composite identity with `put` | `Creation.explicit`; automatic generation is rejected | `Creation.explicit`; automatic generation is rejected | Composite identities unsupported | `Creation.explicit`; automatic generation is rejected | `Creation.explicit`; automatic generation is rejected | `Creation.explicit`; automatic generation is rejected |
+| Capability | Memory | BLoC | Firebase | MySQL | PostgreSQL | MongoDB | HTTP |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| External server required | No | No | Firebase project or emulator | Yes | Yes | Yes | HTTP API |
+| Generated identity from `put` | UUID in memory | UUID in memory | Firebase push key | UUID in SQL | UUID in SQL | UUID in a document field | UUID in HTTP request body |
+| Streams | State-backed | State-backed | Firebase value events | Initial read only | Initial read only | Initial read only | Initial read only |
+| Filter/query execution | In-memory query | In-memory query | Firebase query | SQL query | PostgreSQL SQL query | MongoDB selector | URL parameters |
+| Public transaction API | No | No | No | No | No | No | No |
+| Pagination | Not supported | Not supported | Not supported | Not supported | Not supported | Not supported | Not supported |
+| Composite identity with `put` | `Creation.explicit`; automatic generation is rejected | `Creation.explicit`; automatic generation is rejected | Composite identities unsupported | `Creation.explicit`; automatic generation is rejected | `Creation.explicit`; automatic generation is rejected | `Creation.explicit`; automatic generation is rejected | `Creation.explicit`; automatic generation is rejected |
 
 The matrix describes current implementation behavior. It is not a compatibility promise for a future release.
 

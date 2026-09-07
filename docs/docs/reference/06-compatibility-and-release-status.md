@@ -7,13 +7,14 @@ status that is not established by the available contracts.
 
 | Area | Current status |
 | --- | --- |
-| Published package version in the ten workspace manifests | 1.0.0-alpha.5 |
+| Published package version in the eleven workspace manifests | 1.0.0-alpha.5 |
 | Workspace root Dart SDK | >=3.9.0 <4.0.0 |
 | Workspace member SDK declarations | >=3.5.0 <4.0.0 for the members that use the workspace resolution; some packages declare >=3.11.5 <4.0.0 |
 | Firebase package | Flutter/Firebase integration, not a backend-neutral Dart implementation |
 | MySQL client | mysql_client |
 | PostgreSQL client | postgres |
 | MongoDB client | mongo_dart |
+| HTTP client | http |
 | Generator tooling | build_runner, source_gen, analyzer, json_serializable, and copy_with_extension_gen |
 | Workspace mechanism | Dart Pub Workspace with Melos configuration in the root pubspec.yaml |
 
@@ -31,6 +32,7 @@ compatibility matrix.
 | MySQL | Dart package using mysql_client and an external MySQL server. |
 | PostgreSQL | Pure Dart package using postgres and an external PostgreSQL server. |
 | MongoDB | Pure Dart package using mongo_dart and an external MongoDB server; the driver requires a runtime compatible with dart:io. |
+| HTTP | Pure Dart package using `package:http`; the application supplies the HTTP client, base URI, and REST/JSON mapping. |
 
 The common generated API is observed with these engines. That observation is
 not a promise that every operation has identical semantics across them.
@@ -39,7 +41,7 @@ not a promise that every operation has identical semantics across them.
 
 - The default generated identity shape is String.
 - Firebase reference operations require String identities.
-- Memory, BLoC, MySQL, PostgreSQL, and MongoDB currently generate UUID-backed String identities in their
+- Memory, BLoC, MySQL, PostgreSQL, MongoDB, and HTTP currently generate UUID-backed String identities in their
   automatic identity paths.
 - Generated composite-key repositories accept explicit identities through
   `Creation.explicit`; `Creation.auto` is a compile-time error for those
@@ -56,18 +58,20 @@ for operation-level details.
 | Feature | Status |
 | --- | --- |
 | CRUD | Implemented in the framework and engine paths with engine-specific behavior. |
-| Filters | Implemented by Memory, BLoC, Firebase, MySQL, PostgreSQL, and MongoDB through different query representations. |
+| Filters | Implemented by Memory, BLoC, Firebase, MySQL, PostgreSQL, MongoDB, and HTTP through different query representations. |
 | Relationships | Implemented in the common framework and engine adapters; direct and fallback paths differ. |
-| Streams | Memory, BLoC, and Firebase currently provide state/value events; MySQL, PostgreSQL, and MongoDB currently perform an initial read only. |
+| Streams | Memory, BLoC, and Firebase currently provide state/value events; MySQL, PostgreSQL, MongoDB, and HTTP currently perform an initial read only. |
 | Transactions | No general public transaction API. Some engine operations use backend transactions internally. |
 | Pagination | Explicitly unsupported by the current public scope. |
 | Polymorphic serialization across every engine | Current serialized behavior exists, but universal cross-engine compatibility is not established. |
 | MongoDB change streams | Not exposed by the current MongoDB engine. |
 | MongoDB aggregation and migrations | Not exposed by the current MongoDB package. |
+| HTTP route discovery | Not performed; resource routes and response codecs are configured by the application. |
+| HTTP transactions and server-event streams | Not exposed by the current HTTP package. |
 
 ## Public API and generated output
 
-The documented import surface is the ten package barrel files listed in
+The documented import surface is the eleven package barrel files listed in
 [Public API reference](01-public-api.md). Changes to exported barrels,
 framework contracts, annotations, generator output, generated class names,
 identity codecs, filters, or relationships affect the observable API surface.

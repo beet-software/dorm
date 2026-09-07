@@ -15,6 +15,7 @@
 [![pub package](https://img.shields.io/pub/v/dorm_mysql_database.svg?label=dorm_mysql_database)](https://pub.dev/packages/dorm_mysql_database)
 [![pub package](https://img.shields.io/pub/v/dorm_postgres_database.svg?label=dorm_postgres_database)](https://pub.dev/packages/dorm_postgres_database)
 [![pub package](https://img.shields.io/pub/v/dorm_mongo_database.svg?label=dorm_mongo_database)](https://pub.dev/packages/dorm_mongo_database)
+[![pub package](https://img.shields.io/pub/v/dorm_http_database.svg?label=dorm_http_database)](https://pub.dev/packages/dorm_http_database)
 
 
 A language-agnostic Object Relational Mapper library for Dart.
@@ -109,6 +110,7 @@ Here's a step-by-step guide:
    - Integrate using MySQL, explained by [`dorm_mysql_database`](https://pub.dev/packages/dorm_mysql_database)
    - Integrate using PostgreSQL, explained by [`dorm_postgres_database`](https://pub.dev/packages/dorm_postgres_database)
    - Integrate using MongoDB, explained by [`dorm_mongo_database`](https://pub.dev/packages/dorm_mongo_database)
+   - Integrate with REST-shaped HTTP/JSON APIs, explained by [`dorm_http_database`](https://pub.dev/packages/dorm_http_database)
    - Using another engine? Take a look at the "Implementing your own engine" section below
 
 You can find an *example/* folder inside *every* package mentioned above, containing specific examples

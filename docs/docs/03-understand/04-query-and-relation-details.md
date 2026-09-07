@@ -77,7 +77,7 @@ The framework's relation layer supports two execution inputs:
 1. a structured relation plan that an engine may batch or translate to a local join;
 2. readable repository operations that can resolve the relationship through ordinary reads.
 
-The MySQL, PostgreSQL, and MongoDB engines check for direct table plans and can use grouped relationship reads. Their callback-based relationship tests use readable sources, which exercise the fallback form without requiring a live database server.
+The MySQL, PostgreSQL, and MongoDB engines check for direct table plans and can use grouped relationship reads. The HTTP engine uses readable sources directly, so a relationship can issue additional HTTP requests. Their callback-based relationship tests use readable sources, which exercise the fallback form without requiring a live database server.
 
 This is an execution boundary, not a second public model schema. The generated relation names and result shapes remain the application-facing contract.
 

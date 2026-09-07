@@ -23,6 +23,7 @@ nav:
       - Generate MySQL schema: 03-apply/07-generate-mysql-schema.md
       - Run with PostgreSQL: 03-apply/08-use-postgres.md
       - Run with MongoDB: 03-apply/09-use-mongo.md
+      - Run with HTTP/JSON: 03-apply/10-use-http.md
   - Understand dORM:
       - How the pieces fit: 03-understand/01-how-the-pieces-fit.md
       - Identity and dependencies: 03-understand/02-identity-and-dependencies.md

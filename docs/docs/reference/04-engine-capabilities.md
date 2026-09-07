@@ -6,20 +6,20 @@ requirements.
 
 ## Capability matrix
 
-| Capability | Memory | BLoC | Firebase | MySQL | PostgreSQL | MongoDB |
-| --- | --- | --- | --- | --- | --- | --- |
-| Storage | Dart maps | In-process state | Firebase Realtime Database | MySQL through mysql_client | PostgreSQL through postgres | MongoDB through mongo_dart |
-| Public engine constructor | Engine() | Engine() | Engine(FirebaseInstance, {String? path}) | Engine(MySQLConnection) | Engine(SessionExecutor) | Engine(Db) |
-| External service | None | None | Firebase app/database or emulator | MySQL server and schema | PostgreSQL server and schema | MongoDB server |
-| Runtime dependencies | dorm_framework, uuid | bloc, rxdart, uuid | Firebase packages | mysql_client, uuid | postgres, uuid | mongo_dart, uuid |
-| Automatic identity | UUID-backed in-memory identity | UUID-backed in-memory identity | Firebase push key | UUID-backed SQL identity | UUID-backed SQL identity | UUID-backed String identity |
-| Identity restriction | Composite creation requires `Creation.explicit` | Composite creation requires `Creation.explicit` | Reference identities must be String; composite identities are unsupported | Composite creation requires `Creation.explicit` | Composite creation requires `Creation.explicit` | Composite creation requires `Creation.explicit` |
-| Collection filtering | In-memory query evaluation | In-memory query evaluation | Realtime Database query | SQL query | PostgreSQL SQL query | MongoDB selectors |
-| Single reads | In-memory map lookup | In-memory map lookup | Firebase SDK read | SQL read | SQL read | MongoDB collection read |
-| Streams | State-backed | State-backed | Firebase value events, with offline behavior | Initial read only in current implementation | Initial read only | Initial read only |
-| Relationships | Framework relationship implementation | Framework relationship implementation | Framework relationship implementation | Direct relation plans plus readable fallbacks | Direct relation plans plus readable fallbacks | Direct relation plans plus readable fallbacks |
-| Public transaction API | None documented | None documented | None; patch uses a Firebase transaction internally | None; selected operations use MySQL transactions internally | None; selected operations use PostgreSQL transactions internally | None |
-| Pagination | Not supported by the common API | Not supported | Not supported | Not supported | Not supported | Not supported |
+| Capability | Memory | BLoC | Firebase | MySQL | PostgreSQL | MongoDB | HTTP |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Storage | Dart maps | In-process state | Firebase Realtime Database | MySQL through mysql_client | PostgreSQL through postgres | MongoDB through mongo_dart | REST-shaped HTTP/JSON API |
+| Public engine constructor | Engine() | Engine() | Engine(FirebaseInstance, {String? path}) | Engine(MySQLConnection) | Engine(SessionExecutor) | Engine(Db) | Engine({client, baseUri, mapping, headers}) |
+| External service | None | None | Firebase app/database or emulator | MySQL server and schema | PostgreSQL server and schema | MongoDB server | Configured HTTP API |
+| Runtime dependencies | dorm_framework, uuid | bloc, rxdart, uuid | Firebase packages | mysql_client, uuid | postgres, uuid | mongo_dart, uuid | http, uuid |
+| Automatic identity | UUID-backed in-memory identity | UUID-backed in-memory identity | Firebase push key | UUID-backed SQL identity | UUID-backed SQL identity | UUID-backed String identity | UUID-backed String identity |
+| Identity restriction | Composite creation requires `Creation.explicit` | Composite creation requires `Creation.explicit` | Reference identities must be String; composite identities are unsupported | Composite creation requires `Creation.explicit` | Composite creation requires `Creation.explicit` | Composite creation requires `Creation.explicit` | Composite creation requires `Creation.explicit` |
+| Collection filtering | In-memory query evaluation | In-memory query evaluation | Realtime Database query | SQL query | PostgreSQL SQL query | MongoDB selectors | Configured URL parameters |
+| Single reads | In-memory map lookup | In-memory map lookup | Firebase SDK read | SQL read | SQL read | MongoDB collection read | HTTP request |
+| Streams | State-backed | State-backed | Firebase value events, with offline behavior | Initial read only in current implementation | Initial read only | Initial read only | Initial read only |
+| Relationships | Framework relationship implementation | Framework relationship implementation | Framework relationship implementation | Direct relation plans plus readable fallbacks | Direct relation plans plus readable fallbacks | Direct relation plans plus readable fallbacks | Readable-operation fallback |
+| Public transaction API | None documented | None documented | None; patch uses a Firebase transaction internally | None; selected operations use MySQL transactions internally | None; selected operations use PostgreSQL transactions internally | None | None |
+| Pagination | Not supported by the common API | Not supported | Not supported | Not supported | Not supported | Not supported | Not supported |
 
 The matrix records current behavior. It does not create a future compatibility
 promise.
@@ -203,6 +203,30 @@ read. The engine does not expose public transactions, change streams,
 aggregation, migrations, or native selector APIs.
 
 See [Run with MongoDB](../03-apply/09-use-mongo.md).
+
+## HTTP engine
+
+Import:
+
+~~~dart
+import 'package:dorm_http_database/dorm_http_database.dart';
+import 'package:http/http.dart' as http;
+~~~
+
+Construct it with an application-owned client, a base URI, and one resource
+mapping per entity. The mapping defines endpoint paths, batch operations,
+query parameters, and JSON envelopes.
+
+The engine sends JSON bodies using generated entity serialization and decodes
+JSON objects/lists with generated entity deserialization. It emits an initial
+read for `pull` and `pullAll`, uses readable operations for relationships, and
+does not expose transactions, pagination, polling, or server-event streams.
+
+Batch operations require configured endpoints. Missing batch endpoints produce
+`UnsupportedError` instead of being emulated with multiple independent
+requests. Non-success HTTP responses produce `HttpDatabaseException`.
+
+See [Run with HTTP/JSON](../03-apply/10-use-http.md).
 
 ## Shared surface and engine-specific errors
 

@@ -1,0 +1,32 @@
+name: dorm_http_database_example
+publish_to: none
+
+environment:
+  sdk: '>=3.11.5 <4.0.0'
+
+dependencies:
+  dorm_annotations:
+    path: ../../dorm_annotations
+  dorm_framework:
+    path: ../../dorm_framework
+  dorm_http_database:
+    path: ..
+  http: ^1.6.0
+  json_annotation: ^4.12.0
+
+dev_dependencies:
+  build_runner: ^2.4.3
+  dorm_generator:
+    path: ../../dorm_generator
+  json_serializable: ^6.7.1
+  lints: ^5.0.0
+
+dependency_overrides:
+  dorm_annotations:
+    path: ../../dorm_annotations
+  dorm_framework:
+    path: ../../dorm_framework
+  dorm_generator:
+    path: ../../dorm_generator
+  dorm_http_database:
+    path: ..

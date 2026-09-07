@@ -17,6 +17,7 @@ Use these package entry points for application code:
 | Firebase engine | `package:dorm_firebase_database/dorm_firebase_database.dart` |
 | MySQL engine | `package:dorm_mysql_database/dorm_mysql_database.dart` |
 | PostgreSQL engine | `package:dorm_postgres_database/dorm_postgres_database.dart` |
+| HTTP engine | `package:dorm_http_database/dorm_http_database.dart` |
 
 Concrete classes below `lib/src/` are not automatically part of the barrel
 surface. A class being importable by an internal package path does not by
@@ -156,6 +157,7 @@ and [Framework contracts](03-framework-contracts.md).
 | Firebase | `Engine(FirebaseInstance, {String? path})`, `FirebaseInstance`, `OfflineMode`, `Filter`, `Query`, and selected Firebase types. |
 | MySQL | `Engine(MySQLConnection)`, `Filter`, and `Query`. |
 | PostgreSQL | `Engine(SessionExecutor)`, `Filter`, and `Query`. PostgreSQL driver types are imported from `package:postgres/postgres.dart`. |
+| HTTP | `Engine({client, baseUri, mapping, headers})`, `Filter`, `Query`, `HttpMapping`, `HttpResourceMapping`, `HttpEndpoint`, `HttpJsonCodec`, `HttpQueryCodec`, and `HttpDatabaseException`. |
 
 The generated `Dorm` receives one concrete engine and exposes generated
 `DatabaseEntity` accessors. See [Engine capability reference](04-engine-capabilities.md)
@@ -167,6 +169,8 @@ Public methods return ordinary Dart futures and streams. Current failures can
 include `ArgumentError`, `StateError`, `UnsupportedError`, Dart runtime
 type errors, Firebase SDK errors, and MySQL client/server errors. There is no
 single exported dORM exception base class.
+
+`HttpDatabaseException` preserves the HTTP status code, method, URI, and response body for non-success responses. Transport errors from the injected HTTP client are propagated.
 
 See [Diagnose errors by layer](../05-troubleshooting/01-error-by-layer.md) for
 error handling and [Compatibility and release status](06-compatibility-and-release-status.md)
