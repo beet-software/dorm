@@ -43,7 +43,8 @@ The `Field` annotation is used to link a database column to a Dart field within 
 
 It accepts the following parameters:
 
-- `name`: Specifies the name of the column in the underlying database.
+- `name`: Optional name of the column in the underlying database. When omitted,
+  the generator uses the annotated getter name.
 - `defaultValue`: Provides an optional default value for the field. If not explicitly set and
   the return type of the getter is nullable, the field will default to null.
 
@@ -92,7 +93,8 @@ referential integrity, which ensures that the referenced data exists and remains
 
 It accepts the following parameters:
 
-- `name`: Specifies the name of the foreign key column in the underlying database.
+- `name`: Optional name of the foreign key column in the underlying database.
+  When omitted, the generator uses the annotated getter name.
 - `referTo`: Specifies the model class that the foreign key references.
 - `unique`: Indicates that the foreign key is unique in the source model. A
   non-unique foreign key is many-to-one; a unique foreign key can be
@@ -124,7 +126,8 @@ column and a `root/child` name inside a backend-specific JSON value.
 
 It accepts the following parameters:
 
-- `name`: Specifies the name of the column in the underlying database.
+- `name`: Optional name of the column in the underlying database. When omitted,
+  the generator uses the annotated getter name.
 - `referTo`: Specifies the derived tokens that the field refers to.
 - `joinBy`: Specifies the separator used between token values.
 
@@ -219,7 +222,8 @@ non-relational database model.
 
 It accepts the following parameters:
 
-- `name`: Specifies the name of the column in the underlying database.
+- `name`: Optional name of the column in the underlying database. When omitted,
+  the generator uses the annotated getter name.
 - `referTo`: Specifies the model class that should be represented within this field.
 
 ```dart
@@ -289,7 +293,8 @@ attributes of the base table.
 
 It accepts the following parameters:
 
-- `name`: Specifies the name of the composite column in the underlying database.
+- `name`: Optional name of the composite column in the underlying database.
+  When omitted, the generator uses the annotated getter name.
 - `pivotName`: Specifies the name of the pivot column in the underlying database.
 - `pivotAs`: Specifies the name of the pivot field in the Dart class.
 

@@ -24,6 +24,11 @@ import 'package:source_gen/source_gen.dart';
 import 'custom_types.dart';
 import 'orm_node.dart';
 
+String? _optionalString(ConstantReader reader, String field) {
+  final ConstantReader value = reader.read(field);
+  return value.isNull ? null : value.stringValue;
+}
+
 abstract class NodeParser<A, T, E extends Element>
     implements ElementVisitor2<T?> {
   const NodeParser();
@@ -294,7 +299,7 @@ class FieldParser extends FieldNodeParser<Field> {
       defaultValueReader = null;
     }
     return Field(
-      name: reader.read('name').stringValue,
+      name: _optionalString(reader, 'name'),
       defaultValue: defaultValueReader,
     );
   }
@@ -306,7 +311,7 @@ class ForeignFieldParser extends FieldNodeParser<ForeignField> {
   @override
   ForeignField _parse(ConstantReader reader) {
     return ForeignField(
-      name: reader.read('name').stringValue,
+      name: _optionalString(reader, 'name'),
       referTo: $Type(reader: reader.read('referTo')),
       unique: reader.read('unique').boolValue,
       as: $Symbol(reader: reader.read('as')),
@@ -321,7 +326,7 @@ class ModelFieldParser extends FieldNodeParser<ModelField> {
   @override
   ModelField _parse(ConstantReader reader) {
     return ModelField(
-      name: reader.read('name').stringValue,
+      name: _optionalString(reader, 'name'),
       referTo: $Type(reader: reader.read('referTo')),
       template: $ModelFieldTemplate(reader: reader.read('template')),
     );
@@ -334,7 +339,7 @@ class DerivedFieldParser extends FieldNodeParser<DerivedField> {
   @override
   DerivedField _parse(ConstantReader reader) {
     return DerivedField(
-      name: reader.read('name').stringValue,
+      name: _optionalString(reader, 'name'),
       referTo: reader.read('referTo').listValue.map((obj) {
         final ConstantReader reader = ConstantReader(obj);
         return DerivedToken(
@@ -353,7 +358,7 @@ class PolymorphicFieldParser extends FieldNodeParser<PolymorphicField> {
   @override
   PolymorphicField _parse(ConstantReader reader) {
     return PolymorphicField(
-      name: reader.read('name').stringValue,
+      name: _optionalString(reader, 'name'),
       pivotName: reader.read('pivotName').stringValue,
       pivotAs: $ConcreteSymbol(
         reader: reader.read('pivotAs'),

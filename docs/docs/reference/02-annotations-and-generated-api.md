@@ -10,10 +10,11 @@ after running dORM code generation.
 | `Data` | `const Data()` | Marks a class as serializable data input. |
 | `Model` | `const Model({String? name, List<IdSpec> primaryKey, Symbol? as, Function? primaryKeyGenerator})` | Declares a stored model, primary-key parts, table name, generated accessor name, and optional identity function. |
 | `Field` | `const Field({String? name, Object? defaultValue})` | Maps a getter to a stored field. |
-| `ForeignField` | `const ForeignField({required String name, required Type referTo, bool unique = false, Symbol? as, Symbol? inverseAs})` | Maps a foreign key and declares relationship metadata. |
-| `ModelField` | `const ModelField({required String name, required Type referTo, ModelFieldTemplate<Object?> template})` | Maps an embedded model/data value. |
+| `ForeignField` | `const ForeignField({String? name, required Type referTo, bool unique = false, Symbol? as, Symbol? inverseAs})` | Maps a foreign key and declares relationship metadata. When `name` is omitted, the annotated getter name is used. |
+| `ModelField` | `const ModelField({String? name, required Type referTo, ModelFieldTemplate<Object?> template})` | Maps an embedded model/data value. When `name` is omitted, the annotated getter name is used. |
 
-`Model.name` and field `name` values are storage names. `Model.as` is the
+`Model.name` and field `name` values are storage names. When a field annotation
+omits `name`, generation uses the annotated getter name. `Model.as` is the
 generated Dart accessor name for the database entity.
 
 ## Primary-key annotations
@@ -34,7 +35,7 @@ generator.
 | Type | Constructor | Meaning |
 | --- | --- | --- |
 | `DerivedTransform` | `text`, `enumeration` | Transformation category for a derived token. |
-| `DerivedField` | `const DerivedField({required String name, required List<DerivedToken> referTo, String joinBy = '_'})` | Creates a persisted value from other fields. |
+| `DerivedField` | `const DerivedField({String? name, required List<DerivedToken> referTo, String joinBy = '_'})` | Creates a persisted value from other fields. When `name` is omitted, the annotated getter name is used. |
 | `DerivedToken` | `const DerivedToken(Symbol field, [DerivedTransform? transform])` | Selects one annotated field and an optional transformation. |
 
 `DerivedTransform.text` applies text normalization; `DerivedTransform.enumeration`
@@ -45,7 +46,7 @@ are available through generated field metadata for filters.
 
 | Type | Constructor | Meaning |
 | --- | --- | --- |
-| `PolymorphicField` | `const PolymorphicField({required String name, required String pivotName, Symbol? pivotAs})` | Maps a payload field and discriminator/pivot field. |
+| `PolymorphicField` | `const PolymorphicField({String? name, required String pivotName, Symbol? pivotAs})` | Maps a payload field and discriminator/pivot field. When `name` is omitted, the annotated getter name is used. |
 | `PolymorphicData` | `const PolymorphicData({required String name, Symbol? as})` | Associates a discriminator value with a data class. |
 
 The generated serialized representation includes discriminator and payload

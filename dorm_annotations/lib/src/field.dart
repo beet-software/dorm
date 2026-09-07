@@ -21,6 +21,8 @@ import 'package:meta/meta_meta.dart';
 @Target({TargetKind.getter})
 class Field {
   /// Name of the column in the underlying database.
+  ///
+  /// When omitted, the generator uses the annotated getter name.
   final String? name;
 
   /// Optional default value for the field.
@@ -58,7 +60,7 @@ class ForeignField extends Field {
 
   /// Creates a [ForeignField] by its attributes.
   const ForeignField({
-    required super.name,
+    super.name,
     required this.referTo,
     this.unique = false,
     this.as,
@@ -84,7 +86,7 @@ class ModelField extends Field {
 
   /// Creates a [ModelField] by its attributes.
   const ModelField({
-    required super.name,
+    super.name,
     required this.referTo,
     this.template = const ModelFieldTemplate<ModelFieldType>(),
   });

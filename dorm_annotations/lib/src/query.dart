@@ -48,7 +48,7 @@ class DerivedField extends Field {
 
   /// Creates a [DerivedField] by its attributes.
   const DerivedField({
-    required super.name,
+    super.name,
     required this.referTo,
     this.joinBy = '_',
   });
