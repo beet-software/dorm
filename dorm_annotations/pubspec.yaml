@@ -12,3 +12,6 @@ dependencies:
   lints: ^5.0.0
   json_annotation: ^4.9.0
   copy_with_extension: ^17.1.0
+
+dev_dependencies:
+  test: ^1.32.0
