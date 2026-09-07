@@ -37,6 +37,7 @@ nav:
       - Run with memory: apply/use-memory.md
       - Run with BLoC: apply/use-bloc.md
       - Run with Firebase: apply/use-firebase.md
+      - Run with Cloud Firestore: apply/use-firestore.md
       - Run with MySQL: apply/use-mysql.md
       - Run with PostgreSQL: apply/use-postgres.md
       - Run with MongoDB: apply/use-mongo.md

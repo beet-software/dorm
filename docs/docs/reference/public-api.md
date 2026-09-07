@@ -15,6 +15,7 @@ Use these package entry points for application code:
 | Memory engine | `package:dorm_memory_database/dorm_memory_database.dart` |
 | BLoC engine | `package:dorm_bloc_database/dorm_bloc_database.dart` |
 | Firebase engine | `package:dorm_firebase_database/dorm_firebase_database.dart` |
+| Firestore engine | `package:dorm_firestore_database/dorm_firestore_database.dart` |
 | MySQL engine | `package:dorm_mysql_database/dorm_mysql_database.dart` |
 | PostgreSQL engine | `package:dorm_postgres_database/dorm_postgres_database.dart` |
 | HTTP engine | `package:dorm_http_database/dorm_http_database.dart` |

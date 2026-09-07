@@ -11,6 +11,7 @@ filters, relationships, and streams for a specific storage system.
 | Memory | Pure Dart in-process memory | A reusable `Engine()` instance |
 | BLoC | In-memory BLoC state | A reusable `Engine()` instance |
 | Firebase | Firebase Realtime Database | Initialized Firebase services and database configuration |
+| Firestore | Cloud Firestore | Initialized Firebase services and `FirebaseFirestore` |
 | MySQL | MySQL through `mysql_client` | An opened `MySQLConnection` |
 | PostgreSQL | PostgreSQL through `postgres` | An opened `Connection` or `Pool` |
 | MongoDB | MongoDB through `mongo_dart` | An opened `Db` |
@@ -33,7 +34,10 @@ receives the concrete engine through its constructor.
 Use the [memory engine](use-memory.md) for a pure Dart application that
 needs an in-process store without a database server. Use [BLoC](use-bloc.md)
 when local state must use the BLoC integration. Use [Firebase](use-firebase.md)
-for a Flutter/Firebase application.
+for a Flutter/Firebase Realtime Database application. Use
+[Cloud Firestore](use-firestore.md) for a Flutter application that stores
+documents in Firestore and needs its queries, listeners, batches, or internal
+transactions.
 
 Use [MySQL](use-mysql.md) or [PostgreSQL](use-postgres.md) when the
 database is relational and SQL is part of the application's storage boundary.
@@ -66,14 +70,14 @@ same application role.
 
 ## Compare the current capability boundaries
 
-| Capability | Memory | BLoC | Firebase | MySQL | PostgreSQL | MongoDB | HTTP |
+| Capability | Memory | BLoC | Firebase | Firestore | MySQL | PostgreSQL | MongoDB | HTTP |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| External server required | No | No | Firebase project or emulator | Yes | Yes | Yes | HTTP API |
-| Streams | State-backed | State-backed | Firebase value events | Initial read only | Initial read only | Initial read only | Initial read only |
-| Filter execution | In memory | In memory | Firebase query | SQL query | PostgreSQL SQL query | MongoDB selector | URL parameters |
-| Public transaction API | No | No | No | No | No | No | No |
-| Pagination | Offset pages | Offset pages | Offset pages with client-side skipping | Offset pages | Offset pages | Offset pages | Offset pages |
-| Composite creation | Explicit identity | Explicit identity | Unsupported | Explicit identity | Explicit identity | Explicit identity | Explicit identity |
+| External server required | No | No | Firebase project or emulator | Firebase project or emulator | Yes | Yes | Yes | HTTP API |
+| Streams | State-backed | State-backed | Firebase value events | Firestore snapshots | Initial read only | Initial read only | Initial read only | Initial read only |
+| Filter execution | In memory | In memory | Firebase query | Firestore query | SQL query | PostgreSQL SQL query | MongoDB selector | URL parameters |
+| Public transaction API | No | No | No | No | No | No | No | No |
+| Pagination | Offset pages | Offset pages | Offset pages with client-side skipping | Offset pages with client-side skipping | Offset pages | Offset pages | Offset pages | Offset pages |
+| Composite creation | Explicit identity | Explicit identity | Unsupported | Unsupported | Explicit identity | Explicit identity | Explicit identity | Explicit identity |
 
 This table describes current engine behavior. It does not promise that future
 versions will preserve every backend capability or limitation.

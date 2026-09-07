@@ -102,6 +102,10 @@ See [Generate the store API](../quickstart/generating-models.md).
 | --- | --- |
 | BLoC engine | In-process engine whose state is held by an Engine instance and exposed through BLoC/Cubit-backed streams. |
 | FirebaseInstance | Firebase dependency provider used to construct the Firebase engine. |
+| Firestore engine | Flutter engine that maps dORM repositories to Cloud Firestore collections and documents. |
+| parentPath | Optional Firestore document path below which entity collections are stored. |
+| Document ID | The simple String identity used by the Firestore engine, taken from `DocumentReference.id`. |
+| WriteBatch | Firestore batch used internally for supported multi-document writes. |
 | OfflineMode | Firebase setting with include and exclude modes for local/remote event handling. |
 | MySQL Query | Query implementation that stores SQL text and named parameters. |
 | Relation plan | In MySQL, direct table plans can enable grouped relationship reads; generic sources use readable operations. |

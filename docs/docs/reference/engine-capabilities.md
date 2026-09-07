@@ -6,20 +6,20 @@ requirements.
 
 ## Capability matrix
 
-| Capability | Memory | BLoC | Firebase | MySQL | PostgreSQL | MongoDB | HTTP |
+| Capability | Memory | BLoC | Firebase | Firestore | MySQL | PostgreSQL | MongoDB | HTTP |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Storage | Dart maps | In-process state | Firebase Realtime Database | MySQL through mysql_client | PostgreSQL through postgres | MongoDB through mongo_dart | REST-shaped HTTP/JSON API |
-| Public engine constructor | Engine() | Engine() | Engine(FirebaseInstance, {String? path}) | Engine(MySQLConnection) | Engine(SessionExecutor) | Engine(Db) | Engine({client, baseUri, mapping, headers}) |
-| External service | None | None | Firebase app/database or emulator | MySQL server and schema | PostgreSQL server and schema | MongoDB server | Configured HTTP API |
-| Runtime dependencies | dorm_framework, uuid | bloc, rxdart, uuid | Firebase packages | mysql_client, uuid | postgres, uuid | mongo_dart, uuid | http, uuid |
-| Automatic identity | UUID-backed in-memory identity | UUID-backed in-memory identity | Firebase push key | UUID-backed SQL identity | UUID-backed SQL identity | UUID-backed String identity | UUID-backed String identity |
-| Identity restriction | Composite creation requires `Creation.explicit` | Composite creation requires `Creation.explicit` | Reference identities must be String; composite identities are unsupported | Composite creation requires `Creation.explicit` | Composite creation requires `Creation.explicit` | Composite creation requires `Creation.explicit` | Composite creation requires `Creation.explicit` |
-| Collection filtering | In-memory query evaluation | In-memory query evaluation | Realtime Database query | SQL query | PostgreSQL SQL query | MongoDB selectors | Configured URL parameters |
-| Single reads | In-memory map lookup | In-memory map lookup | Firebase SDK read | SQL read | SQL read | MongoDB collection read | HTTP request |
-| Streams | State-backed | State-backed | Firebase value events, with offline behavior | Initial read only in current implementation | Initial read only | Initial read only | Initial read only |
-| Relationships | Framework relationship implementation | Framework relationship implementation | Framework relationship implementation | Direct relation plans plus readable fallbacks | Direct relation plans plus readable fallbacks | Direct relation plans plus readable fallbacks | Readable-operation fallback |
-| Public transaction API | None documented | None documented | None; patch uses a Firebase transaction internally | None; selected operations use MySQL transactions internally | None; selected operations use PostgreSQL transactions internally | None | None |
-| Pagination | Offset pages | Offset pages | Offset pages with client-side skipping | Offset pages | Offset pages | Offset pages | Offset pages |
+| Storage | Dart maps | In-process state | Firebase Realtime Database | Cloud Firestore | MySQL through mysql_client | PostgreSQL through postgres | MongoDB through mongo_dart | REST-shaped HTTP/JSON API |
+| Public engine constructor | Engine() | Engine() | Engine(FirebaseInstance, {String? path}) | Engine(FirebaseFirestore, {String? parentPath}) | Engine(MySQLConnection) | Engine(SessionExecutor) | Engine(Db) | Engine({client, baseUri, mapping, headers}) |
+| External service | None | None | Firebase app/database or emulator | Firebase app/Firestore or emulator | MySQL server and schema | PostgreSQL server and schema | MongoDB server | Configured HTTP API |
+| Runtime dependencies | dorm_framework, uuid | bloc, rxdart, uuid | Firebase packages | cloud_firestore, rxdart | mysql_client, uuid | postgres, uuid | mongo_dart, uuid | http, uuid |
+| Automatic identity | UUID-backed in-memory identity | UUID-backed in-memory identity | Firebase push key | Firestore document ID | UUID-backed SQL identity | UUID-backed SQL identity | UUID-backed String identity | UUID-backed String identity |
+| Identity restriction | Composite creation requires `Creation.explicit` | Composite creation requires `Creation.explicit` | Reference identities must be String; composite identities are unsupported | Reference identities must be String; composite identities are unsupported | Composite creation requires `Creation.explicit` | Composite creation requires `Creation.explicit` | Composite creation requires `Creation.explicit` | Composite creation requires `Creation.explicit` |
+| Collection filtering | In-memory query evaluation | In-memory query evaluation | Realtime Database query | Firestore query | SQL query | PostgreSQL SQL query | MongoDB selectors | Configured URL parameters |
+| Single reads | In-memory map lookup | In-memory map lookup | Firebase SDK read | Firestore document read | SQL read | PostgreSQL SQL read | MongoDB collection read | HTTP request |
+| Streams | State-backed | State-backed | Firebase value events, with offline behavior | Firestore document/query snapshots | Initial read only in current implementation | Initial read only | Initial read only | Initial read only |
+| Relationships | Framework relationship implementation | Framework relationship implementation | Framework relationship implementation | Readable-operation fallback | Direct relation plans plus readable fallbacks | Direct relation plans plus readable fallbacks | Direct relation plans plus readable fallbacks | Readable-operation fallback |
+| Public transaction API | None documented | None documented | None; patch uses a Firebase transaction internally | None; patch uses a Firestore transaction internally | None; selected operations use MySQL transactions internally | None; selected operations use PostgreSQL transactions internally | None | None |
+| Pagination | Offset pages | Offset pages | Offset pages with client-side skipping | Offset pages with client-side skipping | Offset pages | Offset pages | Offset pages | Offset pages |
 
 The matrix records current behavior. It does not create a future compatibility
 promise.
@@ -111,6 +111,23 @@ popAll currently reads matching models and then removes their keys. The
 operation is not a common all-or-nothing transaction contract.
 
 See [Run with Firebase](../apply/use-firebase.md).
+
+## Cloud Firestore engine
+
+Import `package:dorm_firestore_database/dorm_firestore_database.dart` and pass
+an initialized `FirebaseFirestore` instance to `Engine`. The application owns
+Firebase initialization, emulator configuration, and SDK lifecycle.
+
+The engine uses Firestore document IDs as simple String identities. It supports
+Firestore queries, document/query snapshots, internal write batches, and an
+internal transaction for `patch`. Composite identities, schema generation,
+migrations, aggregation, and a public transaction API are not supported.
+
+Offset pagination is implemented by reading enough documents and skipping the
+offset in the client. Relationship reads use the framework's readable
+operations and may issue multiple Firestore reads.
+
+See [Run with Cloud Firestore](../apply/use-firestore.md).
 
 ## MySQL engine
 

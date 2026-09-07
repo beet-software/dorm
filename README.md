@@ -11,6 +11,7 @@
 [![pub package](https://img.shields.io/pub/v/dorm_generator.svg?label=dorm_generator)](https://pub.dev/packages/dorm_generator)
 
 [![pub package](https://img.shields.io/pub/v/dorm_firebase_database.svg?label=dorm_firebase_database)](https://pub.dev/packages/dorm_firebase_database)
+[![pub package](https://img.shields.io/pub/v/dorm_firestore_database.svg?label=dorm_firestore_database)](https://pub.dev/packages/dorm_firestore_database)
 [![pub package](https://img.shields.io/pub/v/dorm_bloc_database.svg?label=dorm_bloc_database)](https://pub.dev/packages/dorm_bloc_database)
 [![pub package](https://img.shields.io/pub/v/dorm_mysql_database.svg?label=dorm_mysql_database)](https://pub.dev/packages/dorm_mysql_database)
 [![pub package](https://img.shields.io/pub/v/dorm_postgres_database.svg?label=dorm_postgres_database)](https://pub.dev/packages/dorm_postgres_database)
@@ -106,6 +107,7 @@ Here's a step-by-step guide:
 4. Discover what database engines are available to integrate with dORM
    - Start with pure Dart in-memory storage, explained by [`dorm_memory_database`](https://pub.dev/packages/dorm_memory_database)
    - Integrate using Firebase Realtime Database, explained by [`dorm_firebase_database`](https://pub.dev/packages/dorm_firebase_database)
+   - Integrate using Cloud Firestore, explained by [`dorm_firestore_database`](https://pub.dev/packages/dorm_firestore_database)
    - Integrate using local memory and the BLoC pattern, explained by [`dorm_bloc_database`](https://pub.dev/packages/dorm_bloc_database)
    - Integrate using MySQL, explained by [`dorm_mysql_database`](https://pub.dev/packages/dorm_mysql_database)
    - Integrate using PostgreSQL, explained by [`dorm_postgres_database`](https://pub.dev/packages/dorm_postgres_database)
@@ -119,9 +121,10 @@ just one of the packages above. Each documentation complements the other.
 
 ## Current scope
 
-dORM does not expose a general public transaction API. Repository reads support
-offset-based pages through `peekPage`. Current engines declare
-`OffsetPageRequest` as their accepted page type, so a statically typed
+dORM does not expose a general public transaction API. Firestore, PostgreSQL,
+and MySQL use backend transactions internally for selected operations.
+Repository reads support offset-based pages through `peekPage`. Current engines
+declare `OffsetPageRequest` as their accepted page type, so a statically typed
 `CursorPageRequest` call is rejected by the analyzer.
 
 ## Implementing your own engine
