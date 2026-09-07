@@ -1,4 +1,5 @@
 import 'package:device_preview/device_preview.dart';
+import 'package:dorm_framework/dorm_framework.dart';
 import 'package:dorm_bloc_database/dorm_bloc_database.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
@@ -136,7 +137,12 @@ class HomeScreen extends StatelessWidget {
                   .get<Dorm>()
                   .users
                   .repository
-                  .put(const UserDependency(), UserData(name: name));
+                  .put(
+                    Creation.auto(
+                      dependency: const UserDependency(),
+                      data: UserData(name: name),
+                    ),
+                  );
             },
             child: const Icon(Icons.add),
           ),

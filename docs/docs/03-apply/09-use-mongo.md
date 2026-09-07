@@ -52,10 +52,11 @@ the generated schema become document field names. A simple identity remains
 in the declared identity field; dORM does not replace it with MongoDB's
 `_id` field or convert it to `ObjectId`.
 
-For generated models with a default `String` identity, `put` creates a UUID
-string. Use `push` when the model already has an identity. `put` and `putAll`
-do not create composite identities; use explicitly identified models with
-`push` and `pushAll` for composite keys.
+For generated models with a default `String` identity, `Creation.auto` causes
+`put` to create a UUID string. Use `Creation.explicit` when the final identity
+is known before creation. For a composite identity, pass a `CompositeKey` to
+`Creation.explicit`; automatic generation of composite identities is not
+supported.
 
 ## Execute CRUD, filters, and relationships
 
@@ -64,8 +65,10 @@ surface as the other engines:
 
 ```dart
 final User user = await dorm.users.repository.put(
-  const UserDependency(),
-  const UserData(name: 'Ada'),
+  Creation.auto(
+    dependency: UserDependency(),
+    data: UserData(name: 'Ada'),
+  ),
 );
 
 await dorm.posts.repository.push(

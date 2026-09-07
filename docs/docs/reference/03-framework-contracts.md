@@ -6,7 +6,7 @@ behavior.
 
 ## Entity and schema contracts
 
-### Entity<Data, Model extends Data, I extends Object>
+### Entity<Data, Model extends Data, I extends Object, C extends Creation<Data, I>>
 
 An entity maps generated data/model values to an engine-neutral schema and
 identity:
@@ -18,15 +18,17 @@ identity:
 | fromJson | Model fromJson(I id, Map data) | Model reconstructed from stored data and identity. |
 | toJson | Map<String, Object?> toJson(Data data) | Data converted to stored field values. |
 | convert | Model convert(Model model, Data data) | Existing model updated from data. |
-| fromData | Model fromData(Dependency<Data>, I id, Data data) | Model constructed from dependency, identity, and data. |
+| fromData | Model fromData(ResolvedCreation<Data, I>) | Model constructed from a resolved dependency, identity, and data. |
+| supportsAutomaticIdentity | bool get supportsAutomaticIdentity | Whether automatic creation is supported. |
 | identify | I identify(Model model) | Identity extracted from a model. |
 
 Generated entities implement this interface.
 
 ### DatabaseEntity
 
-DatabaseEntity<Data, Model, I, Q> combines one Entity with a
-BaseEngine<Q>. It exposes:
+DatabaseEntity<Data, Model, I, Q, C> combines one Entity with a
+BaseEngine<Q>. It exposes the repository whose `put` and `putAll` methods
+accept `C`, together with:
 
 - repository;
 - relationships;
@@ -51,8 +53,9 @@ compatibility. keyFields preserves the ordered composite-key fields.
 
 ## Repository contracts
 
-Repository<Data, Model, I, Q> combines SingleReadOperation,
-BatchReadOperation, ModelRepository, and DataRepository.
+Repository<Data, Model, I, Q, C> combines SingleReadOperation,
+BatchReadOperation, ModelRepository, and DataRepository. `C` is the creation
+type accepted by that entity.
 
 ### Read contracts
 
@@ -72,8 +75,8 @@ listener.
 ### Write and removal contracts
 
 ~~~dart
-Future<Model> put(Dependency<Data> dependency, Data data);
-Future<List<Model>> putAll(Dependency<Data> dependency, List<Data> datum);
+Future<Model> put(C creation);
+Future<List<Model>> putAll(List<C> creations);
 Future<void> push(Model model);
 Future<void> pushAll(List<Model> models);
 Future<void> patch(I id, Model? Function(Model?) update);
@@ -83,9 +86,13 @@ Future<void> popAll(BaseFilter<Q> filter);
 Future<void> purge();
 ~~~
 
-put creates a model from data and dependency. push persists an already
-identified model. patch receives the current model or null; returning null
-removes the record.
+put creates a model from a creation request. Simple-key entities use
+`SimpleCreation<Data, I>` and accept both factory results. Composite-key
+entities use `ExplicitCreation<Data, CompositeKey>`, so automatic creation is
+rejected at compile time by the generated contract. `Creation.auto` requests
+an engine-generated identity, while `Creation.explicit` supplies the final
+identity. push persists an already identified model. patch receives the
+current model or null; returning null removes the record.
 
 The framework documentation describes popKeys, popAll, pushAll, and patch as
 operations expected to be atomic, but the public API does not expose a general
@@ -182,7 +189,7 @@ for concrete implementations.
 
 There is no common dORM exception class. Contract users can observe ordinary
 Dart errors, engine SDK errors, database client errors, and stream errors.
-Identity codec mismatches produce StateError; Firebase identity conversion
-uses ArgumentError; current BLoC/MySQL composite-key put paths use
-UnsupportedError.
-
+Identity codec mismatches produce StateError in existing key operations;
+explicit creation identities are validated against the entity schema and use
+ArgumentError for incompatible values. Engines retain UnsupportedError for
+automatic composite creation when the generated static contract is bypassed.

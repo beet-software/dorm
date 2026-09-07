@@ -17,7 +17,12 @@
 import 'package:dorm_framework/dorm_framework.dart';
 
 /// Represents the conversion of a [Model] into dORM's model system.
-abstract class Entity<Data, Model extends Data, I extends Object> {
+abstract class Entity<
+  Data,
+  Model extends Data,
+  I extends Object,
+  C extends Creation<Data, I>
+> {
   /// The engine-independent persisted schema of this entity.
   EntitySchema get schema;
 
@@ -27,6 +32,9 @@ abstract class Entity<Data, Model extends Data, I extends Object> {
   /// with composite primary keys override it with a
   /// [CompositePrimaryKeyCodec].
   PrimaryKeyCodec<I> get primaryKeyCodec => const SinglePrimaryKeyCodec();
+
+  /// Whether the entity supports an engine-generated identity for creation.
+  bool get supportsAutomaticIdentity => true;
 
   /// Deserializes the [id] and the [data] of a row in the underlying database
   /// engine to a [Model].
@@ -85,29 +93,33 @@ abstract class Entity<Data, Model extends Data, I extends Object> {
   /// through a form.
   Model convert(Model model, Data data);
 
-  /// Creates a [Model] using its [dependency], an unique [id] and its [data].
+  /// Creates a [Model] using a resolved [creation] context.
   ///
   /// ```dart
   /// final School school = School(id: 'd12207624e35', name: 'S1', active: true);
   /// final Dependency<StudentData> dependency = StudentDependency(schoolId: school.id);
-  /// final String id = 'cc03334e70a9';
   /// final StudentData data = StudentData(name: 'John', birthDate: DateTime(1942, 6, 13));
   ///
   /// final Entity<StudentData, Student> entity = ...;
-  /// final Student student = entity.fromData(dependency, id, data);
-  /// print(student.id);            // This value depends on the identification
-  ///                               // strategy used by the implementation of
-  ///                               // this method. Usually, the default is to
-  ///                               // just duplicate the `id` variable passed as
-  ///                               // argument to `fromData`, but it is also
-  ///                               // common to implement custom logic.
+  /// final Student student = entity.fromData(
+  ///   ResolvedCreation(
+  ///     dependency: dependency,
+  ///     data: data,
+  ///     id: 'cc03334e70a9',
+  ///     wasGenerated: false,
+  ///   ),
+  /// );
+  /// print(student.id);            // The generated implementation uses the
+  ///                               // final `creation.id`. A generated
+  ///                               // primaryKeyGenerator may transform it only
+  ///                               // when `creation.wasGenerated` is true.
   ///
   /// print(student.name);          // 'John'
   /// print(student.birthDate);     // 13/06/1942
   /// ```
   ///
   /// Its useful when modeling *new* data received from a form.
-  Model fromData(covariant Dependency<Data> dependency, I id, Data data);
+  Model fromData(ResolvedCreation<Data, I> creation);
 
   /// Uniquely identify a [model].
   ///
@@ -126,25 +138,32 @@ abstract class Entity<Data, Model extends Data, I extends Object> {
 }
 
 /// Represents the bridge between a database engine and a controller.
-class DatabaseEntity<Data, Model extends Data, I extends Object, Q extends BaseQuery<Q>>
-    implements Entity<Data, Model, I> {
-  final Entity<Data, Model, I> _entity;
+class DatabaseEntity<
+  Data,
+  Model extends Data,
+  I extends Object,
+  Q extends BaseQuery<Q>,
+  C extends Creation<Data, I>
+>
+    implements Entity<Data, Model, I, C> {
+  final Entity<Data, Model, I, C> _entity;
   final BaseReference<Q> _reference;
   final BaseRelationship<Q> _relationship;
 
   DatabaseEntity(
-    Entity<Data, Model, I> entity, {
+    Entity<Data, Model, I, C> entity, {
     required BaseEngine<Q> engine,
-  })  : _entity = entity,
-        _reference = engine.createReference(),
-        _relationship = engine.createRelationship();
+  })
+    : _entity = entity,
+      _reference = engine.createReference(),
+      _relationship = engine.createRelationship();
 
   ModelRelationship<Model, I, Q> get relationships {
     return ModelRelationship(left: repository, relationship: _relationship);
   }
 
   /// The controller of this entity.
-  Repository<Data, Model, I, Q> get repository {
+  Repository<Data, Model, I, Q, C> get repository {
     return Repository(
       entity: _entity,
       reference: _reference,
@@ -156,8 +175,8 @@ class DatabaseEntity<Data, Model extends Data, I extends Object, Q extends BaseQ
   Model convert(Model model, Data data) => _entity.convert(model, data);
 
   @override
-  Model fromData(covariant Dependency<Data> dependency, I id, Data data) =>
-      _entity.fromData(dependency, id, data);
+  Model fromData(ResolvedCreation<Data, I> creation) =>
+      _entity.fromData(creation);
 
   @override
   Model fromJson(I id, Map data) => _entity.fromJson(id, data);
@@ -170,6 +189,9 @@ class DatabaseEntity<Data, Model extends Data, I extends Object, Q extends BaseQ
 
   @override
   PrimaryKeyCodec<I> get primaryKeyCodec => _entity.primaryKeyCodec;
+
+  @override
+  bool get supportsAutomaticIdentity => _entity.supportsAutomaticIdentity;
 
   @override
   Map<String, Object?> toJson(Data data) => _entity.toJson(data);

@@ -118,15 +118,16 @@ class Reference implements BaseReference<Query> {
 
   @override
   Future<Model?> peek<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     I id,
   ) async {
     // Read one backend record and return entity.fromJson(id, data).
     throw UnimplementedError();
   }
 
-  // Implement pull, peekAll, pullAll, peekAllKeys, pop, popKeys,
-  // popAll, patch, put, putAll, push, pushAll, and purge.
+  // Implement the remaining operations. The put and putAll methods must be
+  // generic over C and receive Entity<Data, Model, I, C> together with C or
+  // List<C>, preserving the entity's creation type.
 }
 ```
 

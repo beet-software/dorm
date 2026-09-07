@@ -40,8 +40,10 @@ not a promise that every operation has identical semantics across them.
 - Firebase reference operations require String identities.
 - BLoC, MySQL, PostgreSQL, and MongoDB currently generate UUID-backed String identities in their
   automatic identity paths.
-- BLoC and MySQL reject automatic put operations for composite primary keys
-  with UnsupportedError.
+- Generated composite-key repositories accept explicit identities through
+  `Creation.explicit`; `Creation.auto` is a compile-time error for those
+  repositories. Engines retain `UnsupportedError` when a call bypasses the
+  static type restriction.
 - Firebase composite foreign-key relationships and automatic composite-key
   generation are not supported by the current documented boundaries.
 

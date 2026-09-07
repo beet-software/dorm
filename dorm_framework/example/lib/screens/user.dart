@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dorm_annotations/dorm_annotations.dart';
 import 'package:dorm_bloc_database/dorm_bloc_database.dart';
+import 'package:dorm_framework/dorm_framework.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_bloc/flutter_form_bloc.dart';
 import 'package:get_it/get_it.dart';
@@ -103,7 +104,12 @@ class UserScreen extends StatelessWidget {
                           .get<Dorm>()
                           .reviews
                           .repository
-                          .put(ReviewDependency(userId: userId), data);
+                          .put(
+                            Creation.auto(
+                              dependency: ReviewDependency(userId: userId),
+                              data: data,
+                            ),
+                          );
                     },
                     icon: const Icon(Icons.reviews),
                   ),
@@ -337,8 +343,10 @@ class _CartCard extends StatelessWidget {
           icon: const Icon(Icons.add_circle),
           onPressed: () async {
             await GetIt.instance.get<Dorm>().carts.repository.put(
-                  CartDependency(userId: userId),
-                  CartData(timestamp: DateTime.now()),
+                  Creation.auto(
+                    dependency: CartDependency(userId: userId),
+                    data: CartData(timestamp: DateTime.now()),
+                  ),
                 );
           },
         ),

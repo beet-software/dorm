@@ -92,13 +92,15 @@ The current implementations expose these observed classes:
 | Error | Observed condition |
 | --- | --- |
 | `ArgumentError` | The Firebase adapter receives a non-`String` identity or cannot convert a Firebase key to the requested identity type. |
-| `UnsupportedError` | BLoC and MySQL reject the automatic `put` path for a composite primary key. |
+| `UnsupportedError` | The selected engine cannot generate an automatic identity for the entity, including a composite identity reached through a statically bypassed creation type. |
 | `StateError` | A primary-key codec returns a number of values that does not match the schema or single-key contract. |
 | Dart type error | A backend value, serialized field, identity, or custom entity does not match the declared generic type. |
 
 The exact operation and engine still matter. For example, an explicitly
-identified model may use `push` where automatic identity creation through
-`put` is rejected for a composite key. Check
+identified model may use `push` where automatic identity creation is not
+available. The generated repository rejects automatic `put` for a composite
+key at compile time. If the static type is bypassed, the engine rejects it at
+runtime. Check
 [Identity and dependencies](../03-understand/02-identity-and-dependencies.md)
 before changing an operation.
 

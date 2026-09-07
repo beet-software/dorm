@@ -69,12 +69,14 @@ Construct the generated variant and place it in `ReviewData`:
 
 ```dart
 final Review review = await dorm.reviews.repository.put(
-  ReviewDependency(userId: user.id),
-  ReviewData(
-    text: 'The product matched the description.',
-    timestamp: DateTime.now(),
-    type: ReviewContentType.product,
-    content: const ProductReviewContent(rating: 5),
+  Creation.auto(
+    dependency: ReviewDependency(userId: user.id),
+    data: ReviewData(
+      text: 'The product matched the description.',
+      timestamp: DateTime.now(),
+      type: ReviewContentType.product,
+      content: const ProductReviewContent(rating: 5),
+    ),
   ),
 );
 ```

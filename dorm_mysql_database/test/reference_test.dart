@@ -24,8 +24,13 @@ class IntegerDependency extends Dependency<IntegerData> {
   const IntegerDependency() : super.strong();
 }
 
-class IntegerEntity implements Entity<IntegerData, Integer, String> {
+class IntegerEntity
+    implements
+        Entity<IntegerData, Integer, String, SimpleCreation<IntegerData, String>> {
   const IntegerEntity();
+
+  @override
+  bool get supportsAutomaticIdentity => true;
 
   @override
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
@@ -42,12 +47,8 @@ class IntegerEntity implements Entity<IntegerData, Integer, String> {
   }
 
   @override
-  Integer fromData(
-    covariant Dependency<IntegerData> dependency,
-    String id,
-    IntegerData data,
-  ) {
-    return Integer(id: id, value: data.value);
+  Integer fromData(ResolvedCreation<IntegerData, String> creation) {
+    return Integer(id: creation.id, value: creation.data.value);
   }
 
   @override
@@ -77,8 +78,12 @@ class DateDependency extends Dependency<DateData> {
   const DateDependency() : super.strong();
 }
 
-class DateEntity implements Entity<DateData, Date, String> {
+class DateEntity
+    implements Entity<DateData, Date, String, SimpleCreation<DateData, String>> {
   const DateEntity();
+
+  @override
+  bool get supportsAutomaticIdentity => true;
 
   @override
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
@@ -95,12 +100,8 @@ class DateEntity implements Entity<DateData, Date, String> {
   }
 
   @override
-  Date fromData(
-    covariant Dependency<DateData> dependency,
-    String id,
-    DateData data,
-  ) {
-    return Date(id: id, value: data.value);
+  Date fromData(ResolvedCreation<DateData, String> creation) {
+    return Date(id: creation.id, value: creation.data.value);
   }
 
   @override
@@ -130,8 +131,12 @@ class TextDependency extends Dependency<TextData> {
   const TextDependency() : super.strong();
 }
 
-class TextEntity implements Entity<TextData, Text, String> {
+class TextEntity
+    implements Entity<TextData, Text, String, SimpleCreation<TextData, String>> {
   const TextEntity();
+
+  @override
+  bool get supportsAutomaticIdentity => true;
 
   @override
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
@@ -148,12 +153,8 @@ class TextEntity implements Entity<TextData, Text, String> {
   }
 
   @override
-  Text fromData(
-    covariant Dependency<TextData> dependency,
-    String id,
-    TextData data,
-  ) {
-    return Text(id: id, value: data.value);
+  Text fromData(ResolvedCreation<TextData, String> creation) {
+    return Text(id: creation.id, value: creation.data.value);
   }
 
   @override
@@ -202,7 +203,8 @@ void main() async {
   const DateEntity dateEntity = DateEntity();
   const TextEntity textEntity = TextEntity();
   final RegExp uuidRegExp = RegExp(
-      r'^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$');
+    r'^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$',
+  );
   setUpAll(() async {
     await connection.execute("DELETE FROM Integers;");
     await connection.execute("DELETE FROM Dates;");
@@ -221,8 +223,10 @@ void main() async {
         expect(model, isNull);
       });
       test('peekAll', () async {
-        final List<Integer> models =
-            await reference.peekAll(entity, Filter.empty());
+        final List<Integer> models = await reference.peekAll(
+          entity,
+          Filter.empty(),
+        );
         expect(models, isEmpty);
       });
       test('peekAllKeys', () async {
@@ -238,16 +242,19 @@ void main() async {
         addTearDown(subscription.cancel);
       });
       test('pullAll', () async {
-        final List<Integer> models =
-            await reference.pullAll(entity, Filter.empty()).first;
+        final List<Integer> models = await reference
+            .pullAll(entity, Filter.empty())
+            .first;
         expect(models, isEmpty);
       });
     });
     test('put', () async {
       final Integer model = await reference.put(
         entity,
-        IntegerDependency(),
-        IntegerData(value: 42),
+        Creation.auto(
+          dependency: IntegerDependency(),
+          data: IntegerData(value: 42),
+        ),
       );
       expect(model.id, matches(uuidRegExp));
       expect(model.value, 42);
@@ -257,8 +264,10 @@ void main() async {
       setUp(() async {
         localModel = await reference.put(
           entity,
-          IntegerDependency(),
-          IntegerData(value: 42),
+          Creation.auto(
+            dependency: IntegerDependency(),
+            data: IntegerData(value: 42),
+          ),
         );
       });
       test('peek', () async {
@@ -268,8 +277,10 @@ void main() async {
         expect(model?.value, 42);
       });
       test('peekAll', () async {
-        final List<Integer> model =
-            await reference.peekAll(entity, const Filter.empty());
+        final List<Integer> model = await reference.peekAll(
+          entity,
+          const Filter.empty(),
+        );
         expect(model, isNotEmpty);
         expect(model.length, 1);
         expect(model[0].id, localModel.id);
@@ -290,8 +301,9 @@ void main() async {
         addTearDown(subscription.cancel);
       });
       test('pullAll', () async {
-        final List<Integer> model =
-            await reference.pullAll(entity, const Filter.empty()).first;
+        final List<Integer> model = await reference
+            .pullAll(entity, const Filter.empty())
+            .first;
         expect(model, isNotEmpty);
         expect(model.length, 1);
         expect(model[0].id, localModel.id);
@@ -321,8 +333,10 @@ void main() async {
         expect(model?.value, 42);
       });
       test('peekAll', () async {
-        final List<Integer> model =
-            await reference.peekAll(entity, const Filter.empty());
+        final List<Integer> model = await reference.peekAll(
+          entity,
+          const Filter.empty(),
+        );
         expect(model, isNotEmpty);
         expect(model.length, 1);
         expect(model[0].id, localModel.id);
@@ -343,8 +357,9 @@ void main() async {
         addTearDown(subscription.cancel);
       });
       test('pullAll', () async {
-        final List<Integer> model =
-            await reference.pullAll(entity, const Filter.empty()).first;
+        final List<Integer> model = await reference
+            .pullAll(entity, const Filter.empty())
+            .first;
         expect(model, isNotEmpty);
         expect(model.length, 1);
         expect(model[0].id, localModel.id);
@@ -352,19 +367,30 @@ void main() async {
       });
     });
     test('putAll', () async {
-      await reference.putAll(entity, const IntegerDependency(), [
-        IntegerData(value: 2),
-        IntegerData(value: 3),
+      await reference.putAll(entity, [
+        Creation.auto(
+          dependency: const IntegerDependency(),
+          data: IntegerData(value: 2),
+        ),
+        Creation.auto(
+          dependency: const IntegerDependency(),
+          data: IntegerData(value: 3),
+        ),
       ]);
     });
     group('putAll (post)', () {
       late List<Integer> localModels;
       setUp(() async {
         await reference.push(entity, Integer(id: 'abcdef', value: 1));
-        localModels =
-            await reference.putAll(entity, const IntegerDependency(), [
-          IntegerData(value: 2),
-          IntegerData(value: 3),
+        localModels = await reference.putAll(entity, [
+          Creation.auto(
+            dependency: const IntegerDependency(),
+            data: IntegerData(value: 2),
+          ),
+          Creation.auto(
+            dependency: const IntegerDependency(),
+            data: IntegerData(value: 3),
+          ),
         ]);
       });
       test('peek', () async {
@@ -372,14 +398,18 @@ void main() async {
             .peek(entity, 'abcdef')
             .then((model) => expect(model?.value, 1));
         for (Integer localModel in localModels) {
-          final Integer? remoteModel =
-              await reference.peek(entity, localModel.id);
+          final Integer? remoteModel = await reference.peek(
+            entity,
+            localModel.id,
+          );
           expect(remoteModel?.value, localModel.value);
         }
       });
       test('peekAll', () async {
-        final List<Integer> models =
-            await reference.peekAll(entity, Filter.empty());
+        final List<Integer> models = await reference.peekAll(
+          entity,
+          Filter.empty(),
+        );
         expect(models.length, 3);
       });
       test('peekAllKeys', () async {
@@ -392,14 +422,16 @@ void main() async {
             .first
             .then((model) => expect(model?.value, 1));
         for (Integer localModel in localModels) {
-          final Integer? remoteModel =
-              await reference.pull(entity, localModel.id).first;
+          final Integer? remoteModel = await reference
+              .pull(entity, localModel.id)
+              .first;
           expect(remoteModel?.value, localModel.value);
         }
       });
       test('pullAll', () async {
-        final List<Integer> models =
-            await reference.pullAll(entity, Filter.empty()).first;
+        final List<Integer> models = await reference
+            .pullAll(entity, Filter.empty())
+            .first;
         expect(models.length, 3);
       });
     });
@@ -429,8 +461,10 @@ void main() async {
             .then((model) => expect(model?.value, 3));
       });
       test('peekAll', () async {
-        final List<Integer> models =
-            await reference.peekAll(entity, Filter.empty());
+        final List<Integer> models = await reference.peekAll(
+          entity,
+          Filter.empty(),
+        );
         expect(models.length, 3);
         expect(models[0].id, 'abcdef');
         expect(models[1].id, 'ghijkl');
@@ -458,8 +492,9 @@ void main() async {
             .then((model) => expect(model?.value, 3));
       });
       test('pullAll', () async {
-        final List<Integer> models =
-            await reference.pullAll(entity, Filter.empty()).first;
+        final List<Integer> models = await reference
+            .pullAll(entity, Filter.empty())
+            .first;
         expect(models.length, 3);
         expect(models[0].id, 'abcdef');
         expect(models[1].id, 'ghijkl');
@@ -479,8 +514,10 @@ void main() async {
         expect(model, isNull);
       });
       test('peekAll', () async {
-        final List<Integer> models =
-            await reference.peekAll(entity, Filter.empty());
+        final List<Integer> models = await reference.peekAll(
+          entity,
+          Filter.empty(),
+        );
         expect(models, isEmpty);
       });
       test('peekAllKeys', () async {
@@ -492,8 +529,9 @@ void main() async {
         expect(model, isNull);
       });
       test('pullAll', () async {
-        final List<Integer> models =
-            await reference.pullAll(entity, Filter.empty()).first;
+        final List<Integer> models = await reference
+            .pullAll(entity, Filter.empty())
+            .first;
         expect(models, isEmpty);
       });
     });
@@ -519,8 +557,10 @@ void main() async {
         expect(m3?.value, null);
       });
       test('peekAll', () async {
-        final List<Integer> models =
-            await reference.peekAll(entity, Filter.empty());
+        final List<Integer> models = await reference.peekAll(
+          entity,
+          Filter.empty(),
+        );
         expect(models, isEmpty);
       });
       test('peekAllKeys', () async {
@@ -536,8 +576,9 @@ void main() async {
         expect(m3?.value, null);
       });
       test('pullAll', () async {
-        final List<Integer> models =
-            await reference.pullAll(entity, Filter.empty()).first;
+        final List<Integer> models = await reference
+            .pullAll(entity, Filter.empty())
+            .first;
         expect(models, isEmpty);
       });
     });
@@ -556,8 +597,10 @@ void main() async {
         expect(m3?.value, 3);
       });
       test('peekAll', () async {
-        final List<Integer> models =
-            await reference.peekAll(entity, Filter.empty());
+        final List<Integer> models = await reference.peekAll(
+          entity,
+          Filter.empty(),
+        );
         expect(models.length, 1);
         expect(models[0].id, 'mnopqr');
       });
@@ -575,8 +618,9 @@ void main() async {
         expect(m3?.value, 3);
       });
       test('pullAll', () async {
-        final List<Integer> models =
-            await reference.pullAll(entity, Filter.empty()).first;
+        final List<Integer> models = await reference
+            .pullAll(entity, Filter.empty())
+            .first;
         expect(models.length, 1);
         expect(models[0].id, 'mnopqr');
       });
@@ -597,8 +641,10 @@ void main() async {
         expect(m3?.value, null);
       });
       test('peekAll', () async {
-        final List<Integer> models =
-            await reference.peekAll(entity, Filter.empty());
+        final List<Integer> models = await reference.peekAll(
+          entity,
+          Filter.empty(),
+        );
         expect(models, isEmpty);
       });
       test('peekAllKeys', () async {
@@ -627,8 +673,10 @@ void main() async {
         expect(model, isNull);
       });
       test('peekAll', () async {
-        final List<Integer> models =
-            await reference.peekAll(entity, Filter.empty());
+        final List<Integer> models = await reference.peekAll(
+          entity,
+          Filter.empty(),
+        );
         expect(models, isEmpty);
       });
       test('peekAllKeys', () async {
@@ -640,8 +688,9 @@ void main() async {
         expect(model, isNull);
       });
       test('pullAll', () async {
-        final List<Integer> models =
-            await reference.pullAll(entity, Filter.empty()).first;
+        final List<Integer> models = await reference
+            .pullAll(entity, Filter.empty())
+            .first;
         expect(models, isEmpty);
       });
     });
@@ -682,19 +731,24 @@ void main() async {
         ]);
       });
       test('peekAll', () async {
-        final List<Integer> models =
-            await reference.peekAll(entity, Filter.empty());
+        final List<Integer> models = await reference.peekAll(
+          entity,
+          Filter.empty(),
+        );
         expect(models.length, 3);
       });
       test('pullAll', () async {
-        final List<Integer> models =
-            await reference.pullAll(entity, Filter.empty()).first;
+        final List<Integer> models = await reference
+            .pullAll(entity, Filter.empty())
+            .first;
         expect(models.length, 3);
       });
       test('popAll', () async {
         await reference.popAll(entity, Filter.empty());
-        final List<Integer> models =
-            await reference.peekAll(entity, Filter.empty());
+        final List<Integer> models = await reference.peekAll(
+          entity,
+          Filter.empty(),
+        );
         expect(models.length, 0);
       });
     });
@@ -726,14 +780,18 @@ void main() async {
       });
       test('popAll: non-existing', () async {
         await reference.popAll(entity, Filter.value(0, key: 'value'));
-        final List<Integer> models =
-            await reference.peekAll(entity, Filter.empty());
+        final List<Integer> models = await reference.peekAll(
+          entity,
+          Filter.empty(),
+        );
         expect(models.length, 3);
       });
       test('popAll: existing', () async {
         await reference.popAll(entity, Filter.value(4, key: 'value'));
-        final List<Integer> models =
-            await reference.peekAll(entity, Filter.empty());
+        final List<Integer> models = await reference.peekAll(
+          entity,
+          Filter.empty(),
+        );
         expect(models.length, 2);
       });
     });
@@ -789,66 +847,51 @@ void main() async {
       test('pullAll', () async {
         List<Text> models;
         models = await reference
-            .pullAll(
-              textEntity,
-              Filter.text('a', key: 'value'),
-            )
+            .pullAll(textEntity, Filter.text('a', key: 'value'))
             .first;
         expect(models.length, 3);
         models = await reference
-            .pullAll(
-              textEntity,
-              Filter.text('alpha', key: 'value'),
-            )
+            .pullAll(textEntity, Filter.text('alpha', key: 'value'))
             .first;
         expect(models.length, 2);
         models = await reference
-            .pullAll(
-              textEntity,
-              Filter.text('alphab', key: 'value'),
-            )
+            .pullAll(textEntity, Filter.text('alphab', key: 'value'))
             .first;
         expect(models.length, 1);
         models = await reference
-            .pullAll(
-              textEntity,
-              Filter.text('b', key: 'value'),
-            )
+            .pullAll(textEntity, Filter.text('b', key: 'value'))
             .first;
         expect(models.length, 3);
         models = await reference
-            .pullAll(
-              textEntity,
-              Filter.text('be', key: 'value'),
-            )
+            .pullAll(textEntity, Filter.text('be', key: 'value'))
             .first;
         expect(models.length, 2);
         models = await reference
-            .pullAll(
-              textEntity,
-              Filter.text('bet', key: 'value'),
-            )
+            .pullAll(textEntity, Filter.text('bet', key: 'value'))
             .first;
         expect(models.length, 1);
         models = await reference
-            .pullAll(
-              textEntity,
-              Filter.text('charlie', key: 'value'),
-            )
+            .pullAll(textEntity, Filter.text('charlie', key: 'value'))
             .first;
         expect(models.length, 0);
       });
       test('popAll: non-existing', () async {
         await reference.popAll(
-            textEntity, Filter.text('charlie', key: 'value'));
-        final List<Text> models =
-            await reference.peekAll(textEntity, Filter.empty());
+          textEntity,
+          Filter.text('charlie', key: 'value'),
+        );
+        final List<Text> models = await reference.peekAll(
+          textEntity,
+          Filter.empty(),
+        );
         expect(models.length, 6);
       });
       test('popAll: existing', () async {
         await reference.popAll(textEntity, Filter.text('al', key: 'value'));
-        final List<Text> models =
-            await reference.peekAll(textEntity, Filter.empty());
+        final List<Text> models = await reference.peekAll(
+          textEntity,
+          Filter.empty(),
+        );
         expect(models.length, 4);
       });
     });
@@ -887,14 +930,18 @@ void main() async {
       });
       test('popAll: non-existing', () async {
         await reference.popAll(entity, Filter.value(0, key: 'value').limit(1));
-        final List<Integer> models =
-            await reference.peekAll(entity, Filter.empty());
+        final List<Integer> models = await reference.peekAll(
+          entity,
+          Filter.empty(),
+        );
         expect(models.length, 4);
       });
       test('popAll: existing', () async {
         await reference.popAll(entity, Filter.value(2, key: 'value').limit(1));
-        final List<Integer> models =
-            await reference.peekAll(entity, Filter.empty());
+        final List<Integer> models = await reference.peekAll(
+          entity,
+          Filter.empty(),
+        );
         expect(models.length, 3);
       });
     });
@@ -915,20 +962,12 @@ void main() async {
         List<Date> models;
         models = await reference.peekAll(
           dateEntity,
-          Filter.date(
-            DateTime(2023),
-            key: 'value',
-            unit: DateFilterUnit.year,
-          ),
+          Filter.date(DateTime(2023), key: 'value', unit: DateFilterUnit.year),
         );
         expect(models.length, 1);
         models = await reference.peekAll(
           dateEntity,
-          Filter.date(
-            DateTime(2024),
-            key: 'value',
-            unit: DateFilterUnit.year,
-          ),
+          Filter.date(DateTime(2024), key: 'value', unit: DateFilterUnit.year),
         );
         expect(models.length, 7);
 
@@ -1228,26 +1267,17 @@ void main() async {
           List<Integer> models;
           models = await reference.peekAll(
             entity,
-            Filter.numericRange(
-              FilterRange(from: 3, to: 6),
-              key: 'value',
-            ),
+            Filter.numericRange(FilterRange(from: 3, to: 6), key: 'value'),
           );
           expect(models.length, 4);
           models = await reference.peekAll(
             entity,
-            Filter.numericRange(
-              FilterRange(to: 3),
-              key: 'value',
-            ),
+            Filter.numericRange(FilterRange(to: 3), key: 'value'),
           );
           expect(models.length, 3);
           models = await reference.peekAll(
             entity,
-            Filter.numericRange(
-              FilterRange(from: 7),
-              key: 'value',
-            ),
+            Filter.numericRange(FilterRange(from: 7), key: 'value'),
           );
           expect(models.length, 2);
         });
@@ -1256,30 +1286,21 @@ void main() async {
           models = await reference
               .pullAll(
                 entity,
-                Filter.numericRange(
-                  FilterRange(from: 3, to: 6),
-                  key: 'value',
-                ),
+                Filter.numericRange(FilterRange(from: 3, to: 6), key: 'value'),
               )
               .first;
           expect(models.length, 4);
           models = await reference
               .pullAll(
                 entity,
-                Filter.numericRange(
-                  FilterRange(to: 3),
-                  key: 'value',
-                ),
+                Filter.numericRange(FilterRange(to: 3), key: 'value'),
               )
               .first;
           expect(models.length, 3);
           models = await reference
               .pullAll(
                 entity,
-                Filter.numericRange(
-                  FilterRange(from: 7),
-                  key: 'value',
-                ),
+                Filter.numericRange(FilterRange(from: 7), key: 'value'),
               )
               .first;
           expect(models.length, 2);
@@ -1310,18 +1331,12 @@ void main() async {
           expect(models.length, 4);
           models = await reference.peekAll(
             textEntity,
-            Filter.textRange(
-              FilterRange(to: 'd'),
-              key: 'value',
-            ),
+            Filter.textRange(FilterRange(to: 'd'), key: 'value'),
           );
           expect(models.length, 3);
           models = await reference.peekAll(
             textEntity,
-            Filter.textRange(
-              FilterRange(from: 'g'),
-              key: 'value',
-            ),
+            Filter.textRange(FilterRange(from: 'g'), key: 'value'),
           );
           expect(models.length, 2);
         });
@@ -1340,20 +1355,14 @@ void main() async {
           models = await reference
               .pullAll(
                 textEntity,
-                Filter.textRange(
-                  FilterRange(to: 'd'),
-                  key: 'value',
-                ),
+                Filter.textRange(FilterRange(to: 'd'), key: 'value'),
               )
               .first;
           expect(models.length, 3);
           models = await reference
               .pullAll(
                 textEntity,
-                Filter.textRange(
-                  FilterRange(from: 'g'),
-                  key: 'value',
-                ),
+                Filter.textRange(FilterRange(from: 'g'), key: 'value'),
               )
               .first;
           expect(models.length, 2);
@@ -1379,10 +1388,7 @@ void main() async {
           expect(models.length, 3);
           models = await reference.peekAll(
             dateEntity,
-            Filter.dateRange(
-              DateFilterRange(to: DateTime(2024)),
-              key: 'value',
-            ),
+            Filter.dateRange(DateFilterRange(to: DateTime(2024)), key: 'value'),
           );
           expect(models.length, 3);
 
@@ -1413,10 +1419,7 @@ void main() async {
           expect(models.length, 2);
           models = await reference.peekAll(
             dateEntity,
-            Filter.dateRange(
-              DateFilterRange(to: DateTime(2022)),
-              key: 'value',
-            ),
+            Filter.dateRange(DateFilterRange(to: DateTime(2022)), key: 'value'),
           );
           expect(models.length, 2);
 
@@ -1431,64 +1434,78 @@ void main() async {
         });
         test('pullAll', () async {
           List<Date> models;
-          models = await reference.pullAll(
-            dateEntity,
-            Filter.dateRange(
-              DateFilterRange(from: DateTime(2020)),
-              key: 'value',
-            ),
-          ).first;
+          models = await reference
+              .pullAll(
+                dateEntity,
+                Filter.dateRange(
+                  DateFilterRange(from: DateTime(2020)),
+                  key: 'value',
+                ),
+              )
+              .first;
           expect(models.length, 3);
-          models = await reference.pullAll(
-            dateEntity,
-            Filter.dateRange(
-              DateFilterRange(to: DateTime(2024)),
-              key: 'value',
-            ),
-          ).first;
-          expect(models.length, 3);
-
-          models = await reference.pullAll(
-            dateEntity,
-            Filter.dateRange(
-              DateFilterRange(from: DateTime(2020)),
-              key: 'value',
-            ),
-          ).first;
-          expect(models.length, 3);
-          models = await reference.pullAll(
-            dateEntity,
-            Filter.dateRange(
-              DateFilterRange(from: DateTime(2020), to: DateTime(2024)),
-              key: 'value',
-            ),
-          ).first;
+          models = await reference
+              .pullAll(
+                dateEntity,
+                Filter.dateRange(
+                  DateFilterRange(to: DateTime(2024)),
+                  key: 'value',
+                ),
+              )
+              .first;
           expect(models.length, 3);
 
-          models = await reference.pullAll(
-            dateEntity,
-            Filter.dateRange(
-              DateFilterRange(from: DateTime(2022)),
-              key: 'value',
-            ),
-          ).first;
+          models = await reference
+              .pullAll(
+                dateEntity,
+                Filter.dateRange(
+                  DateFilterRange(from: DateTime(2020)),
+                  key: 'value',
+                ),
+              )
+              .first;
+          expect(models.length, 3);
+          models = await reference
+              .pullAll(
+                dateEntity,
+                Filter.dateRange(
+                  DateFilterRange(from: DateTime(2020), to: DateTime(2024)),
+                  key: 'value',
+                ),
+              )
+              .first;
+          expect(models.length, 3);
+
+          models = await reference
+              .pullAll(
+                dateEntity,
+                Filter.dateRange(
+                  DateFilterRange(from: DateTime(2022)),
+                  key: 'value',
+                ),
+              )
+              .first;
           expect(models.length, 2);
-          models = await reference.pullAll(
-            dateEntity,
-            Filter.dateRange(
-              DateFilterRange(to: DateTime(2022)),
-              key: 'value',
-            ),
-          ).first;
+          models = await reference
+              .pullAll(
+                dateEntity,
+                Filter.dateRange(
+                  DateFilterRange(to: DateTime(2022)),
+                  key: 'value',
+                ),
+              )
+              .first;
           expect(models.length, 2);
 
-          models = await reference.pullAll(
-            dateEntity,
-            Filter.dateRange(
-              DateFilterRange(from: DateTime(2022), to: DateTime(2022)),
-              key: 'value',
-            ),
-          ).first;
+          models = await reference
+              .pullAll(
+                dateEntity,
+                Filter.dateRange(
+                  DateFilterRange(from: DateTime(2022), to: DateTime(2022)),
+                  key: 'value',
+                ),
+              )
+              .first;
           expect(models.length, 1);
         });
       });
@@ -1508,7 +1525,9 @@ void main() async {
       models = await reference.peekAll(entity, const Filter.empty());
       expect(models.map((m) => m.value).toList(), [8, 2, 7, 1, 5, 6, 3, 4]);
       models = await reference.peekAll(
-          entity, const Filter.empty().sort(key: 'value'));
+        entity,
+        const Filter.empty().sort(key: 'value'),
+      );
       expect(models.map((m) => m.value).toList(), [1, 2, 3, 4, 5, 6, 7, 8]);
     });
   });

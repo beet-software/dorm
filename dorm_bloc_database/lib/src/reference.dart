@@ -27,7 +27,8 @@ class _State {
 
   const _State(this.references);
 
-  _EntityReference<Data, Model, I> access<Data, Model extends Data, I extends Object>(String key) {
+  _EntityReference<Data, Model, I>
+      access<Data, Model extends Data, I extends Object>(String key) {
     return references[key] as _EntityReference<Data, Model, I>;
   }
 }
@@ -42,7 +43,7 @@ class _EntityState<I extends Object, Model> {
 
 class _EntityReference<Data, Model extends Data, I extends Object>
     extends Cubit<_EntityState<I, Model>> {
-  final Entity<Data, Model, I> entity;
+  final Entity<Data, Model, I, Creation<Data, I>> entity;
   StreamSubscription<void>? _subscription;
   late final StreamController<Map<I, Model>> _controller;
 
@@ -110,30 +111,18 @@ class _EntityReference<Data, Model extends Data, I extends Object>
     });
   }
 
-  Model put(Dependency<Data> dependency, Data data) {
-    if (entity.schema.isCompositePrimaryKey) {
-      throw UnsupportedError(
-        'BLoC put requires an explicitly identified model for composite '
-        'primary keys; use push instead.',
-      );
-    }
+  Model put(Creation<Data, I> creation) {
     return _emit((models) {
-      final Model model = entity.fromData(dependency, _uuid.v4() as I, data);
+      final Model model = entity.fromData(_resolvedCreation(creation));
       models[entity.identify(model)] = model;
       return model;
     });
   }
 
-  List<Model> putAll(Dependency<Data> dependency, List<Data> datum) {
-    if (entity.schema.isCompositePrimaryKey) {
-      throw UnsupportedError(
-        'BLoC putAll requires explicitly identified models for composite '
-        'primary keys; use pushAll instead.',
-      );
-    }
+  List<Model> putAll(List<Creation<Data, I>> creations) {
     return _emit((current) {
-      final List<Model> models = datum
-          .map((data) => entity.fromData(dependency, _uuid.v4() as I, data))
+      final List<Model> models = creations
+          .map((creation) => entity.fromData(_resolvedCreation(creation)))
           .toList();
 
       current.addAll({
@@ -141,6 +130,54 @@ class _EntityReference<Data, Model extends Data, I extends Object>
       });
       return models;
     });
+  }
+
+  ResolvedCreation<Data, I> _resolvedCreation(Creation<Data, I> creation) {
+    return switch (creation.identity) {
+      AutoIdentity<I>() => ResolvedCreation(
+          dependency: creation.dependency,
+          data: creation.data,
+          id: _generatedId(),
+          wasGenerated: true,
+        ),
+      ExplicitIdentity<I>(:final value) => () {
+          _validateIdentity(value);
+          return ResolvedCreation(
+            dependency: creation.dependency,
+            data: creation.data,
+            id: value,
+            wasGenerated: false,
+          );
+        }(),
+    };
+  }
+
+  I _generatedId() {
+    if (entity.schema.isCompositePrimaryKey ||
+        !entity.supportsAutomaticIdentity) {
+      throw UnsupportedError(
+        'BLoC creation requires an explicit identity for this entity.',
+      );
+    }
+    return _uuid.v4() as I;
+  }
+
+  void _validateIdentity(I id) {
+    final List<Object?> values;
+    try {
+      values = entity.primaryKeyCodec.encode(id);
+    } catch (_) {
+      throw ArgumentError.value(
+          id, 'identity', 'Identity cannot be encoded for this schema.');
+    }
+    if (values.length != entity.schema.keyFields.length) {
+      throw ArgumentError.value(
+        id,
+        'identity',
+        'Identity has ${values.length} values, but the schema requires '
+            '${entity.schema.keyFields.length}.',
+      );
+    }
   }
 
   @override
@@ -154,8 +191,9 @@ class _EntityReference<Data, Model extends Data, I extends Object>
 class Reference extends Cubit<_State> implements BaseReference<Query> {
   Reference() : super(const _State({}));
 
-  _EntityReference<Data, Model, I> _access<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+  _EntityReference<Data, Model, I>
+      _access<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
   ) {
     final Map<String, _EntityReference<Object, Object, Object>> blocs =
         Map.of(state.references);
@@ -170,7 +208,7 @@ class Reference extends Cubit<_State> implements BaseReference<Query> {
 
   @override
   Future<Model?> peek<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     I id,
   ) async {
     final _EntityReference<Data, Model, I> bloc = _access(entity);
@@ -179,7 +217,7 @@ class Reference extends Cubit<_State> implements BaseReference<Query> {
 
   @override
   Future<List<Model>> peekAll<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     BaseFilter<Query> filter,
   ) async {
     final _EntityReference<Data, Model, I> bloc = _access(entity);
@@ -194,7 +232,7 @@ class Reference extends Cubit<_State> implements BaseReference<Query> {
 
   @override
   Future<List<I>> peekAllKeys<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
   ) async {
     final _EntityReference<Data, Model, I> bloc = _access(entity);
     return bloc.state.models.keys.toList();
@@ -202,7 +240,7 @@ class Reference extends Cubit<_State> implements BaseReference<Query> {
 
   @override
   Future<void> pop<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     I id,
   ) async {
     final _EntityReference<Data, Model, I> bloc = _access(entity);
@@ -211,7 +249,7 @@ class Reference extends Cubit<_State> implements BaseReference<Query> {
 
   @override
   Future<void> popAll<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     BaseFilter<Query> filter,
   ) async {
     final _EntityReference<Data, Model, I> bloc = _access(entity);
@@ -221,7 +259,7 @@ class Reference extends Cubit<_State> implements BaseReference<Query> {
 
   @override
   Future<void> popKeys<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     Iterable<I> ids,
   ) async {
     final _EntityReference<Data, Model, I> bloc = _access(entity);
@@ -230,7 +268,7 @@ class Reference extends Cubit<_State> implements BaseReference<Query> {
 
   @override
   Stream<Model?> pull<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     I id,
   ) {
     final _EntityReference<Data, Model, I> bloc = _access(entity);
@@ -239,7 +277,7 @@ class Reference extends Cubit<_State> implements BaseReference<Query> {
 
   @override
   Stream<List<Model>> pullAll<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     BaseFilter<Query> filter,
   ) {
     final _EntityReference<Data, Model, I> bloc = _access(entity);
@@ -254,7 +292,7 @@ class Reference extends Cubit<_State> implements BaseReference<Query> {
 
   @override
   Future<void> patch<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     I id,
     Model? Function(Model?) update,
   ) async {
@@ -264,7 +302,7 @@ class Reference extends Cubit<_State> implements BaseReference<Query> {
 
   @override
   Future<void> push<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     Model model,
   ) async {
     final _EntityReference<Data, Model, I> bloc = _access(entity);
@@ -273,7 +311,7 @@ class Reference extends Cubit<_State> implements BaseReference<Query> {
 
   @override
   Future<void> pushAll<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     List<Model> models,
   ) async {
     final _EntityReference<Data, Model, I> bloc = _access(entity);
@@ -281,34 +319,38 @@ class Reference extends Cubit<_State> implements BaseReference<Query> {
   }
 
   @override
-  Future<Model> put<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
-    Dependency<Data> dependency,
-    Data data,
+  Future<Model> put<
+    Data,
+    Model extends Data,
+    I extends Object,
+    C extends Creation<Data, I>
+  >(
+    Entity<Data, Model, I, C> entity,
+    C creation,
   ) async {
     final _EntityReference<Data, Model, I> bloc = _access(entity);
-    return bloc.put(dependency, data);
+    return bloc.put(creation);
   }
 
   @override
   Future<void> purge<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
   ) async {
     final _EntityReference<Data, Model, I> bloc = _access(entity);
     bloc.purge();
   }
 
   @override
-  Future<List<Model>> putAll<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
-    Dependency<Data> dependency,
-    List<Data> datum,
+  Future<List<Model>> putAll<
+    Data,
+    Model extends Data,
+    I extends Object,
+    C extends Creation<Data, I>
+  >(
+    Entity<Data, Model, I, C> entity,
+    List<C> creations,
   ) async {
     final _EntityReference<Data, Model, I> bloc = _access(entity);
-    return bloc.putAll(dependency, datum);
+    return bloc.putAll(creations);
   }
 }
-
-
-
-

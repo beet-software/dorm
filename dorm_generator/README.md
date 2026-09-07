@@ -162,8 +162,10 @@ void main() async {
 
   // Create
   final Class c = await dorm.classes.repository.put(
-    ClassDependency(schoolId: 'school-0'),
-    ClassData(name: 'A class.', timestamp: DateTime.now()),
+    Creation.auto(
+      dependency: ClassDependency(schoolId: 'school-0'),
+      data: ClassData(name: 'A class.', timestamp: DateTime.now()),
+    ),
   );
 
   // Read
@@ -234,8 +236,14 @@ with `PolymorphicField`:
 ```dart
 void main() async {
   final Operation o1 = await dorm.operations.repository.put(
-    const OperationDependency(),
-    OperationData(name: 'AoT', action: Attack(strength: 42), type: ActionType.attack),
+    Creation.auto(
+      dependency: const OperationDependency(),
+      data: OperationData(
+        name: 'AoT',
+        action: Attack(strength: 42),
+        type: ActionType.attack,
+      ),
+    ),
   );
 
   final Operation o2 = await dorm.operations.repository.peek('543f2f8da023');
@@ -281,8 +289,10 @@ then
 ```dart
 void main() async {
   final Country country = await dorm.countries.repository.put(
-    CountryDependency(),
-    CountryData(name: 'Brazil'),
+    Creation.auto(
+      dependency: CountryDependency(),
+      data: CountryData(name: 'Brazil'),
+    ),
   );
   // uuid
   assert(country.id == '27f04af67a1f');
@@ -309,8 +319,10 @@ then
 ```dart
 void main() async {
   final State state = await dorm.states.repository.put(
-    StateDependency(countryId: '27f04af67a1f'),
-    StateData(name: 'Rio de Janeiro'),
+    Creation.auto(
+      dependency: StateDependency(countryId: '27f04af67a1f'),
+      data: StateData(name: 'Rio de Janeiro'),
+    ),
   );
   // ${countryId}_uuid
   assert(country.id == '27f04af67a1f_367f1672f637');
@@ -339,8 +351,10 @@ then
 ```dart
 void main() async {
   final Capital capital = await dorm.capitals.repository.put(
-    CapitalDependency(countryId: '27f04af67a1f'),
-    CapitalData(name: 'Brasilia'),
+    Creation.auto(
+      dependency: CapitalDependency(countryId: '27f04af67a1f'),
+      data: CapitalData(name: 'Brasilia'),
+    ),
   );
   // countryId
   assert(capital.id == '27f04af67a1f');
@@ -379,32 +393,43 @@ then
 ```dart
 void main() async {
   final Citizen c1 = await dorm.citizens.repository.put(
-    CitizenDependency(countryId: '27f04af67a1f'),
-    CitizenData(
-      name: 'Rodrigo Maia',
-      isForeigner: true,
-      visaCode: '4bb6',
-      socialSecurity: '11111111111',
+    Creation.auto(
+      dependency: CitizenDependency(countryId: '27f04af67a1f'),
+      data: CitizenData(
+        name: 'Rodrigo Maia',
+        isForeigner: true,
+        visaCode: '4bb6',
+        socialSecurity: '11111111111',
+      ),
     ),
   );
   // visaCode
   assert(c1.id == '4bb6');
 
   final Citizen c2 = await dorm.citizens.repository.put(
-    CitizenDependency(countryId: '27f04af67a1f'),
-    CitizenData(
-      name: 'Arthur Lira',
-      isForeigner: false,
-      visaCode: null,
-      socialSecurity: '22222222222',
+    Creation.auto(
+      dependency: CitizenDependency(countryId: '27f04af67a1f'),
+      data: CitizenData(
+        name: 'Arthur Lira',
+        isForeigner: false,
+        visaCode: null,
+        socialSecurity: '22222222222',
+      ),
     ),
   );
   // socialSecurity
   assert(c2.id == '22222222222');
 
   final Citizen c3 = await dorm.citizens.repository.put(
-    CitizenDependency(countryId: '27f04af67a1f'),
-    CitizenData(name: 'Capivara Filó', isForeigner: false, visaCode: null, socialSecurity: null),
+    Creation.auto(
+      dependency: CitizenDependency(countryId: '27f04af67a1f'),
+      data: CitizenData(
+        name: 'Capivara Filó',
+        isForeigner: false,
+        visaCode: null,
+        socialSecurity: null,
+      ),
+    ),
   );
   // uuid
   assert(c3.id == 'b2a6304807a0');

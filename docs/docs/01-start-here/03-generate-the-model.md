@@ -109,12 +109,12 @@ class UserEntity implements Entity<UserData, User, String> {
       const SinglePrimaryKeyCodec();
 
   @override
-  User fromData(UserDependency dependency, String id, UserData data) {
+  User fromData(ResolvedCreation<UserData, String> creation) {
     return User(
-      id: id,
-      username: data.username,
-      email: data.email,
-      profile: data.profile,
+      id: creation.id,
+      username: creation.data.username,
+      email: creation.data.email,
+      profile: creation.data.profile,
     );
   }
 

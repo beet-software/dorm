@@ -62,8 +62,19 @@ void main() {
 
   late MockBaseReference<Query> referenceMock;
   late MockBaseRelationship<Query> relationshipMock;
-  late MockEntity<ModelData, Model, String> entityMock;
-  late Repository<ModelData, Model, String, Query> repository;
+  late MockEntity<
+    ModelData,
+    Model,
+    String,
+    SimpleCreation<ModelData, String>
+  > entityMock;
+  late Repository<
+    ModelData,
+    Model,
+    String,
+    Query,
+    SimpleCreation<ModelData, String>
+  > repository;
 
   setUp(() {
     referenceMock = MockBaseReference();
@@ -81,46 +92,42 @@ void main() {
 
   group('create', () {
     test('put', () async {
+      final SimpleCreation<ModelData, String> creation = Creation.auto(
+        dependency: dependency,
+        data: ModelData(1),
+      );
       mockito
-          .when(referenceMock.put(entityMock, dependency, const ModelData(1)))
+          .when(referenceMock.put(entityMock, creation))
           .thenAnswer((_) async => const Model(1, id: '1'));
 
-      final Model model = await repository.put(dependency, const ModelData(1));
+      final Model model = await repository.put(creation);
       expect(model.id, '1');
       expect(model.value, 1);
 
-      mockito
-          .verify(referenceMock.put(entityMock, dependency, const ModelData(1)))
-          .called(1);
+      mockito.verify(referenceMock.put(entityMock, creation)).called(1);
       mockito.verifyNoMoreInteractions(referenceMock);
       mockito.verifyZeroInteractions(entityMock);
       mockito.verifyZeroInteractions(relationshipMock);
     });
     test('putAll', () async {
+      final List<SimpleCreation<ModelData, String>> creations = [
+        Creation.auto(dependency: dependency, data: ModelData(1)),
+        Creation.auto(dependency: dependency, data: ModelData(2)),
+      ];
       mockito
-          .when(referenceMock.putAll(entityMock, dependency, const [
-            ModelData(1),
-            ModelData(2),
-          ]))
-          .thenAnswer((_) async => [
-                const Model(1, id: '1'),
-                const Model(2, id: '2'),
-              ]);
+          .when(referenceMock.putAll(entityMock, creations))
+          .thenAnswer(
+            (_) async => [const Model(1, id: '1'), const Model(2, id: '2')],
+          );
 
-      final List<Model> models = await repository
-          .putAll(dependency, const [ModelData(1), ModelData(2)]);
+      final List<Model> models = await repository.putAll(creations);
       expect(models.length, 2);
       expect(models[0].id, '1');
       expect(models[0].value, 1);
       expect(models[1].id, '2');
       expect(models[1].value, 2);
 
-      mockito
-          .verify(referenceMock.putAll(entityMock, dependency, const [
-            ModelData(1),
-            ModelData(2),
-          ]))
-          .called(1);
+      mockito.verify(referenceMock.putAll(entityMock, creations)).called(1);
       mockito.verifyNoMoreInteractions(referenceMock);
       mockito.verifyZeroInteractions(entityMock);
       mockito.verifyZeroInteractions(relationshipMock);

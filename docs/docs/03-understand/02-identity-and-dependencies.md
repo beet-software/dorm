@@ -56,28 +56,34 @@ class UserDependency extends Dependency<UserData> {
 
 ```dart
 final Cart cart = await dorm.carts.repository.put(
-  CartDependency(userId: user.id),
-  CartData(timestamp: DateTime.now()),
+  Creation.auto(
+    dependency: CartDependency(userId: user.id),
+    data: CartData(timestamp: DateTime.now()),
+  ),
 );
 
 final CartItem item = await dorm.cartItems.repository.put(
-  CartItemDependency(productId: product.id, cartId: cart.id),
-  const CartItemData(amount: 2),
+  Creation.auto(
+    dependency: CartItemDependency(productId: product.id, cartId: cart.id),
+    data: const CartItemData(amount: 2),
+  ),
 );
 ```
 
-The generated `CartDependency` and `CartItemDependency` retain the typed foreign IDs in addition to the base dependency ID list. `Entity.fromData` receives the dependency and uses it to construct the relationship-bearing model.
+The generated `CartDependency` and `CartItemDependency` retain the typed foreign IDs in addition to the base dependency ID list. `Entity.fromData` receives a `ResolvedCreation` and uses its dependency and data to construct the relationship-bearing model.
 
 In the store model, `Cart` uses a primary-key generator that returns `cart.userId`, so the cart identity is the user identity. `CartItem` receives both the product and cart IDs as foreign dependencies.
 
 ## Separate `put` from `push`
 
-`put` receives `Data` and a `Dependency`, then creates an identified `Model`. `push` receives an already identified `Model`:
+`put` receives a `Creation` and creates an identified `Model`. `push` receives an already identified `Model`:
 
 ```dart
 final User created = await dorm.users.repository.put(
-  const UserDependency(),
-  userData,
+  Creation.auto(
+    dependency: const UserDependency(),
+    data: userData,
+  ),
 );
 
 await dorm.users.repository.push(
@@ -114,8 +120,8 @@ Identity behavior depends on the engine:
 
 | Situation | Current behavior |
 | --- | --- |
-| BLoC `put` for a composite primary key | Throws `UnsupportedError`; use an explicitly identified model with `push` |
-| MySQL `put` for a composite primary key | Throws `UnsupportedError`; use `push` |
+| `put` with a composite primary key | Use `Creation.explicit` with a `CompositeKey`; the generated repository accepts only explicit creation |
+| `put` with `Creation.auto` and a composite primary key | Compile-time error through generated types; `UnsupportedError` if the static type is bypassed |
 | Firebase non-String identity | Throws `ArgumentError` |
 | Simple generated identity in BLoC/MySQL | UUID-backed String behavior in current implementations |
 

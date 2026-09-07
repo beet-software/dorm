@@ -62,9 +62,13 @@ class CartScreen extends StatelessWidget {
               if (result == null) return;
 
               await GetIt.instance.get<Dorm>().cartItems.repository.put(
-                    CartItemDependency(
-                        productId: result.productId, cartId: cartId),
-                    CartItemData(amount: result.amount),
+                    Creation.auto(
+                      dependency: CartItemDependency(
+                        productId: result.productId,
+                        cartId: cartId,
+                      ),
+                      data: CartItemData(amount: result.amount),
+                    ),
                   );
             },
           ),

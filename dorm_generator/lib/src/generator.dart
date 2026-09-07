@@ -181,6 +181,13 @@ class ModelNaming extends Naming<ModelOrmNode> {
       ? _primaryKey.type
       : cb.Reference('CompositeKey', '$_dormUrl');
 
+  cb.Reference get creationReference => cb.TypeReference((b) {
+    b.symbol = isCompositePrimaryKey ? 'ExplicitCreation' : 'SimpleCreation';
+    b.url = '$_dormUrl';
+    b.types.add(cb.Reference(dataName));
+    b.types.add(idReference);
+  });
+
   bool get isCompositePrimaryKey => _primaryKeys.length > 1;
 
   bool get isGeneratedPrimaryKey =>
@@ -785,17 +792,26 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
 
   cb.Expression get _primaryKeyExpression {
     final Function? generator = annotation.primaryKeyGenerator;
-    if (generator == null) return expressionOf('id');
-    return cb.InvokeExpression.newOf(cb.Reference(generator(null, '')), [
-      cb.InvokeExpression.newOf(
-        cb.Reference(naming.dummyName),
-        [expressionOf('dependency'), expressionOf('data')],
-        {},
-        [],
-        'fromData',
-      ),
-      expressionOf('id'),
-    ]);
+    if (generator == null) return expressionOf('creation.id');
+    final cb.Expression generated = cb.InvokeExpression.newOf(
+      cb.Reference(generator(null, '')),
+      [
+        cb.InvokeExpression.newOf(
+          cb.Reference(naming.dummyName),
+          [
+            expressionOf('creation.dependency as ${naming.dependencyName}'),
+            expressionOf('creation.data'),
+          ],
+          {},
+          [],
+          'fromData',
+        ),
+        expressionOf('creation.id'),
+      ],
+    );
+    return expressionOf(
+      'creation.wasGenerated',
+    ).conditional(generated, expressionOf('creation.id'));
   }
 
   cb.Spec get _dummyClass {
@@ -1217,6 +1233,7 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
           b.types.add(cb.Reference(naming.dataName));
           b.types.add(cb.Reference(naming.modelName));
           b.types.add(naming.idReference);
+          b.types.add(naming.creationReference);
         }),
       );
       b.constructors.add(
@@ -1265,6 +1282,16 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
           ).code;
         }),
       );
+      b.methods.add(
+        cb.Method((b) {
+          b.annotations.add(expressionOf('override'));
+          b.returns = cb.Reference('bool');
+          b.name = 'supportsAutomaticIdentity';
+          b.type = cb.MethodType.getter;
+          b.lambda = true;
+          b.body = cb.literalBool(naming.isGeneratedPrimaryKey).code;
+        }),
+      );
       b.fields.insertAll(0, [
         cb.Field((b) {
           b.static = true;
@@ -1283,20 +1310,13 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
           b.name = 'fromData';
           b.requiredParameters.add(
             cb.Parameter((b) {
-              b.type = cb.Reference(naming.dependencyName);
-              b.name = 'dependency';
-            }),
-          );
-          b.requiredParameters.add(
-            cb.Parameter((b) {
-              b.type = naming.idReference;
-              b.name = 'id';
-            }),
-          );
-          b.requiredParameters.add(
-            cb.Parameter((b) {
-              b.type = cb.Reference(naming.dataName);
-              b.name = 'data';
+              b.type = cb.TypeReference((b) {
+                b.symbol = 'ResolvedCreation';
+                b.url = '$_dormUrl';
+                b.types.add(cb.Reference(naming.dataName));
+                b.types.add(naming.idReference);
+              });
+              b.name = 'creation';
             }),
           );
           b.lambda = false;
@@ -1309,43 +1329,44 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
                     index++
                   )
                     naming.primaryKeyFieldNames[index]: expressionOf(
-                      'id.values[$index]',
+                      'creation.id.values[$index]',
                     ),
                 }
               : {naming.idFieldName: _primaryKeyExpression};
-          b.body =
-              cb.InvokeExpression.newOf(cb.Reference(naming.modelName), [], {
-                ...primaryKeyEntries,
-                ...Map.fromEntries(
-                  fields.where((field) => field.isConcrete).entries.expand((
-                    entry,
-                  ) sync* {
-                    final String fieldName = entry.key;
-                    if (naming.primaryKeyFieldNames.contains(fieldName)) {
-                      return;
-                    }
-                    final Field baseField = entry.value.annotation;
-                    if (baseField is PolymorphicField) {
-                      final $ConcreteSymbol pivotSymbol =
-                          baseField.pivotAs as $ConcreteSymbol;
-                      yield MapEntry(
-                        pivotSymbol.name,
-                        expressionOf('data').property(pivotSymbol.name),
-                      );
-                    }
-                    final cb.Expression prefixExpression;
-                    if (entry.value.annotation is ForeignField) {
-                      prefixExpression = expressionOf('dependency');
-                    } else {
-                      prefixExpression = expressionOf('data');
-                    }
+          b.body = cb.InvokeExpression.newOf(
+            cb.Reference(naming.modelName),
+            [],
+            {
+              ...primaryKeyEntries,
+              ...Map.fromEntries(
+                fields.where((field) => field.isConcrete).entries.expand((
+                  entry,
+                ) sync* {
+                  final String fieldName = entry.key;
+                  if (naming.primaryKeyFieldNames.contains(fieldName)) {
+                    return;
+                  }
+                  final Field baseField = entry.value.annotation;
+                  if (baseField is PolymorphicField) {
+                    final $ConcreteSymbol pivotSymbol =
+                        baseField.pivotAs as $ConcreteSymbol;
                     yield MapEntry(
-                      fieldName,
-                      prefixExpression.property(fieldName),
+                      pivotSymbol.name,
+                      expressionOf('creation.data').property(pivotSymbol.name),
                     );
-                  }),
-                ),
-              }).returned.statement;
+                  }
+                  final cb.Expression fieldExpression =
+                      entry.value.annotation is ForeignField
+                      ? expressionOf(
+                          '(creation.dependency as '
+                          '${naming.dependencyName}).$fieldName',
+                        )
+                      : expressionOf('creation.data').property(fieldName);
+                  yield MapEntry(fieldName, fieldExpression);
+                }),
+              ),
+            },
+          ).returned.statement;
         }),
       );
       b.methods.add(
@@ -2383,6 +2404,7 @@ class OrmGenerator extends Generator {
                     b.types.add(cb.Reference(naming.modelName));
                     b.types.add(naming.idReference);
                     b.types.add(cb.Reference('Query'));
+                    b.types.add(naming.creationReference);
                   });
                   b.type = cb.MethodType.getter;
                   b.lambda = true;

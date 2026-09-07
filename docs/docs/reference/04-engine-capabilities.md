@@ -12,7 +12,7 @@ requirements.
 | Public engine constructor | Engine() | Engine(FirebaseInstance, {String? path}) | Engine(MySQLConnection) | Engine(SessionExecutor) | Engine(Db) |
 | External service | None | Firebase app/database or emulator | MySQL server and schema | PostgreSQL server and schema | MongoDB server |
 | Automatic identity | UUID-backed in-memory identity | Firebase push key | UUID-backed SQL identity | UUID-backed SQL identity | UUID-backed String identity |
-| Identity restriction | Composite-key put/putAll throw UnsupportedError | Reference identities must be String | Composite-key put throws UnsupportedError | Composite-key put throws UnsupportedError | Composite-key put/putAll throw UnsupportedError |
+| Identity restriction | Generated composite-key repositories accept only `Creation.explicit`; bypassed automatic creation throws `UnsupportedError` | Reference identities must be String; composite identities are unsupported | Generated composite-key repositories accept only `Creation.explicit`; bypassed automatic creation throws `UnsupportedError` | Generated composite-key repositories accept only `Creation.explicit`; bypassed automatic creation throws `UnsupportedError` | Generated composite-key repositories accept only `Creation.explicit`; bypassed automatic creation throws `UnsupportedError` |
 | Collection filtering | In-memory query evaluation | Realtime Database query | SQL query | PostgreSQL SQL query | MongoDB selectors |
 | Single reads | In-memory map lookup | Firebase SDK read | SQL read | SQL read | MongoDB collection read |
 | Streams | State-backed | Firebase value events, with offline behavior | Initial read only in current implementation | Initial read only | Initial read only |
@@ -45,9 +45,10 @@ Filter and Query evaluate serialized in-memory values. BLoC streams react to
 state changes. The current implementation copies table state for mutation
 paths and reconstructs collection reads through serialization.
 
-Composite-key automatic put and putAll are rejected with UnsupportedError. An
-explicitly identified model can use push when the operation and generated
-entity support it.
+Generated composite-key repositories accept only `Creation.explicit` with a
+`CompositeKey` for creation. A `Creation.auto` call is rejected by the static
+type system; engines retain `UnsupportedError` as a runtime safeguard when
+that type restriction is bypassed.
 
 See [Run with BLoC](../03-apply/02-use-bloc.md).
 

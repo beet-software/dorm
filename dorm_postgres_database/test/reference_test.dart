@@ -23,8 +23,12 @@ class _ItemDependency extends Dependency<_ItemData> {
   const _ItemDependency() : super.strong();
 }
 
-class _ItemEntity implements Entity<_ItemData, _Item, String> {
+class _ItemEntity
+    implements Entity<_ItemData, _Item, String, SimpleCreation<_ItemData, String>> {
   const _ItemEntity();
+
+  @override
+  bool get supportsAutomaticIdentity => true;
 
   @override
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
@@ -41,12 +45,12 @@ class _ItemEntity implements Entity<_ItemData, _Item, String> {
   }
 
   @override
-  _Item fromData(
-    covariant Dependency<_ItemData> dependency,
-    String id,
-    _ItemData data,
-  ) {
-    return _Item(id: id, title: data.title, value: data.value);
+  _Item fromData(ResolvedCreation<_ItemData, String> creation) {
+    return _Item(
+      id: creation.id,
+      title: creation.data.title,
+      value: creation.data.value,
+    );
   }
 
   @override
@@ -143,8 +147,17 @@ class _CompositeDependency extends Dependency<_CompositeData> {
 }
 
 class _CompositeEntity
-    implements Entity<_CompositeData, _CompositeModel, CompositeKey> {
+    implements
+        Entity<
+          _CompositeData,
+          _CompositeModel,
+          CompositeKey,
+          ExplicitCreation<_CompositeData, CompositeKey>
+        > {
   const _CompositeEntity();
+
+  @override
+  bool get supportsAutomaticIdentity => false;
 
   @override
   PrimaryKeyCodec<CompositeKey> get primaryKeyCodec =>
@@ -166,10 +179,8 @@ class _CompositeEntity
 
   @override
   _CompositeModel fromData(
-    covariant Dependency<_CompositeData> dependency,
-    CompositeKey id,
-    _CompositeData data,
-  ) => _CompositeModel(id: id, value: data.value);
+    ResolvedCreation<_CompositeData, CompositeKey> creation,
+  ) => _CompositeModel(id: creation.id, value: creation.data.value);
 
   @override
   _CompositeModel fromJson(CompositeKey id, Map data) =>
@@ -188,8 +199,10 @@ void main() {
     expect(
       () => reference.put(
         const _CompositeEntity(),
-        const _CompositeDependency(),
-        const _CompositeData('value'),
+        const Creation.auto(
+          dependency: _CompositeDependency(),
+          data: _CompositeData('value'),
+        ),
       ),
       throwsUnsupportedError,
     );
@@ -218,11 +231,22 @@ void main() {
           'CREATE TABLE IF NOT EXISTS dorm_postgres_test_items '
           '(id TEXT PRIMARY KEY, title TEXT NOT NULL, value INTEGER NOT NULL)',
         );
+        await connection.execute(
+          'CREATE TABLE IF NOT EXISTS dorm_postgres_test_composite_items '
+          '(first TEXT NOT NULL, second INTEGER NOT NULL, value TEXT NOT NULL, '
+          'PRIMARY KEY (first, second))',
+        );
         await connection.execute('TRUNCATE TABLE dorm_postgres_test_items');
+        await connection.execute(
+          'TRUNCATE TABLE dorm_postgres_test_composite_items',
+        );
       });
 
       tearDown(() async {
         await connection.execute('TRUNCATE TABLE dorm_postgres_test_items');
+        await connection.execute(
+          'TRUNCATE TABLE dorm_postgres_test_composite_items',
+        );
       });
 
       tearDownAll(() => connection.close());
@@ -230,8 +254,10 @@ void main() {
       test('puts and reads a generated model', () async {
         final _Item item = await reference.put(
           entity,
-          const _ItemDependency(),
-          const _ItemData(title: 'first', value: 1),
+          const Creation.auto(
+            dependency: _ItemDependency(),
+            data: _ItemData(title: 'first', value: 1),
+          ),
         );
 
         expect(item.id, matches(RegExp(r'^[0-9a-f-]{36}$')));
@@ -246,6 +272,23 @@ void main() {
         await reference.push(entity, second);
 
         expect(await reference.peek(entity, 'fixed'), second);
+      });
+
+      test('puts and reads an explicitly identified composite model', () async {
+        const _CompositeEntity composite = _CompositeEntity();
+        final CompositeKey key = CompositeKey(['tenant', 7]);
+
+        final _CompositeModel model = await reference.put(
+          composite,
+          Creation.explicit(
+            dependency: const _CompositeDependency(),
+            data: const _CompositeData('value'),
+            identity: key,
+          ),
+        );
+
+        expect(model.id, key);
+        expect(await reference.peek(composite, key), model);
       });
 
       test('filters, sorts, and limits rows', () async {

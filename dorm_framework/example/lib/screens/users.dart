@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dorm_annotations/dorm_annotations.dart';
 import 'package:dorm_bloc_database/dorm_bloc_database.dart';
+import 'package:dorm_framework/dorm_framework.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
@@ -139,7 +140,12 @@ class UsersScreen extends StatelessWidget {
                   .get<Dorm>()
                   .users
                   .repository
-                  .put(const UserDependency(), data);
+                  .put(
+                    Creation.auto(
+                      dependency: const UserDependency(),
+                      data: data,
+                    ),
+                  );
             },
           ),
         ),

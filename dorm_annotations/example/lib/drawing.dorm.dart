@@ -107,7 +107,14 @@ class DrawingFields {
   );
 }
 
-class DrawingEntity implements Entity<DrawingData, Drawing, String> {
+class DrawingEntity
+    implements
+        Entity<
+          DrawingData,
+          Drawing,
+          String,
+          SimpleCreation<DrawingData, String>
+        > {
   const DrawingEntity();
 
   static const DrawingFields fields = DrawingFields();
@@ -126,12 +133,15 @@ class DrawingEntity implements Entity<DrawingData, Drawing, String> {
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  Drawing fromData(DrawingDependency dependency, String id, DrawingData data) {
+  bool get supportsAutomaticIdentity => true;
+
+  @override
+  Drawing fromData(ResolvedCreation<DrawingData, String> creation) {
     return Drawing(
-      id: id,
-      color: data.color,
-      type: data.type,
-      shape: data.shape,
+      id: creation.id,
+      color: creation.data.color,
+      type: creation.data.type,
+      shape: creation.data.shape,
     );
   }
 
@@ -220,6 +230,12 @@ class Dorm {
 
   final BaseEngine<Query> _engine;
 
-  DatabaseEntity<DrawingData, Drawing, String, Query> get drawings =>
-      DatabaseEntity(const DrawingEntity(), engine: _engine);
+  DatabaseEntity<
+    DrawingData,
+    Drawing,
+    String,
+    Query,
+    SimpleCreation<DrawingData, String>
+  >
+  get drawings => DatabaseEntity(const DrawingEntity(), engine: _engine);
 }

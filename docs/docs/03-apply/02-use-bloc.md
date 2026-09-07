@@ -38,24 +38,28 @@ The repository calls do not change for the BLoC engine:
 ```dart
 Future<void> createAndRead(Dorm dorm) async {
   final User user = await dorm.users.repository.put(
-    const UserDependency(),
-    UserData(
-      username: 'ada',
-      email: 'ada@example.com',
-      profile: Profile(
-        name: 'Ada Lovelace',
-        birthDate: DateTime(1815, 12, 10),
-        bio: null,
+    Creation.auto(
+      dependency: const UserDependency(),
+      data: UserData(
+        username: 'ada',
+        email: 'ada@example.com',
+        profile: Profile(
+          name: 'Ada Lovelace',
+          birthDate: DateTime(1815, 12, 10),
+          bio: null,
+        ),
       ),
     ),
   );
 
   await dorm.products.repository.put(
-    const ProductDependency(),
-    ProductData(
-      name: 'Notebook',
-      description: 'A lined notebook',
-      price: Decimal.fromInt(12),
+    Creation.auto(
+      dependency: const ProductDependency(),
+      data: ProductData(
+        name: 'Notebook',
+        description: 'A lined notebook',
+        price: Decimal.fromInt(12),
+      ),
     ),
   );
 
@@ -76,14 +80,16 @@ final subscription = dorm.users.repository.pullAll().listen((users) {
 });
 
 await dorm.users.repository.put(
-  const UserDependency(),
-  UserData(
-    username: 'ada',
-    email: 'ada@example.com',
-    profile: Profile(
-      name: 'Ada Lovelace',
-      birthDate: DateTime(1815, 12, 10),
-      bio: null,
+  Creation.auto(
+    dependency: const UserDependency(),
+    data: UserData(
+      username: 'ada',
+      email: 'ada@example.com',
+      profile: Profile(
+        name: 'Ada Lovelace',
+        birthDate: DateTime(1815, 12, 10),
+        bio: null,
+      ),
     ),
   ),
 );
@@ -101,17 +107,23 @@ The engine does not expose a database-server connection or a migration step. The
 
 ## Handle composite identities
 
-The current BLoC implementation rejects `put` and `putAll` when an entity has a composite primary key:
+For a composite primary key, pass the final identity explicitly through `Creation.explicit`:
 
 ```dart
-try {
-  await repository.put(dependency, data);
-} on UnsupportedError catch (error) {
-  print(error);
-}
+final CompositeKey key = CompositeKey(['tenant-1', 'user-1']);
+final [PLACEHOLDER: composite model] model =
+    await [PLACEHOLDER: composite repository].put(
+  Creation.explicit(
+    dependency: [PLACEHOLDER: composite dependency],
+    data: [PLACEHOLDER: composite data],
+    identity: key,
+  ),
+);
 ```
 
-The error states that an explicitly identified model must be supplied through `push` or `pushAll`. This restriction applies to BLoC's automatic identity path for composite keys.
+`Creation.auto` is rejected by the generated composite repository at compile
+time because dORM does not generate multiple key components implicitly.
+`Creation.explicit` uses the supplied identity as the model's final identity.
 
 ## Run the application
 

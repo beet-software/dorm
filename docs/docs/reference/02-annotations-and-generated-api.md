@@ -63,7 +63,7 @@ types:
 | `User` | Identified model extending `UserData`. |
 | `UserDependency` | Values required to construct `User`. |
 | `UserFields` | Generated field metadata for filters and relationships. |
-| `UserEntity` | `Entity<UserData, User, I>` implementation. |
+| `UserEntity` | `Entity<UserData, User, I, C>` implementation, where `C` is `SimpleCreation<UserData, I>` for a simple key or `ExplicitCreation<UserData, CompositeKey>` for a composite key. |
 | `Dorm` | Generated engine-bound accessors such as `users`. |
 
 The exact generated class names are derived from the annotated class name and
@@ -74,14 +74,14 @@ are part of the current generated output shape.
 The generated entity implements the engine-neutral mapping contract:
 
 ```dart
-Entity<UserData, User, String>
+Entity<UserData, User, String, SimpleCreation<UserData, String>>
 ```
 
 It supplies:
 
 - `schema`;
 - `primaryKeyCodec`;
-- `fromData(dependency, id, data)`;
+- `fromData(ResolvedCreation<Data, I>)`;
 - `identify(model)`;
 - `fromJson(id, data)`;
 - `toJson(data)`;

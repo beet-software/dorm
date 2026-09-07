@@ -22,8 +22,10 @@ The application code keeps the same shape after changing engines:
 final Dorm dorm = Dorm(engine);
 
 final User created = await dorm.users.repository.put(
-  const UserDependency(),
-  userData,
+  Creation.auto(
+    dependency: const UserDependency(),
+    data: userData,
+  ),
 );
 
 final List<Product> products = await dorm.products.repository.peekAll(
@@ -158,7 +160,7 @@ The common repository API does not imply identical runtime behavior in every eng
 | --- | --- | --- | --- | --- | --- |
 | External server required | No | Firebase project or emulator | Yes | Yes | Yes |
 | Generated identity from `put` | UUID in memory | Firebase push key | UUID in SQL | UUID in SQL | UUID in a document field |
-| Composite identity with `put` | `UnsupportedError` | Firebase IDs must be `String` | `UnsupportedError` from `put` | `UnsupportedError` from `put` | `UnsupportedError` from `put` |
+| Composite identity with `put` | Generated repository accepts `Creation.explicit`; bypassed automatic creation throws `UnsupportedError` | Firebase IDs must be `String` | Generated repository accepts `Creation.explicit`; bypassed automatic creation throws `UnsupportedError` | Generated repository accepts `Creation.explicit`; bypassed automatic creation throws `UnsupportedError` | Generated repository accepts `Creation.explicit`; bypassed automatic creation throws `UnsupportedError` |
 | Single-record streams | State-backed | Firebase value events | Initial read only in current implementation | Initial read only | Initial read only |
 | Filter/query execution | In-memory query implementation | Firebase Realtime Database query | SQL query | PostgreSQL SQL query | MongoDB selector |
 | Transactions exposed by the public framework API | No documented transaction API | `patch` uses a Firebase transaction internally | Some batch and patch operations use MySQL transactions internally | Some batch and patch operations use PostgreSQL transactions internally | No |

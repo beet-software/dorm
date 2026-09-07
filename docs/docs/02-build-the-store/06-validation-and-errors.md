@@ -39,11 +39,13 @@ if (error != null) {
 }
 
 final User user = await dorm.users.repository.put(
-  const UserDependency(),
-  UserData(
-    username: inputUsername,
-    email: inputEmail,
-    profile: profile,
+  Creation.auto(
+    dependency: const UserDependency(),
+    data: UserData(
+      username: inputUsername,
+      email: inputEmail,
+      profile: profile,
+    ),
   ),
 );
 ```
@@ -79,17 +81,22 @@ Use explicit branches for these results before accessing model fields.
 
 The framework and engines use ordinary Dart error classes for invalid operations and unsupported combinations. The observed classes include `ArgumentError`, `StateError`, and `UnsupportedError`.
 
-For example, the BLoC engine rejects `put` and `putAll` for entities with composite primary keys because those operations require an identity that `put` does not receive:
+For a composite primary key, provide the final identity explicitly in the creation request:
 
 ```dart
-try {
-  await repository.put(dependency, data);
-} on UnsupportedError catch (error) {
-  print('This engine cannot generate this identity: $error');
-}
+await repository.put(
+  Creation.explicit(
+    dependency: dependency,
+    data: data,
+    identity: CompositeKey(['tenant-1', 'record-1']),
+  ),
+);
 ```
 
-Use `push` with an explicitly identified model when that engine and entity require it. The exact supported operation depends on the identity and engine involved.
+For a generated composite-key repository, `Creation.auto` is unavailable at
+compile time. An incompatible explicit identity produces `ArgumentError`; an
+automatic composite identity request that bypasses the static type produces
+`UnsupportedError`.
 
 ## Let engine and database errors propagate
 
@@ -102,11 +109,13 @@ import 'package:decimal/decimal.dart';
 
 try {
   final Product product = await dorm.products.repository.put(
-    const ProductDependency(),
-    ProductData(
-      name: 'Notebook',
-      description: 'A lined notebook',
-      price: Decimal.fromInt(12),
+    Creation.auto(
+      dependency: const ProductDependency(),
+      data: ProductData(
+        name: 'Notebook',
+        description: 'A lined notebook',
+        price: Decimal.fromInt(12),
+      ),
     ),
   );
   print(product.id);

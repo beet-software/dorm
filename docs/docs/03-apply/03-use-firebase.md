@@ -51,8 +51,10 @@ After `createDorm` completes, repository calls use Firebase storage:
 final Dorm dorm = await createDorm();
 
 final User user = await dorm.users.repository.put(
-  const UserDependency(),
-  userData,
+  Creation.auto(
+    dependency: const UserDependency(),
+    data: userData,
+  ),
 );
 
 final User? loaded = await dorm.users.repository.peek(user.id);

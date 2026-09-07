@@ -64,8 +64,8 @@ Generated repositories expose these operation families:
 | `pull` | `Stream<Model?> pull(I id)` | A stream of one model or `null`. |
 | `pullAll` | `Stream<List<Model>> pullAll([BaseFilter<Q> filter])` | A stream of matching lists. |
 | `peekAllKeys` | `Future<List<I>> peekAllKeys()` | Stored identities. |
-| `put` | `Future<Model> put(Dependency<Data>, Data)` | A newly constructed/persisted model. |
-| `putAll` | `Future<List<Model>> putAll(Dependency<Data>, List<Data>)` | Persisted models. |
+| `put` | `Future<Model> put(C creation)` | Constructs and persists one model from a creation request accepted by the entity. |
+| `putAll` | `Future<List<Model>> putAll(List<C> creations)` | Constructs and persists one model per creation request accepted by the entity. |
 | `push` | `Future<void> push(Model model)` | Persists an identified model. |
 | `pushAll` | `Future<void> pushAll(List<Model>)` | Persists identified models. |
 | `patch` | `Future<void> patch(I id, Model? Function(Model?) update)` | Updates, creates, or removes according to the callback result. |
@@ -80,6 +80,35 @@ entry point is normally `dorm.<model>.repository`.
 See [Create, read, update, and remove](../02-build-the-store/01-crud.md) for
 operation sequences and [Framework contracts](03-framework-contracts.md) for
 contract details.
+
+### Creation requests
+
+`Creation<Data, I>` is the common base for requests that group the data,
+dependency, and identity strategy for one new model. `Creation.auto(...)`
+returns `AutoCreation<Data, I>`, while `Creation.explicit(...)` returns
+`ExplicitCreation<Data, I>`:
+
+~~~dart
+Creation.auto(
+  dependency: dependency,
+  data: data,
+);
+
+Creation.explicit(
+  dependency: dependency,
+  data: data,
+  identity: id,
+);
+~~~
+
+`SimpleCreation<Data, I>` is the accepted creation type for generated
+single-key entities, so it accepts both factory results. Generated
+composite-key entities accept `ExplicitCreation<Data, CompositeKey>` only;
+passing `Creation.auto(...)` to their generated `put` or `putAll` is a
+compile-time error. `AutoIdentity<I>` requests the engine's automatic
+identity. `ExplicitIdentity<I>` contains the final identity. `ResolvedCreation<Data, I>` is the context passed to
+`Entity.fromData`; it contains `dependency`, `data`, `id`, and
+`wasGenerated`.
 
 ## Filters and queries
 

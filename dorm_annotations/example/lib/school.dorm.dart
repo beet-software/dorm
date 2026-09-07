@@ -148,7 +148,9 @@ class SchoolFields {
   );
 }
 
-class SchoolEntity implements Entity<SchoolData, School, String> {
+class SchoolEntity
+    implements
+        Entity<SchoolData, School, String, SimpleCreation<SchoolData, String>> {
   const SchoolEntity();
 
   static const SchoolFields fields = SchoolFields();
@@ -167,12 +169,23 @@ class SchoolEntity implements Entity<SchoolData, School, String> {
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  School fromData(SchoolDependency dependency, String id, SchoolData data) {
+  bool get supportsAutomaticIdentity => true;
+
+  @override
+  School fromData(ResolvedCreation<SchoolData, String> creation) {
     return School(
-      id: _School._generate(_$School.fromData(dependency, data), id),
-      name: data.name,
-      address: data.address,
-      phoneNumbers: data.phoneNumbers,
+      id: creation.wasGenerated
+          ? _School._generate(
+              _$School.fromData(
+                creation.dependency as SchoolDependency,
+                creation.data,
+              ),
+              creation.id,
+            )
+          : creation.id,
+      name: creation.data.name,
+      address: creation.data.address,
+      phoneNumbers: creation.data.phoneNumbers,
     );
   }
 
@@ -294,7 +307,14 @@ class StudentFields {
   );
 }
 
-class StudentEntity implements Entity<StudentData, Student, String> {
+class StudentEntity
+    implements
+        Entity<
+          StudentData,
+          Student,
+          String,
+          SimpleCreation<StudentData, String>
+        > {
   const StudentEntity();
 
   static const StudentFields fields = StudentFields();
@@ -313,12 +333,15 @@ class StudentEntity implements Entity<StudentData, Student, String> {
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  Student fromData(StudentDependency dependency, String id, StudentData data) {
+  bool get supportsAutomaticIdentity => true;
+
+  @override
+  Student fromData(ResolvedCreation<StudentData, String> creation) {
     return Student(
-      id: id,
-      name: data.name,
-      hasDisabilities: data.hasDisabilities,
-      schoolId: dependency.schoolId,
+      id: creation.id,
+      name: creation.data.name,
+      hasDisabilities: creation.data.hasDisabilities,
+      schoolId: (creation.dependency as StudentDependency).schoolId,
     );
   }
 
@@ -411,7 +434,14 @@ class TeacherFields {
   );
 }
 
-class TeacherEntity implements Entity<TeacherData, Teacher, String> {
+class TeacherEntity
+    implements
+        Entity<
+          TeacherData,
+          Teacher,
+          String,
+          SimpleCreation<TeacherData, String>
+        > {
   const TeacherEntity();
 
   static const TeacherFields fields = TeacherFields();
@@ -430,8 +460,15 @@ class TeacherEntity implements Entity<TeacherData, Teacher, String> {
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  Teacher fromData(TeacherDependency dependency, String id, TeacherData data) {
-    return Teacher(id: id, name: data.name, ssn: data.ssn);
+  bool get supportsAutomaticIdentity => true;
+
+  @override
+  Teacher fromData(ResolvedCreation<TeacherData, String> creation) {
+    return Teacher(
+      id: creation.id,
+      name: creation.data.name,
+      ssn: creation.data.ssn,
+    );
   }
 
   @override
@@ -500,7 +537,14 @@ class HistoryFields {
   );
 }
 
-class HistoryEntity implements Entity<HistoryData, History, String> {
+class HistoryEntity
+    implements
+        Entity<
+          HistoryData,
+          History,
+          String,
+          SimpleCreation<HistoryData, String>
+        > {
   const HistoryEntity();
 
   static const HistoryFields fields = HistoryFields();
@@ -519,8 +563,14 @@ class HistoryEntity implements Entity<HistoryData, History, String> {
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  History fromData(HistoryDependency dependency, String id, HistoryData data) {
-    return History(id: id, studentId: dependency.studentId);
+  bool get supportsAutomaticIdentity => true;
+
+  @override
+  History fromData(ResolvedCreation<HistoryData, String> creation) {
+    return History(
+      id: creation.id,
+      studentId: (creation.dependency as HistoryDependency).studentId,
+    );
   }
 
   @override
@@ -614,7 +664,14 @@ class TeachingFields {
   );
 }
 
-class TeachingEntity implements Entity<TeachingData, Teaching, String> {
+class TeachingEntity
+    implements
+        Entity<
+          TeachingData,
+          Teaching,
+          String,
+          SimpleCreation<TeachingData, String>
+        > {
   const TeachingEntity();
 
   static const TeachingFields fields = TeachingFields();
@@ -633,16 +690,15 @@ class TeachingEntity implements Entity<TeachingData, Teaching, String> {
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  Teaching fromData(
-    TeachingDependency dependency,
-    String id,
-    TeachingData data,
-  ) {
+  bool get supportsAutomaticIdentity => true;
+
+  @override
+  Teaching fromData(ResolvedCreation<TeachingData, String> creation) {
     return Teaching(
-      id: id,
-      teacherId: dependency.teacherId,
-      schoolId: dependency.schoolId,
-      code: data.code,
+      id: creation.id,
+      teacherId: (creation.dependency as TeachingDependency).teacherId,
+      schoolId: (creation.dependency as TeachingDependency).schoolId,
+      code: creation.data.code,
     );
   }
 
@@ -757,7 +813,9 @@ class ClassFields {
   );
 }
 
-class ClassEntity implements Entity<ClassData, Class, String> {
+class ClassEntity
+    implements
+        Entity<ClassData, Class, String, SimpleCreation<ClassData, String>> {
   const ClassEntity();
 
   static const ClassFields fields = ClassFields();
@@ -781,13 +839,16 @@ class ClassEntity implements Entity<ClassData, Class, String> {
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  Class fromData(ClassDependency dependency, String id, ClassData data) {
+  bool get supportsAutomaticIdentity => true;
+
+  @override
+  Class fromData(ResolvedCreation<ClassData, String> creation) {
     return Class(
-      id: id,
-      patron: data.patron,
-      teacherId: dependency.teacherId,
-      studentId: dependency.studentId,
-      location: data.location,
+      id: creation.id,
+      patron: creation.data.patron,
+      teacherId: (creation.dependency as ClassDependency).teacherId,
+      studentId: (creation.dependency as ClassDependency).studentId,
+      location: creation.data.location,
     );
   }
 
@@ -821,23 +882,59 @@ class Dorm {
 
   final BaseEngine<Query> _engine;
 
-  DatabaseEntity<SchoolData, School, String, Query> get schools =>
-      DatabaseEntity(const SchoolEntity(), engine: _engine);
+  DatabaseEntity<
+    SchoolData,
+    School,
+    String,
+    Query,
+    SimpleCreation<SchoolData, String>
+  >
+  get schools => DatabaseEntity(const SchoolEntity(), engine: _engine);
 
-  DatabaseEntity<StudentData, Student, String, Query> get students =>
-      DatabaseEntity(const StudentEntity(), engine: _engine);
+  DatabaseEntity<
+    StudentData,
+    Student,
+    String,
+    Query,
+    SimpleCreation<StudentData, String>
+  >
+  get students => DatabaseEntity(const StudentEntity(), engine: _engine);
 
-  DatabaseEntity<TeacherData, Teacher, String, Query> get teachers =>
-      DatabaseEntity(const TeacherEntity(), engine: _engine);
+  DatabaseEntity<
+    TeacherData,
+    Teacher,
+    String,
+    Query,
+    SimpleCreation<TeacherData, String>
+  >
+  get teachers => DatabaseEntity(const TeacherEntity(), engine: _engine);
 
-  DatabaseEntity<HistoryData, History, String, Query> get histories =>
-      DatabaseEntity(const HistoryEntity(), engine: _engine);
+  DatabaseEntity<
+    HistoryData,
+    History,
+    String,
+    Query,
+    SimpleCreation<HistoryData, String>
+  >
+  get histories => DatabaseEntity(const HistoryEntity(), engine: _engine);
 
-  DatabaseEntity<TeachingData, Teaching, String, Query> get teachings =>
-      DatabaseEntity(const TeachingEntity(), engine: _engine);
+  DatabaseEntity<
+    TeachingData,
+    Teaching,
+    String,
+    Query,
+    SimpleCreation<TeachingData, String>
+  >
+  get teachings => DatabaseEntity(const TeachingEntity(), engine: _engine);
 
-  DatabaseEntity<ClassData, Class, String, Query> get classes =>
-      DatabaseEntity(const ClassEntity(), engine: _engine);
+  DatabaseEntity<
+    ClassData,
+    Class,
+    String,
+    Query,
+    SimpleCreation<ClassData, String>
+  >
+  get classes => DatabaseEntity(const ClassEntity(), engine: _engine);
 
   DormRelations get relations => DormRelations(this);
 }

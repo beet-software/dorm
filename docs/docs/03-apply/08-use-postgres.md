@@ -76,8 +76,10 @@ Use the generated repositories in the same way as other dORM engines:
 
 ```dart
 final User user = await dorm.users.repository.put(
-  const UserDependency(),
-  const UserData(name: 'Ada'),
+  Creation.auto(
+    dependency: UserDependency(),
+    data: UserData(name: 'Ada'),
+  ),
 );
 
 await dorm.posts.repository.push(

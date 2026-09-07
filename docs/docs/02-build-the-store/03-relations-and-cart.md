@@ -15,8 +15,10 @@ Create the cart with the user's identity in `CartDependency`:
 
 ```dart
 final Cart cart = await dorm.carts.repository.put(
-  CartDependency(userId: user.id),
-  CartData(timestamp: DateTime.now()),
+  Creation.auto(
+    dependency: CartDependency(userId: user.id),
+    data: CartData(timestamp: DateTime.now()),
+  ),
 );
 ```
 
@@ -26,11 +28,13 @@ Create an item with both foreign identities in `CartItemDependency`:
 
 ```dart
 final CartItem item = await dorm.cartItems.repository.put(
-  CartItemDependency(
-    productId: product.id,
-    cartId: cart.id,
+  Creation.auto(
+    dependency: CartItemDependency(
+      productId: product.id,
+      cartId: cart.id,
+    ),
+    data: const CartItemData(amount: 2),
   ),
-  const CartItemData(amount: 2),
 );
 ```
 

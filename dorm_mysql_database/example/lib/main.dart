@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:args/args.dart';
+import 'package:dorm_framework/dorm_framework.dart';
 import 'package:dorm_mysql_database/dorm_mysql_database.dart';
 import 'package:dotenv/dotenv.dart';
 import 'package:mysql_client/mysql_client.dart';
@@ -85,8 +86,10 @@ Future<void> run(Dorm dorm) async {
             age: int.parse(command['age']),
           );
           final User user = await dorm.users.repository.put(
-            const UserDependency(),
-            data,
+            Creation.auto(
+              dependency: const UserDependency(),
+              data: data,
+            ),
           );
           print({'id': user.id, ...user.toJson()});
         }

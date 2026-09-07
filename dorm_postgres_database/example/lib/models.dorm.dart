@@ -51,7 +51,9 @@ class UserFields {
   );
 }
 
-class UserEntity implements Entity<UserData, User, String> {
+class UserEntity
+    implements
+        Entity<UserData, User, String, SimpleCreation<UserData, String>> {
   const UserEntity();
 
   static const UserFields fields = UserFields();
@@ -70,8 +72,11 @@ class UserEntity implements Entity<UserData, User, String> {
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  User fromData(UserDependency dependency, String id, UserData data) {
-    return User(id: id, name: data.name);
+  bool get supportsAutomaticIdentity => true;
+
+  @override
+  User fromData(ResolvedCreation<UserData, String> creation) {
+    return User(id: creation.id, name: creation.data.name);
   }
 
   @override
@@ -151,7 +156,9 @@ class PostFields {
   );
 }
 
-class PostEntity implements Entity<PostData, Post, String> {
+class PostEntity
+    implements
+        Entity<PostData, Post, String, SimpleCreation<PostData, String>> {
   const PostEntity();
 
   static const PostFields fields = PostFields();
@@ -170,8 +177,15 @@ class PostEntity implements Entity<PostData, Post, String> {
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  Post fromData(PostDependency dependency, String id, PostData data) {
-    return Post(id: id, title: data.title, userId: dependency.userId);
+  bool get supportsAutomaticIdentity => true;
+
+  @override
+  Post fromData(ResolvedCreation<PostData, String> creation) {
+    return Post(
+      id: creation.id,
+      title: creation.data.title,
+      userId: (creation.dependency as PostDependency).userId,
+    );
   }
 
   @override
@@ -198,11 +212,23 @@ class Dorm {
 
   final BaseEngine<Query> _engine;
 
-  DatabaseEntity<UserData, User, String, Query> get users =>
-      DatabaseEntity(const UserEntity(), engine: _engine);
+  DatabaseEntity<
+    UserData,
+    User,
+    String,
+    Query,
+    SimpleCreation<UserData, String>
+  >
+  get users => DatabaseEntity(const UserEntity(), engine: _engine);
 
-  DatabaseEntity<PostData, Post, String, Query> get posts =>
-      DatabaseEntity(const PostEntity(), engine: _engine);
+  DatabaseEntity<
+    PostData,
+    Post,
+    String,
+    Query,
+    SimpleCreation<PostData, String>
+  >
+  get posts => DatabaseEntity(const PostEntity(), engine: _engine);
 
   DormRelations get relations => DormRelations(this);
 }

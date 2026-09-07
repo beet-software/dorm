@@ -51,7 +51,9 @@ class UserFields {
   );
 }
 
-class UserEntity implements Entity<UserData, User, String> {
+class UserEntity
+    implements
+        Entity<UserData, User, String, SimpleCreation<UserData, String>> {
   const UserEntity();
 
   static const UserFields fields = UserFields();
@@ -60,6 +62,7 @@ class UserEntity implements Entity<UserData, User, String> {
     tableName: 'users',
     primaryKey: fields.id,
     fields: [fields.name],
+    derivedFields: [],
   );
 
   @override
@@ -69,8 +72,11 @@ class UserEntity implements Entity<UserData, User, String> {
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  User fromData(UserDependency dependency, String id, UserData data) {
-    return User(id: id, name: data.name);
+  bool get supportsAutomaticIdentity => true;
+
+  @override
+  User fromData(ResolvedCreation<UserData, String> creation) {
+    return User(id: creation.id, name: creation.data.name);
   }
 
   @override
@@ -97,6 +103,12 @@ class Dorm {
 
   final BaseEngine<Query> _engine;
 
-  DatabaseEntity<UserData, User, String, Query> get users =>
-      DatabaseEntity(const UserEntity(), engine: _engine);
+  DatabaseEntity<
+    UserData,
+    User,
+    String,
+    Query,
+    SimpleCreation<UserData, String>
+  >
+  get users => DatabaseEntity(const UserEntity(), engine: _engine);
 }

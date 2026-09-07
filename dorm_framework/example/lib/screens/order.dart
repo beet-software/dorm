@@ -1,4 +1,5 @@
 import 'package:decimal/intl.dart';
+import 'package:dorm_framework/dorm_framework.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_bloc/flutter_form_bloc.dart' as ffb;
 import 'package:flutter_spinbox/flutter_spinbox.dart';
@@ -166,7 +167,12 @@ class OrderScreen extends StatelessWidget {
                                   .get<Dorm>()
                                   .products
                                   .repository
-                                  .put(const ProductDependency(), data);
+                                  .put(
+                                    Creation.auto(
+                                      dependency: const ProductDependency(),
+                                      data: data,
+                                    ),
+                                  );
                             },
                             child: const Icon(Icons.add),
                           )

@@ -25,18 +25,20 @@ The repository type is generated with the entity's data type, model type, and id
 
 ## Create a user with `put`
 
-Pass a generated dependency and a generated data object to `put`:
+Pass a `Creation` object to `put`. Use `Creation.auto` when the selected engine should generate the identity:
 
 ```dart
 final User created = await userRepository.put(
-  const UserDependency(),
-  UserData(
-    username: 'ada',
-    email: 'ada@example.com',
-    profile: Profile(
-      name: 'Ada Lovelace',
-      birthDate: DateTime(1815, 12, 10),
-      bio: null,
+  Creation.auto(
+    dependency: const UserDependency(),
+    data: UserData(
+      username: 'ada',
+      email: 'ada@example.com',
+      profile: Profile(
+        name: 'Ada Lovelace',
+        birthDate: DateTime(1815, 12, 10),
+        bio: null,
+      ),
     ),
   ),
 );
@@ -161,10 +163,10 @@ await userRepository.purge();
 Use the batch operations when the input is already grouped:
 
 ```dart
-final List<User> createdUsers = await userRepository.putAll(
-  const UserDependency(),
-  [
-    UserData(
+final List<User> createdUsers = await userRepository.putAll([
+  Creation.auto(
+    dependency: const UserDependency(),
+    data: UserData(
       username: 'ada',
       email: 'ada@example.com',
       profile: Profile(
@@ -173,12 +175,12 @@ final List<User> createdUsers = await userRepository.putAll(
         bio: null,
       ),
     ),
-  ],
-);
+  ),
+]);
 
 await userRepository.pushAll(createdUsers);
 ```
 
-`putAll` creates models from one dependency and a list of data values. `pushAll` writes already identified models. `peekAllKeys` returns the identities currently stored by the repository.
+`putAll` creates one model per `Creation` object. Each item can carry its own dependency, data, and identity request. `pushAll` writes already identified models. `peekAllKeys` returns the identities currently stored by the repository.
 
 The CRUD API has separate one-shot operations and stream operations. Choose the one-shot form when the caller needs a completed `Future`; keep and cancel the subscription when the caller needs ongoing updates.

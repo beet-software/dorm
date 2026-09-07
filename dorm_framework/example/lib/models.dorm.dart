@@ -111,7 +111,9 @@ class UserFields {
   );
 }
 
-class UserEntity implements Entity<UserData, User, String> {
+class UserEntity
+    implements
+        Entity<UserData, User, String, SimpleCreation<UserData, String>> {
   const UserEntity();
 
   static const UserFields fields = UserFields();
@@ -130,12 +132,15 @@ class UserEntity implements Entity<UserData, User, String> {
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  User fromData(UserDependency dependency, String id, UserData data) {
+  bool get supportsAutomaticIdentity => true;
+
+  @override
+  User fromData(ResolvedCreation<UserData, String> creation) {
     return User(
-      id: id,
-      username: data.username,
-      email: data.email,
-      profile: data.profile,
+      id: creation.id,
+      username: creation.data.username,
+      email: creation.data.email,
+      profile: creation.data.profile,
     );
   }
 
@@ -242,7 +247,14 @@ class ProductFields {
   );
 }
 
-class ProductEntity implements Entity<ProductData, Product, String> {
+class ProductEntity
+    implements
+        Entity<
+          ProductData,
+          Product,
+          String,
+          SimpleCreation<ProductData, String>
+        > {
   const ProductEntity();
 
   static const ProductFields fields = ProductFields();
@@ -261,12 +273,15 @@ class ProductEntity implements Entity<ProductData, Product, String> {
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  Product fromData(ProductDependency dependency, String id, ProductData data) {
+  bool get supportsAutomaticIdentity => true;
+
+  @override
+  Product fromData(ResolvedCreation<ProductData, String> creation) {
     return Product(
-      id: id,
-      name: data.name,
-      description: data.description,
-      price: data.price,
+      id: creation.id,
+      name: creation.data.name,
+      description: creation.data.description,
+      price: creation.data.price,
     );
   }
 
@@ -369,7 +384,9 @@ class CartFields {
   );
 }
 
-class CartEntity implements Entity<CartData, Cart, String> {
+class CartEntity
+    implements
+        Entity<CartData, Cart, String, SimpleCreation<CartData, String>> {
   const CartEntity();
 
   static const CartFields fields = CartFields();
@@ -388,11 +405,22 @@ class CartEntity implements Entity<CartData, Cart, String> {
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  Cart fromData(CartDependency dependency, String id, CartData data) {
+  bool get supportsAutomaticIdentity => true;
+
+  @override
+  Cart fromData(ResolvedCreation<CartData, String> creation) {
     return Cart(
-      id: _Cart._generate(_$Cart.fromData(dependency, data), id),
-      timestamp: data.timestamp,
-      userId: dependency.userId,
+      id: creation.wasGenerated
+          ? _Cart._generate(
+              _$Cart.fromData(
+                creation.dependency as CartDependency,
+                creation.data,
+              ),
+              creation.id,
+            )
+          : creation.id,
+      timestamp: creation.data.timestamp,
+      userId: (creation.dependency as CartDependency).userId,
     );
   }
 
@@ -493,7 +521,14 @@ class CartItemFields {
   );
 }
 
-class CartItemEntity implements Entity<CartItemData, CartItem, String> {
+class CartItemEntity
+    implements
+        Entity<
+          CartItemData,
+          CartItem,
+          String,
+          SimpleCreation<CartItemData, String>
+        > {
   const CartItemEntity();
 
   static const CartItemFields fields = CartItemFields();
@@ -512,16 +547,15 @@ class CartItemEntity implements Entity<CartItemData, CartItem, String> {
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  CartItem fromData(
-    CartItemDependency dependency,
-    String id,
-    CartItemData data,
-  ) {
+  bool get supportsAutomaticIdentity => true;
+
+  @override
+  CartItem fromData(ResolvedCreation<CartItemData, String> creation) {
     return CartItem(
-      id: id,
-      amount: data.amount,
-      productId: dependency.productId,
-      cartId: dependency.cartId,
+      id: creation.id,
+      amount: creation.data.amount,
+      productId: (creation.dependency as CartItemDependency).productId,
+      cartId: (creation.dependency as CartItemDependency).cartId,
     );
   }
 
@@ -691,7 +725,9 @@ class ReviewFields {
   );
 }
 
-class ReviewEntity implements Entity<ReviewData, Review, String> {
+class ReviewEntity
+    implements
+        Entity<ReviewData, Review, String, SimpleCreation<ReviewData, String>> {
   const ReviewEntity();
 
   static const ReviewFields fields = ReviewFields();
@@ -716,14 +752,17 @@ class ReviewEntity implements Entity<ReviewData, Review, String> {
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  Review fromData(ReviewDependency dependency, String id, ReviewData data) {
+  bool get supportsAutomaticIdentity => true;
+
+  @override
+  Review fromData(ResolvedCreation<ReviewData, String> creation) {
     return Review(
-      id: id,
-      text: data.text,
-      timestamp: data.timestamp,
-      type: data.type,
-      content: data.content,
-      userId: dependency.userId,
+      id: creation.id,
+      text: creation.data.text,
+      timestamp: creation.data.timestamp,
+      type: creation.data.type,
+      content: creation.data.content,
+      userId: (creation.dependency as ReviewDependency).userId,
     );
   }
 
@@ -833,20 +872,50 @@ class Dorm {
 
   final BaseEngine<Query> _engine;
 
-  DatabaseEntity<UserData, User, String, Query> get users =>
-      DatabaseEntity(const UserEntity(), engine: _engine);
+  DatabaseEntity<
+    UserData,
+    User,
+    String,
+    Query,
+    SimpleCreation<UserData, String>
+  >
+  get users => DatabaseEntity(const UserEntity(), engine: _engine);
 
-  DatabaseEntity<ProductData, Product, String, Query> get products =>
-      DatabaseEntity(const ProductEntity(), engine: _engine);
+  DatabaseEntity<
+    ProductData,
+    Product,
+    String,
+    Query,
+    SimpleCreation<ProductData, String>
+  >
+  get products => DatabaseEntity(const ProductEntity(), engine: _engine);
 
-  DatabaseEntity<CartData, Cart, String, Query> get carts =>
-      DatabaseEntity(const CartEntity(), engine: _engine);
+  DatabaseEntity<
+    CartData,
+    Cart,
+    String,
+    Query,
+    SimpleCreation<CartData, String>
+  >
+  get carts => DatabaseEntity(const CartEntity(), engine: _engine);
 
-  DatabaseEntity<CartItemData, CartItem, String, Query> get cartItems =>
-      DatabaseEntity(const CartItemEntity(), engine: _engine);
+  DatabaseEntity<
+    CartItemData,
+    CartItem,
+    String,
+    Query,
+    SimpleCreation<CartItemData, String>
+  >
+  get cartItems => DatabaseEntity(const CartItemEntity(), engine: _engine);
 
-  DatabaseEntity<ReviewData, Review, String, Query> get reviews =>
-      DatabaseEntity(const ReviewEntity(), engine: _engine);
+  DatabaseEntity<
+    ReviewData,
+    Review,
+    String,
+    Query,
+    SimpleCreation<ReviewData, String>
+  >
+  get reviews => DatabaseEntity(const ReviewEntity(), engine: _engine);
 
   DormRelations get relations => DormRelations(this);
 }

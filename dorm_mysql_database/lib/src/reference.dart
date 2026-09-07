@@ -37,7 +37,7 @@ Map<String, Object?> _primaryKeyParameters<
   Data,
   Model extends Data,
   I extends Object
->(Entity<Data, Model, I> entity, I id, {String prefix = 'id'}) {
+ >(Entity<Data, Model, I, Creation<Data, I>> entity, I id, {String prefix = 'id'}) {
   final List<Object?> values = entity.primaryKeyCodec.encode(id);
   final List<FieldSchema> fields = entity.schema.keyFields;
   if (values.length != fields.length) {
@@ -87,7 +87,7 @@ class Reference implements BaseReference<Query> {
 
   @override
   Future<void> patch<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     I id,
     Model? Function(Model?) update,
   ) {
@@ -112,7 +112,7 @@ class Reference implements BaseReference<Query> {
 
   @override
   Future<Model?> peek<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     I id, {
     MySQLConnection? connection,
   }) {
@@ -140,7 +140,7 @@ class Reference implements BaseReference<Query> {
 
   @override
   Future<List<Model>> peekAll<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     BaseFilter<Query> filter,
   ) {
     final StringBuffer preBuffer = StringBuffer()
@@ -175,7 +175,7 @@ class Reference implements BaseReference<Query> {
 
   @override
   Future<List<I>> peekAllKeys<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
   ) {
     final StringBuffer buffer = StringBuffer()
       ..write('SELECT ')
@@ -201,7 +201,7 @@ class Reference implements BaseReference<Query> {
 
   @override
   Future<void> pop<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     I id, {
     MySQLConnection? connection,
   }) {
@@ -219,7 +219,7 @@ class Reference implements BaseReference<Query> {
 
   @override
   Future<void> popAll<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     BaseFilter<Query> filter,
   ) {
     final StringBuffer preBuffer = StringBuffer()
@@ -238,7 +238,7 @@ class Reference implements BaseReference<Query> {
 
   @override
   Future<void> popKeys<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     Iterable<I> ids,
   ) {
     final List<I> keys = ids.toList();
@@ -291,7 +291,7 @@ class Reference implements BaseReference<Query> {
 
   @override
   Stream<Model?> pull<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     I id,
   ) {
     // TODO: make pull realtime somehow
@@ -302,7 +302,7 @@ class Reference implements BaseReference<Query> {
 
   @override
   Stream<List<Model>> pullAll<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     BaseFilter<Query> filter,
   ) {
     // TODO: make pullAll realtime somehow
@@ -314,7 +314,7 @@ class Reference implements BaseReference<Query> {
 
   @override
   Future<void> purge<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity, {
+    Entity<Data, Model, I, Creation<Data, I>> entity, {
     MySQLConnection? connection,
   }) {
     connection ??= this.connection;
@@ -328,7 +328,7 @@ class Reference implements BaseReference<Query> {
 
   @override
   Future<void> push<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     Model model, {
     MySQLConnection? connection,
   }) {
@@ -342,7 +342,7 @@ class Reference implements BaseReference<Query> {
 
   @override
   Future<void> pushAll<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     List<Model> models,
   ) {
     return connection.transactional((connection) async {
@@ -353,20 +353,21 @@ class Reference implements BaseReference<Query> {
   }
 
   @override
-  Future<Model> put<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
-    Dependency<Data> dependency,
-    Data data, {
+  Future<Model> put<
+    Data,
+    Model extends Data,
+    I extends Object,
+    C extends Creation<Data, I>
+  >(
+    Entity<Data, Model, I, C> entity,
+    C creation, {
     MySQLConnection? connection,
   }) {
-    if (entity.schema.isCompositePrimaryKey) {
-      throw UnsupportedError(
-        'MySQL put requires an explicitly identified model for composite '
-        'primary keys; use push instead.',
-      );
-    }
-    final I id = const Uuid().v4() as I;
-    final Model model = entity.fromData(dependency, id, data);
+    final ResolvedCreation<Data, I> resolved = _resolveCreation(
+      entity,
+      creation,
+    );
+    final Model model = entity.fromData(resolved);
     final StringBuffer buffer = StringBuffer();
     final Map<String, Object?>? params = _QueryBuilder(
       entity,
@@ -376,16 +377,96 @@ class Reference implements BaseReference<Query> {
         .then((_) => model);
   }
 
+  ResolvedCreation<Data, I> _resolveCreation<
+    Data,
+    Model extends Data,
+    I extends Object
+  >(Entity<Data, Model, I, Creation<Data, I>> entity, Creation<Data, I> creation) {
+    return switch (creation.identity) {
+      AutoIdentity<I>() => _resolveAutoCreation(entity, creation),
+      ExplicitIdentity<I>(:final value) => _resolveExplicitCreation(
+        entity,
+        creation,
+        value,
+      ),
+    };
+  }
+
+  ResolvedCreation<Data, I> _resolveExplicitCreation<
+    Data,
+    Model extends Data,
+    I extends Object
+  >(Entity<Data, Model, I, Creation<Data, I>> entity, Creation<Data, I> creation, I id) {
+    _validateIdentity(entity, id);
+    return ResolvedCreation(
+      dependency: creation.dependency,
+      data: creation.data,
+      id: id,
+      wasGenerated: false,
+    );
+  }
+
+  ResolvedCreation<Data, I> _resolveAutoCreation<
+    Data,
+    Model extends Data,
+    I extends Object
+  >(Entity<Data, Model, I, Creation<Data, I>> entity, Creation<Data, I> creation) {
+    if (entity.schema.isCompositePrimaryKey ||
+        !entity.supportsAutomaticIdentity) {
+      throw UnsupportedError(
+        'MySQL creation requires an explicit identity for this entity.',
+      );
+    }
+    return ResolvedCreation(
+      dependency: creation.dependency,
+      data: creation.data,
+      id: const Uuid().v4() as I,
+      wasGenerated: true,
+    );
+  }
+
+  void _validateIdentity<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    I id,
+  ) {
+    final List<Object?> values;
+    try {
+      values = entity.primaryKeyCodec.encode(id);
+    } catch (_) {
+      throw ArgumentError.value(
+        id,
+        'identity',
+        'Identity cannot be encoded for this schema.',
+      );
+    }
+    if (values.length != entity.schema.keyFields.length) {
+      throw ArgumentError.value(
+        id,
+        'identity',
+        'Identity has ${values.length} values, but the schema requires '
+            '${entity.schema.keyFields.length}.',
+      );
+    }
+  }
+
   @override
-  Future<List<Model>> putAll<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
-    Dependency<Data> dependency,
-    List<Data> datum,
+  Future<List<Model>> putAll<
+    Data,
+    Model extends Data,
+    I extends Object,
+    C extends Creation<Data, I>
+  >(
+    Entity<Data, Model, I, C> entity,
+    List<C> creations,
   ) async {
     final List<Model> models = [];
     await connection.transactional((connection) async {
-      for (Data data in datum) {
-        models.add(await put(entity, dependency, data, connection: connection));
+      for (final C creation in creations) {
+        models.add(await put<Data, Model, I, C>(
+          entity,
+          creation,
+          connection: connection,
+        ));
       }
     });
     return models;
@@ -393,7 +474,7 @@ class Reference implements BaseReference<Query> {
 }
 
 class _QueryBuilder<Data, Model extends Data, I extends Object> {
-  final Entity<Data, Model, I> entity;
+  final Entity<Data, Model, I, Creation<Data, I>> entity;
 
   const _QueryBuilder(this.entity);
 

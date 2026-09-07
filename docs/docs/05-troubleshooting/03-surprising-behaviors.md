@@ -69,23 +69,30 @@ at the call site; the accessor is generated from the relation metadata.
 The distinction between an association name and a generated relation path is
 described in [Query and relationship details](../03-understand/04-query-and-relation-details.md).
 
-## Composite identities do not have identical engine support
+## Composite identities have a statically restricted creation path
 
-The framework contains simple and composite identity abstractions, but the
-current engine paths differ:
+Generated entities expose different creation types according to their primary
+key shape:
 
-- BLoC throws `UnsupportedError` for `put` and `putAll` on a composite-key
-  entity.
-- MySQL throws `UnsupportedError` for the automatic `put` path on a
-  composite-key entity.
+- simple-key entities accept both `Creation.auto(...)` and
+  `Creation.explicit(...)`;
+- composite-key entities accept only `Creation.explicit(...)`, so passing
+  `Creation.auto(...)` to their generated `put` or `putAll` is a compile-time
+  error;
+- if the static type is bypassed with `dynamic`, a cast, or a broad custom
+  contract, the engines still throw `UnsupportedError` for automatic
+  composite-key creation;
 - Firebase reference operations require identity values of type `String`.
 
 An explicitly identified model may use `push` where the automatic `put` path
-cannot create an identity. This is an observed compatibility boundary, not a
-promise that every composite-key operation is available in every engine.
+cannot create an identity. The generated API prevents the invalid automatic
+creation call before execution; the runtime error remains a safeguard for
+statically bypassed calls.
 
 Read [Identity and dependencies](../03-understand/02-identity-and-dependencies.md)
-before interpreting a composite-key error as a model-generation failure.
+before interpreting a composite-key error as a model-generation failure. Use
+`Creation.explicit` with a `CompositeKey` when the selected engine supports
+composite-key creation.
 
 ## Query fields carry legacy and portability qualifications
 

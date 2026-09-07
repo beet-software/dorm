@@ -24,8 +24,12 @@ class _ItemDependency extends Dependency<_ItemData> {
   const _ItemDependency() : super.strong();
 }
 
-class _ItemEntity implements Entity<_ItemData, _Item, String> {
+class _ItemEntity
+    implements Entity<_ItemData, _Item, String, SimpleCreation<_ItemData, String>> {
   const _ItemEntity();
+
+  @override
+  bool get supportsAutomaticIdentity => true;
 
   @override
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
@@ -42,12 +46,12 @@ class _ItemEntity implements Entity<_ItemData, _Item, String> {
   }
 
   @override
-  _Item fromData(
-    covariant Dependency<_ItemData> dependency,
-    String id,
-    _ItemData data,
-  ) {
-    return _Item(id: id, title: data.title, value: data.value);
+  _Item fromData(ResolvedCreation<_ItemData, String> creation) {
+    return _Item(
+      id: creation.id,
+      title: creation.data.title,
+      value: creation.data.value,
+    );
   }
 
   @override
@@ -87,8 +91,17 @@ class _CompositeDependency extends Dependency<_CompositeData> {
 }
 
 class _CompositeEntity
-    implements Entity<_CompositeData, _CompositeModel, CompositeKey> {
+    implements
+        Entity<
+          _CompositeData,
+          _CompositeModel,
+          CompositeKey,
+          ExplicitCreation<_CompositeData, CompositeKey>
+        > {
   const _CompositeEntity();
+
+  @override
+  bool get supportsAutomaticIdentity => false;
 
   @override
   PrimaryKeyCodec<CompositeKey> get primaryKeyCodec =>
@@ -110,10 +123,8 @@ class _CompositeEntity
 
   @override
   _CompositeModel fromData(
-    covariant Dependency<_CompositeData> dependency,
-    CompositeKey id,
-    _CompositeData data,
-  ) => _CompositeModel(id: id, value: data.value);
+    ResolvedCreation<_CompositeData, CompositeKey> creation,
+  ) => _CompositeModel(id: creation.id, value: creation.data.value);
 
   @override
   _CompositeModel fromJson(CompositeKey id, Map data) =>
@@ -133,8 +144,10 @@ void main() {
     expect(
       () => reference.put(
         const _CompositeEntity(),
-        const _CompositeDependency(),
-        const _CompositeData('value'),
+        const Creation.auto(
+          dependency: _CompositeDependency(),
+          data: _CompositeData('value'),
+        ),
       ),
       throwsUnsupportedError,
     );
@@ -176,8 +189,10 @@ void main() {
       test('inserts and reads a generated model', () async {
         final _Item item = await reference.put(
           entity,
-          const _ItemDependency(),
-          const _ItemData(title: 'first', value: 1),
+          const Creation.auto(
+            dependency: _ItemDependency(),
+            data: _ItemData(title: 'first', value: 1),
+          ),
         );
 
         expect(item.id, matches(RegExp(r'^[0-9a-f-]{36}$')));
@@ -194,15 +209,37 @@ void main() {
         expect(await reference.peek(entity, 'fixed'), second);
       });
 
+      test(
+        'inserts and reads an explicitly identified composite document',
+        () async {
+          const _CompositeEntity composite = _CompositeEntity();
+          final CompositeKey key = CompositeKey(['tenant', 7]);
+
+          final _CompositeModel model = await reference.put(
+            composite,
+            Creation.explicit(
+              dependency: const _CompositeDependency(),
+              data: const _CompositeData('value'),
+              identity: key,
+            ),
+          );
+
+          expect(model.id, key);
+          expect(await reference.peek(composite, key), model);
+        },
+      );
+
       test('inserts multiple generated models', () async {
-        final List<_Item> items = await reference.putAll(
-          entity,
-          const _ItemDependency(),
-          const [
-            _ItemData(title: 'first', value: 1),
-            _ItemData(title: 'second', value: 2),
-          ],
-        );
+        final List<_Item> items = await reference.putAll(entity, const [
+          Creation.auto(
+            dependency: _ItemDependency(),
+            data: _ItemData(title: 'first', value: 1),
+          ),
+          Creation.auto(
+            dependency: _ItemDependency(),
+            data: _ItemData(title: 'second', value: 2),
+          ),
+        ]);
 
         expect(await reference.peekAllKeys(entity), hasLength(2));
         expect(items, hasLength(2));

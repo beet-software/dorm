@@ -16,7 +16,6 @@
 
 import 'package:dorm_framework/dorm_framework.dart';
 
-import 'dependency.dart';
 import 'entity.dart';
 import 'filter.dart';
 import 'reference.dart';
@@ -208,39 +207,47 @@ abstract class ModelRepository<Model, I extends Object, Q extends BaseQuery<Q>>
 }
 
 /// Represents creating models into the database engine.
-abstract class DataRepository<Data, Model extends Data, I extends Object, Q extends BaseQuery<Q>>
+abstract class DataRepository<
+  Data,
+  Model extends Data,
+  I extends Object,
+  Q extends BaseQuery<Q>,
+  C extends Creation<Data, I>
+>
     implements ModelRepository<Model, I, Q> {
-  /// Convert a [data] into a model and inserts it into its respective table on
-  /// the database engine.
+  /// Converts [creation] into a model and inserts it into its respective table
+  /// on the database engine.
   ///
-  /// The id of the model may be defined by [dependency], through its
-  /// [Dependency.key] method. If there is a model in the table with the same id
-  /// as the one being created, the existing model will be overwritten.
-  Future<Model> put(Dependency<Data> dependency, Data data);
+  /// An explicit identity is required for composite primary keys.
+  Future<Model> put(C creation);
 
-  /// Convert a sequence of [datum] into models and inserts them into their
+  /// Converts each [creation] into a model and inserts the models into their
   /// respective table on the database engine.
   ///
-  /// /// The id of the model may be defined by [dependency], through its
-  /// [Dependency.key] method. If there are any models in the table with the
-  /// same id as any of the ones being inserted, the existing models will be
-  /// overwritten.
-  Future<List<Model>> putAll(Dependency<Data> dependency, List<Data> datum);
+  /// Each creation may provide its own dependency and identity request.
+  Future<List<Model>> putAll(List<C> creations);
 }
 
 /// Represents the controller of the underlying database engine.
-class Repository<Data, Model extends Data, I extends Object, Q extends BaseQuery<Q>>
-    implements DataRepository<Data, Model, I, Q>, RelationSource<Model, I, Q> {
+class Repository<
+  Data,
+  Model extends Data,
+  I extends Object,
+  Q extends BaseQuery<Q>,
+  C extends Creation<Data, I>
+>
+    implements DataRepository<Data, Model, I, Q, C>,
+        RelationSource<Model, I, Q> {
   final BaseReference<Q> _reference;
-  final Entity<Data, Model, I> _entity;
+  final Entity<Data, Model, I, C> _entity;
 
   /// Creates a repository by its attributes.
   const Repository({
     required BaseReference<Q> reference,
     required BaseRelationship<Q> relationship,
-    required Entity<Data, Model, I> entity,
-  })  : _reference = reference,
-        _entity = entity;
+    required Entity<Data, Model, I, C> entity,
+  }) : _reference = reference,
+       _entity = entity;
 
   /// The engine-independent schema of the repository's entity.
   @override
@@ -248,10 +255,10 @@ class Repository<Data, Model extends Data, I extends Object, Q extends BaseQuery
 
   @override
   RelationPlan<Model, I> get plan => TableRelationPlan(
-        schema: _entity.schema,
-        fromJson: _entity.fromJson,
-        primaryKeyCodec: _entity.primaryKeyCodec,
-      );
+    schema: _entity.schema,
+    fromJson: _entity.fromJson,
+    primaryKeyCodec: _entity.primaryKeyCodec,
+  );
 
   @override
   Future<Model?> peek(I id) {
@@ -298,13 +305,13 @@ class Repository<Data, Model extends Data, I extends Object, Q extends BaseQuery
   }
 
   @override
-  Future<Model> put(Dependency<Data> dependency, Data data) async {
-    return _reference.put<Data, Model, I>(_entity, dependency, data);
+  Future<Model> put(C creation) async {
+    return _reference.put<Data, Model, I, C>(_entity, creation);
   }
 
   @override
-  Future<List<Model>> putAll(Dependency<Data> dependency, List<Data> datum) {
-    return _reference.putAll<Data, Model, I>(_entity, dependency, datum);
+  Future<List<Model>> putAll(List<C> creations) {
+    return _reference.putAll<Data, Model, I, C>(_entity, creations);
   }
 
   @override

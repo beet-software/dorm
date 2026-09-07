@@ -105,8 +105,10 @@ import 'package:dorm_store/models.dart';
 Future<void> main() async {
   final Dorm dorm = Dorm(Engine());
   final User created = await dorm.users.repository.put(
-    const UserDependency(),
-    const UserData(name: 'Ada'),
+    Creation.auto(
+      dependency: UserDependency(),
+      data: UserData(name: 'Ada'),
+    ),
   );
   final User? loaded = await dorm.users.repository.peek(created.id);
 
@@ -114,7 +116,7 @@ Future<void> main() async {
 }
 ```
 
-`put` receives the data values and a dependency object. It creates a model with an identity and returns that model. `peek` reads one model by its identity and returns `null` when no model exists for that identity.
+`put` receives a `Creation` object. `Creation.auto` keeps the engine-generated identity behavior and carries the dependency and data used to construct the model. `put` returns the identified model. `peek` reads one model by its identity and returns `null` when no model exists for that identity.
 
 ## 6. Run the app
 

@@ -30,15 +30,13 @@ class Reference implements BaseReference<Query> {
   final FirebaseInstance instance;
   final fd.DatabaseReference _ref;
 
-  Reference(
-    FirebaseInstance instance, [
-    String? path,
-  ]) : this._(instance, instance.database.ref(path));
+  Reference(FirebaseInstance instance, [String? path])
+    : this._(instance, instance.database.ref(path));
 
   const Reference._(this.instance, this._ref);
 
   fd.DatabaseReference _refOf<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
   ) {
     return _ref.child(entity.schema.tableName);
   }
@@ -55,41 +53,45 @@ class Reference implements BaseReference<Query> {
 
   @override
   Future<Model?> peek<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     I id,
   ) {
     return _refOf(entity) //
         .child(_key(id))
         .get()
         .then((snapshot) => snapshot.value)
-        .then((value) =>
-            value == null ? null : entity.fromJson(id, value as Map));
+        .then(
+          (value) => value == null ? null : entity.fromJson(id, value as Map),
+        );
   }
 
   @override
   Future<List<Model>> peekAll<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     BaseFilter<Query> filter,
   ) {
     final Query query = filter.accept(Query(_refOf(entity)));
-    return query.query.get().then((snapshot) {
-      return {
-        for (fd.DataSnapshot child in snapshot.children)
-          _id<I>(child.key as String): child.value as Object,
-      };
-    }).then((values) {
-      if (values.isEmpty) return [];
-      return values.entries.map((entry) {
-        final I key = entry.key;
-        final Map value = entry.value as Map;
-        return entity.fromJson(key, value);
-      }).toList();
-    });
+    return query.query
+        .get()
+        .then((snapshot) {
+          return {
+            for (fd.DataSnapshot child in snapshot.children)
+              _id<I>(child.key as String): child.value as Object,
+          };
+        })
+        .then((values) {
+          if (values.isEmpty) return [];
+          return values.entries.map((entry) {
+            final I key = entry.key;
+            final Map value = entry.value as Map;
+            return entity.fromJson(key, value);
+          }).toList();
+        });
   }
 
   @override
   Future<void> pop<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     I id,
   ) {
     return _refOf(entity).child(_key(id)).remove();
@@ -97,7 +99,7 @@ class Reference implements BaseReference<Query> {
 
   @override
   Future<void> popKeys<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     Iterable<I> ids,
   ) {
     return _refOf(entity).update({for (I id in ids) _key(id): null});
@@ -105,7 +107,7 @@ class Reference implements BaseReference<Query> {
 
   @override
   Future<void> popAll<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     BaseFilter<Query> filter,
   ) async {
     // TODO Refactor this operation as atomic.
@@ -117,7 +119,7 @@ class Reference implements BaseReference<Query> {
 
   @override
   Future<void> patch<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     I id,
     Model? Function(Model?) update,
   ) {
@@ -145,13 +147,14 @@ class Reference implements BaseReference<Query> {
 
   @override
   Stream<Model?> pull<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     I id,
   ) {
     return _onValueOf(_refOf(entity).child(_key(id)))
         .map((snapshot) => snapshot.value)
-        .map((value) =>
-            value == null ? null : entity.fromJson(id, value as Map));
+        .map(
+          (value) => value == null ? null : entity.fromJson(id, value as Map),
+        );
   }
 
   Stream<fd.DataSnapshot> _onValueOf(fd.Query query) {
@@ -165,56 +168,156 @@ class Reference implements BaseReference<Query> {
 
   @override
   Stream<List<Model>> pullAll<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     BaseFilter<Query> filter,
   ) {
     final Query query = filter.accept(Query(_refOf(entity)));
-    return _onValueOf(query.query).map((snapshot) {
-      return {
-        for (fd.DataSnapshot child in snapshot.children)
-          _id<I>(child.key as String): child.value as Object,
-      };
-    }).map((values) {
-      if (values.isEmpty) return [];
-      return values.entries.map((entry) {
-        final I key = entry.key;
-        final Map value = entry.value as Map;
-        return entity.fromJson(key, value);
-      }).toList();
-    });
+    return _onValueOf(query.query)
+        .map((snapshot) {
+          return {
+            for (fd.DataSnapshot child in snapshot.children)
+              _id<I>(child.key as String): child.value as Object,
+          };
+        })
+        .map((values) {
+          if (values.isEmpty) return [];
+          return values.entries.map((entry) {
+            final I key = entry.key;
+            final Map value = entry.value as Map;
+            return entity.fromJson(key, value);
+          }).toList();
+        });
   }
 
   @override
-  Future<Model> put<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
-    Dependency<Data> dependency,
-    Data data,
+  Future<Model> put<
+    Data,
+    Model extends Data,
+    I extends Object,
+    C extends Creation<Data, I>
+  >(
+    Entity<Data, Model, I, C> entity,
+    C creation,
   ) {
-    return putAll(entity, dependency, [data]).then((models) => models.single);
+    return putAll(entity, [creation]).then((models) => models.single);
   }
 
   @override
-  Future<List<Model>> putAll<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
-    Dependency<Data> dependency,
-    List<Data> datum,
+  Future<List<Model>> putAll<
+    Data,
+    Model extends Data,
+    I extends Object,
+    C extends Creation<Data, I>
+  >(
+    Entity<Data, Model, I, C> entity,
+    List<C> creations,
   ) async {
     final List<Model> models = [];
-    for (Data data in datum) {
-      final fd.DatabaseReference ref = _refOf(entity).push();
-      final I id = _id<I>(ref.key as String);
-      final Model model = entity.fromData(dependency, id, data);
+    for (final C creation in creations) {
+      final ResolvedCreation<Data, I> resolved = _resolveCreation(
+        entity,
+        creation,
+      );
+      final Model model = entity.fromData(resolved);
       models.add(model);
     }
     await _refOf(entity).update({
-      for (Model model in models) _key(entity.identify(model)): entity.toJson(model),
+      for (Model model in models)
+        _key(entity.identify(model)): entity.toJson(model),
     });
     return models;
   }
 
+  ResolvedCreation<Data, I> _resolveCreation<
+    Data,
+    Model extends Data,
+    I extends Object
+  >(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    Creation<Data, I> creation,
+  ) {
+    return switch (creation.identity) {
+      AutoIdentity<I>() => _resolveAutoCreation(entity, creation),
+      ExplicitIdentity<I>(:final value) => _resolveExplicitCreation(
+        entity,
+        creation,
+        value,
+      ),
+    };
+  }
+
+  ResolvedCreation<Data, I> _resolveAutoCreation<
+    Data,
+    Model extends Data,
+    I extends Object
+  >(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    Creation<Data, I> creation,
+  ) {
+    if (entity.schema.isCompositePrimaryKey ||
+        !entity.supportsAutomaticIdentity) {
+      throw UnsupportedError(
+        'Firebase creation requires an explicit simple String identity.',
+      );
+    }
+    final fd.DatabaseReference ref = _refOf(entity).push();
+    return ResolvedCreation(
+      dependency: creation.dependency,
+      data: creation.data,
+      id: _id<I>(ref.key as String),
+      wasGenerated: true,
+    );
+  }
+
+  ResolvedCreation<Data, I> _resolveExplicitCreation<
+    Data,
+    Model extends Data,
+    I extends Object
+  >(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    Creation<Data, I> creation,
+    I id,
+  ) {
+    if (entity.schema.isCompositePrimaryKey) {
+      throw UnsupportedError('Firebase does not support composite identities.');
+    }
+    _validateIdentity(entity, id);
+    _key(id);
+    return ResolvedCreation(
+      dependency: creation.dependency,
+      data: creation.data,
+      id: id,
+      wasGenerated: false,
+    );
+  }
+
+  void _validateIdentity<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    I id,
+  ) {
+    final List<Object?> values;
+    try {
+      values = entity.primaryKeyCodec.encode(id);
+    } catch (_) {
+      throw ArgumentError.value(
+        id,
+        'identity',
+        'Identity cannot be encoded for this schema.',
+      );
+    }
+    if (values.length != entity.schema.keyFields.length) {
+      throw ArgumentError.value(
+        id,
+        'identity',
+        'Identity has ${values.length} values, but the schema requires '
+            '${entity.schema.keyFields.length}.',
+      );
+    }
+  }
+
   @override
   Future<void> push<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     Model model,
   ) {
     return pushAll(entity, [model]);
@@ -222,7 +325,7 @@ class Reference implements BaseReference<Query> {
 
   @override
   Future<void> pushAll<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     List<Model> models,
   ) {
     return _refOf(entity).update({
@@ -232,26 +335,30 @@ class Reference implements BaseReference<Query> {
   }
 
   @override
-  Future<void> purge<Data, Model extends Data, I extends Object>(Entity<Data, Model, I> entity) {
+  Future<void> purge<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+  ) {
     return _refOf(entity).remove();
   }
 
   @override
   Future<List<I>> peekAllKeys<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
   ) async {
     final String path = _refOf(entity).path;
     final String projectId = instance.app.options.projectId;
     final fa.User? user = instance.auth.currentUser;
-    final http.Response response = await http.get(Uri(
-      scheme: 'https',
-      host: '$projectId-default-rtdb.firebaseio.com',
-      path: '$path.json',
-      queryParameters: {
-        if (user != null) 'auth': await user.getIdToken(),
-        'shallow': 'true',
-      },
-    ));
+    final http.Response response = await http.get(
+      Uri(
+        scheme: 'https',
+        host: '$projectId-default-rtdb.firebaseio.com',
+        path: '$path.json',
+        queryParameters: {
+          if (user != null) 'auth': await user.getIdToken(),
+          'shallow': 'true',
+        },
+      ),
+    );
     final Map? data = json.decode(response.body) as Map?;
     if (data == null) return [];
     return data.keys.map((key) => _id<I>(key as String)).toList();

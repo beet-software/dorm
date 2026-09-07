@@ -26,8 +26,10 @@ Pass the resulting `UserData` to `put` together with `UserDependency`:
 
 ```dart
 final User created = await dorm.users.repository.put(
-  const UserDependency(),
-  userDataFromInput(input),
+  Creation.auto(
+    dependency: const UserDependency(),
+    data: userDataFromInput(input),
+  ),
 );
 ```
 

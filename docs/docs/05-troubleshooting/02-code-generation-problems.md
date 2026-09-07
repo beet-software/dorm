@@ -107,9 +107,9 @@ Separate these cases:
 
 1. A source declaration that violates generator validation fails during
    `build_runner`.
-2. A generated composite-key entity can reach an engine operation, but BLoC
-   and MySQL reject automatic `put` because that operation has no explicit
-   identity argument.
+2. A generated composite-key repository accepts only explicit creation. A
+   `Creation.auto` call is rejected by the static type system; a call that
+   bypasses that type reaches the engine's runtime `UnsupportedError` guard.
 3. Firebase reference operations require identities that are `String` values.
 
 Use [Identity and dependencies](../03-understand/02-identity-and-dependencies.md)

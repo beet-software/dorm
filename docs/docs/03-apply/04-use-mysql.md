@@ -84,8 +84,10 @@ Once the connection and tables exist, the generated repository calls are the sam
 
 ```dart
 final User user = await dorm.users.repository.put(
-  const UserDependency(),
-  userData,
+  Creation.auto(
+    dependency: const UserDependency(),
+    data: userData,
+  ),
 );
 
 final List<User> users = await dorm.users.repository.peekAll(
@@ -131,8 +133,10 @@ This internal behavior does not change the repository method signatures. Handle 
 ```dart
 try {
   await dorm.products.repository.put(
-    const ProductDependency(),
-    productData,
+    Creation.auto(
+      dependency: const ProductDependency(),
+      data: productData,
+    ),
   );
 } catch (error, stackTrace) {
   print('MySQL operation failed: $error');

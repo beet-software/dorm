@@ -303,13 +303,12 @@ class SchoolEntity implements Entity<SchoolData, School> {
 
   // This represents the CREATE method, see the previous section
   @override
-  School fromData(SchoolDependency dependency, String id, SchoolData data) {
+  School fromData(ResolvedCreation<SchoolData, String> creation) {
     return School(
-      // Choose your primary key strategy here
-      id: id,
-      name: data.name,
-      phoneNumber: data.phoneNumber,
-      address: data.address,
+      id: creation.id,
+      name: creation.data.name,
+      phoneNumber: creation.data.phoneNumber,
+      address: creation.data.address,
     );
   }
 }
@@ -395,9 +394,12 @@ void main() {
 
   // Create a model
   school = controller.fromData(
-    SchoolDependency(),
-    '123456',
-    SchoolData(name: 'School'),
+    ResolvedCreation(
+      dependency: SchoolDependency(),
+      id: '123456',
+      data: SchoolData(name: 'School'),
+      wasGenerated: false,
+    ),
   );
 
   // Update a model
@@ -414,40 +416,48 @@ This class provides a `repository` field you can use to access all the CRUD meth
 
 There are two methods available for creating: `put` and `putAll`.
 
-The `put` method receives a dependency of an object and its data. Its primary concept is
-to create a new row on the table. It returns the created model:
+The `put` method receives a `Creation` object containing a dependency, data,
+and identity request. Its primary concept is to create a new row on the table.
+It returns the created model:
 
 ```dart
 void main(Repository<SchoolData, School> repository) async {
   final School school = await repository.put(
-    const SchoolDependency(),
-    SchoolData(
-      name: 'Harmony Academy',
-      phoneNumber: '(555) 123-4567',
-      address: '123 Main Street, Anytown, USA',
+    Creation.auto(
+      dependency: const SchoolDependency(),
+      data: SchoolData(
+        name: 'Harmony Academy',
+        phoneNumber: '(555) 123-4567',
+        address: '123 Main Street, Anytown, USA',
+      ),
     ),
   );
 }
 ```
 
-The `putAll` method receives a dependency of an object and a collection of data. If
-you have more than two or more data views that share the same dependency, this method is
-preferred rather than calling `put` repeatedly. It returns the created models:
+The `putAll` method receives one `Creation` object per model. Each item can
+have its own dependency, data, and identity request. It returns the created
+models:
 
 ```dart
 void main(Repository<SchoolData, School> repository) async {
   final List<School> schools = await repository.putAll(
-    const SchoolDependency(),
     [
-      SchoolData(
-        name: 'Oakwood High School',
-        phoneNumber: '(555) 987-6543',
-        address: '456 Elm Avenue, Springfield, USA',
+      Creation.auto(
+        dependency: const SchoolDependency(),
+        data: SchoolData(
+          name: 'Oakwood High School',
+          phoneNumber: '(555) 987-6543',
+          address: '456 Elm Avenue, Springfield, USA',
+        ),
       ),
-      SchoolData(
-        name: 'Maplewood Elementary',
-        phoneNumber: '(555) 555-5555',
-        address: '789 Oak Street, Willowbrook, USA',
+      Creation.auto(
+        dependency: const SchoolDependency(),
+        data: SchoolData(
+          name: 'Maplewood Elementary',
+          phoneNumber: '(555) 555-5555',
+          address: '789 Oak Street, Willowbrook, USA',
+        ),
       ),
     ],
   );

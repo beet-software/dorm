@@ -13,7 +13,7 @@ Map<String, Object?> _data(Map<String, dynamic> document) {
 }
 
 List<Object?> _keyValues<Data, Model extends Data, I extends Object>(
-  Entity<Data, Model, I> entity,
+  Entity<Data, Model, I, Creation<Data, I>> entity,
   I id,
 ) {
   final List<Object?> values = entity.primaryKeyCodec.encode(id);
@@ -56,7 +56,7 @@ Map<String, Object?> _keysSelector(
 }
 
 Map<String, dynamic> _withIdentity<Data, Model extends Data, I extends Object>(
-  Entity<Data, Model, I> entity,
+  Entity<Data, Model, I, Creation<Data, I>> entity,
   Model model,
 ) {
   final Map<String, dynamic> data = _document(entity.toJson(model));
@@ -79,12 +79,12 @@ class Reference implements BaseReference<Query> {
     Data,
     Model extends Data,
     I extends Object
-  >(Entity<Data, Model, I> entity, I id) {
+  >(Entity<Data, Model, I, Creation<Data, I>> entity, I id) {
     return _document(_keySelector(entity.schema, _keyValues(entity, id)));
   }
 
   Future<Model?> _decodeOne<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     Map<String, dynamic>? document,
   ) async {
     if (document == null) return null;
@@ -96,7 +96,7 @@ class Reference implements BaseReference<Query> {
   }
 
   Future<List<Model>> _find<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     Query query,
   ) async {
     final Stream<Map<String, dynamic>> documents = _collection(entity.schema)
@@ -117,7 +117,7 @@ class Reference implements BaseReference<Query> {
     Data,
     Model extends Data,
     I extends Object
-  >(Entity<Data, Model, I> entity, Query query) async {
+  >(Entity<Data, Model, I, Creation<Data, I>> entity, Query query) async {
     final Map<String, Object> projection = {
       for (final FieldSchema field in entity.schema.keyFields)
         field.columnName: 1,
@@ -142,7 +142,7 @@ class Reference implements BaseReference<Query> {
 
   @override
   Future<Model?> peek<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     I id,
   ) async {
     final Map<String, dynamic>? document = await _collection(
@@ -153,7 +153,7 @@ class Reference implements BaseReference<Query> {
 
   @override
   Future<List<Model>> peekAll<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     BaseFilter<Query> filter,
   ) {
     return _find(entity, filter.accept(Query(schema: entity.schema)));
@@ -161,7 +161,7 @@ class Reference implements BaseReference<Query> {
 
   @override
   Future<List<I>> peekAllKeys<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
   ) async {
     final List<List<Object?>> values = await _findKeys(
       entity,
@@ -175,7 +175,7 @@ class Reference implements BaseReference<Query> {
 
   @override
   Future<void> pop<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     I id,
   ) async {
     await _collection(entity.schema).deleteOne(_selectorForId(entity, id));
@@ -183,7 +183,7 @@ class Reference implements BaseReference<Query> {
 
   @override
   Future<void> popKeys<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     Iterable<I> ids,
   ) async {
     final List<List<Object?>> values = [
@@ -197,7 +197,7 @@ class Reference implements BaseReference<Query> {
 
   @override
   Future<void> popAll<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     BaseFilter<Query> filter,
   ) async {
     final Query query = filter.accept(Query(schema: entity.schema));
@@ -216,7 +216,7 @@ class Reference implements BaseReference<Query> {
 
   @override
   Future<void> push<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     Model model,
   ) async {
     await _collection(entity.schema).replaceOne(
@@ -228,7 +228,7 @@ class Reference implements BaseReference<Query> {
 
   @override
   Future<void> pushAll<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     List<Model> models,
   ) async {
     final DbCollection collection = _collection(entity.schema);
@@ -243,7 +243,7 @@ class Reference implements BaseReference<Query> {
 
   @override
   Future<void> patch<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     I id,
     Model? Function(Model?) update,
   ) async {
@@ -257,38 +257,33 @@ class Reference implements BaseReference<Query> {
   }
 
   @override
-  Future<Model> put<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
-    Dependency<Data> dependency,
-    Data data,
+  Future<Model> put<
+    Data,
+    Model extends Data,
+    I extends Object,
+    C extends Creation<Data, I>
+  >(
+    Entity<Data, Model, I, C> entity,
+    C creation,
   ) async {
-    if (entity.schema.isCompositePrimaryKey) {
-      throw UnsupportedError(
-        'MongoDB put requires an explicitly identified model for composite '
-        'primary keys; use push instead.',
-      );
-    }
-    final I id = const Uuid().v4() as I;
-    final Model model = entity.fromData(dependency, id, data);
+    final Model model = entity.fromData(_resolveCreation(entity, creation));
     await _collection(entity.schema).insertOne(_withIdentity(entity, model));
     return model;
   }
 
   @override
-  Future<List<Model>> putAll<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
-    Dependency<Data> dependency,
-    List<Data> datum,
+  Future<List<Model>> putAll<
+    Data,
+    Model extends Data,
+    I extends Object,
+    C extends Creation<Data, I>
+  >(
+    Entity<Data, Model, I, C> entity,
+    List<C> creations,
   ) async {
-    if (entity.schema.isCompositePrimaryKey) {
-      throw UnsupportedError(
-        'MongoDB put requires an explicitly identified model for composite '
-        'primary keys; use push instead.',
-      );
-    }
     final List<Model> models = [
-      for (final Data data in datum)
-        entity.fromData(dependency, const Uuid().v4() as I, data),
+      for (final C creation in creations)
+        entity.fromData(_resolveCreation(entity, creation)),
     ];
     if (models.isNotEmpty) {
       await _collection(entity.schema).insertMany([
@@ -298,16 +293,88 @@ class Reference implements BaseReference<Query> {
     return models;
   }
 
+  ResolvedCreation<Data, I> _resolveCreation<
+    Data,
+    Model extends Data,
+    I extends Object
+  >(Entity<Data, Model, I, Creation<Data, I>> entity, Creation<Data, I> creation) {
+    return switch (creation.identity) {
+      AutoIdentity<I>() => _resolveAutoCreation(entity, creation),
+      ExplicitIdentity<I>(:final value) => _resolveExplicitCreation(
+        entity,
+        creation,
+        value,
+      ),
+    };
+  }
+
+  ResolvedCreation<Data, I> _resolveExplicitCreation<
+    Data,
+    Model extends Data,
+    I extends Object
+  >(Entity<Data, Model, I, Creation<Data, I>> entity, Creation<Data, I> creation, I id) {
+    _validateIdentity(entity, id);
+    return ResolvedCreation(
+      dependency: creation.dependency,
+      data: creation.data,
+      id: id,
+      wasGenerated: false,
+    );
+  }
+
+  ResolvedCreation<Data, I> _resolveAutoCreation<
+    Data,
+    Model extends Data,
+    I extends Object
+  >(Entity<Data, Model, I, Creation<Data, I>> entity, Creation<Data, I> creation) {
+    if (entity.schema.isCompositePrimaryKey ||
+        !entity.supportsAutomaticIdentity) {
+      throw UnsupportedError(
+        'MongoDB creation requires an explicit identity for this entity.',
+      );
+    }
+    return ResolvedCreation(
+      dependency: creation.dependency,
+      data: creation.data,
+      id: const Uuid().v4() as I,
+      wasGenerated: true,
+    );
+  }
+
+  void _validateIdentity<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    I id,
+  ) {
+    final List<Object?> values;
+    try {
+      values = entity.primaryKeyCodec.encode(id);
+    } catch (_) {
+      throw ArgumentError.value(
+        id,
+        'identity',
+        'Identity cannot be encoded for this schema.',
+      );
+    }
+    if (values.length != entity.schema.keyFields.length) {
+      throw ArgumentError.value(
+        id,
+        'identity',
+        'Identity has ${values.length} values, but the schema requires '
+            '${entity.schema.keyFields.length}.',
+      );
+    }
+  }
+
   @override
   Future<void> purge<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
   ) async {
     await _collection(entity.schema).deleteMany({});
   }
 
   @override
   Stream<Model?> pull<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     I id,
   ) async* {
     yield await peek(entity, id);
@@ -315,7 +382,7 @@ class Reference implements BaseReference<Query> {
 
   @override
   Stream<List<Model>> pullAll<Data, Model extends Data, I extends Object>(
-    Entity<Data, Model, I> entity,
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     BaseFilter<Query> filter,
   ) async* {
     yield await peekAll(entity, filter);

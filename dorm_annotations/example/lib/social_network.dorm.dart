@@ -86,7 +86,9 @@ class UserFields {
   );
 }
 
-class UserEntity implements Entity<UserData, User, String> {
+class UserEntity
+    implements
+        Entity<UserData, User, String, SimpleCreation<UserData, String>> {
   const UserEntity();
 
   static const UserFields fields = UserFields();
@@ -105,13 +107,16 @@ class UserEntity implements Entity<UserData, User, String> {
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  User fromData(UserDependency dependency, String id, UserData data) {
+  bool get supportsAutomaticIdentity => true;
+
+  @override
+  User fromData(ResolvedCreation<UserData, String> creation) {
     return User(
-      id: id,
-      name: data.name,
-      birthDate: data.birthDate,
-      email: data.email,
-      pictureUrl: data.pictureUrl,
+      id: creation.id,
+      name: creation.data.name,
+      birthDate: creation.data.birthDate,
+      email: creation.data.email,
+      pictureUrl: creation.data.pictureUrl,
     );
   }
 
@@ -211,7 +216,9 @@ class PostFields {
   );
 }
 
-class PostEntity implements Entity<PostData, Post, String> {
+class PostEntity
+    implements
+        Entity<PostData, Post, String, SimpleCreation<PostData, String>> {
   const PostEntity();
 
   static const PostFields fields = PostFields();
@@ -230,12 +237,15 @@ class PostEntity implements Entity<PostData, Post, String> {
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  Post fromData(PostDependency dependency, String id, PostData data) {
+  bool get supportsAutomaticIdentity => true;
+
+  @override
+  Post fromData(ResolvedCreation<PostData, String> creation) {
     return Post(
-      id: id,
-      contents: data.contents,
-      creationDate: data.creationDate,
-      userId: dependency.userId,
+      id: creation.id,
+      contents: creation.data.contents,
+      creationDate: creation.data.creationDate,
+      userId: (creation.dependency as PostDependency).userId,
     );
   }
 
@@ -350,7 +360,14 @@ class MessageFields {
   );
 }
 
-class MessageEntity implements Entity<MessageData, Message, String> {
+class MessageEntity
+    implements
+        Entity<
+          MessageData,
+          Message,
+          String,
+          SimpleCreation<MessageData, String>
+        > {
   const MessageEntity();
 
   static const MessageFields fields = MessageFields();
@@ -374,13 +391,16 @@ class MessageEntity implements Entity<MessageData, Message, String> {
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  Message fromData(MessageDependency dependency, String id, MessageData data) {
+  bool get supportsAutomaticIdentity => true;
+
+  @override
+  Message fromData(ResolvedCreation<MessageData, String> creation) {
     return Message(
-      id: id,
-      contents: data.contents,
-      creationDate: data.creationDate,
-      senderId: dependency.senderId,
-      receiverId: dependency.receiverId,
+      id: creation.id,
+      contents: creation.data.contents,
+      creationDate: creation.data.creationDate,
+      senderId: (creation.dependency as MessageDependency).senderId,
+      receiverId: (creation.dependency as MessageDependency).receiverId,
     );
   }
 
@@ -414,14 +434,32 @@ class Dorm {
 
   final BaseEngine<Query> _engine;
 
-  DatabaseEntity<UserData, User, String, Query> get users =>
-      DatabaseEntity(const UserEntity(), engine: _engine);
+  DatabaseEntity<
+    UserData,
+    User,
+    String,
+    Query,
+    SimpleCreation<UserData, String>
+  >
+  get users => DatabaseEntity(const UserEntity(), engine: _engine);
 
-  DatabaseEntity<PostData, Post, String, Query> get post =>
-      DatabaseEntity(const PostEntity(), engine: _engine);
+  DatabaseEntity<
+    PostData,
+    Post,
+    String,
+    Query,
+    SimpleCreation<PostData, String>
+  >
+  get post => DatabaseEntity(const PostEntity(), engine: _engine);
 
-  DatabaseEntity<MessageData, Message, String, Query> get messages =>
-      DatabaseEntity(const MessageEntity(), engine: _engine);
+  DatabaseEntity<
+    MessageData,
+    Message,
+    String,
+    Query,
+    SimpleCreation<MessageData, String>
+  >
+  get messages => DatabaseEntity(const MessageEntity(), engine: _engine);
 
   DormRelations get relations => DormRelations(this);
 }
