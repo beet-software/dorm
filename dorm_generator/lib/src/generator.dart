@@ -2113,22 +2113,57 @@ class OrmGenerator extends Generator {
     return relations;
   }
 
-  String _relationPathCode(
+  List<cb.Spec> _relationPathSpecs(
     List<ModelNaming> models,
     List<_GeneratedRelation> relations,
   ) {
-    final StringBuffer code = StringBuffer();
-    code.writeln('class DormRelations {');
-    code.writeln('  const DormRelations(this._dorm);');
-    code.writeln('  final Dorm _dorm;');
-    for (final ModelNaming model in models) {
-      code.writeln(
-        '  RelationPath<Dorm, ${model.modelName}, ${model.modelName}, Query> '
-        'get ${model.repositoryName} => RelationPath.root('
-        '_dorm.${model.repositoryName}.repository, context: _dorm);',
-      );
-    }
-    code.writeln('}');
+    final List<cb.Spec> specs = [
+      cb.Class((b) {
+        b.name = 'DormRelations';
+        b.fields.add(
+          cb.Field((b) {
+            b.modifier = cb.FieldModifier.final$;
+            b.type = cb.Reference('Dorm');
+            b.name = '_dorm';
+          }),
+        );
+        b.constructors.add(
+          cb.Constructor((b) {
+            b.constant = true;
+            b.requiredParameters.add(
+              cb.Parameter((b) {
+                b.toThis = true;
+                b.name = '_dorm';
+              }),
+            );
+          }),
+        );
+        b.methods.addAll(
+          models.map(
+            (model) => cb.Method((b) {
+              b.type = cb.MethodType.getter;
+              b.lambda = true;
+              b.name = model.repositoryName;
+              b.returns = _relationPathType(
+                model.modelName,
+                cb.Reference(model.modelName),
+              );
+              b.body = cb.Reference('RelationPath')
+                  .property('root')
+                  .call(
+                    [
+                      expressionOf(
+                        '_dorm',
+                      ).property(model.repositoryName).property('repository'),
+                    ],
+                    {'context': expressionOf('_dorm')},
+                  )
+                  .code;
+            }),
+          ),
+        );
+      }),
+    ];
 
     final Map<String, List<_GeneratedRelation>> grouped = {};
     for (final _GeneratedRelation relation in relations) {
@@ -2142,82 +2177,143 @@ class OrmGenerator extends Generator {
 
       final Set<String> generatedNames = {};
 
-      code.writeln(
-        'extension ${model.modelName}RelationPaths<Root> on '
-        'RelationPath<Dorm, Root, ${model.modelName}, Query> {',
-      );
-      for (final _GeneratedRelation relation in currentRelations) {
-        final bool many = relation.inverse && !relation.unique;
-        final String currentEntity = '${relation.current.modelName}Entity';
-        final String sourceField = relation.inverse
-            ? '$currentEntity.fields.${relation.current.idFieldName}'
-            : '$currentEntity.fields.${relation.fieldName}';
-        final String targetField = relation.inverse
-            ? '${relation.target.modelName}Entity.fields.${relation.fieldName}'
-            : '${relation.target.modelName}Entity.fields.${relation.target.idFieldName}';
-        final String targetRepository =
-            'context.${relation.target.repositoryName}.repository';
-        final String callback = relation.inverse
-            ? 'BaseFilter.value(model.${relation.current.idFieldName}, field: $targetField)'
-            : 'model.${relation.fieldName}';
+      specs.add(
+        cb.Extension((b) {
+          b.name = '${model.modelName}RelationPaths';
+          b.types.add(cb.Reference('Root'));
+          b.on = _relationPathType('Root', cb.Reference(model.modelName));
 
-        void emit({
-          required String name,
-          required String method,
-          required String resultType,
-        }) {
-          if (!generatedNames.add(name)) {
-            throw StateError(
-              'Duplicate generated relationship path "$name" on '
-              '${model.modelName}. Use distinct ForeignField.as or '
-              'ForeignField.inverseAs values.',
-            );
+          for (final _GeneratedRelation relation in currentRelations) {
+            final bool many = relation.inverse && !relation.unique;
+
+            void emit({
+              required String name,
+              required String method,
+              required cb.Reference resultType,
+            }) {
+              if (!generatedNames.add(name)) {
+                throw StateError(
+                  'Duplicate generated relationship path "$name" on '
+                  '${model.modelName}. Use distinct ForeignField.as or '
+                  'ForeignField.inverseAs values.',
+                );
+              }
+              b.methods.add(
+                cb.Method((b) {
+                  b.type = cb.MethodType.getter;
+                  b.name = name;
+                  b.returns = _relationPathType('Root', resultType);
+                  b.body = _relationPathCall(
+                    relation,
+                    method: method,
+                    many: many,
+                  ).returned.statement;
+                }),
+              );
+            }
+
+            if (many) {
+              emit(
+                name: relation.name,
+                method: 'toMany',
+                resultType: cb.Reference(relation.target.modelName),
+              );
+              emit(
+                name: '${relation.name}OrEmpty',
+                method: 'toManyOrEmpty',
+                resultType: _listType(relation.target.modelName),
+              );
+            } else {
+              emit(
+                name: relation.name,
+                method: 'toOne',
+                resultType: cb.Reference(relation.target.modelName),
+              );
+              emit(
+                name: '${relation.name}OrNull',
+                method: 'toOneOrNull',
+                resultType: cb.TypeReference((b) {
+                  b.symbol = relation.target.modelName;
+                  b.isNullable = true;
+                }),
+              );
+            }
           }
-          code.writeln(
-            '  RelationPath<Dorm, Root, $resultType, Query> '
-            'get $name {',
-          );
-          code.writeln('    return $method(');
-          code.writeln('      $targetRepository,');
-          code.writeln('      spec: RelationSpec(');
-          code.writeln(
-            '        cardinality: RelationCardinality.${many ? 'many' : 'one'},',
-          );
-          code.writeln('        source: $sourceField,');
-          code.writeln('        target: $targetField,');
-          code.writeln('      ),');
-          code.writeln('      on: (model) => $callback,');
-          code.writeln('    );');
-          code.writeln('  }');
-        }
-
-        if (many) {
-          emit(
-            name: relation.name,
-            method: 'toMany',
-            resultType: relation.target.modelName,
-          );
-          emit(
-            name: '${relation.name}OrEmpty',
-            method: 'toManyOrEmpty',
-            resultType: 'List<${relation.target.modelName}>',
-          );
-        } else {
-          emit(
-            name: relation.name,
-            method: 'toOne',
-            resultType: relation.target.modelName,
-          );
-          emit(
-            name: '${relation.name}OrNull',
-            method: 'toOneOrNull',
-            resultType: '${relation.target.modelName}?',
-          );
-        }
-      }
-      code.writeln('}');
+        }),
+      );
     }
-    return code.toString();
+    return specs;
+  }
+
+  cb.Reference _relationPathType(String rootType, cb.Reference resultType) {
+    return cb.TypeReference((b) {
+      b.symbol = 'RelationPath';
+      b.types.addAll([
+        cb.Reference('Dorm'),
+        cb.Reference(rootType),
+        resultType,
+        cb.Reference('Query'),
+      ]);
+    });
+  }
+
+  cb.Reference _listType(String type) {
+    return cb.TypeReference((b) {
+      b.symbol = 'List';
+      b.types.add(cb.Reference(type));
+    });
+  }
+
+  cb.Expression _relationPathCall(
+    _GeneratedRelation relation, {
+    required String method,
+    required bool many,
+  }) {
+    final String currentEntity = '${relation.current.modelName}Entity';
+    final cb.Expression sourceField = cb.Reference(currentEntity)
+        .property('fields')
+        .property(
+          relation.inverse ? relation.current.idFieldName : relation.fieldName,
+        );
+    final cb.Expression targetField =
+        cb.Reference('${relation.target.modelName}Entity')
+            .property('fields')
+            .property(
+              relation.inverse
+                  ? relation.fieldName
+                  : relation.target.idFieldName,
+            );
+    final cb.Expression targetRepository = expressionOf(
+      'context',
+    ).property(relation.target.repositoryName).property('repository');
+    final cb.Expression callbackExpression = relation.inverse
+        ? cb.Reference('BaseFilter')
+              .property('value')
+              .call(
+                [expressionOf('model').property(relation.current.idFieldName)],
+                {'field': targetField},
+              )
+        : expressionOf('model').property(relation.fieldName);
+    final cb.Expression callback = cb.Method((b) {
+      b.lambda = true;
+      b.requiredParameters.add(
+        cb.Parameter((b) {
+          b.name = 'model';
+        }),
+      );
+      b.body = callbackExpression.code;
+    }).closure;
+
+    final cb.Expression spec = cb.Reference('RelationSpec').newInstance([], {
+      'cardinality': cb.Reference(
+        'RelationCardinality',
+      ).property(many ? 'many' : 'one'),
+      'source': sourceField,
+      'target': targetField,
+    });
+    return cb.Reference(
+      method,
+    ).call([targetRepository], {'spec': spec, 'on': callback});
   }
 
   @override
@@ -2438,7 +2534,7 @@ class OrmGenerator extends Generator {
           }),
         );
         if (relations.isNotEmpty) {
-          b.body.add(cb.Code(_relationPathCode(modelsNamings, relations)));
+          b.body.addAll(_relationPathSpecs(modelsNamings, relations));
         }
       }
     });

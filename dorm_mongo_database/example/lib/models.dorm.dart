@@ -235,9 +235,12 @@ class Dorm {
 
 class DormRelations {
   const DormRelations(this._dorm);
+
   final Dorm _dorm;
+
   RelationPath<Dorm, User, User, Query> get users =>
       RelationPath.root(_dorm.users.repository, context: _dorm);
+
   RelationPath<Dorm, Post, Post, Query> get posts =>
       RelationPath.root(_dorm.posts.repository, context: _dorm);
 }

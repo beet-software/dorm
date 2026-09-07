@@ -941,17 +941,24 @@ class Dorm {
 
 class DormRelations {
   const DormRelations(this._dorm);
+
   final Dorm _dorm;
+
   RelationPath<Dorm, School, School, Query> get schools =>
       RelationPath.root(_dorm.schools.repository, context: _dorm);
+
   RelationPath<Dorm, Student, Student, Query> get students =>
       RelationPath.root(_dorm.students.repository, context: _dorm);
+
   RelationPath<Dorm, Teacher, Teacher, Query> get teachers =>
       RelationPath.root(_dorm.teachers.repository, context: _dorm);
+
   RelationPath<Dorm, History, History, Query> get histories =>
       RelationPath.root(_dorm.histories.repository, context: _dorm);
+
   RelationPath<Dorm, Teaching, Teaching, Query> get teachings =>
       RelationPath.root(_dorm.teachings.repository, context: _dorm);
+
   RelationPath<Dorm, Class, Class, Query> get classes =>
       RelationPath.root(_dorm.classes.repository, context: _dorm);
 }

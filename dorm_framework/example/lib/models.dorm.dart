@@ -922,15 +922,21 @@ class Dorm {
 
 class DormRelations {
   const DormRelations(this._dorm);
+
   final Dorm _dorm;
+
   RelationPath<Dorm, User, User, Query> get users =>
       RelationPath.root(_dorm.users.repository, context: _dorm);
+
   RelationPath<Dorm, Product, Product, Query> get products =>
       RelationPath.root(_dorm.products.repository, context: _dorm);
+
   RelationPath<Dorm, Cart, Cart, Query> get carts =>
       RelationPath.root(_dorm.carts.repository, context: _dorm);
+
   RelationPath<Dorm, CartItem, CartItem, Query> get cartItems =>
       RelationPath.root(_dorm.cartItems.repository, context: _dorm);
+
   RelationPath<Dorm, Review, Review, Query> get reviews =>
       RelationPath.root(_dorm.reviews.repository, context: _dorm);
 }
