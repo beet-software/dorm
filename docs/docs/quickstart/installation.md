@@ -37,7 +37,6 @@ Each package has a separate role in the application:
 ```shell title="Add code-generation packages"
 dart pub add --dev dorm_generator
 dart pub add --dev build_runner
-dart pub add --dev json_serializable
 ```
 
 These packages are used during generation:
@@ -45,15 +44,14 @@ These packages are used during generation:
 | Package | Why it is a development dependency |
 | --- | --- |
 | [`dorm_generator`](https://pub.dev/packages/dorm_generator) | Generates dORM model, entity, repository, and `Dorm` types from the annotated source. |
-| [`build_runner`](https://pub.dev/packages/build_runner) | Runs the dORM and JSON builders in the application project. |
-| [`json_serializable`](https://pub.dev/packages/json_serializable) | Generates the JSON conversion helpers used by the generated model types. |
+| [`build_runner`](https://pub.dev/packages/build_runner) | Runs the dORM builder and the builders it applies in the application project. |
 
 !!! note
     The source imports `dorm_annotations`, and that barrel reexports
     `json_annotation`. The generated part therefore resolves its JSON
-    annotations through the import already present in `models.dart`.
-    `json_serializable` remains a development dependency because its builder
-    still generates `models.g.dart`.
+    annotations through the import already present in `models.dart`. The
+    `dorm_generator` package applies the `json_serializable` builder when
+    generation runs, so the application does not declare that builder directly.
 
 The same applies to generated `copyWith` support. Do not add
 `copy_with_extension` or `copy_with_extension_gen` to this project. The

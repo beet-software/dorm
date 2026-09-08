@@ -11,6 +11,7 @@ builders:
       - json_serializable|json_serializable
       - copy_with_extension_gen|copy_with_extension_gen
     applies_builders:
+      - json_serializable|json_serializable
       - copy_with_extension_gen|copy_with_extension_gen
     builder_factories:
       - generateOrm

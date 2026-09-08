@@ -19,7 +19,6 @@ dependencies:
 dev_dependencies:
   lints: ^5.0.0
   build_runner: ^2.4.3
-  json_serializable: ^6.7.1
   dorm_generator:
     path: ../../dorm_generator
 

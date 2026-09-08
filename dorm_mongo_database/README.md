@@ -15,7 +15,6 @@ dart pub add dorm_mongo_database
 dart pub add mongo_dart
 dart pub add dev:dorm_generator
 dart pub add dev:build_runner
-dart pub add dev:json_serializable
 ```
 
 Open a `mongo_dart` `Db` in the application and pass it to `Engine`:
