@@ -1,0 +1,15 @@
+.highlight {
+  position: relative;
+}
+
+.highlight .filename {
+  display: block;
+  padding: 0.55rem 0.9rem;
+  border-bottom: 1px solid #d9d9d9;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.highlight pre {
+  margin-top: 0;
+}
