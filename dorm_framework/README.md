@@ -400,7 +400,7 @@ void main() {
       dependency: SchoolDependency(),
       id: '123456',
       data: SchoolData(name: 'School'),
-      wasGenerated: false,
+      identitySource: CreationIdentitySource.explicit,
     ),
   );
 
@@ -419,7 +419,7 @@ This class provides a `repository` field you can use to access all the CRUD meth
 There are two methods available for creating: `put` and `putAll`.
 
 The `put` method receives a `Creation` object containing a dependency, data,
-and identity request. Its primary concept is to create a new row on the table.
+and identity strategy. Its primary concept is to create a new row on the table.
 It returns the created model:
 
 ```dart
@@ -438,7 +438,7 @@ void main(Repository<SchoolData, School> repository) async {
 ```
 
 The `putAll` method receives one `Creation` object per model. Each item can
-have its own dependency, data, and identity request. It returns the created
+have its own dependency, data, and identity strategy. It returns the created
 models:
 
 ```dart

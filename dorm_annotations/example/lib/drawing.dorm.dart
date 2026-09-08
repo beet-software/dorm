@@ -133,7 +133,8 @@ class DrawingEntity
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  bool get supportsAutomaticIdentity => true;
+  IdentityGenerationStrategy get identityGeneration =>
+      IdentityGenerationStrategy.engine;
 
   @override
   Drawing fromData(ResolvedCreation<DrawingData, String> creation) {

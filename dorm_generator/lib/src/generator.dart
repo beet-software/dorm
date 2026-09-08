@@ -66,12 +66,14 @@ class _PrimaryKeyNaming {
   final String columnName;
   final cb.Reference type;
   final bool generated;
+  final bool databaseGenerated;
 
   const _PrimaryKeyNaming({
     required this.fieldName,
     required this.columnName,
     required this.type,
     required this.generated,
+    this.databaseGenerated = false,
   });
 }
 
@@ -137,6 +139,16 @@ class ModelNaming extends Naming<ModelOrmNode> {
         }),
         generated: true,
       ),
+      DatabaseGeneratedIdSpec generated => _PrimaryKeyNaming(
+        fieldName: _symbolName(generated.as) ?? 'id',
+        columnName: generated.name,
+        type: cb.Reference(switch (generated.type) {
+          $Type type => type.name ?? 'String',
+          _ => generated.type.toString(),
+        }),
+        generated: true,
+        databaseGenerated: true,
+      ),
       ExistingIdSpec existing => _existingPrimaryKey(existing),
     };
   }
@@ -191,7 +203,19 @@ class ModelNaming extends Naming<ModelOrmNode> {
   bool get isCompositePrimaryKey => _primaryKeys.length > 1;
 
   bool get isGeneratedPrimaryKey =>
-      _primaryKeys.length == 1 && _primaryKeys.single.generated;
+      _primaryKeys.length == 1 &&
+      _primaryKeys.single.generated &&
+      !_primaryKeys.single.databaseGenerated;
+
+  bool get isDatabaseGeneratedPrimaryKey =>
+      _primaryKeys.length == 1 && _primaryKeys.single.databaseGenerated;
+
+  String get identityGenerationStrategy =>
+      switch ((isDatabaseGeneratedPrimaryKey, isGeneratedPrimaryKey)) {
+        (true, _) => 'database',
+        (false, true) => 'engine',
+        (false, false) => 'explicit',
+      };
 
   List<String> get primaryKeyFieldNames =>
       _primaryKeys.map((key) => key.fieldName).toList();
@@ -810,7 +834,7 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
       ],
     );
     return expressionOf(
-      'creation.wasGenerated',
+      'creation.identitySource == CreationIdentitySource.generated',
     ).conditional(generated, expressionOf('creation.id'));
   }
 
@@ -1281,11 +1305,13 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
       b.methods.add(
         cb.Method((b) {
           b.annotations.add(expressionOf('override'));
-          b.returns = cb.Reference('bool');
-          b.name = 'supportsAutomaticIdentity';
+          b.returns = cb.Reference('IdentityGenerationStrategy', '$_dormUrl');
+          b.name = 'identityGeneration';
           b.type = cb.MethodType.getter;
           b.lambda = true;
-          b.body = cb.literalBool(naming.isGeneratedPrimaryKey).code;
+          b.body = expressionOf(
+            'IdentityGenerationStrategy.${naming.identityGenerationStrategy}',
+          ).code;
         }),
       );
       b.fields.insertAll(0, [
@@ -1538,7 +1564,9 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
           includesPrimaryKey: false,
           primaryKeyType: naming.idReference,
           primaryKeyNames: naming.primaryKeyFieldNames,
-          primaryKeyIsGenerated: naming.isGeneratedPrimaryKey,
+          primaryKeyIsGenerated:
+              naming.isGeneratedPrimaryKey ||
+              naming.isDatabaseGeneratedPrimaryKey,
           supportsSerialization: true,
           extendsReference: null,
           implementsReferences: [],
@@ -1557,8 +1585,12 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
           includesPrimaryKey: true,
           primaryKeyType: naming.idReference,
           primaryKeyNames: naming.primaryKeyFieldNames,
-          primaryKeyIsGenerated: naming.isGeneratedPrimaryKey,
-          includeExistingPrimaryKey: !naming.isGeneratedPrimaryKey,
+          primaryKeyIsGenerated:
+              naming.isGeneratedPrimaryKey ||
+              naming.isDatabaseGeneratedPrimaryKey,
+          includeExistingPrimaryKey:
+              !naming.isGeneratedPrimaryKey &&
+              !naming.isDatabaseGeneratedPrimaryKey,
           supportsSerialization: true,
           extendsReference: cb.Reference(naming.dataName),
           implementsReferences: [cb.Reference(naming.schemaName)],
@@ -1997,6 +2029,11 @@ class OrmGenerator extends Generator {
               '${naming.schemaName} supports only ExistingIdSpec parts for '
               'composite primary keys.',
             );
+          case DatabaseGeneratedIdSpec():
+            throw StateError(
+              '${naming.schemaName} supports only ExistingIdSpec parts for '
+              'composite primary keys.',
+            );
         }
       }
       final List<String> names = naming.primaryKeyFieldNames;
@@ -2020,34 +2057,66 @@ class OrmGenerator extends Generator {
         }
         return;
       case GeneratedIdSpec spec:
-        final String? propertyName = _symbolName(spec.as);
-        final String? typeName = switch (spec.type) {
-          $Type type => type.name,
-          _ => spec.type.toString(),
-        };
-        if (propertyName == null || propertyName.isEmpty) {
+        _validateGeneratedPrimaryKeySpec(
+          naming,
+          fields,
+          as: spec.as,
+          name: spec.name,
+          type: spec.type,
+        );
+        return;
+      case DatabaseGeneratedIdSpec spec:
+        if (naming.node.annotation.primaryKeyGenerator != null) {
           throw StateError(
-            '${naming.schemaName} has a GeneratedIdSpec without a valid Dart '
-            'property name.',
+            '${naming.schemaName} cannot use primaryKeyGenerator with a '
+            'DatabaseGeneratedIdSpec.',
           );
         }
-        if (spec.name.isEmpty) {
-          throw StateError(
-            '${naming.schemaName} has a GeneratedIdSpec without a storage name.',
-          );
-        }
-        if (typeName == null || typeName.endsWith('?')) {
-          throw StateError(
-            '${naming.schemaName} has a nullable or unresolved generated '
-            'primary-key type.',
-          );
-        }
-        if (fields.containsKey(propertyName)) {
-          throw StateError(
-            '${naming.schemaName} declares a field named $propertyName, which '
-            'conflicts with its generated primary key.',
-          );
-        }
+        _validateGeneratedPrimaryKeySpec(
+          naming,
+          fields,
+          as: spec.as,
+          name: spec.name,
+          type: spec.type,
+        );
+    }
+  }
+
+  void _validateGeneratedPrimaryKeySpec(
+    ModelNaming naming,
+    Map<String, FieldOrmNode> fields, {
+    required Symbol as,
+    required String name,
+    required Type type,
+  }) {
+    final String? propertyName = _symbolName(as);
+    final String? typeName = switch (type) {
+      $Type value => value.name,
+      _ => type.toString(),
+    };
+    if (propertyName == null || propertyName.isEmpty) {
+      throw StateError(
+        '${naming.schemaName} has a generated identity specification without '
+        'a valid Dart property name.',
+      );
+    }
+    if (name.isEmpty) {
+      throw StateError(
+        '${naming.schemaName} has a generated identity specification without '
+        'a storage name.',
+      );
+    }
+    if (typeName == null || typeName.endsWith('?')) {
+      throw StateError(
+        '${naming.schemaName} has a nullable or unresolved generated '
+        'primary-key type.',
+      );
+    }
+    if (fields.containsKey(propertyName)) {
+      throw StateError(
+        '${naming.schemaName} declares a field named $propertyName, which '
+        'conflicts with its generated primary key.',
+      );
     }
   }
 
@@ -2611,9 +2680,11 @@ class OrmGenerator extends Generator {
               cb.Method((b) {
                 b.name = 'transaction';
                 b.lambda = true;
-                b.types.add(cb.TypeReference((b) {
-                  b.symbol = 'T';
-                }));
+                b.types.add(
+                  cb.TypeReference((b) {
+                    b.symbol = 'T';
+                  }),
+                );
                 b.returns = cb.Reference('Future<T>');
                 b.requiredParameters.add(
                   cb.Parameter((b) {

@@ -59,6 +59,12 @@ contains a primary-key column and the mapped model columns. Foreign fields
 must reference the corresponding target primary-key column when PostgreSQL
 constraints are enabled.
 
+For a database-generated identity, define the key column with PostgreSQL's
+identity or sequence-backed syntax and annotate the model with
+`DatabaseGeneratedIdSpec`. Do not include that column in the `Data` input. The
+engine uses `INSERT ... RETURNING` to obtain the value before returning the
+model.
+
 ## Generate the model API
 
 Declare the model source with `part` directives and run:

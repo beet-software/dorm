@@ -121,9 +121,17 @@ void main() {
 
   test('identity specifications expose their defaults', () {
     const GeneratedIdSpec generated = GeneratedIdSpec();
+    const DatabaseGeneratedIdSpec database = DatabaseGeneratedIdSpec(
+      as: #key,
+      name: 'key',
+      type: int,
+    );
 
     expect(generated.as, #id);
     expect(generated.name, 'id');
     expect(generated.type, String);
+    expect(database.as, #key);
+    expect(database.name, 'key');
+    expect(database.type, int);
   });
 }

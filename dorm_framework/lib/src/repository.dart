@@ -237,7 +237,7 @@ abstract class DataRepository<
   /// Converts each [creation] into a model and inserts the models into their
   /// respective table on the database engine.
   ///
-  /// Each creation may provide its own dependency and identity request.
+  /// Each creation may provide its own dependency and identity strategy.
   Future<List<Model>> putAll(List<C> creations);
 }
 

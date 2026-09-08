@@ -136,6 +136,30 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     return _Statement(sql, params);
   }
 
+  _Statement _insertData<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    Data value,
+  ) {
+    final Map<String, Object?> json = entity.toJson(value);
+    final Set<String> primaryKeyNames = {
+      for (final FieldSchema field in entity.schema.primaryKeys)
+        field.columnName,
+    };
+    final Map<String, Object?> data = {
+      for (final MapEntry<String, Object?> entry in json.entries)
+        if (!primaryKeyNames.contains(entry.key))
+          entry.key: sqliteValue(entry.value),
+    };
+    final List<String> columns = data.keys.toList();
+    final String sql = columns.isEmpty
+        ? 'INSERT INTO ${quoteIdentifier(entity.schema.tableName)} '
+              'DEFAULT VALUES'
+        : 'INSERT INTO ${quoteIdentifier(entity.schema.tableName)} '
+              '(${columns.map(quoteIdentifier).join(', ')}) '
+              'VALUES (${List.filled(columns.length, '?').join(', ')})';
+    return _Statement(sql, data.values.toList());
+  }
+
   @override
   Future<Model?> peek<Data, Model extends Data, I extends Object>(
     Entity<Data, Model, I, Creation<Data, I>> entity,
@@ -308,6 +332,13 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     I extends Object,
     C extends Creation<Data, I>
   >(Entity<Data, Model, I, C> entity, C creation) async {
+    if (creation case AutoCreation<Data, I>()) {
+      if (entity.identityGeneration == IdentityGenerationStrategy.database) {
+        return _writeTransaction((context) {
+          return _putDatabaseGenerated(entity, creation, context);
+        });
+      }
+    }
     final ResolvedCreation<Data, I> resolved = _resolveCreation(
       entity,
       creation,
@@ -320,27 +351,66 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     return model;
   }
 
+  Future<Model> _putDatabaseGenerated<
+    Data,
+    Model extends Data,
+    I extends Object,
+    C extends Creation<Data, I>
+  >(
+    Entity<Data, Model, I, C> entity,
+    C creation,
+    SqliteWriteContext context,
+  ) async {
+    if (entity.schema.isCompositePrimaryKey ||
+        entity.identityGeneration != IdentityGenerationStrategy.database) {
+      throw UnsupportedError(
+        'SQLite database-generated identities require a supported '
+        'single-key entity.',
+      );
+    }
+    final _Statement statement = _insertData(entity, creation.data);
+    await context.execute(statement.sql, statement.params);
+    final Row row = await context.get('SELECT last_insert_rowid() AS id');
+    final I id = entity.primaryKeyCodec.decode([row['id']]);
+    _validateIdentity(entity, id);
+    return entity.fromData(
+      ResolvedCreation(
+        dependency: creation.dependency,
+        data: creation.data,
+        id: id,
+        identitySource: CreationIdentitySource.database,
+      ),
+    );
+  }
+
   @override
   Future<List<Model>> putAll<
     Data,
     Model extends Data,
     I extends Object,
     C extends Creation<Data, I>
-  >(Entity<Data, Model, I, C> entity, List<C> creations) =>
-      _writeTransaction((context) async {
-        final List<Model> models = [];
-        for (final C creation in creations) {
-          final ResolvedCreation<Data, I> resolved = _resolveCreation(
-            entity,
-            creation,
-          );
-          final Model model = entity.fromData(resolved);
-          final _Statement statement = _insert(entity, model, upsert: false);
-          await context.execute(statement.sql, statement.params);
-          models.add(model);
+  >(Entity<Data, Model, I, C> entity, List<C> creations) => _writeTransaction((
+    context,
+  ) async {
+    final List<Model> models = [];
+    for (final C creation in creations) {
+      if (creation case AutoCreation<Data, I>()) {
+        if (entity.identityGeneration == IdentityGenerationStrategy.database) {
+          models.add(await _putDatabaseGenerated(entity, creation, context));
+          continue;
         }
-        return models;
-      });
+      }
+      final ResolvedCreation<Data, I> resolved = _resolveCreation(
+        entity,
+        creation,
+      );
+      final Model model = entity.fromData(resolved);
+      final _Statement statement = _insert(entity, model, upsert: false);
+      await context.execute(statement.sql, statement.params);
+      models.add(model);
+    }
+    return models;
+  });
 
   ResolvedCreation<Data, I> _resolveCreation<
     Data,
@@ -348,15 +418,15 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     I extends Object,
     C extends Creation<Data, I>
   >(Entity<Data, Model, I, C> entity, C creation) {
-    return switch (creation.identity) {
-      AutoIdentity<I>() => _resolveAuto(entity, creation),
-      ExplicitIdentity<I>(:final value) => () {
-        _validateIdentity(entity, value);
+    return switch (creation) {
+      AutoCreation<Data, I>() => _resolveAuto(entity, creation),
+      ExplicitCreation<Data, I>(:final identity) => () {
+        _validateIdentity(entity, identity);
         return ResolvedCreation(
           dependency: creation.dependency,
           data: creation.data,
-          id: value,
-          wasGenerated: false,
+          id: identity,
+          identitySource: CreationIdentitySource.explicit,
         );
       }(),
     };
@@ -368,7 +438,7 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     Creation<Data, I> creation,
   ) {
     if (entity.schema.isCompositePrimaryKey ||
-        !entity.supportsAutomaticIdentity) {
+        entity.identityGeneration != IdentityGenerationStrategy.engine) {
       throw UnsupportedError(
         'SQLite creation requires an explicit identity for this entity.',
       );
@@ -377,7 +447,7 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
       dependency: creation.dependency,
       data: creation.data,
       id: _uuid.v4() as I,
-      wasGenerated: true,
+      identitySource: CreationIdentitySource.generated,
     );
   }
 

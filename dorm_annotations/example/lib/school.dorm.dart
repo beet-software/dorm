@@ -169,12 +169,13 @@ class SchoolEntity
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  bool get supportsAutomaticIdentity => true;
+  IdentityGenerationStrategy get identityGeneration =>
+      IdentityGenerationStrategy.engine;
 
   @override
   School fromData(ResolvedCreation<SchoolData, String> creation) {
     return School(
-      id: creation.wasGenerated
+      id: creation.identitySource == CreationIdentitySource.generated
           ? _School._generate(
               _$School.fromData(
                 creation.dependency as SchoolDependency,
@@ -333,7 +334,8 @@ class StudentEntity
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  bool get supportsAutomaticIdentity => true;
+  IdentityGenerationStrategy get identityGeneration =>
+      IdentityGenerationStrategy.engine;
 
   @override
   Student fromData(ResolvedCreation<StudentData, String> creation) {
@@ -460,7 +462,8 @@ class TeacherEntity
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  bool get supportsAutomaticIdentity => true;
+  IdentityGenerationStrategy get identityGeneration =>
+      IdentityGenerationStrategy.engine;
 
   @override
   Teacher fromData(ResolvedCreation<TeacherData, String> creation) {
@@ -563,7 +566,8 @@ class HistoryEntity
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  bool get supportsAutomaticIdentity => true;
+  IdentityGenerationStrategy get identityGeneration =>
+      IdentityGenerationStrategy.engine;
 
   @override
   History fromData(ResolvedCreation<HistoryData, String> creation) {
@@ -690,7 +694,8 @@ class TeachingEntity
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  bool get supportsAutomaticIdentity => true;
+  IdentityGenerationStrategy get identityGeneration =>
+      IdentityGenerationStrategy.engine;
 
   @override
   Teaching fromData(ResolvedCreation<TeachingData, String> creation) {
@@ -839,7 +844,8 @@ class ClassEntity
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  bool get supportsAutomaticIdentity => true;
+  IdentityGenerationStrategy get identityGeneration =>
+      IdentityGenerationStrategy.engine;
 
   @override
   Class fromData(ResolvedCreation<ClassData, String> creation) {

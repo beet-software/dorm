@@ -85,6 +85,55 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     );
   }
 
+  I _decodeCreatedIdentity<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    Object value,
+  ) {
+    if (entity.schema.isCompositePrimaryKey) {
+      throw const FormatException(
+        'A generated HTTP identity must belong to a single-key entity.',
+      );
+    }
+    try {
+      final I id = entity.primaryKeyCodec.decode([value]);
+      _validateIdentity(entity, id);
+      return id;
+    } catch (error) {
+      if (error is FormatException) rethrow;
+      throw FormatException('The HTTP response contained an invalid identity.');
+    }
+  }
+
+  Model _resolveCreatedItem<
+    Data,
+    Model extends Data,
+    I extends Object,
+    C extends Creation<Data, I>
+  >(Entity<Data, Model, I, C> entity, C creation, HttpCreatedItem item) {
+    return switch (item) {
+      HttpCreatedIdentity(:final value) => entity.fromData(
+        ResolvedCreation(
+          dependency: creation.dependency,
+          data: creation.data,
+          id: _decodeCreatedIdentity(entity, value),
+          identitySource: CreationIdentitySource.database,
+        ),
+      ),
+      HttpCreatedData(:final data) => () {
+        try {
+          final I id = _decodeIdentity(entity, data);
+          _validateIdentity(entity, id);
+          return entity.fromJson(id, data);
+        } catch (error) {
+          if (error is FormatException) rethrow;
+          throw const FormatException(
+            'The HTTP response did not contain a valid identity.',
+          );
+        }
+      }(),
+    };
+  }
+
   Model _decodeModel<Data, Model extends Data, I extends Object>(
     Entity<Data, Model, I, Creation<Data, I>> entity,
     Object? value, {
@@ -114,7 +163,10 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     HttpResourceMapping resource,
   ) {
     final Map<String, Object?> data = {...entity.toJson(model)};
-    if (resource.identityLocation == HttpIdentityLocation.path) return data;
+    if (resource.identityLocation == HttpIdentityLocation.path ||
+        resource.identityLocation == HttpIdentityLocation.none) {
+      return data;
+    }
     final List<Object?> values = entity.primaryKeyCodec.encode(
       entity.identify(model),
     );
@@ -127,21 +179,32 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     return data;
   }
 
+  Map<String, Object?> _bodyForData<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    Data data,
+  ) {
+    final Map<String, Object?> result = {...entity.toJson(data)};
+    for (final FieldSchema field in entity.schema.primaryKeys) {
+      result.remove(field.columnName);
+    }
+    return result;
+  }
+
   ResolvedCreation<Data, I> _resolveCreation<
     Data,
     Model extends Data,
     I extends Object,
     C extends Creation<Data, I>
   >(Entity<Data, Model, I, C> entity, C creation) {
-    return switch (creation.identity) {
-      AutoIdentity<I>() => _resolveAuto(entity, creation),
-      ExplicitIdentity<I>(:final value) => () {
-        _validateIdentity(entity, value);
+    return switch (creation) {
+      AutoCreation<Data, I>() => _resolveAuto(entity, creation),
+      ExplicitCreation<Data, I>(:final identity) => () {
+        _validateIdentity(entity, identity);
         return ResolvedCreation(
           dependency: creation.dependency,
           data: creation.data,
-          id: value,
-          wasGenerated: false,
+          id: identity,
+          identitySource: CreationIdentitySource.explicit,
         );
       }(),
     };
@@ -154,7 +217,7 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     C extends Creation<Data, I>
   >(Entity<Data, Model, I, C> entity, C creation) {
     if (entity.schema.isCompositePrimaryKey ||
-        !entity.supportsAutomaticIdentity) {
+        entity.identityGeneration != IdentityGenerationStrategy.engine) {
       throw UnsupportedError(
         'HTTP creation requires an explicit identity for this entity.',
       );
@@ -163,7 +226,7 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
       dependency: creation.dependency,
       data: creation.data,
       id: const Uuid().v4() as I,
-      wasGenerated: true,
+      identitySource: CreationIdentitySource.generated,
     );
   }
 
@@ -387,6 +450,31 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     I extends Object,
     C extends Creation<Data, I>
   >(Entity<Data, Model, I, C> entity, C creation) async {
+    if (creation is AutoCreation<Data, I> &&
+        entity.identityGeneration == IdentityGenerationStrategy.database) {
+      final HttpResourceMapping resource = _resource(entity.schema);
+      if (resource.identityLocation != HttpIdentityLocation.none) {
+        throw UnsupportedError(
+          'Database-generated HTTP creation requires identityLocation.none.',
+        );
+      }
+      final http.Response response = await _request(
+        resource.create,
+        entity.schema,
+        body: _bodyForData(entity, creation.data),
+      );
+      final Object? body = _decode(response);
+      if (body == null) {
+        throw const FormatException(
+          'The HTTP creation response did not contain an identity.',
+        );
+      }
+      final HttpCreatedItem item = mapping.creationCodec.decode(
+        mapping.jsonCodec.single(body),
+        entity.schema,
+      );
+      return _resolveCreatedItem<Data, Model, I, C>(entity, creation, item);
+    }
     final ResolvedCreation<Data, I> resolved = _resolveCreation(
       entity,
       creation,
@@ -421,6 +509,47 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     final HttpEndpoint? endpoint = resource.createAll;
     if (endpoint == null) {
       throw UnsupportedError('This HTTP resource has no create-all endpoint.');
+    }
+    final bool hasAutomaticCreation = creations.any(
+      (creation) => creation is AutoCreation<Data, I>,
+    );
+    if (hasAutomaticCreation &&
+        entity.identityGeneration == IdentityGenerationStrategy.database) {
+      if (creations.any((creation) => creation is! AutoCreation<Data, I>)) {
+        throw UnsupportedError(
+          'Database-generated HTTP putAll requires automatic creations only.',
+        );
+      }
+      if (resource.identityLocation != HttpIdentityLocation.none) {
+        throw UnsupportedError(
+          'Database-generated HTTP creation requires identityLocation.none.',
+        );
+      }
+      final http.Response response = await _request(
+        endpoint,
+        entity.schema,
+        body: creations
+            .cast<AutoCreation<Data, I>>()
+            .map((creation) => _bodyForData(entity, creation.data))
+            .toList(),
+      );
+      final Object? body = _decode(response);
+      final List<Object?> items = mapping.jsonCodec.list(body);
+      if (items.length != creations.length) {
+        throw StateError(
+          'The HTTP creation response contained ${items.length} items, '
+          'but ${creations.length} were requested.',
+        );
+      }
+      return List<Model>.generate(
+        creations.length,
+        (index) => _resolveCreatedItem(
+          entity,
+          creations[index],
+          mapping.creationCodec.decode(items[index], entity.schema),
+        ),
+        growable: false,
+      );
     }
     final List<Model> models = [
       for (final C creation in creations)

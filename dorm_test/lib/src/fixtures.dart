@@ -63,7 +63,8 @@ class ComplianceItemEntity
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  bool get supportsAutomaticIdentity => true;
+  IdentityGenerationStrategy get identityGeneration =>
+      IdentityGenerationStrategy.engine;
 
   @override
   ComplianceItem fromJson(String id, Map data) {
@@ -153,7 +154,8 @@ class ComplianceCompositeEntity
       const CompositePrimaryKeyCodec();
 
   @override
-  bool get supportsAutomaticIdentity => false;
+  IdentityGenerationStrategy get identityGeneration =>
+      IdentityGenerationStrategy.explicit;
 
   @override
   ComplianceComposite fromJson(CompositeKey id, Map data) =>
@@ -290,7 +292,8 @@ abstract class _SimpleEntity<Data, Model extends Data>
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  bool get supportsAutomaticIdentity => true;
+  IdentityGenerationStrategy get identityGeneration =>
+      IdentityGenerationStrategy.engine;
 
   @override
   String identify(Model model);

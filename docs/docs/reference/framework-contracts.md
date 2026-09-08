@@ -19,7 +19,7 @@ identity:
 | toJson | Map<String, Object?> toJson(Data data) | Data converted to stored field values. |
 | convert | Model convert(Model model, Data data) | Existing model updated from data. |
 | fromData | Model fromData(ResolvedCreation<Data, I>) | Model constructed from a resolved dependency, identity, and data. |
-| supportsAutomaticIdentity | bool get supportsAutomaticIdentity | Whether automatic creation is supported. |
+| identityGeneration | IdentityGenerationStrategy get identityGeneration | How `Creation.auto` obtains the final identity: `engine`, `database`, or `explicit`. |
 | identify | I identify(Model model) | Identity extracted from a model. |
 
 Generated entities implement this interface.
@@ -96,9 +96,9 @@ Future<void> purge();
 put creates a model from a creation request. Simple-key entities use
 `SimpleCreation<Data, I>` and accept both factory results. Composite-key
 entities use `ExplicitCreation<Data, CompositeKey>`, so automatic creation is
-rejected at compile time by the generated contract. `Creation.auto` requests
-an engine-generated identity, while `Creation.explicit` supplies the final
-identity. push persists an already identified model. patch receives the
+rejected at compile time by the generated contract. `Creation.auto` follows
+the identity strategy declared by the entity, while `Creation.explicit`
+supplies the final identity. push persists an already identified model. patch receives the
 current model or null; returning null removes the record.
 
 The framework documentation describes popKeys, popAll, pushAll, and patch as

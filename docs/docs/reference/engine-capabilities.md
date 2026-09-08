@@ -13,6 +13,7 @@ requirements.
 | External service | None | None | Firebase app/database or emulator | Firebase app/Firestore or emulator | MySQL server and schema | PostgreSQL server and schema | MongoDB server | Configured HTTP API | None; local SQLite file or configured sqlite_async runtime |
 | Runtime dependencies | dorm_framework, uuid | bloc, rxdart, uuid | Firebase packages | cloud_firestore, rxdart | mysql_client, uuid | postgres, uuid | mongo_dart, uuid | http, uuid | sqlite_async, sqlite3, uuid |
 | Automatic identity | UUID-backed in-memory identity | UUID-backed in-memory identity | Firebase push key | Firestore document ID | UUID-backed SQL identity | UUID-backed SQL identity | UUID-backed String identity | UUID-backed String identity | UUID-backed String identity |
+| Database-generated identity | Not supported | Not supported | Not supported | Not supported | Supported for single-key numeric `DatabaseGeneratedIdSpec` entities | Supported for single-key `DatabaseGeneratedIdSpec` entities | Not supported | Supported when the HTTP mapping explicitly omits and decodes the identity | Supported for single-key numeric `DatabaseGeneratedIdSpec` entities |
 | Identity restriction | Composite creation requires `Creation.explicit` | Composite creation requires `Creation.explicit` | Reference identities must be String; composite identities are unsupported | Reference identities must be String; composite identities are unsupported | Composite creation requires `Creation.explicit` | Composite creation requires `Creation.explicit` | Composite creation requires `Creation.explicit` | Composite creation requires `Creation.explicit` | Composite creation requires `Creation.explicit` |
 | Collection filtering | In-memory query evaluation | In-memory query evaluation | Realtime Database query | Firestore query | SQL query | PostgreSQL SQL query | MongoDB selectors | Configured URL parameters | SQLite SQL query |
 | Single reads | In-memory map lookup | In-memory map lookup | Firebase SDK read | Firestore document read | MySQL SQL read | PostgreSQL SQL read | MongoDB collection read | HTTP request | SQLite SQL read |
@@ -235,9 +236,12 @@ mapping per entity. The mapping defines endpoint paths, batch operations,
 query parameters, and JSON envelopes.
 
 The engine sends JSON bodies using generated entity serialization and decodes
-JSON objects/lists with generated entity deserialization. It emits an initial
-read for `pull` and `pullAll`, uses readable operations for relationships, and
-does not expose transactions, cursor pagination, polling, or server-event streams.
+JSON objects/lists with generated entity deserialization. For a
+`DatabaseGeneratedIdSpec` entity, `HttpIdentityLocation.none` omits the key from
+creation requests and `HttpCreationCodec` resolves the identity returned by the
+API. It emits an initial read for `pull` and `pullAll`, uses readable operations
+for relationships, and does not expose transactions, cursor pagination,
+polling, or server-event streams.
 
 Batch operations require configured endpoints. Missing batch endpoints produce
 `UnsupportedError` instead of being emulated with multiple independent

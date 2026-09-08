@@ -132,7 +132,8 @@ class UserEntity
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  bool get supportsAutomaticIdentity => true;
+  IdentityGenerationStrategy get identityGeneration =>
+      IdentityGenerationStrategy.engine;
 
   @override
   User fromData(ResolvedCreation<UserData, String> creation) {
@@ -273,7 +274,8 @@ class ProductEntity
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  bool get supportsAutomaticIdentity => true;
+  IdentityGenerationStrategy get identityGeneration =>
+      IdentityGenerationStrategy.engine;
 
   @override
   Product fromData(ResolvedCreation<ProductData, String> creation) {
@@ -405,12 +407,13 @@ class CartEntity
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  bool get supportsAutomaticIdentity => true;
+  IdentityGenerationStrategy get identityGeneration =>
+      IdentityGenerationStrategy.engine;
 
   @override
   Cart fromData(ResolvedCreation<CartData, String> creation) {
     return Cart(
-      id: creation.wasGenerated
+      id: creation.identitySource == CreationIdentitySource.generated
           ? _Cart._generate(
               _$Cart.fromData(
                 creation.dependency as CartDependency,
@@ -547,7 +550,8 @@ class CartItemEntity
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  bool get supportsAutomaticIdentity => true;
+  IdentityGenerationStrategy get identityGeneration =>
+      IdentityGenerationStrategy.engine;
 
   @override
   CartItem fromData(ResolvedCreation<CartItemData, String> creation) {
@@ -752,7 +756,8 @@ class ReviewEntity
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  bool get supportsAutomaticIdentity => true;
+  IdentityGenerationStrategy get identityGeneration =>
+      IdentityGenerationStrategy.engine;
 
   @override
   Review fromData(ResolvedCreation<ReviewData, String> creation) {

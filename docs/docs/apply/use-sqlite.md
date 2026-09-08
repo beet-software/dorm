@@ -60,6 +60,28 @@ other engines. Filters, offset pages, simple and composite identities,
 relationships, and model serialization are mapped to SQL statements with bound
 parameters.
 
+## Use a database-generated identity
+
+For an SQLite `INTEGER PRIMARY KEY` column, declare a single key with
+`DatabaseGeneratedIdSpec(type: int)` and omit that key from the `Data` input.
+`Creation.auto` inserts the remaining fields, reads SQLite's last inserted row
+ID on the same write context, and returns a model with that identity.
+
+```dart title="Declare an SQLite rowid-backed key"
+@Model(
+  name: 'products',
+  primaryKey: [
+    DatabaseGeneratedIdSpec(as: #id, name: 'id', type: int),
+  ],
+)
+abstract class Product {
+  String get name;
+}
+```
+
+This path applies to a single numeric database-generated key. Composite keys
+still require `Creation.explicit`.
+
 ## Use transactions and streams
 
 SQLite supports the portable dORM transaction callback through

@@ -27,43 +27,38 @@ void main() {
     expect(explicit, isA<SimpleCreation<ItemData, String>>());
   });
 
-  test('auto creation requests do not carry an identity', () {
-    final Creation<ItemData, String> creation = Creation.auto(
+  test('auto creation preserves its dependency and data', () {
+    final AutoCreation<ItemData, String> creation = Creation.auto(
       dependency: ItemDependency(),
       data: ItemData('value'),
     );
 
     expect(creation.dependency, isA<ItemDependency>());
     expect(creation.data.value, 'value');
-    expect(creation.identity, isA<AutoIdentity<String>>());
   });
 
   test('explicit creation requests preserve the final identity', () {
     final CompositeKey key = CompositeKey(['tenant', 7]);
-    final Creation<ItemData, CompositeKey> creation = Creation.explicit(
+    final ExplicitCreation<ItemData, CompositeKey> creation = Creation.explicit(
       dependency: const ItemDependency(),
       data: const ItemData('value'),
       identity: key,
     );
 
-    expect(creation.identity, isA<ExplicitIdentity<CompositeKey>>());
-    expect((creation.identity as ExplicitIdentity<CompositeKey>).value, key);
+    expect(creation.identity, key);
   });
 
-  test(
-    'resolved creation keeps the dependency, data, and generation state',
-    () {
-      const ResolvedCreation<ItemData, String> creation = ResolvedCreation(
-        dependency: ItemDependency(),
-        data: ItemData('value'),
-        id: 'id',
-        wasGenerated: true,
-      );
+  test('resolved creation keeps the dependency, data, and identity source', () {
+    const ResolvedCreation<ItemData, String> creation = ResolvedCreation(
+      dependency: ItemDependency(),
+      data: ItemData('value'),
+      id: 'id',
+      identitySource: CreationIdentitySource.generated,
+    );
 
-      expect(creation.dependency, isA<ItemDependency>());
-      expect(creation.data.value, 'value');
-      expect(creation.id, 'id');
-      expect(creation.wasGenerated, isTrue);
-    },
-  );
+    expect(creation.dependency, isA<ItemDependency>());
+    expect(creation.data.value, 'value');
+    expect(creation.id, 'id');
+    expect(creation.identitySource, CreationIdentitySource.generated);
+  });
 }

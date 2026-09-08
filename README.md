@@ -131,6 +131,13 @@ Repository reads support offset-based pages through `peekPage`. Current engines
 declare `OffsetPageRequest` as their accepted page type, so a statically typed
 `CursorPageRequest` call is rejected by the analyzer.
 
+For creation, `Creation.auto` follows the model's declared
+`IdentityGenerationStrategy`. Memory, BLoC, Firebase, Firestore, MongoDB, and
+the default HTTP flow obtain an identity before persistence. MySQL, PostgreSQL,
+and SQLite support `DatabaseGeneratedIdSpec` for supported single-key schemas;
+HTTP can do the same when its mapping uses `HttpIdentityLocation.none` and a
+creation response codec that resolves the returned identity.
+
 ## Implementing your own engine
 
 If you want to implement a new database engine for dORM, you can look at 

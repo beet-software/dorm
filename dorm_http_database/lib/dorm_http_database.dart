@@ -7,6 +7,10 @@ export 'src/mapping.dart'
     show
         HttpEndpoint,
         HttpIdentityLocation,
+        HttpCreatedItem,
+        HttpCreatedIdentity,
+        HttpCreatedData,
+        HttpCreationCodec,
         HttpJsonCodec,
         HttpMapping,
         DefaultHttpQueryCodec,

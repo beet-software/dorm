@@ -125,20 +125,20 @@ class _EntityReference<
   }
 
   ResolvedCreation<Data, I> _resolvedCreation(C creation) {
-    return switch (creation.identity) {
-      AutoIdentity<I>() => ResolvedCreation(
+    return switch (creation) {
+      AutoCreation<Data, I>() => ResolvedCreation(
         dependency: creation.dependency,
         data: creation.data,
         id: _generatedId(),
-        wasGenerated: true,
+        identitySource: CreationIdentitySource.generated,
       ),
-      ExplicitIdentity<I>(:final value) => () {
-        _validateIdentity(value);
+      ExplicitCreation<Data, I>(:final identity) => () {
+        _validateIdentity(identity);
         return ResolvedCreation(
           dependency: creation.dependency,
           data: creation.data,
-          id: value,
-          wasGenerated: false,
+          id: identity,
+          identitySource: CreationIdentitySource.explicit,
         );
       }(),
     };
@@ -146,7 +146,7 @@ class _EntityReference<
 
   I _generatedId() {
     if (entity.schema.isCompositePrimaryKey ||
-        !entity.supportsAutomaticIdentity) {
+        entity.identityGeneration != IdentityGenerationStrategy.engine) {
       throw UnsupportedError(
         'Memory creation requires an explicit identity for this entity.',
       );

@@ -6,7 +6,7 @@ model already exists; the update page covers that operation.
 
 ## Create one record
 
-Pass a `Creation` containing the dependency, data, and identity request:
+Pass a `Creation` containing the dependency, data, and identity strategy:
 
 ```dart
 final User created = await dorm.users.repository.put(
@@ -25,9 +25,28 @@ final User created = await dorm.users.repository.put(
 );
 ```
 
-`Creation.auto` asks the engine to generate the identity when that entity
-supports automatic identity generation. The returned `User` contains the
-final identity and can be passed to later reads or updates.
+`Creation.auto` follows the identity strategy declared by the model. With a
+`GeneratedIdSpec`, the dORM engine generates the identity before persistence.
+The returned `User` contains the final identity and can be passed to later
+reads or updates.
+
+When the database owns an auto-increment or identity column, declare it with
+`DatabaseGeneratedIdSpec`. With `Creation.auto`, MySQL, PostgreSQL, SQLite, and
+explicitly mapped HTTP resources obtain the identity from the insert or HTTP
+response when the engine supports the
+declared key type:
+
+```dart
+final Sequence sequence = await dorm.sequences.repository.put(
+  Creation.auto(
+    dependency: const SequenceDependency(),
+    data: const SequenceData(name: 'orders'),
+  ),
+);
+```
+
+For this annotation, the key is omitted from the insert and the model is built
+only after the database returns the generated value.
 
 For a simple identity that the application already owns, use
 `Creation.explicit`:

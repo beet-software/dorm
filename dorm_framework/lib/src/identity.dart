@@ -14,17 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-export 'src/dependency.dart';
-export 'src/creation.dart';
-export 'src/engine.dart';
-export 'src/entity.dart';
-export 'src/filter.dart';
-export 'src/identity.dart';
-export 'src/query.dart';
-export 'src/read_options.dart';
-export 'src/primary_key.dart';
-export 'src/reference.dart';
-export 'src/relationship.dart';
-export 'src/repository.dart';
-export 'src/schema.dart';
-export 'src/transaction.dart';
+/// Describes who supplies an identity when [Creation.auto] is resolved.
+enum IdentityGenerationStrategy {
+  /// The dORM engine creates the identity before persistence.
+  engine,
+
+  /// The database or remote backend returns the identity during persistence.
+  database,
+
+  /// The caller must provide the final identity explicitly.
+  explicit,
+}

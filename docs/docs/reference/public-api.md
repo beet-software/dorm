@@ -81,7 +81,8 @@ contract details.
 
 `Creation<Data, I>` is the common base for requests that group the data,
 dependency, and identity strategy for one new model. `Creation.auto(...)`
-returns `AutoCreation<Data, I>`, while `Creation.explicit(...)` returns
+follows the identity strategy declared by the model's `IdSpec`, while
+`Creation.explicit(...)` returns
 `ExplicitCreation<Data, I>`:
 
 ~~~dart
@@ -98,13 +99,17 @@ Creation.explicit(
 ~~~
 
 `SimpleCreation<Data, I>` is the accepted creation type for generated
-single-key entities, so it accepts both factory results. Generated
+single-key entities, so it accepts both factory results. `Creation.auto` can
+use a dORM-generated identity or a backend-generated identity when the model
+declares `DatabaseGeneratedIdSpec` and the engine supports it. Generated
 composite-key entities accept `ExplicitCreation<Data, CompositeKey>` only;
 passing `Creation.auto(...)` to their generated `put` or `putAll` is a
-compile-time error. `AutoIdentity<I>` requests the engine's automatic
-identity. `ExplicitIdentity<I>` contains the final identity. `ResolvedCreation<Data, I>` is the context passed to
+compile-time error. `AutoCreation<Data, I>` follows the automatic identity
+strategy, while `ExplicitCreation<Data, I>` contains the final identity.
+`ResolvedCreation<Data, I>` is the context passed to
 `Entity.fromData`; it contains `dependency`, `data`, `id`, and
-`wasGenerated`.
+`identitySource`, which identifies whether the engine, database, or caller
+supplied the final identity.
 
 ## Filters and queries
 
@@ -191,7 +196,7 @@ include `ArgumentError`, `StateError`, `UnsupportedError`, Dart runtime
 type errors, Firebase SDK errors, and MySQL client/server errors. There is no
 single exported dORM exception base class.
 
-`HttpDatabaseException` preserves the HTTP status code, method, URI, and response body for non-success responses. Transport errors from the injected HTTP client are propagated.
+`HttpDatabaseException` preserves the HTTP status code, method, URI, and response body for non-success responses. Transport errors from the injected HTTP client are propagated. `HttpIdentityLocation.none` and `HttpCreationCodec` configure HTTP creation responses for `DatabaseGeneratedIdSpec` entities; the response can provide a scalar identity or complete JSON data.
 
 See [Diagnose errors by layer](../troubleshooting/error-by-layer.md) for
 error handling and [Compatibility and release status](compatibility-and-release-status.md)

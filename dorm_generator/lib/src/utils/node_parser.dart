@@ -194,6 +194,12 @@ class ModelParser extends ClassNodeParser<Model> {
           name: reader.read('name').stringValue,
           type: $Type(reader: reader.read('type')),
         );
+      case 'DatabaseGeneratedIdSpec':
+        return DatabaseGeneratedIdSpec(
+          as: $Symbol(reader: reader.read('as')),
+          name: reader.read('name').stringValue,
+          type: $Type(reader: reader.read('type')),
+        );
       case 'ExistingIdSpec':
         return ExistingIdSpec(referTo: $Symbol(reader: reader.read('referTo')));
       default:

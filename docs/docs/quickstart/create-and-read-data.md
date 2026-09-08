@@ -30,8 +30,9 @@ Future<void> main() async {
 }
 ```
 
-`put` receives a `Creation` object. `Creation.auto` asks the engine to generate
-the identity and carries the dependency and data used to construct the model.
+`put` receives a `Creation` object. `Creation.auto` follows the identity
+strategy declared by the model and carries the dependency and data used to
+construct it.
 The returned `User` is already identified, so its `id` can be passed to
 `peek`. `peek` returns `null` when that identity is not present.
 

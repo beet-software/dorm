@@ -400,6 +400,11 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     C creation, {
     MySQLConnection? connection,
   }) {
+    if (creation case AutoCreation<Data, I>()) {
+      if (entity.identityGeneration == IdentityGenerationStrategy.database) {
+        return _putDatabaseGenerated(entity, creation, connection: connection);
+      }
+    }
     final ResolvedCreation<Data, I> resolved = _resolveCreation(
       entity,
       creation,
@@ -414,17 +419,54 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
         .then((_) => model);
   }
 
+  Future<Model> _putDatabaseGenerated<
+    Data,
+    Model extends Data,
+    I extends Object,
+    C extends Creation<Data, I>
+  >(
+    Entity<Data, Model, I, C> entity,
+    C creation, {
+    MySQLConnection? connection,
+  }) async {
+    if (entity.schema.isCompositePrimaryKey ||
+        entity.identityGeneration != IdentityGenerationStrategy.database) {
+      throw UnsupportedError(
+        'MySQL database-generated identities require a supported '
+        'single-key entity.',
+      );
+    }
+    final StringBuffer buffer = StringBuffer();
+    final Map<String, Object?>? params = _QueryBuilder(
+      entity,
+    ).pushData(buffer, creation.data);
+    final IResultSet result = await (connection ?? this.connection).execute(
+      '$buffer',
+      params,
+    );
+    final I id = entity.primaryKeyCodec.decode([result.lastInsertID.toInt()]);
+    _validateIdentity(entity, id);
+    return entity.fromData(
+      ResolvedCreation(
+        dependency: creation.dependency,
+        data: creation.data,
+        id: id,
+        identitySource: CreationIdentitySource.database,
+      ),
+    );
+  }
+
   ResolvedCreation<Data, I>
   _resolveCreation<Data, Model extends Data, I extends Object>(
     Entity<Data, Model, I, Creation<Data, I>> entity,
     Creation<Data, I> creation,
   ) {
-    return switch (creation.identity) {
-      AutoIdentity<I>() => _resolveAutoCreation(entity, creation),
-      ExplicitIdentity<I>(:final value) => _resolveExplicitCreation(
+    return switch (creation) {
+      AutoCreation<Data, I>() => _resolveAutoCreation(entity, creation),
+      ExplicitCreation<Data, I>(:final identity) => _resolveExplicitCreation(
         entity,
         creation,
-        value,
+        identity,
       ),
     };
   }
@@ -440,7 +482,7 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
       dependency: creation.dependency,
       data: creation.data,
       id: id,
-      wasGenerated: false,
+      identitySource: CreationIdentitySource.explicit,
     );
   }
 
@@ -450,7 +492,7 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     Creation<Data, I> creation,
   ) {
     if (entity.schema.isCompositePrimaryKey ||
-        !entity.supportsAutomaticIdentity) {
+        entity.identityGeneration != IdentityGenerationStrategy.engine) {
       throw UnsupportedError(
         'MySQL creation requires an explicit identity for this entity.',
       );
@@ -459,7 +501,7 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
       dependency: creation.dependency,
       data: creation.data,
       id: const Uuid().v4() as I,
-      wasGenerated: true,
+      identitySource: CreationIdentitySource.generated,
     );
   }
 
@@ -564,6 +606,43 @@ class _QueryBuilder<Data, Model extends Data, I extends Object> {
         ..writeln(i == valuesParams.length - 1 ? '' : ',');
     }
     buffer.writeln(');');
+    return Map.fromEntries(valuesParams);
+  }
+
+  Map<String, Object?>? pushData(StringBuffer buffer, Data data) {
+    final Map<String, Object?> json = _encodeDerived(
+      entity.schema,
+      entity.toJson(data),
+    );
+    final Set<String> primaryKeyNames = {
+      for (final FieldSchema field in entity.schema.primaryKeys)
+        field.columnName,
+    };
+    final List<String> columns = [
+      for (final String column in json.keys)
+        if (!primaryKeyNames.contains(column)) column,
+    ];
+    final List<MapEntry<String, Object?>> valuesParams = [
+      for (int i = 0; i < columns.length; i++)
+        MapEntry('value$i', json[columns[i]]),
+    ];
+
+    buffer
+      ..write('INSERT INTO ')
+      ..write(entity.schema.tableName);
+    if (columns.isEmpty) {
+      buffer.write(' () VALUES ();');
+    } else {
+      buffer
+        ..writeln(' (')
+        ..writeAll(columns, ',\n')
+        ..writeln(') VALUES (')
+        ..writeAll([
+          for (final MapEntry<String, Object?> entry in valuesParams)
+            ':${entry.key}',
+        ], ',\n')
+        ..write(');');
+    }
     return Map.fromEntries(valuesParams);
   }
 }

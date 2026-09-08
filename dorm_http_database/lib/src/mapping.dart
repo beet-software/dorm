@@ -11,7 +11,57 @@ class HttpEndpoint {
 }
 
 /// Controls where an identity is written for an HTTP operation.
-enum HttpIdentityLocation { path, body, pathAndBody }
+enum HttpIdentityLocation {
+  path,
+  body,
+  pathAndBody,
+
+  /// Omits the identity from the request; the backend supplies it in response.
+  none,
+}
+
+/// Represents the result returned by an HTTP creation endpoint.
+sealed class HttpCreatedItem {
+  const HttpCreatedItem();
+}
+
+/// A creation endpoint returned the new identity as a scalar value.
+final class HttpCreatedIdentity extends HttpCreatedItem {
+  const HttpCreatedIdentity(this.value);
+
+  final Object value;
+}
+
+/// A creation endpoint returned the complete representation of the new item.
+final class HttpCreatedData extends HttpCreatedItem {
+  const HttpCreatedData(this.data);
+
+  final Map<String, Object?> data;
+}
+
+/// Decodes an item returned by an HTTP creation endpoint.
+class HttpCreationCodec {
+  final HttpCreatedItem Function(Object? value, EntitySchema schema) single;
+
+  const HttpCreationCodec({this.single = _defaultSingle});
+
+  HttpCreatedItem decode(Object? value, EntitySchema schema) =>
+      single(value, schema);
+
+  static HttpCreatedItem _defaultSingle(Object? value, EntitySchema schema) {
+    if (value is Map) {
+      return HttpCreatedData(
+        value.map((key, value) => MapEntry('$key', value)),
+      );
+    }
+    if (value == null) {
+      throw const FormatException(
+        'Expected a created identity or JSON object.',
+      );
+    }
+    return HttpCreatedIdentity(value);
+  }
+}
 
 /// Describes the endpoints for one dORM entity.
 class HttpResourceMapping {
@@ -230,12 +280,14 @@ class HttpMapping {
   final HttpResourceMapping Function(EntitySchema schema) resource;
   final HttpQueryCodec queryCodec;
   final HttpJsonCodec jsonCodec;
+  final HttpCreationCodec creationCodec;
   final String Function(Object identity) encodeIdentity;
 
   const HttpMapping({
     required this.resource,
     this.queryCodec = const DefaultHttpQueryCodec(),
     this.jsonCodec = const HttpJsonCodec(),
+    this.creationCodec = const HttpCreationCodec(),
     this.encodeIdentity = _defaultIdentity,
   });
 
@@ -244,6 +296,7 @@ class HttpMapping {
     Map<String, HttpResourceMapping> resources, {
     HttpQueryCodec queryCodec = const DefaultHttpQueryCodec(),
     HttpJsonCodec jsonCodec = const HttpJsonCodec(),
+    HttpCreationCodec creationCodec = const HttpCreationCodec(),
     String Function(Object identity) encodeIdentity = _defaultIdentity,
   }) {
     return HttpMapping(
@@ -260,6 +313,7 @@ class HttpMapping {
       },
       queryCodec: queryCodec,
       jsonCodec: jsonCodec,
+      creationCodec: creationCodec,
       encodeIdentity: encodeIdentity,
     );
   }

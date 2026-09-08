@@ -318,12 +318,12 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     Entity<Data, Model, I, Creation<Data, I>> entity,
     Creation<Data, I> creation,
   ) {
-    return switch (creation.identity) {
-      AutoIdentity<I>() => _resolveAutoCreation(entity, creation),
-      ExplicitIdentity<I>(:final value) => _resolveExplicitCreation(
+    return switch (creation) {
+      AutoCreation<Data, I>() => _resolveAutoCreation(entity, creation),
+      ExplicitCreation<Data, I>(:final identity) => _resolveExplicitCreation(
         entity,
         creation,
-        value,
+        identity,
       ),
     };
   }
@@ -339,7 +339,7 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
       dependency: creation.dependency,
       data: creation.data,
       id: id,
-      wasGenerated: false,
+      identitySource: CreationIdentitySource.explicit,
     );
   }
 
@@ -349,7 +349,7 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     Creation<Data, I> creation,
   ) {
     if (entity.schema.isCompositePrimaryKey ||
-        !entity.supportsAutomaticIdentity) {
+        entity.identityGeneration != IdentityGenerationStrategy.engine) {
       throw UnsupportedError(
         'MongoDB creation requires an explicit identity for this entity.',
       );
@@ -358,7 +358,7 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
       dependency: creation.dependency,
       data: creation.data,
       id: const Uuid().v4() as I,
-      wasGenerated: true,
+      identitySource: CreationIdentitySource.generated,
     );
   }
 

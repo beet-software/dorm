@@ -89,6 +89,27 @@ identity is written to the body by default and is also available in the item
 path. Change this with `HttpIdentityLocation.path` when the API keeps identity
 only in the route, or provide a custom identity encoder for composite routes.
 
+For a resource whose backend assigns the identity, declare
+`DatabaseGeneratedIdSpec` on the model and use `HttpIdentityLocation.none`.
+The create request then omits the identity from both the route and the JSON
+body. The response must contain either the scalar identity or the complete
+created object:
+
+```dart title="Configure a backend-generated identity"
+final HttpResourceMapping users = HttpResourceMapping(
+  path: 'users',
+  identityLocation: HttpIdentityLocation.none,
+);
+
+final HttpMapping mapping = HttpMapping.byTableName({'users': users});
+```
+
+The default `HttpCreationCodec` treats a JSON object as complete model data
+and a scalar JSON value as the identity. Use `HttpCreationCodec.single` to
+decode an API-specific response such as `{ "id": 42 }`. `putAll` requires a
+configured batch endpoint and one resolvable response item for each request
+item, in the same order.
+
 ## Use repositories and relationships
 
 After creating the engine, repository and relationship calls use the common

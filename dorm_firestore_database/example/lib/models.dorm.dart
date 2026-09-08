@@ -72,7 +72,8 @@ class UserEntity
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  bool get supportsAutomaticIdentity => true;
+  IdentityGenerationStrategy get identityGeneration =>
+      IdentityGenerationStrategy.engine;
 
   @override
   User fromData(ResolvedCreation<UserData, String> creation) {
@@ -177,7 +178,8 @@ class PostEntity
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  bool get supportsAutomaticIdentity => true;
+  IdentityGenerationStrategy get identityGeneration =>
+      IdentityGenerationStrategy.engine;
 
   @override
   Post fromData(ResolvedCreation<PostData, String> creation) {

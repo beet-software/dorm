@@ -33,8 +33,12 @@ abstract class Entity<
   /// [CompositePrimaryKeyCodec].
   PrimaryKeyCodec<I> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
-  /// Whether the entity supports an engine-generated identity for creation.
-  bool get supportsAutomaticIdentity => true;
+  /// Declares how [Creation.auto] obtains the final identity.
+  ///
+  /// Manual entities default to [IdentityGenerationStrategy.engine]. Generated
+  /// entities override this value according to their primary-key annotation.
+  IdentityGenerationStrategy get identityGeneration =>
+      IdentityGenerationStrategy.engine;
 
   /// Deserializes the [id] and the [data] of a row in the underlying database
   /// engine to a [Model].
@@ -106,13 +110,14 @@ abstract class Entity<
   ///     dependency: dependency,
   ///     data: data,
   ///     id: 'cc03334e70a9',
-  ///     wasGenerated: false,
+  ///     identitySource: CreationIdentitySource.explicit,
   ///   ),
   /// );
   /// print(student.id);            // The generated implementation uses the
   ///                               // final `creation.id`. A generated
   ///                               // primaryKeyGenerator may transform it only
-  ///                               // when `creation.wasGenerated` is true.
+  ///                               // when `creation.identitySource` is
+  ///                               // `CreationIdentitySource.generated`.
   ///
   /// print(student.name);          // 'John'
   /// print(student.birthDate);     // 13/06/1942
@@ -191,7 +196,8 @@ class DatabaseEntity<
   PrimaryKeyCodec<I> get primaryKeyCodec => _entity.primaryKeyCodec;
 
   @override
-  bool get supportsAutomaticIdentity => _entity.supportsAutomaticIdentity;
+  IdentityGenerationStrategy get identityGeneration =>
+      _entity.identityGeneration;
 
   @override
   Map<String, Object?> toJson(Data data) => _entity.toJson(data);

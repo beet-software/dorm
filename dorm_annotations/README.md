@@ -363,5 +363,7 @@ abstract class _Capital {
 ```
 
 The generator validates the callback signature when it compiles the generated source. A custom
-generated key type can be declared through `GeneratedIdSpec(type: ...)`; each database engine
+generated key type can be declared through `GeneratedIdSpec(type: ...)`. A
+database-assigned key can be declared through
+`DatabaseGeneratedIdSpec(type: ...)`; each database engine
 decides which ID types it supports.

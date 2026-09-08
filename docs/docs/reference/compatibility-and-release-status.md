@@ -72,7 +72,7 @@ identity details.
 | Polymorphic serialization across every engine | Current serialized behavior exists, but universal cross-engine compatibility is not established. |
 | MongoDB change streams | Not exposed by the current MongoDB engine. |
 | MongoDB aggregation and migrations | Not exposed by the current MongoDB package. |
-| HTTP route discovery | Not performed; resource routes and response codecs are configured by the application. |
+| HTTP route discovery | Not performed; resource routes and response codecs are configured by the application. Backend-generated identities require an explicit `HttpIdentityLocation.none` mapping and a resolvable creation response. |
 | HTTP transactions and server-event streams | Not exposed by the current HTTP package. |
 
 ## Public API and generated output

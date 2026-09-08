@@ -110,21 +110,34 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     return entity.fromJson(id, _row(entity.schema, row));
   }
 
-  Future<void> _insert<Data, Model extends Data, I extends Object>(
+  Future<Result> _insert<Data, Model extends Data, I extends Object>(
     Entity<Data, Model, I, Creation<Data, I>> entity,
-    Model model, {
+    Data value, {
+    I? identity,
     required Session session,
     required bool upsert,
+    bool databaseGenerated = false,
   }) async {
+    if (databaseGenerated &&
+        (entity.schema.isCompositePrimaryKey ||
+            entity.identityGeneration != IdentityGenerationStrategy.database)) {
+      throw UnsupportedError(
+        'PostgreSQL database-generated identities require a supported '
+        'single-key entity.',
+      );
+    }
     final Map<String, Object?> json = _encodeDerived(
       entity.schema,
-      entity.toJson(model),
+      entity.toJson(value),
     );
     final List<FieldSchema> primaryKeys = entity.schema.primaryKeys;
-    final List<Object?> keyValues = entity.primaryKeyCodec.encode(
-      entity.identify(model),
-    );
-    if (keyValues.length != primaryKeys.length) {
+    final List<Object?> keyValues = identity == null
+        ? const []
+        : entity.primaryKeyCodec.encode(identity);
+    if (identity == null && !databaseGenerated) {
+      throw StateError('An identity is required for this PostgreSQL insert.');
+    }
+    if (identity != null && keyValues.length != primaryKeys.length) {
       throw StateError('Primary-key codec returned an invalid value count.');
     }
     final Set<String> keyNames = {
@@ -134,24 +147,31 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
       for (final MapEntry<String, Object?> entry in json.entries)
         if (!keyNames.contains(entry.key)) entry.key: entry.value,
     };
-    final List<String> columns = [
-      ...primaryKeys.map((field) => field.columnName),
-      ...data.keys,
-    ];
+    final List<String> columns = identity == null
+        ? data.keys.toList()
+        : [...primaryKeys.map((field) => field.columnName), ...data.keys];
     final Map<String, Object?> params = {
       for (int i = 0; i < keyValues.length; i++) 'key$i': keyValues[i],
       for (int i = 0; i < data.length; i++) 'value$i': data.values.elementAt(i),
     };
-    final List<String> values = [
-      for (int i = 0; i < keyValues.length; i++) '@key$i',
-      for (int i = 0; i < data.length; i++) '@value$i',
-    ];
+    final List<String> values = identity == null
+        ? [for (int i = 0; i < data.length; i++) '@value$i']
+        : [
+            for (int i = 0; i < keyValues.length; i++) '@key$i',
+            for (int i = 0; i < data.length; i++) '@value$i',
+          ];
     final StringBuffer sql = StringBuffer()
-      ..write('INSERT INTO ${entity.schema.tableName} (')
-      ..write(columns.join(', '))
-      ..write(') VALUES (')
-      ..write(values.join(', '))
-      ..write(')');
+      ..write('INSERT INTO ${entity.schema.tableName} ');
+    if (columns.isEmpty) {
+      sql.write('DEFAULT VALUES');
+    } else {
+      sql
+        ..write('(')
+        ..write(columns.join(', '))
+        ..write(') VALUES (')
+        ..write(values.join(', '))
+        ..write(')');
+    }
     if (upsert) {
       sql
         ..write(' ON CONFLICT (')
@@ -167,7 +187,12 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
           );
       }
     }
-    await _execute(session, '$sql', params);
+    if (databaseGenerated) {
+      sql
+        ..write(' RETURNING ')
+        ..write(primaryKeys.map((field) => field.columnName).join(', '));
+    }
+    return _execute(session, '$sql', params);
   }
 
   @override
@@ -324,7 +349,13 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     Model model,
   ) {
     return _run(
-      (session) => _insert(entity, model, session: session, upsert: true),
+      (session) => _insert(
+        entity,
+        model,
+        identity: entity.identify(model),
+        session: session,
+        upsert: true,
+      ),
     );
   }
 
@@ -335,7 +366,13 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
   ) {
     return _runTx((session) async {
       for (final Model model in models) {
-        await _insert(entity, model, session: session, upsert: true);
+        await _insert(
+          entity,
+          model,
+          identity: entity.identify(model),
+          session: session,
+          upsert: true,
+        );
       }
     });
   }
@@ -357,7 +394,13 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
           _keyParameters(entity, id),
         );
       } else {
-        await _insert(entity, updated, session: session, upsert: true);
+        await _insert(
+          entity,
+          updated,
+          identity: entity.identify(updated),
+          session: session,
+          upsert: true,
+        );
       }
     });
   }
@@ -369,13 +412,38 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     I extends Object,
     C extends Creation<Data, I>
   >(Entity<Data, Model, I, C> entity, C creation) {
+    if (creation case AutoCreation<Data, I>()) {
+      if (entity.identityGeneration == IdentityGenerationStrategy.database) {
+        return _run((session) async {
+          final Result result = await _insert(
+            entity,
+            creation.data,
+            session: session,
+            upsert: false,
+            databaseGenerated: true,
+          );
+          final ResolvedCreation<Data, I> resolved = _resolveDatabaseCreation(
+            entity,
+            creation,
+            result,
+          );
+          return entity.fromData(resolved);
+        });
+      }
+    }
     final ResolvedCreation<Data, I> resolved = _resolveCreation(
       entity,
       creation,
     );
     final Model model = entity.fromData(resolved);
     return _run((session) async {
-      await _insert(entity, model, session: session, upsert: false);
+      await _insert(
+        entity,
+        model,
+        identity: entity.identify(model),
+        session: session,
+        upsert: false,
+      );
       return model;
     });
   }
@@ -386,12 +454,12 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     I extends Object,
     C extends Creation<Data, I>
   >(Entity<Data, Model, I, C> entity, C creation) {
-    return switch (creation.identity) {
-      AutoIdentity<I>() => _resolveAutoCreation(entity, creation),
-      ExplicitIdentity<I>(:final value) => _resolveExplicitCreation(
+    return switch (creation) {
+      AutoCreation<Data, I>() => _resolveAutoCreation(entity, creation),
+      ExplicitCreation<Data, I>(:final identity) => _resolveExplicitCreation(
         entity,
         creation,
-        value,
+        identity,
       ),
     };
   }
@@ -407,7 +475,7 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
       dependency: creation.dependency,
       data: creation.data,
       id: id,
-      wasGenerated: false,
+      identitySource: CreationIdentitySource.explicit,
     );
   }
 
@@ -417,7 +485,7 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     Creation<Data, I> creation,
   ) {
     if (entity.schema.isCompositePrimaryKey ||
-        !entity.supportsAutomaticIdentity) {
+        entity.identityGeneration != IdentityGenerationStrategy.engine) {
       throw UnsupportedError(
         'PostgreSQL creation requires an explicit identity for this entity.',
       );
@@ -426,7 +494,39 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
       dependency: creation.dependency,
       data: creation.data,
       id: const Uuid().v4() as I,
-      wasGenerated: true,
+      identitySource: CreationIdentitySource.generated,
+    );
+  }
+
+  ResolvedCreation<Data, I>
+  _resolveDatabaseCreation<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    Creation<Data, I> creation,
+    Result result,
+  ) {
+    if (entity.schema.isCompositePrimaryKey ||
+        entity.identityGeneration != IdentityGenerationStrategy.database) {
+      throw UnsupportedError(
+        'PostgreSQL database-generated identities require a supported '
+        'single-key entity.',
+      );
+    }
+    if (result.isEmpty) {
+      throw StateError(
+        'PostgreSQL did not return the database-generated identity.',
+      );
+    }
+    final Map<String, Object?> values = result.first.toColumnMap();
+    final I id = entity.primaryKeyCodec.decode([
+      for (final FieldSchema field in entity.schema.primaryKeys)
+        values[field.columnName],
+    ]);
+    _validateIdentity(entity, id);
+    return ResolvedCreation(
+      dependency: creation.dependency,
+      data: creation.data,
+      id: id,
+      identitySource: CreationIdentitySource.database,
     );
   }
 
@@ -464,12 +564,36 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     return _runTx((session) async {
       final List<Model> models = [];
       for (final C creation in creations) {
+        if (creation case AutoCreation<Data, I>()) {
+          if (entity.identityGeneration == IdentityGenerationStrategy.database) {
+            final Result result = await _insert(
+              entity,
+              creation.data,
+              session: session,
+              upsert: false,
+              databaseGenerated: true,
+            );
+            final ResolvedCreation<Data, I> resolved = _resolveDatabaseCreation(
+              entity,
+              creation,
+              result,
+            );
+            models.add(entity.fromData(resolved));
+            continue;
+          }
+        }
         final ResolvedCreation<Data, I> resolved = _resolveCreation(
           entity,
           creation,
         );
         final Model model = entity.fromData(resolved);
-        await _insert(entity, model, session: session, upsert: false);
+        await _insert(
+          entity,
+          model,
+          identity: entity.identify(model),
+          session: session,
+          upsert: false,
+        );
         models.add(model);
       }
       return models;

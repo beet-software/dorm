@@ -188,6 +188,28 @@ outside the dORM framework.
 The engine sends filter values as SQL parameters. Table and column identifiers
 come from generated schema metadata and are not values in the parameter map.
 
+## Use a database-generated identity
+
+For a MySQL `AUTO_INCREMENT` primary key, declare a single key with
+`DatabaseGeneratedIdSpec(type: int)`. Leave that key out of the `Data` input.
+`Creation.auto` then omits the key from the `INSERT`, reads MySQL's generated
+insert ID, and returns a model containing that identity.
+
+```dart title="Declare a MySQL auto-increment key"
+@Model(
+  name: 'products',
+  primaryKey: [
+    DatabaseGeneratedIdSpec(as: #id, name: 'id', type: int),
+  ],
+)
+abstract class Product {
+  String get name;
+}
+```
+
+This path applies to a single numeric database-generated key. Composite keys
+still require `Creation.explicit`.
+
 ## Observe performance characteristics
 
 The MySQL reference builds SQL text and passes named parameters to

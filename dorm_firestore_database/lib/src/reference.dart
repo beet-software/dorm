@@ -113,10 +113,10 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     I extends Object,
     C extends Creation<Data, I>
   >(Entity<Data, Model, I, C> entity, C creation, String generatedId) {
-    return switch (creation.identity) {
-      AutoIdentity<I>() => () {
+    return switch (creation) {
+      AutoCreation<Data, I>() => () {
         if (entity.schema.isCompositePrimaryKey ||
-            !entity.supportsAutomaticIdentity) {
+            entity.identityGeneration != IdentityGenerationStrategy.engine) {
           throw UnsupportedError(
             'Firestore creation requires an explicit identity for this entity.',
           );
@@ -125,24 +125,24 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
           dependency: creation.dependency,
           data: creation.data,
           id: generatedId as I,
-          wasGenerated: true,
+          identitySource: CreationIdentitySource.generated,
         );
       }(),
-      ExplicitIdentity<I>(:final value) => () {
-        _key(value);
+      ExplicitCreation<Data, I>(:final identity) => () {
+        _key(identity);
         final List<Object?> values;
         try {
-          values = entity.primaryKeyCodec.encode(value);
+          values = entity.primaryKeyCodec.encode(identity);
         } catch (_) {
           throw ArgumentError.value(
-            value,
+            identity,
             'identity',
             'Identity cannot be encoded for this schema.',
           );
         }
         if (values.length != entity.schema.primaryKeys.length) {
           throw ArgumentError.value(
-            value,
+            identity,
             'identity',
             'Identity has ${values.length} values, but the schema requires '
                 '${entity.schema.primaryKeys.length}.',
@@ -151,8 +151,8 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
         return ResolvedCreation(
           dependency: creation.dependency,
           data: creation.data,
-          id: value,
-          wasGenerated: false,
+          id: identity,
+          identitySource: CreationIdentitySource.explicit,
         );
       }(),
     };

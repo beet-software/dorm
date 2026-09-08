@@ -19,9 +19,15 @@ class _Model extends _Data {
   const _Model({required this.id, required String name}) : super(name);
 }
 
+class _Dependency extends Dependency<_Data> {
+  const _Dependency() : super.strong();
+}
+
 class _Entity
     implements Entity<_Data, _Model, String, Creation<_Data, String>> {
-  const _Entity();
+  const _Entity({this.strategy = IdentityGenerationStrategy.engine});
+
+  final IdentityGenerationStrategy strategy;
 
   @override
   final EntitySchema schema = const EntitySchema(
@@ -34,7 +40,7 @@ class _Entity
   PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
 
   @override
-  bool get supportsAutomaticIdentity => true;
+  IdentityGenerationStrategy get identityGeneration => strategy;
 
   @override
   _Model fromData(ResolvedCreation<_Data, String> creation) =>
@@ -160,4 +166,237 @@ void main() {
       throwsUnsupportedError,
     );
   });
+
+  test('resolves a scalar identity returned by a creation endpoint', () async {
+    const _Entity databaseEntity = _Entity(
+      strategy: IdentityGenerationStrategy.database,
+    );
+    final Reference reference = Reference(
+      client: MockClient((request) async {
+        expect(request.method, 'POST');
+        expect(request.url.toString(), 'https://example.test/api/users');
+        expect(jsonDecode(request.body), {'name': 'Ada'});
+        return http.Response(jsonEncode('u-2'), 201);
+      }),
+      baseUri: Uri.parse('https://example.test/api/'),
+      mapping: HttpMapping.byTableName({
+        'users': HttpResourceMapping(
+          path: 'users',
+          identityLocation: HttpIdentityLocation.none,
+        ),
+      }),
+      headers: const {},
+    );
+
+    final _Model model = await reference.put(
+      databaseEntity,
+      Creation.auto<_Data, String>(
+        dependency: const _Dependency(),
+        data: const _Data('Ada'),
+      ),
+    );
+
+    expect(model.id, 'u-2');
+  });
+
+  test(
+    'requires an explicit no-identity mapping for backend-generated IDs',
+    () async {
+      const _Entity databaseEntity = _Entity(
+        strategy: IdentityGenerationStrategy.database,
+      );
+      final Reference reference = Reference(
+        client: MockClient((_) async => http.Response('', 201)),
+        baseUri: Uri.parse('https://example.test/api/'),
+        mapping: mapping(),
+        headers: const {},
+      );
+
+      expect(
+        () => reference.put(
+          databaseEntity,
+          Creation.auto<_Data, String>(
+            dependency: const _Dependency(),
+            data: const _Data('Ada'),
+          ),
+        ),
+        throwsUnsupportedError,
+      );
+    },
+  );
+
+  test(
+    'resolves a complete representation returned by a creation endpoint',
+    () async {
+      const _Entity databaseEntity = _Entity(
+        strategy: IdentityGenerationStrategy.database,
+      );
+      final Reference reference = Reference(
+        client: MockClient((request) async {
+          expect(jsonDecode(request.body), {'name': 'Ada'});
+          return http.Response(jsonEncode({'id': 'u-3', 'name': 'Ada'}), 201);
+        }),
+        baseUri: Uri.parse('https://example.test/api/'),
+        mapping: HttpMapping.byTableName({
+          'users': HttpResourceMapping(
+            path: 'users',
+            identityLocation: HttpIdentityLocation.none,
+          ),
+        }),
+        headers: const {},
+      );
+
+      final _Model model = await reference.put(
+        databaseEntity,
+        Creation.auto<_Data, String>(
+          dependency: const _Dependency(),
+          data: const _Data('Ada'),
+        ),
+      );
+
+      expect(model.id, 'u-3');
+      expect(model.name, 'Ada');
+    },
+  );
+
+  test('rejects a creation response without an identity', () async {
+    const _Entity databaseEntity = _Entity(
+      strategy: IdentityGenerationStrategy.database,
+    );
+    final Reference reference = Reference(
+      client: MockClient(
+        (_) async => http.Response(jsonEncode({'name': 'Ada'}), 201),
+      ),
+      baseUri: Uri.parse('https://example.test/api/'),
+      mapping: HttpMapping.byTableName({
+        'users': HttpResourceMapping(
+          path: 'users',
+          identityLocation: HttpIdentityLocation.none,
+        ),
+      }),
+      headers: const {},
+    );
+
+    expect(
+      () => reference.put(
+        databaseEntity,
+        Creation.auto<_Data, String>(
+          dependency: const _Dependency(),
+          data: const _Data('Ada'),
+        ),
+      ),
+      throwsFormatException,
+    );
+  });
+
+  test('uses a custom codec for an identity envelope', () async {
+    const _Entity databaseEntity = _Entity(
+      strategy: IdentityGenerationStrategy.database,
+    );
+    final Reference reference = Reference(
+      client: MockClient(
+        (_) async => http.Response(jsonEncode({'id': 'u-4'}), 201),
+      ),
+      baseUri: Uri.parse('https://example.test/api/'),
+      mapping: HttpMapping.byTableName(
+        {
+          'users': HttpResourceMapping(
+            path: 'users',
+            identityLocation: HttpIdentityLocation.none,
+          ),
+        },
+        creationCodec: HttpCreationCodec(
+          single: (value, _) => HttpCreatedIdentity((value as Map)['id']!),
+        ),
+      ),
+      headers: const {},
+    );
+
+    final _Model model = await reference.put(
+      databaseEntity,
+      Creation.auto<_Data, String>(
+        dependency: const _Dependency(),
+        data: const _Data('Ada'),
+      ),
+    );
+
+    expect(model.id, 'u-4');
+  });
+
+  test(
+    'resolves one identity for each database-generated batch item',
+    () async {
+      const _Entity databaseEntity = _Entity(
+        strategy: IdentityGenerationStrategy.database,
+      );
+      final Reference reference = Reference(
+        client: MockClient((request) async {
+          expect(jsonDecode(request.body), [
+            {'name': 'Ada'},
+            {'name': 'Grace'},
+          ]);
+          return http.Response(jsonEncode(['u-5', 'u-6']), 201);
+        }),
+        baseUri: Uri.parse('https://example.test/api/'),
+        mapping: HttpMapping.byTableName({
+          'users': HttpResourceMapping(
+            path: 'users',
+            createAll: HttpEndpoint('POST', 'users/batch'),
+            identityLocation: HttpIdentityLocation.none,
+          ),
+        }),
+        headers: const {},
+      );
+
+      final List<_Model> models = await reference.putAll(databaseEntity, [
+        Creation.auto<_Data, String>(
+          dependency: const _Dependency(),
+          data: const _Data('Ada'),
+        ),
+        Creation.auto<_Data, String>(
+          dependency: const _Dependency(),
+          data: const _Data('Grace'),
+        ),
+      ]);
+
+      expect(models.map((model) => model.id), ['u-5', 'u-6']);
+    },
+  );
+
+  test(
+    'rejects a database-generated batch response with a wrong count',
+    () async {
+      const _Entity databaseEntity = _Entity(
+        strategy: IdentityGenerationStrategy.database,
+      );
+      final Reference reference = Reference(
+        client: MockClient(
+          (_) async => http.Response(jsonEncode(['u-7']), 201),
+        ),
+        baseUri: Uri.parse('https://example.test/api/'),
+        mapping: HttpMapping.byTableName({
+          'users': HttpResourceMapping(
+            path: 'users',
+            createAll: HttpEndpoint('POST', 'users/batch'),
+            identityLocation: HttpIdentityLocation.none,
+          ),
+        }),
+        headers: const {},
+      );
+
+      expect(
+        () => reference.putAll(databaseEntity, [
+          Creation.auto<_Data, String>(
+            dependency: const _Dependency(),
+            data: const _Data('Ada'),
+          ),
+          Creation.auto<_Data, String>(
+            dependency: const _Dependency(),
+            data: const _Data('Grace'),
+          ),
+        ]),
+        throwsStateError,
+      );
+    },
+  );
 }

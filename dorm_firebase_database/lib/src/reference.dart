@@ -262,12 +262,12 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     Entity<Data, Model, I, Creation<Data, I>> entity,
     Creation<Data, I> creation,
   ) {
-    return switch (creation.identity) {
-      AutoIdentity<I>() => _resolveAutoCreation(entity, creation),
-      ExplicitIdentity<I>(:final value) => _resolveExplicitCreation(
+    return switch (creation) {
+      AutoCreation<Data, I>() => _resolveAutoCreation(entity, creation),
+      ExplicitCreation<Data, I>(:final identity) => _resolveExplicitCreation(
         entity,
         creation,
-        value,
+        identity,
       ),
     };
   }
@@ -278,7 +278,7 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     Creation<Data, I> creation,
   ) {
     if (entity.schema.isCompositePrimaryKey ||
-        !entity.supportsAutomaticIdentity) {
+        entity.identityGeneration != IdentityGenerationStrategy.engine) {
       throw UnsupportedError(
         'Firebase creation requires an explicit simple String identity.',
       );
@@ -288,7 +288,7 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
       dependency: creation.dependency,
       data: creation.data,
       id: _id<I>(ref.key as String),
-      wasGenerated: true,
+      identitySource: CreationIdentitySource.generated,
     );
   }
 
@@ -307,7 +307,7 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
       dependency: creation.dependency,
       data: creation.data,
       id: id,
-      wasGenerated: false,
+      identitySource: CreationIdentitySource.explicit,
     );
   }
 

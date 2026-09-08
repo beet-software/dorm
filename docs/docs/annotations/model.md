@@ -33,8 +33,8 @@ The default primary key is one generated `String` field named `id`.
 
 ## Identity specifications
 
-`Model.primaryKey` accepts `IdSpec` values. The two concrete specifications
-are `GeneratedIdSpec` and `ExistingIdSpec`.
+`Model.primaryKey` accepts `IdSpec` values. The concrete specifications are
+`GeneratedIdSpec`, `DatabaseGeneratedIdSpec`, and `ExistingIdSpec`.
 
 ### `GeneratedIdSpec`
 
@@ -66,6 +66,30 @@ const GeneratedIdSpec({
 `as` is the generated Dart property name, `name` is the stored field name,
 and `type` is the Dart identity type. `primaryKeyGenerator` can transform a
 generated identity before the model is persisted.
+
+### `DatabaseGeneratedIdSpec`
+
+Use `DatabaseGeneratedIdSpec` when the database assigns the identity during
+the insert and returns it to the engine:
+
+```dart
+@Model(
+  name: 'sequences',
+  primaryKey: [DatabaseGeneratedIdSpec(as: #id, name: 'id', type: int)],
+)
+abstract class _Sequence {
+  @Field()
+  String get name;
+}
+```
+
+The identity is not present in the `Data` input. The engine omits the key from
+the insert, reads the generated value from the backend response, and then
+constructs the returned `Model`. MySQL, PostgreSQL, SQLite, and explicitly
+mapped HTTP resources support this flow for supported single-key entities when
+the table or endpoint defines its own generated identity.
+
+`primaryKeyGenerator` cannot be combined with `DatabaseGeneratedIdSpec`.
 
 ### `ExistingIdSpec`
 
@@ -105,7 +129,7 @@ abstract class _CartItem {
 
 The generator preserves the order of composite key fields. Current generated
 repositories require `Creation.explicit` with a `CompositeKey` for composite
-creation; `Creation.auto` is rejected statically by the generated creation
+creation; automatic creation requests are rejected statically by the generated creation
 type. The identity is part of the generated `Model`, while the generated
 `Data` value contains the input fields.
 

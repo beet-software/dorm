@@ -33,7 +33,8 @@ class Model {
 
   /// Parts of the model's primary key.
   ///
-  /// The generator supports one [GeneratedIdSpec] or one or more
+  /// The generator supports one [GeneratedIdSpec], one
+  /// [DatabaseGeneratedIdSpec], or one or more
   /// [ExistingIdSpec] parts. Composite generated keys are not supported.
   final List<IdSpec> primaryKey;
 
@@ -44,7 +45,7 @@ class Model {
   ///
   /// Should accept the annotated class and the generated ID value, and return
   /// the model's generated primary-key value. The generated ID argument and
-  /// return type must match the active [GeneratedIdSpec.type].
+  /// return type must match the active generated identity specification type.
   final Function? primaryKeyGenerator;
 
   /// Creates a [Model] by its attributes.

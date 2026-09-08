@@ -18,7 +18,7 @@ Its main members have these roles:
 The create path uses `fromData`:
 
 ```text
-Data + Dependency + identity request
+Data + Dependency + identity strategy
     -> ResolvedCreation
     -> Entity.fromData
     -> identified Model

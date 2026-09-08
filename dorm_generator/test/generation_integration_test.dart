@@ -130,6 +130,16 @@ abstract class _Post {
   @ForeignField(referTo: _User, inverseAs: #posts)
   String get userId;
 }
+
+@Model(
+  name: 'sequences',
+  as: #sequences,
+  primaryKey: [DatabaseGeneratedIdSpec(type: int)],
+)
+abstract class _Sequence {
+  @Field()
+  String get name;
+}
 ''');
 
         _expectSuccess(await _runDart(project, ['pub', 'get']), 'dart pub get');
@@ -145,6 +155,8 @@ abstract class _Post {
         expect(generatedCode, contains('class UserData'));
         expect(generatedCode, contains('class UserEntity'));
         expect(generatedCode, contains('class PostEntity'));
+        expect(generatedCode, contains('class SequenceEntity'));
+        expect(generatedCode, contains('IdentityGenerationStrategy.database'));
         expect(
           generatedCode,
           contains('class Dorm<Q extends BaseQuery<Q>, P extends PageRequest>'),
