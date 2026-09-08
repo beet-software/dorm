@@ -4,18 +4,18 @@ This page configures `dorm_http_database` for a REST-shaped JSON API. The
 engine translates dORM repository operations into HTTP requests; it does not
 discover routes or infer an API contract from a URL.
 
-## Add the packages
+## Add the engine package
 
 From the Dart application directory, execute:
 
-```shell
-dart pub add dorm_framework
-dart pub add dorm_annotations
+```shell title="Add the HTTP engine"
 dart pub add dorm_http_database
+```
+
+Add the HTTP package because the application creates and owns the client:
+
+```shell title="Add the HTTP client package"
 dart pub add http
-dart pub add dev:dorm_generator
-dart pub add dev:build_runner
-dart pub add dev:json_serializable
 ```
 
 The application owns the `http.Client`. This lets the application select the

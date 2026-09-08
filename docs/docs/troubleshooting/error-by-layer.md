@@ -32,6 +32,7 @@ startup sequence:
 - [Run with PostgreSQL](../apply/use-postgres.md)
 - [Run with MongoDB](../apply/use-mongo.md)
 - [Run with HTTP/JSON](../apply/use-http.md)
+- [Run with SQLite](../apply/use-sqlite.md)
 
 ## Separate generation from runtime
 

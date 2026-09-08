@@ -22,7 +22,7 @@ The application owns the lifecycle of the backend object when the engine
 accepts one. The engine does not automatically open or close an application-
 owned database connection, `Db`, or HTTP client.
 
-!!! warning "Engine capability is not identical to backend capability"
+!!! warning
     The repository API is portable, but it does not expose every feature of
     every backend. Check the engine page before relying on transactions,
     reactive streams, schema generation, or backend-specific query features.
@@ -79,7 +79,7 @@ same application role.
 | Filter execution | In memory | In memory | Firebase query | Firestore query | SQL query | PostgreSQL SQL query | MongoDB selector | URL parameters | SQLite SQL query |
 | Public transaction API | Yes | Yes | No | No | Yes | Yes | No | No | Yes |
 | Pagination | Offset pages | Offset pages | Offset pages with client-side skipping | Offset pages with client-side skipping | Offset pages | Offset pages | Offset pages | Offset pages | Offset pages |
-| Composite creation | Explicit identity | Explicit identity | Unsupported | Unsupported | Explicit identity | Explicit identity | Explicit identity | Explicit identity | Explicit identity |
+| Composite creation | Explicit identity required | Explicit identity required | Unsupported | Unsupported | Explicit identity required | Explicit identity required | Explicit identity required | Explicit identity required | Explicit identity required |
 
 This table describes current engine behavior. It does not promise that future
 versions will preserve every backend capability or limitation.

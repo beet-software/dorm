@@ -15,7 +15,7 @@ focuses on adding the review flow to the store.
 
 Declare the shared content type and each variant in the annotated source:
 
-```dart
+```dart title="Declare review content variants in lib/models.dart"
 abstract class _ReviewContent {}
 
 @PolymorphicData(name: 'product', as: #product)
@@ -41,7 +41,7 @@ abstract class _UserReviewContent implements _ReviewContent {
 
 Connect the variants to the review with a pivot field:
 
-```dart
+```dart title="Connect variants to the Review model"
 @Model(name: 'Reviews', as: #reviews)
 abstract class _Review {
   @Field(name: 'text')
@@ -64,7 +64,7 @@ the supported polymorphic declaration in detail.
 
 Regenerate the generated parts after changing these declarations:
 
-```shell
+```shell title="Regenerate the review model API"
 dart run build_runner build
 ```
 

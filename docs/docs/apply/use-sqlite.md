@@ -5,12 +5,18 @@ through [`sqlite_async`](https://pub.dev/packages/sqlite_async). The engine uses
 the asynchronous driver API and keeps the database object owned by your
 application.
 
-## Add the packages
+## Add the engine package
 
 From your pure Dart project, run:
 
-```shell
+```shell title="Add the SQLite engine"
 dart pub add dorm_sqlite_database
+```
+
+Add the SQLite driver because the application creates and owns the
+`SqliteDatabase`:
+
+```shell title="Add the SQLite driver"
 dart pub add sqlite_async
 ```
 
@@ -23,7 +29,7 @@ Create the database before constructing `Engine`. Use SQL or the migration
 helpers provided by `sqlite_async` to prepare the tables. The dORM package does
 not generate SQLite DDL.
 
-```dart
+```dart title="Create the SQLite database and schema"
 import 'package:dorm_sqlite_database/dorm_sqlite_database.dart';
 import 'package:sqlite_async/sqlite_async.dart';
 

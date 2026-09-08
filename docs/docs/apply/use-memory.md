@@ -4,11 +4,11 @@ The memory engine is a pure Dart implementation of the dORM framework. It
 stores records in the process, so it is useful for a local workflow, an
 example application, or tests that should not require a database server.
 
-## Add the package
+## Add the engine package
 
 From the Dart application directory, run:
 
-```shell
+```shell title="Add the memory engine"
 dart pub add dorm_memory_database
 ```
 

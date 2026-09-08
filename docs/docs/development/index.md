@@ -70,7 +70,7 @@ Annotated source files can produce both `*.dorm.dart` and `*.g.dart` parts. Run
 the generator from the package or example directory that owns the annotated
 source:
 
-```shell
+```shell title="Generate workspace sources"
 dart pub get
 dart run build_runner build --delete-conflicting-outputs
 ```
@@ -103,7 +103,7 @@ the documentation build as a substitute for Dart package analysis.
 The repository contains a preparation script for package metadata and license
 headers:
 
-```shell
+```shell title="Prepare a package for release checks"
 dart run tool/prepare_package.dart --package dorm_framework
 ```
 

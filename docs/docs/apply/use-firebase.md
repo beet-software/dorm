@@ -4,19 +4,26 @@
 
 The repository API remains the same after the engine changes. The setup adds Firebase initialization, a Firebase dependency object, and a database root path.
 
-## Add the Firebase packages
+## Add the engine package
 
 From the Flutter application directory, run:
 
-```shell
+```shell title="Add the Firebase Realtime Database engine"
 flutter pub add dorm_firebase_database
-flutter pub add firebase_core
-flutter pub add firebase_database
-flutter pub add firebase_auth
-flutter pub get
 ```
 
-The Firebase engine uses Firebase Core, Realtime Database, and Authentication dependencies. A Firebase project configuration is required before the application can connect to a hosted database.
+Add the Firebase packages that your application imports directly:
+
+```shell title="Add the Firebase SDK packages"
+flutter pub add firebase_core
+flutter pub add firebase_database
+```
+
+The engine package brings its own Firebase integration dependencies. The
+application still declares SDK packages that it imports directly, such as
+`firebase_core` for initialization and `firebase_database` for emulator
+configuration. Add `firebase_auth` separately when the application uses
+Firebase Authentication APIs.
 
 ## Initialize Firebase before creating the engine
 
@@ -84,7 +91,7 @@ The default mode is `OfflineMode.include`.
 
 From the Flutter application directory, configure the Firebase Database Emulator with port `9000`:
 
-```shell
+```shell title="Initialize Firebase emulator configuration"
 firebase init
 ```
 
@@ -92,7 +99,7 @@ Select Realtime Database and Emulators during initialization. Use `database.rule
 
 Start the emulator in a separate terminal:
 
-```shell
+```shell title="Start the Realtime Database Emulator"
 firebase emulators:start --only database
 ```
 
@@ -126,7 +133,7 @@ The selected `OfflineMode` affects how the adapter obtains snapshots while conne
 
 After changing annotated models, regenerate the generated parts before launching Flutter:
 
-```shell
+```shell title="Regenerate and run the Firebase application"
 flutter pub run build_runner build
 flutter run
 ```
@@ -153,7 +160,7 @@ create or deploy rules.
 
 For a local authenticated-only setup, the rules file can contain:
 
-```json
+```json title="database.rules.json"
 {
   "rules": {
     ".read": "auth != null",

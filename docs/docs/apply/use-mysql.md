@@ -8,15 +8,14 @@ This setup has three resources that must be available before a repository call c
 2. a database containing the generated tables;
 3. an open `MySQLConnection` passed to the dORM `Engine`.
 
-## Add the packages
+## Add the engine package
 
 From the Dart application's directory, run:
 
-```shell
+```shell title="Add the MySQL engine"
 dart pub add dorm_mysql_database
 dart pub add mysql_client
 dart pub add dotenv
-dart pub get
 ```
 
 `dorm_mysql_database` supplies the dORM engine. `mysql_client` supplies the connection type used by application code. `dotenv` loads connection values from a local `.env` file in the command-line example.
@@ -25,7 +24,7 @@ dart pub get
 
 Create `.env` beside the application's `pubspec.yaml`:
 
-```dotenv
+```dotenv title=".env"
 MYSQL_HOST=127.0.0.1
 MYSQL_PORT=3306
 MYSQL_USERNAME=[PLACEHOLDER: MySQL username]
@@ -154,13 +153,13 @@ generator, not a migration history tool.
 
 Run it from the application directory:
 
-```shell
+```shell title="Generate a MySQL schema"
 dart run dorm_mysql_database:generate lib/models.dart
 ```
 
 Save the output when the database tool expects a file:
 
-```shell
+```shell title="Save the generated schema"
 dart run dorm_mysql_database:generate lib/models.dart > schema.sql
 ```
 
@@ -170,7 +169,7 @@ not read the generated `.dorm.dart` file.
 
 The normal model-generation command remains separate:
 
-```shell
+```shell title="Generate the model API"
 dart run build_runner build
 ```
 

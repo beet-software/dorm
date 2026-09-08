@@ -4,29 +4,30 @@
 Firestore. It is a Flutter package: initialize Firebase and configure the
 Firestore instance before constructing the engine.
 
-!!! warning "The Firestore object belongs to the application"
+!!! warning
     The engine does not initialize, open, or close `FirebaseFirestore`. Keep
     that lifecycle in the application and pass the configured instance to
     `Engine`.
 
-## Add the packages
+## Add the engine package
 
 From a Flutter project, run:
 
-```shell
-flutter pub add dorm_framework
-flutter pub add dorm_annotations
+```shell title="Add the Cloud Firestore engine"
 flutter pub add dorm_firestore_database
-flutter pub add firebase_core
-flutter pub add cloud_firestore
-flutter pub add dev:dorm_generator
-flutter pub add dev:build_runner
 ```
 
-`dorm_framework`, `dorm_annotations`, and `dorm_firestore_database` provide
-the dORM contracts, annotations, and Firestore engine. `firebase_core` and
-`cloud_firestore` initialize and configure the Firebase SDK. The generator and
-Build Runner create the model-facing API from your annotated source.
+Add the Firebase SDK packages that your application imports directly:
+
+```shell title="Add the Firebase SDK packages"
+flutter pub add firebase_core
+flutter pub add cloud_firestore
+```
+
+The model source and code-generation packages come from the [Quickstart
+installation](../quickstart/installation.md). `firebase_core` and
+`cloud_firestore` are direct application dependencies because the application
+initializes Firebase and passes a `FirebaseFirestore` instance to `Engine`.
 
 ## Initialize Firebase and create the engine
 
@@ -212,7 +213,7 @@ could compose multiple repositories.
 Start the emulator from the Flutter project that contains your Firebase
 configuration:
 
-```shell
+```shell title="Start the Firestore Emulator"
 firebase emulators:start --only firestore
 ```
 

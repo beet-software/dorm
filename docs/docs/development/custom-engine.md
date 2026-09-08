@@ -8,7 +8,7 @@ This guide assumes that the model and repository flow is already understood. It 
 
 Create a Dart package and add the framework:
 
-```shell
+```shell title="Create a custom engine package"
 dart create -t package dorm_example_database
 cd dorm_example_database
 dart pub add dorm_framework
@@ -198,7 +198,7 @@ The current engine packages guarantee `Engine`, `Filter`, and `Query` through th
 
 Add tests for the framework contract and run them from the custom engine package:
 
-```shell
+```shell title="Analyze and test a custom engine"
 dart pub get
 dart analyze
 dart test

@@ -40,7 +40,7 @@ The returned `User` is already identified, so its `id` can be passed to
 Run the generation command again after changing `models.dart`, then start the
 application:
 
-```shell title="Generate and run"
+```shell title="Generate the model API and run the application"
 dart run build_runner build
 dart run
 ```

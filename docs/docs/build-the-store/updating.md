@@ -28,6 +28,43 @@ await dorm.users.repository.pushAll([updated]);
 The engine determines how replacement and batch writes are executed. The
 common API does not turn every batch operation into a public transaction.
 
+## Create a replacement with `copyWith`
+
+The generated model exposes `copyWith` for changing selected model fields
+while retaining the rest of the model. Use it when the current model already
+contains the values that should remain unchanged:
+
+```dart
+final User updated = created.copyWith(
+  email: 'ada-updated@example.com',
+);
+
+await dorm.users.repository.push(updated);
+```
+
+`copyWith` returns a new model. In this example, `id`, `username`, and
+`profile` remain from `created`, so `push` replaces the same stored record.
+
+## Convert updated data with `updateWith`
+
+Use the generated `updateWith` extension when the application has a complete
+`UserData` value, such as data assembled by a form or another boundary:
+
+```dart
+final UserData editedData = UserData(
+  username: created.username,
+  email: 'ada-updated@example.com',
+  profile: created.profile,
+);
+final User updated = created.updateWith(editedData);
+
+await dorm.users.repository.push(updated);
+```
+
+`updateWith` creates a model from the supplied data and keeps the identity of
+the model on which it is called. The result can therefore be passed to
+`push`.
+
 ## Change a model with `patch`
 
 ```dart

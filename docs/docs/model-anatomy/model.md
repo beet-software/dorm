@@ -23,6 +23,11 @@ await dorm.users.repository.push(
 );
 ```
 
+Generated models also provide `copyWith`, which returns a new model with
+selected fields changed, and `updateWith`, which applies a complete generated
+`Data` value while retaining the model identity. [Update records](../build-the-store/updating.md)
+shows when to use each helper before calling `push`.
+
 The generated entity reads the identity through `identify(model)`. It passes
 the identity separately to `fromJson` when reconstructing a model from stored
 data. The identity is encoded according to the model's primary-key codec.

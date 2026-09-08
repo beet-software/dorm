@@ -22,7 +22,7 @@ part 'models.g.dart';
 
 Run generation from the directory containing the application `pubspec.yaml`:
 
-```shell
+```shell title="Generate the application parts"
 dart run build_runner build
 ```
 
@@ -77,11 +77,17 @@ class User extends UserData {
 `UserData` and `User` receive generated JSON methods. The entity passes the
 identity separately when it reconstructs a model from stored JSON.
 
+The generated `Model` also exposes `copyWith` for creating a changed model
+without rebuilding every field. The generated model extension exposes
+`updateWith`, which applies a complete `Data` value while retaining the model's
+identity. Use these helpers before `push` when an identified model is being
+updated; the task-oriented examples are in [Update records](../build-the-store/updating.md).
+
 ## Generated dependencies
 
 A model without foreign fields receives a strong dependency:
 
-```dart
+```dart title="Generated User and UserData types"
 class UserDependency extends Dependency<UserData> {
   const UserDependency() : super.strong();
 }

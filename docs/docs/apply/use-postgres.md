@@ -4,18 +4,19 @@ This page uses a pure Dart application and the `dorm_postgres_database` engine.
 The application supplies an opened `Connection` or `Pool`; the engine does
 not open or close that object for you.
 
-## Add the packages
+## Add the engine package
 
 From the Dart application directory, execute:
 
-```shell
-dart pub add dorm_framework
-dart pub add dorm_annotations
+```shell title="Add the PostgreSQL engine"
 dart pub add dorm_postgres_database
+```
+
+Add the PostgreSQL driver because the application creates and owns the
+`Connection` or `Pool`:
+
+```shell title="Add the PostgreSQL driver"
 dart pub add postgres
-dart pub add dev:dorm_generator
-dart pub add dev:build_runner
-dart pub add dev:json_serializable
 ```
 
 The application imports `postgres` directly for connection setup. The dORM
@@ -62,7 +63,7 @@ constraints are enabled.
 
 Declare the model source with `part` directives and run:
 
-```shell
+```shell title="Generate the PostgreSQL model API"
 dart run build_runner build
 ```
 

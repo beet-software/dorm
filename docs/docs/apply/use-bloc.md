@@ -8,9 +8,8 @@ This page uses a pure Dart application and the generated store models from [Gene
 
 From the directory containing your application's `pubspec.yaml`, run:
 
-```shell
+```shell title="Add the BLoC engine"
 dart pub add dorm_bloc_database
-dart pub get
 ```
 
 The model source still needs the dORM annotations, framework, generator, and
@@ -23,7 +22,7 @@ the application code.
 
 Create the engine before creating the generated database object:
 
-```dart
+```dart title="bin/dorm_store.dart"
 import 'package:decimal/decimal.dart';
 import 'package:dorm_bloc_database/dorm_bloc_database.dart';
 
@@ -113,13 +112,38 @@ The engine does not expose a database-server connection or a migration step. The
 
 For a composite primary key, pass the final identity explicitly through `Creation.explicit`:
 
+Add this model declaration to `lib/models.dart` and regenerate the model API:
+
+```dart title="Add a composite-key model to lib/models.dart"
+@Model(
+  name: 'CartItems',
+  as: #cartItems,
+  primaryKey: [
+    ExistingIdSpec(referTo: #cartId),
+    ExistingIdSpec(referTo: #productId),
+  ],
+)
+abstract class _CartItem {
+  @Field(name: 'cart-id')
+  String get cartId;
+
+  @Field(name: 'product-id')
+  String get productId;
+
+  @Field(name: 'quantity')
+  int get quantity;
+}
+```
+
+The generated `CartItemData` contains the non-key fields. Create the record
+with a `CompositeKey` whose values follow the same order as `primaryKey`:
+
 ```dart
-final CompositeKey key = CompositeKey(['tenant-1', 'user-1']);
-final [PLACEHOLDER: composite model] model =
-    await [PLACEHOLDER: composite repository].put(
+final CompositeKey key = CompositeKey(['cart-1', 'product-1']);
+final CartItem model = await dorm.cartItems.repository.put(
   Creation.explicit(
-    dependency: [PLACEHOLDER: composite dependency],
-    data: [PLACEHOLDER: composite data],
+    dependency: CartItemDependency(),
+    data: CartItemData(quantity: 1),
     identity: key,
   ),
 );
@@ -133,7 +157,7 @@ time because dORM does not generate multiple key components implicitly.
 
 For a Dart console application, regenerate the model and run the program from the application directory:
 
-```shell
+```shell title="Regenerate and run the BLoC application"
 dart run build_runner build
 dart run
 ```

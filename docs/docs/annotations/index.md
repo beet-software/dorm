@@ -5,7 +5,7 @@ defines the metadata read by the dORM generator. Add annotations to abstract
 Dart classes and getters, then regenerate the `*.dorm.dart` and `*.g.dart`
 parts.
 
-!!! note "Annotations describe the model; the engine executes it"
+!!! note
     An annotation declares names, fields, identities, or relationships. It
     does not open a connection or perform a database operation. The generated
     entity and the selected engine use the resulting metadata at runtime.

@@ -3,18 +3,18 @@
 This page uses a pure Dart application and the `dorm_mongo_database` engine.
 The application creates, opens, and closes the MongoDB `Db` instance.
 
-## Add the packages
+## Add the engine package
 
 From the Dart application directory, execute:
 
-```shell
-dart pub add dorm_framework
-dart pub add dorm_annotations
+```shell title="Add the MongoDB engine"
 dart pub add dorm_mongo_database
+```
+
+Add the MongoDB driver because the application creates and owns the `Db`:
+
+```shell title="Add the MongoDB driver"
 dart pub add mongo_dart
-dart pub add dev:dorm_generator
-dart pub add dev:build_runner
-dart pub add dev:json_serializable
 ```
 
 The application imports `mongo_dart` directly to create the database

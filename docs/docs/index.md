@@ -22,7 +22,7 @@ dORM generates much of this connection between your Dart models and your data
 source. It does not take ownership of the database client, connection, pool,
 or HTTP client that your application already uses.
 
-!!! tip "Start with a model you already have"
+!!! tip
     Keep your current database or API code. Pass its client or connection to
     the matching dORM engine, and move one model or one operation to the
     generated repository first.
