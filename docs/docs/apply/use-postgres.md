@@ -96,8 +96,9 @@ final List<Join<User, Post>> posts =
 
 `push` and `pushAll` use PostgreSQL `INSERT ... ON CONFLICT` statements. The
 conflict target contains all primary-key columns. `patch`, `putAll`, and
-`pushAll` use an internal driver transaction; the common framework does not
-expose a public transaction object.
+`pushAll` use an internal driver transaction. `TransactionalDorm` exposes a
+transaction callback for composing repository operations without exposing the
+driver transaction object.
 
 ## Close the executor
 
@@ -127,8 +128,8 @@ generated schema metadata rather than from filter values.
 
 The PostgreSQL engine builds parameterized SQL for direct operations. Its
 `putAll`, `pushAll`, and `patch` paths use the driver's internal transaction
-boundary described on this page; the framework does not expose a public
-transaction object.
+boundary described on this page. `TransactionalDorm` reuses the same driver
+transaction for its callback.
 
 Relationship reads can use direct relation plans or fall back to readable
 operations. The fallback can perform additional repository reads. PostgreSQL

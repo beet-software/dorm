@@ -13,8 +13,9 @@ TableRelationPlanBase? _tablePlan<Model, I extends Object>(
 
 class Relationship implements BaseRelationship<Query> {
   final SessionExecutor? executor;
+  final Session? session;
 
-  const Relationship([this.executor]);
+  const Relationship(this.executor, {this.session});
 
   @override
   OneToOneAssociation<L, I, R, Query>
@@ -23,7 +24,13 @@ class Relationship implements BaseRelationship<Query> {
     RelationSource<R, J, Query> right,
     J Function(L) on,
   ) {
-    return _OneToOne(executor: executor, left: left, right: right, on: on);
+    return _OneToOne(
+      executor: executor,
+      session: session,
+      left: left,
+      right: right,
+      on: on,
+    );
   }
 
   @override
@@ -33,7 +40,13 @@ class Relationship implements BaseRelationship<Query> {
     RelationSource<R, J, Query> right,
     BaseFilter<Query> Function(L) on,
   ) {
-    return _OneToMany(executor: executor, left: left, right: right, on: on);
+    return _OneToMany(
+      executor: executor,
+      session: session,
+      left: left,
+      right: right,
+      on: on,
+    );
   }
 
   @override
@@ -43,7 +56,13 @@ class Relationship implements BaseRelationship<Query> {
     RelationSource<R, J, Query> right,
     J Function(L) on,
   ) {
-    return _ManyToOne(executor: executor, left: left, right: right, on: on);
+    return _ManyToOne(
+      executor: executor,
+      session: session,
+      left: left,
+      right: right,
+      on: on,
+    );
   }
 
   @override
@@ -57,6 +76,7 @@ class Relationship implements BaseRelationship<Query> {
   ) {
     return _ManyToMany(
       executor: executor,
+      session: session,
       middle: middle,
       left: left,
       right: right,
@@ -69,12 +89,14 @@ class Relationship implements BaseRelationship<Query> {
 class _OneToOne<L, I extends Object, R, J extends Object>
     implements OneToOneAssociation<L, I, R, Query> {
   final SessionExecutor? executor;
+  final Session? session;
   final RelationSource<L, I, Query> left;
   final RelationSource<R, J, Query> right;
   final J Function(L) on;
 
   const _OneToOne({
     required this.executor,
+    required this.session,
     required this.left,
     required this.right,
     required this.on,
@@ -96,7 +118,12 @@ class _OneToOne<L, I extends Object, R, J extends Object>
     final TableRelationPlanBase? plan = _tablePlan(right);
     if (plan != null) {
       final List<J> ids = leftModels.map(on).toList();
-      final Map<Object, Object> models = await readByIds(executor!, plan, ids);
+      final Map<Object, Object> models = await readByIds(
+        executor!,
+        plan,
+        ids,
+        session: session,
+      );
       return [
         for (int i = 0; i < leftModels.length; i++)
           Join(left: leftModels[i], right: models[ids[i]] as R?),
@@ -113,6 +140,9 @@ class _OneToOne<L, I extends Object, R, J extends Object>
 
   @override
   Stream<Join<L, R?>?> pull(I id) async* {
+    if (session != null) {
+      throw UnsupportedError('Streams are not available in a transaction.');
+    }
     yield await peek(id);
   }
 
@@ -121,6 +151,9 @@ class _OneToOne<L, I extends Object, R, J extends Object>
     BaseFilter<Query> filter = const BaseFilter.empty(),
     QueryOptions options = const QueryOptions(),
   ]) async* {
+    if (session != null) {
+      throw UnsupportedError('Streams are not available in a transaction.');
+    }
     yield await peekAll(filter, options);
   }
 }
@@ -128,12 +161,14 @@ class _OneToOne<L, I extends Object, R, J extends Object>
 class _OneToMany<L, I extends Object, R, J extends Object>
     implements OneToManyAssociation<L, I, R, Query> {
   final SessionExecutor? executor;
+  final Session? session;
   final RelationSource<L, I, Query> left;
   final RelationSource<R, J, Query> right;
   final BaseFilter<Query> Function(L) on;
 
   const _OneToMany({
     required this.executor,
+    required this.session,
     required this.left,
     required this.right,
     required this.on,
@@ -187,6 +222,7 @@ class _OneToMany<L, I extends Object, R, J extends Object>
             rightPlan,
             field,
             relationFilters.map((relationFilter) => relationFilter.value!),
+            session: session,
           );
           return [
             for (int i = 0; i < leftModels.length; i++)
@@ -209,6 +245,9 @@ class _OneToMany<L, I extends Object, R, J extends Object>
 
   @override
   Stream<Join<L, List<R>>?> pull(I id) async* {
+    if (session != null) {
+      throw UnsupportedError('Streams are not available in a transaction.');
+    }
     yield await peek(id);
   }
 
@@ -217,6 +256,9 @@ class _OneToMany<L, I extends Object, R, J extends Object>
     BaseFilter<Query> filter = const BaseFilter.empty(),
     QueryOptions options = const QueryOptions(),
   ]) async* {
+    if (session != null) {
+      throw UnsupportedError('Streams are not available in a transaction.');
+    }
     yield await peekAll(filter, options);
   }
 }
@@ -224,12 +266,14 @@ class _OneToMany<L, I extends Object, R, J extends Object>
 class _ManyToOne<L, I extends Object, R, J extends Object>
     implements ManyToOneAssociation<L, I, R, J, Query> {
   final SessionExecutor? executor;
+  final Session? session;
   final RelationSource<L, I, Query> left;
   final RelationSource<R, J, Query> right;
   final J Function(L) on;
 
   const _ManyToOne({
     required this.executor,
+    required this.session,
     required this.left,
     required this.right,
     required this.on,
@@ -261,6 +305,7 @@ class _ManyToOne<L, I extends Object, R, J extends Object>
         executor!,
         plan,
         entries.map((entry) => entry.key),
+        session: session,
       );
       return [
         for (final MapEntry<J, List<L>> entry in entries)
@@ -280,6 +325,9 @@ class _ManyToOne<L, I extends Object, R, J extends Object>
 
   @override
   Stream<Join<R, L>?> pull(I id) async* {
+    if (session != null) {
+      throw UnsupportedError('Streams are not available in a transaction.');
+    }
     yield await peek(id);
   }
 
@@ -288,6 +336,9 @@ class _ManyToOne<L, I extends Object, R, J extends Object>
     BaseFilter<Query> filter = const BaseFilter.empty(),
     QueryOptions options = const QueryOptions(),
   ]) async* {
+    if (session != null) {
+      throw UnsupportedError('Streams are not available in a transaction.');
+    }
     yield await peekAll(filter, options);
   }
 }
@@ -295,6 +346,7 @@ class _ManyToOne<L, I extends Object, R, J extends Object>
 class _ManyToMany<M, I extends Object, L, J extends Object, R, K extends Object>
     implements ManyToManyAssociation<M, I, L, R, Query> {
   final SessionExecutor? executor;
+  final Session? session;
   final RelationSource<M, I, Query> middle;
   final RelationSource<L, J, Query> left;
   final RelationSource<R, K, Query> right;
@@ -303,6 +355,7 @@ class _ManyToMany<M, I extends Object, L, J extends Object, R, K extends Object>
 
   const _ManyToMany({
     required this.executor,
+    required this.session,
     required this.middle,
     required this.left,
     required this.right,
@@ -336,11 +389,13 @@ class _ManyToMany<M, I extends Object, L, J extends Object, R, K extends Object>
         executor!,
         leftPlan,
         leftIds,
+        session: session,
       );
       final Map<Object, Object> rightModels = await readByIds(
         executor!,
         rightPlan,
         rightIds,
+        session: session,
       );
       return [
         for (int i = 0; i < middleModels.length; i++)
@@ -366,6 +421,9 @@ class _ManyToMany<M, I extends Object, L, J extends Object, R, K extends Object>
 
   @override
   Stream<Join<M, (L?, R?)>?> pull(I id) async* {
+    if (session != null) {
+      throw UnsupportedError('Streams are not available in a transaction.');
+    }
     yield await peek(id);
   }
 
@@ -374,6 +432,9 @@ class _ManyToMany<M, I extends Object, L, J extends Object, R, K extends Object>
     BaseFilter<Query> filter = const BaseFilter.empty(),
     QueryOptions options = const QueryOptions(),
   ]) async* {
+    if (session != null) {
+      throw UnsupportedError('Streams are not available in a transaction.');
+    }
     yield await peekAll(filter, options);
   }
 }

@@ -150,7 +150,9 @@ signature and result shape.
 
 ### Transaction
 
-The public framework does not expose a general transaction object. Firebase
-patch and selected MySQL operations use backend transaction mechanisms
-internally. The word transaction therefore has different scopes in the API
-and engine implementations.
+A scoped execution of multiple repository operations with commit or rollback
+semantics. `TransactionalDorm.transaction` exposes this portable capability
+for Memory, BLoC, MySQL, and PostgreSQL. The callback receives a temporary
+`Dorm`; streams and nested transactions are not available in that context.
+Backend transactions used internally by individual operations are a separate
+scope.

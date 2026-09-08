@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `sort` extension method to `Filter`
+- Optional portable transactions through `TransactionalEngine` and the
+  generated `TransactionalDorm` facade for Memory, BLoC, MySQL, and PostgreSQL.
 
 ### Changed
 

@@ -39,6 +39,7 @@ the declaration name:
 | `UserFields` | Field metadata used by filters and relationships. |
 | `UserEntity` | Schema, identity, conversion, and serialization adapter. |
 | `Dorm` | Engine-bound database access object containing entity accessors. |
+| `TransactionalDorm` | Transaction-capable facade generated alongside `Dorm` for a transaction-capable engine. |
 
 The generated `Product` model receives the corresponding `ProductData`,
 `Product`, `ProductDependency`, `ProductFields`, and `ProductEntity` types.
@@ -152,6 +153,10 @@ class Dorm<Q extends BaseQuery<Q>, P extends PageRequest> {
 The `as: #users` value in `@Model` becomes the `users` accessor. Application
 code normally reaches the generated operations through
 `dorm.users.repository`.
+
+When the selected engine implements `TransactionalEngine<Q, P>`, the generated
+library also contains `TransactionalDorm<Q, P>`. It extends `Dorm<Q, P>` and
+exposes `transaction`, whose callback receives a temporary `Dorm<Q, P>`.
 
 ## Generated relationship paths
 

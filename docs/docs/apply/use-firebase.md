@@ -133,6 +133,18 @@ flutter run
 
 The Firebase initialization, database rules, and network/emulator connection are separate from dORM code generation.
 
+## Understand the transaction boundary
+
+Firebase Realtime Database provides `runTransaction` for a single
+`DatabaseReference`. The dORM engine uses that mechanism internally for
+`patch`, but it does not expose `TransactionalDorm` for composing operations
+across repositories.
+
+Filtered reads cannot be moved into the current Firebase transaction handler,
+so operations such as `popAll` read the matching models first and then remove
+their identities. This is not the same as one public multi-repository
+transaction.
+
 ## Configure authentication and database rules
 
 Firebase Authentication and Realtime Database rules define whether a repository

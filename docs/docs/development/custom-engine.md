@@ -226,6 +226,8 @@ Framework relationship-path tests and MySQL relationship tests demonstrate the k
 | Import another package's `lib/src` classes or rely on generated normalization helper names | Incidental implementation use; not guaranteed |
 | Depend on a backend's private transaction, cache, or driver behavior through an internal class | Incidental and backend-specific |
 
-The current common framework has no public transaction contract. Offset pages
-are part of the common read surface; cursor requests remain unsupported by the
-current engines.
+Transaction support is an optional framework capability. A custom engine may
+implement `TransactionalEngine<Q, P>` when it can provide the callback,
+commit, rollback, and temporary-context behavior required by that contract.
+Offset pages are part of the common read surface; cursor requests remain
+unsupported by the current engines.

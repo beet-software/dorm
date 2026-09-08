@@ -6,7 +6,7 @@ import 'package:dorm_test/dorm_test.dart';
 import 'package:mysql_client/mysql_client.dart';
 import 'package:test/test.dart';
 
-class _MySqlAdapter implements EngineTestAdapter<Query> {
+class _MySqlAdapter implements TransactionalEngineTestAdapter<Query> {
   _MySqlAdapter(this.config);
 
   final _MySqlConfig config;
@@ -15,7 +15,7 @@ class _MySqlAdapter implements EngineTestAdapter<Query> {
   String get name => 'MySQL';
 
   @override
-  Future<EngineTestSession<Query>> open() async {
+  Future<TransactionalEngineTestSession<Query>> open() async {
     final MySQLConnection connection = await MySQLConnection.createConnection(
       host: config.host,
       port: config.port,
@@ -71,7 +71,7 @@ class _MySqlAdapter implements EngineTestAdapter<Query> {
   }
 }
 
-class _MySqlSession implements EngineTestSession<Query> {
+class _MySqlSession implements TransactionalEngineTestSession<Query> {
   _MySqlSession(this.connection) : _engine = Engine(connection);
 
   final MySQLConnection connection;
@@ -81,8 +81,12 @@ class _MySqlSession implements EngineTestSession<Query> {
   BaseEngine<Query, OffsetPageRequest> get engine => _engine;
 
   @override
+  TransactionalEngine<Query, OffsetPageRequest> get transactionalEngine =>
+      _engine;
+
+  @override
   EngineCapabilities get capabilities =>
-      const EngineCapabilities(compositeIdentities: true);
+      const EngineCapabilities(compositeIdentities: true, transactions: true);
 
   @override
   Future<void> reset() async {
@@ -151,4 +155,5 @@ void main() {
     return;
   }
   defineEngineComplianceTests(_MySqlAdapter(config));
+  defineEngineTransactionComplianceTests(_MySqlAdapter(config));
 }

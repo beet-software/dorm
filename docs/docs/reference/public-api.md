@@ -158,6 +158,30 @@ The generated `Dorm` receives one concrete engine and exposes generated
 `DatabaseEntity` accessors. See [Engine capability reference](engine-capabilities.md)
 for current backend differences.
 
+### Transactions
+
+Generated model libraries also expose `TransactionalDorm<Q, P>` when a
+transaction-capable engine is used. Its constructor requires
+`TransactionalEngine<Q, P>` and its callback receives a temporary
+`Dorm<Q, P>`:
+
+~~~dart
+final TransactionalDorm<Query, OffsetPageRequest> dorm =
+    TransactionalDorm(engine);
+
+final result = await dorm.transaction((tx) async {
+  final User? user = await tx.users.repository.peek(userId);
+  await tx.carts.repository.push(cart);
+  return user;
+});
+~~~
+
+The callback result is returned and callback or backend errors are propagated.
+Supported engines roll back the transaction when the callback fails. Streams
+are rejected inside the callback, and nested transactions are not supported.
+The capability is currently implemented by Memory, BLoC, MySQL, and
+PostgreSQL.
+
 ## Errors and status
 
 Public methods return ordinary Dart futures and streams. Current failures can

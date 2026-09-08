@@ -14,27 +14,19 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import 'package:dorm_framework/dorm_framework.dart';
-
-import 'reference.dart';
+import 'engine.dart';
 import 'query.dart';
-import 'relationship.dart';
+import 'read_options.dart';
 
-class Engine
-    implements
-        BaseEngine<Query, OffsetPageRequest>,
-        TransactionalEngine<Query, OffsetPageRequest> {
-  final Reference _reference = Reference();
-
-  @override
-  BaseReference<Query, OffsetPageRequest> createReference() => _reference;
-
-  @override
-  BaseRelationship<Query> createRelationship() => const Relationship();
-
-  @override
-  Future<T> transaction<T>(
-    Future<T> Function(BaseEngine<Query, OffsetPageRequest> engine) action,
-  ) =>
-      _reference.transaction(action);
+/// Provides a dORM engine bound to one transaction context.
+///
+/// The engine supplied to the callback is valid only while the callback is
+/// running. Implementations must commit when the callback completes and must
+/// roll back when it throws.
+abstract interface class TransactionalEngine<
+  Q extends BaseQuery<Q>,
+  P extends PageRequest
+> implements BaseEngine<Q, P> {
+  /// Runs [action] inside one transaction context.
+  Future<T> transaction<T>(Future<T> Function(BaseEngine<Q, P> engine) action);
 }

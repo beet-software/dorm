@@ -21,10 +21,14 @@ import 'query.dart';
 import 'reference.dart';
 import 'relationship.dart';
 
-class Engine implements BaseEngine<Query, OffsetPageRequest> {
+class Engine
+    implements
+        BaseEngine<Query, OffsetPageRequest>,
+        TransactionalEngine<Query, OffsetPageRequest> {
   final MySQLConnection connection;
+  bool _transactionActive = false;
 
-  const Engine(this.connection);
+  Engine(this.connection);
 
   @override
   BaseReference<Query, OffsetPageRequest> createReference() =>
@@ -32,4 +36,49 @@ class Engine implements BaseEngine<Query, OffsetPageRequest> {
 
   @override
   BaseRelationship<Query> createRelationship() => Relationship(connection);
+
+  @override
+  Future<T> transaction<T>(
+    Future<T> Function(BaseEngine<Query, OffsetPageRequest> engine) action,
+  ) {
+    if (_transactionActive) {
+      throw StateError('Nested transactions are not supported.');
+    }
+    _transactionActive = true;
+    _TransactionEngine? transactionEngine;
+    return connection
+        .transactional((transactionConnection) {
+          transactionEngine = _TransactionEngine(transactionConnection);
+          return action(transactionEngine!);
+        })
+        .whenComplete(() {
+          transactionEngine?.active = false;
+          _transactionActive = false;
+        });
+  }
+}
+
+class _TransactionEngine implements BaseEngine<Query, OffsetPageRequest> {
+  final MySQLConnection connection;
+  bool active = true;
+
+  _TransactionEngine(this.connection);
+
+  @override
+  BaseReference<Query, OffsetPageRequest> createReference() {
+    _checkActive();
+    return Reference(connection, transactionScoped: true);
+  }
+
+  @override
+  BaseRelationship<Query> createRelationship() {
+    _checkActive();
+    return Relationship(connection);
+  }
+
+  void _checkActive() {
+    if (!active) {
+      throw StateError('The transaction context is no longer active.');
+    }
+  }
 }

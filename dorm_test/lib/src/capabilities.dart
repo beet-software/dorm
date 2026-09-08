@@ -6,6 +6,7 @@ class EngineCapabilities {
     this.reactiveStreams = false,
     this.atomicBatchWrites = false,
     this.atomicPatch = false,
+    this.transactions = false,
   });
 
   /// Whether explicit composite identities are supported by the engine.
@@ -20,4 +21,7 @@ class EngineCapabilities {
 
   /// Whether patch evaluates and persists its callback atomically.
   final bool atomicPatch;
+
+  /// Whether the engine exposes the portable multi-operation transaction API.
+  final bool transactions;
 }

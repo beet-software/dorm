@@ -151,6 +151,15 @@ abstract class _Post {
         );
         expect(generatedCode, contains('BaseEngine<Q, P>'));
         expect(generatedCode, contains('DormRelations<Q, P>'));
+        expect(
+          generatedCode,
+          contains(
+            'class TransactionalDorm<Q extends BaseQuery<Q>, '
+            'P extends PageRequest>',
+          ),
+        );
+        expect(generatedCode, contains('TransactionalEngine<Q, P>'));
+        expect(generatedCode, contains('Future<T> transaction<T>'));
         expect(generatedCode, contains('RelationPath<Dorm<Q, P>'));
         expect(generatedCode, isNot(contains('BaseEngine<Query, P>')));
         expect(generatedCode, contains('SimpleCreation<UserData, String>'));
@@ -184,6 +193,61 @@ Dorm<dorm_bloc.Query, OffsetPageRequest> createDorm() {
         _expectSuccess(
           await _runDart(project, ['analyze']),
           'dart analyze with an offset page request',
+        );
+
+        await File(
+          '${lib.path}${Platform.pathSeparator}valid_transaction.dart',
+        ).writeAsString('''
+import 'package:dorm_bloc_database/dorm_bloc_database.dart' as dorm_bloc;
+import 'package:dorm_framework/dorm_framework.dart';
+
+import 'models.dart';
+
+Future<User> createUser() async {
+  final TransactionalDorm<dorm_bloc.Query, OffsetPageRequest> dorm =
+      TransactionalDorm(dorm_bloc.Engine());
+  return dorm.transaction((tx) async {
+    return tx.users.repository.put(
+      Creation.explicit(
+        dependency: const UserDependency(),
+        data: UserData(
+          name: 'transactional',
+          createdAt: DateTime.utc(2026),
+        ),
+        identity: 'transaction-user',
+      ),
+    );
+  });
+}
+''');
+        _expectSuccess(
+          await _runDart(project, ['analyze']),
+          'dart analyze with a transactional engine',
+        );
+
+        await File(
+          '${lib.path}${Platform.pathSeparator}invalid_transaction.dart',
+        ).writeAsString('''
+import 'package:dorm_bloc_database/dorm_bloc_database.dart' as dorm_bloc;
+import 'package:dorm_framework/dorm_framework.dart';
+
+import 'models.dart';
+
+TransactionalDorm<dorm_bloc.Query, OffsetPageRequest> invalidTransaction() {
+  final BaseEngine<dorm_bloc.Query, OffsetPageRequest> engine =
+      dorm_bloc.Engine();
+  return TransactionalDorm(engine);
+}
+''');
+        final ProcessResult invalidTransactionAnalysis = await _runDart(
+          project,
+          ['analyze'],
+        );
+        expect(invalidTransactionAnalysis.exitCode, isNot(0));
+        expect(
+          '${invalidTransactionAnalysis.stdout}\n'
+          '${invalidTransactionAnalysis.stderr}',
+          contains('TransactionalEngine'),
         );
 
         await File(

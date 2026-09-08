@@ -11,6 +11,13 @@ abstract interface class EngineTestAdapter<Q extends BaseQuery<Q>> {
   Future<EngineTestSession<Q>> open();
 }
 
+/// An adapter whose engine also exposes the portable transaction capability.
+abstract interface class TransactionalEngineTestAdapter<Q extends BaseQuery<Q>>
+    extends EngineTestAdapter<Q> {
+  @override
+  Future<TransactionalEngineTestSession<Q>> open();
+}
+
 /// A configured engine session used by the conformance suite.
 abstract interface class EngineTestSession<Q extends BaseQuery<Q>> {
   /// The engine under test.
@@ -24,4 +31,11 @@ abstract interface class EngineTestSession<Q extends BaseQuery<Q>> {
 
   /// Closes the backend resources owned by the session.
   Future<void> close();
+}
+
+/// A conformance session with a transaction-capable engine.
+abstract interface class TransactionalEngineTestSession<Q extends BaseQuery<Q>>
+    implements EngineTestSession<Q> {
+  /// The transaction-capable engine under test.
+  TransactionalEngine<Q, OffsetPageRequest> get transactionalEngine;
 }

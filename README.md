@@ -121,8 +121,10 @@ just one of the packages above. Each documentation complements the other.
 
 ## Current scope
 
-dORM does not expose a general public transaction API. Firestore, PostgreSQL,
-and MySQL use backend transactions internally for selected operations.
+dORM exposes an optional public transaction API through `TransactionalDorm`.
+Memory, BLoC, MySQL, and PostgreSQL implement it. Firestore, Firebase
+Realtime Database, MongoDB, and HTTP do not; some of those engines still use
+backend transactions internally for individual operations.
 Repository reads support offset-based pages through `peekPage`. Current engines
 declare `OffsetPageRequest` as their accepted page type, so a statically typed
 `CursorPageRequest` call is rejected by the analyzer.

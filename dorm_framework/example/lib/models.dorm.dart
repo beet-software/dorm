@@ -911,6 +911,17 @@ class Dorm<Q extends BaseQuery<Q>, P extends PageRequest> {
   DormRelations<Q, P> get relations => DormRelations<Q, P>(this);
 }
 
+class TransactionalDorm<Q extends BaseQuery<Q>, P extends PageRequest>
+    extends Dorm<Q, P> {
+  const TransactionalDorm(this._transactionalEngine)
+    : super(_transactionalEngine);
+
+  final TransactionalEngine<Q, P> _transactionalEngine;
+
+  Future<T> transaction<T>(Future<T> Function(Dorm<Q, P>) action) =>
+      _transactionalEngine.transaction((engine) => action(Dorm<Q, P>(engine)));
+}
+
 class DormRelations<Q extends BaseQuery<Q>, P extends PageRequest> {
   const DormRelations(this._dorm);
 

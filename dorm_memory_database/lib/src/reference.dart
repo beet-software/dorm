@@ -20,6 +20,7 @@ import 'package:dorm_framework/dorm_framework.dart';
 import 'package:uuid/uuid.dart';
 
 import 'query.dart';
+import 'relationship.dart';
 
 const Uuid _uuid = Uuid();
 
@@ -33,18 +34,31 @@ class _EntityReference<
   final Map<I, Model> models = {};
   final StreamController<Map<I, Model>> _controller =
       StreamController<Map<I, Model>>.broadcast();
+  bool emitEvents = true;
 
   _EntityReference(this.entity) {
     _controller.onListen = () => _controller.add(Map.of(models));
+  }
+
+  _EntityReference<Data, Model, I, C> copyForTransaction() {
+    final _EntityReference<Data, Model, I, C> copy =
+        _EntityReference<Data, Model, I, C>(entity);
+    copy.models.addAll(models);
+    copy.emitEvents = false;
+    return copy;
   }
 
   Stream<Map<I, Model>> get dataStream => _controller.stream;
 
   R _emit<R>(R Function() action) {
     final R result = action();
-    _controller.add(Map.of(models));
+    if (emitEvents) _controller.add(Map.of(models));
     return result;
   }
+
+  void notify() => _controller.add(Map.of(models));
+
+  Future<void> close() => _controller.close();
 
   void pop(I id) => _emit(() => models.remove(id));
 
@@ -165,6 +179,9 @@ class _EntityReference<
 /// A [BaseReference] implementation backed by Dart maps and streams.
 class Reference implements BaseReference<Query, OffsetPageRequest> {
   final Map<String, Object> _references = {};
+  bool _transactionActive = false;
+
+  Reference();
 
   _EntityReference<Data, Model, I, C> _access<
     Data,
@@ -180,8 +197,70 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     final _EntityReference<Data, Model, I, C> reference = _EntityReference(
       entity,
     );
+    reference.emitEvents = !_transactionActive;
     _references[tableName] = reference;
     return reference;
+  }
+
+  Future<T> transaction<T>(
+    Future<T> Function(BaseEngine<Query, OffsetPageRequest> engine) action,
+  ) async {
+    if (_transactionActive) {
+      throw StateError('Nested dORM transactions are not supported.');
+    }
+    final Reference transactionReference = Reference._forTransaction(this);
+    _transactionActive = true;
+    final _TransactionEngine transactionEngine = _TransactionEngine(
+      transactionReference,
+    );
+    try {
+      final T result = await action(transactionEngine);
+      await _commit(transactionReference);
+      transactionEngine.active = false;
+      _transactionActive = false;
+      return result;
+    } catch (_) {
+      _transactionActive = false;
+      transactionEngine.active = false;
+      await transactionReference._close();
+      rethrow;
+    }
+  }
+
+  Reference._forTransaction(Reference source) {
+    for (final MapEntry<String, Object> entry in source._references.entries) {
+      _references[entry.key] = (entry.value as dynamic).copyForTransaction();
+    }
+    _transactionActive = true;
+  }
+
+  Future<void> _commit(Reference transactionReference) async {
+    for (final MapEntry<String, Object> entry
+        in transactionReference._references.entries) {
+      final dynamic transactional = entry.value;
+      final dynamic current = _references[entry.key];
+      if (current == null) {
+        transactional.emitEvents = true;
+        _references[entry.key] = transactional;
+      } else {
+        current.models
+          ..clear()
+          ..addAll(transactional.models);
+        current.emitEvents = true;
+        current.notify();
+        await transactional.close();
+      }
+    }
+    transactionReference._references.clear();
+    transactionReference._transactionActive = false;
+  }
+
+  Future<void> _close() async {
+    for (final Object value in _references.values) {
+      await (value as dynamic).close();
+    }
+    _references.clear();
+    _transactionActive = false;
   }
 
   @override
@@ -279,6 +358,9 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     Entity<Data, Model, I, Creation<Data, I>> entity,
     I id,
   ) {
+    if (_transactionActive) {
+      throw UnsupportedError('Streams are not available in a transaction.');
+    }
     return _access(entity).dataStream.map((models) => models[id]);
   }
 
@@ -288,6 +370,9 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     BaseFilter<Query> filter, [
     QueryOptions options = const QueryOptions(),
   ]) {
+    if (_transactionActive) {
+      throw UnsupportedError('Streams are not available in a transaction.');
+    }
     final Query<I> query = QueryOptions(
       orderBy: options.orderBy,
       limit: options.limit == null ? null : options.limit! + options.offset,
@@ -355,5 +440,30 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     Entity<Data, Model, I, Creation<Data, I>> entity,
   ) async {
     _access(entity).purge();
+  }
+}
+
+class _TransactionEngine implements BaseEngine<Query, OffsetPageRequest> {
+  final Reference reference;
+  bool active = true;
+
+  _TransactionEngine(this.reference);
+
+  @override
+  BaseReference<Query, OffsetPageRequest> createReference() {
+    _checkActive();
+    return reference;
+  }
+
+  @override
+  BaseRelationship<Query> createRelationship() {
+    _checkActive();
+    return const Relationship();
+  }
+
+  void _checkActive() {
+    if (!active) {
+      throw StateError('The transaction context is no longer active.');
+    }
   }
 }

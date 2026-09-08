@@ -101,11 +101,12 @@ can generate schema SQL, but that is different from a migration system.
 PostgreSQL, MongoDB, Firebase, and HTTP setup also remain application- or
 backend-specific.
 
-dORM does not expose a public transaction object or transaction callback API.
-Some SQL operations use transactions internally, while other engines have
-different guarantees. Code that depends on a transaction spanning several
-unrelated repository calls must use the native backend API or another
-application-level mechanism.
+dORM provides a public transaction callback through `TransactionalDorm` for
+the Memory, BLoC, MySQL, and PostgreSQL engines. The callback can compose
+repository reads and writes across entities and rolls back when it fails.
+Streams are not available inside the callback. Firestore, Firebase Realtime
+Database, MongoDB, and HTTP do not expose this common capability; their
+individual internal transactions, where present, remain separate from it.
 
 If your project expects one abstraction to hide all backend details, this may
 not be a good fit. Engine differences remain visible, and advanced SQL,

@@ -22,6 +22,10 @@ In application code, type inference normally supplies `Q` and `P` from the
 engine. The generated accessors return `DatabaseEntity` values, and the
 repository is available through `.repository`.
 
+For engines that implement the optional `TransactionalEngine` capability, the
+same generated library also contains `TransactionalDorm<Q, P>`. It extends
+`Dorm<Q, P>` and creates a temporary `Dorm` for the transaction callback.
+
 `Dorm` also exposes generated relationship roots through `relations` when the
 source models contain relationship metadata. See [Relationship paths](relations.md).
 

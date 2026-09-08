@@ -9,5 +9,14 @@ void main() {
     expect(capabilities.reactiveStreams, isFalse);
     expect(capabilities.atomicBatchWrites, isFalse);
     expect(capabilities.atomicPatch, isFalse);
+    expect(capabilities.transactions, isFalse);
+  });
+
+  test('transaction capability can be declared', () {
+    const EngineCapabilities capabilities = EngineCapabilities(
+      transactions: true,
+    );
+
+    expect(capabilities.transactions, isTrue);
   });
 }

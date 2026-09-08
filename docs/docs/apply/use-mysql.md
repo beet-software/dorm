@@ -126,7 +126,9 @@ The current MySQL reference implements `pull` and `pullAll` by performing an ini
 
 ## Observe transaction use inside operations
 
-The current MySQL implementation uses a connection transaction internally for `patch`, `putAll`, and `pushAll`. The public framework does not expose a general transaction object or transaction callback API.
+The current MySQL implementation uses a connection transaction internally for
+`patch`, `putAll`, and `pushAll`. `TransactionalDorm` also exposes a callback
+for composing multiple repository operations on the same connection.
 
 This internal behavior does not change the repository method signatures. Handle connection and database errors around the repository call:
 
@@ -195,8 +197,8 @@ SQL operation; `peekAllKeys` selects only identity columns.
 
 `putAll` and `pushAll` use one connection transaction but execute one SQL
 statement per model. `patch` reads, invokes its callback, and writes or removes
-inside an internal transaction. The public framework does not expose that
-transaction object.
+inside an internal transaction. `TransactionalDorm` exposes the surrounding
+connection transaction without exposing the driver transaction object.
 
 Direct table relationship plans can group related reads. When a plan is not
 available, relationship resolution falls back to readable operations and can

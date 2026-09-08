@@ -21,33 +21,43 @@ Future<List<DecodedRow>> readRows(
   required String where,
   required Map<String, Object?> params,
 }) {
-  return executor.run((session) async {
-    final Result result = await session.execute(
-      Sql.named('SELECT * FROM ${plan.schema.tableName} WHERE $where'),
-      parameters: params,
+  return executor.run(
+    (session) => readRowsInSession(session, plan, where: where, params: params),
+  );
+}
+
+Future<List<DecodedRow>> readRowsInSession(
+  Session session,
+  TableRelationPlanBase plan, {
+  required String where,
+  required Map<String, Object?> params,
+}) async {
+  final Result result = await session.execute(
+    Sql.named('SELECT * FROM ${plan.schema.tableName} WHERE $where'),
+    parameters: params,
+  );
+  return result.map((row) {
+    final Map<String, Object?> raw = row.toColumnMap();
+    final Map<String, Object?> data = {...raw};
+    for (final DerivedFieldSchema field in plan.schema.derivedFields) {
+      if (field.path.length == 1) continue;
+      final Object? value = data[field.storageName];
+      if (value is String) data[field.storageName] = jsonDecode(value);
+    }
+    return DecodedRow(
+      key: plan.decodeKey(data)!,
+      model: plan.decode(data)!,
+      data: data,
     );
-    return result.map((row) {
-      final Map<String, Object?> raw = row.toColumnMap();
-      final Map<String, Object?> data = {...raw};
-      for (final DerivedFieldSchema field in plan.schema.derivedFields) {
-        if (field.path.length == 1) continue;
-        final Object? value = data[field.storageName];
-        if (value is String) data[field.storageName] = jsonDecode(value);
-      }
-      return DecodedRow(
-        key: plan.decodeKey(data)!,
-        model: plan.decode(data)!,
-        data: data,
-      );
-    }).toList();
-  });
+  }).toList();
 }
 
 Future<Map<Object, Object>> readByIds(
   SessionExecutor executor,
   TableRelationPlanBase plan,
-  Iterable<Object> ids,
-) async {
+  Iterable<Object> ids, {
+  Session? session,
+}) async {
   final List<Object> values = ids.toSet().toList();
   if (values.isEmpty) return {};
   final List<FieldSchema> fields = plan.schema.primaryKeys;
@@ -78,12 +88,15 @@ Future<Map<Object, Object>> readByIds(
         '(${fields.map((field) => field.columnName).join(', ')}) IN '
         '(${tuples.join(', ')})';
   }
-  final List<DecodedRow> rows = await readRows(
-    executor,
-    plan,
-    where: where,
-    params: params,
-  );
+  final List<DecodedRow> rows = switch (session) {
+    final Session txSession => await readRowsInSession(
+      txSession,
+      plan,
+      where: where,
+      params: params,
+    ),
+    null => await readRows(executor, plan, where: where, params: params),
+  };
   return {for (final DecodedRow row in rows) row.key: row.model};
 }
 
@@ -91,8 +104,9 @@ Future<Map<Object, List<Object>>> readByForeignKey(
   SessionExecutor executor,
   TableRelationPlanBase plan,
   ForeignKeySchema field,
-  Iterable<Object> values,
-) async {
+  Iterable<Object> values, {
+  Session? session,
+}) async {
   final List<Object> keys = values.toSet().toList();
   if (keys.isEmpty) return {};
   final Map<String, Object?> params = {
@@ -102,12 +116,20 @@ Future<Map<Object, List<Object>>> readByForeignKey(
     keys.length,
     (i) => '@relation_fk_$i',
   ).join(', ');
-  final List<DecodedRow> rows = await readRows(
-    executor,
-    plan,
-    where: '${field.columnName} IN ($placeholders)',
-    params: params,
-  );
+  final List<DecodedRow> rows = switch (session) {
+    final Session txSession => await readRowsInSession(
+      txSession,
+      plan,
+      where: '${field.columnName} IN ($placeholders)',
+      params: params,
+    ),
+    null => await readRows(
+      executor,
+      plan,
+      where: '${field.columnName} IN ($placeholders)',
+      params: params,
+    ),
+  };
   final Map<Object, List<Object>> result = {};
   for (final DecodedRow row in rows) {
     final Object? foreignKey = row.data[field.columnName];

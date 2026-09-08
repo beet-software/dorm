@@ -65,7 +65,7 @@ identity details.
 | Filters | Implemented by Memory, BLoC, Firebase, Firestore, MySQL, PostgreSQL, MongoDB, and HTTP through different query representations. |
 | Relationships | Implemented in the common framework and engine adapters; direct and fallback paths differ. |
 | Streams | Memory, BLoC, Firebase, and Firestore currently provide state/value/snapshot events; MySQL, PostgreSQL, MongoDB, and HTTP currently perform an initial read only. |
-| Transactions | No general public transaction API. Some engine operations use backend transactions internally. |
+| Transactions | `TransactionalDorm` is currently implemented by Memory, BLoC, MySQL, and PostgreSQL. Other engines may still use internal transactions for individual operations. |
 | Pagination | Current engines expose `OffsetPageRequest` as their page type; cursor requests are rejected by the typed repository surface. |
 | Polymorphic serialization across every engine | Current serialized behavior exists, but universal cross-engine compatibility is not established. |
 | MongoDB change streams | Not exposed by the current MongoDB engine. |

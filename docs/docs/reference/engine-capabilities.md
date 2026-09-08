@@ -18,7 +18,7 @@ requirements.
 | Single reads | In-memory map lookup | In-memory map lookup | Firebase SDK read | Firestore document read | SQL read | PostgreSQL SQL read | MongoDB collection read | HTTP request |
 | Streams | State-backed | State-backed | Firebase value events, with offline behavior | Firestore document/query snapshots | Initial read only in current implementation | Initial read only | Initial read only | Initial read only |
 | Relationships | Framework relationship implementation | Framework relationship implementation | Framework relationship implementation | Readable-operation fallback | Direct relation plans plus readable fallbacks | Direct relation plans plus readable fallbacks | Direct relation plans plus readable fallbacks | Readable-operation fallback |
-| Public transaction API | None documented | None documented | None; patch uses a Firebase transaction internally | None; patch uses a Firestore transaction internally | None; selected operations use MySQL transactions internally | None; selected operations use PostgreSQL transactions internally | None | None |
+| Public transaction API | `TransactionalDorm` | `TransactionalDorm` | None; patch uses a Firebase transaction internally | None; patch uses a Firestore transaction internally | `TransactionalDorm` | `TransactionalDorm` | None | None |
 | Pagination | Offset pages | Offset pages | Offset pages with client-side skipping | Offset pages with client-side skipping | Offset pages | Offset pages | Offset pages | Offset pages |
 
 The matrix records current behavior. It does not create a future compatibility
@@ -149,9 +149,9 @@ parameters. It requires tables to exist before normal CRUD operations can
 succeed.
 
 The current MySQL pull and pullAll implementations perform an initial read and
-do not subscribe to later database changes. Several writes use a connection
-transaction internally, but the public framework does not expose a general
-transaction object.
+do not subscribe to later database changes. `TransactionalDorm` can compose
+reads and writes across repositories using the same connection transaction.
+Selected individual operations also use a connection transaction internally.
 
 Direct table relationship plans can group reads. Other relationship sources
 use readable operations. This is an implementation capability, not a
@@ -186,8 +186,8 @@ can succeed. Identified writes use PostgreSQL upsert statements. The package
 does not provide schema generation or migrations.
 
 `pull` and `pullAll` perform the initial read only. Selected batch and patch
-operations use driver transactions internally, while the common framework
-does not expose a transaction object.
+operations use driver transactions internally. `TransactionalDorm` can also
+compose reads and writes across repositories using the same driver transaction.
 
 See [Run with PostgreSQL](../apply/use-postgres.md).
 

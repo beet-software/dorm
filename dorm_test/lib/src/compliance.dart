@@ -355,3 +355,120 @@ void defineEngineComplianceTests<Q extends BaseQuery<Q>>(
     });
   });
 }
+
+/// Registers the optional portable transaction conformance tests.
+void defineEngineTransactionComplianceTests<Q extends BaseQuery<Q>>(
+  TransactionalEngineTestAdapter<Q> adapter,
+) {
+  group('${adapter.name} dORM transactions', () {
+    late TransactionalEngineTestSession<Q> session;
+    TransactionalEngineTestSession<Q>? openedSession;
+
+    setUp(() async {
+      openedSession = await adapter.open();
+      session = openedSession!;
+      if (!session.capabilities.transactions) {
+        markTestSkipped('Transactions are not supported by this session.');
+      }
+      await session.reset();
+    });
+
+    tearDown(() async {
+      await openedSession?.close();
+      openedSession = null;
+    });
+
+    test('commits work across repositories', () async {
+      late BaseEngine<Q, OffsetPageRequest> transactionContext;
+      final String id = await session.transactionalEngine.transaction((
+        engine,
+      ) async {
+        transactionContext = engine;
+        final ComplianceFixtures<Q> fixtures = ComplianceFixtures(engine);
+        final ComplianceItem item = await fixtures.items.repository.put(
+          Creation.explicit(
+            dependency: const ComplianceDependency<ComplianceItemData>(),
+            data: const ComplianceItemData(
+              name: 'transactional',
+              value: 1,
+              active: true,
+            ),
+            identity: 'transaction-item',
+          ),
+        );
+        await fixtures.profiles.repository.put(
+          Creation.explicit(
+            dependency: const ComplianceDependency<ComplianceProfileData>(),
+            data: const ComplianceProfileData(label: 'transactional'),
+            identity: 'transaction-profile',
+          ),
+        );
+        return item.id;
+      });
+
+      final ComplianceFixtures<Q> fixtures = ComplianceFixtures(session.engine);
+      expect(id, 'transaction-item');
+      expect(await fixtures.items.repository.peek(id), isNotNull);
+      expect(
+        await fixtures.profiles.repository.peek('transaction-profile'),
+        isNotNull,
+      );
+      expect(
+        () => transactionContext.createReference(),
+        throwsA(isA<StateError>()),
+      );
+    });
+
+    test('rolls back work when the callback fails', () async {
+      late BaseEngine<Q, OffsetPageRequest> transactionContext;
+      await expectLater(
+        session.transactionalEngine.transaction<void>((engine) async {
+          transactionContext = engine;
+          final ComplianceFixtures<Q> fixtures = ComplianceFixtures(engine);
+          await fixtures.items.repository.push(
+            const ComplianceItem(
+              id: 'rolled-back',
+              name: 'rolled-back',
+              value: 1,
+              active: true,
+            ),
+          );
+          throw StateError('abort transaction');
+        }),
+        throwsA(isA<StateError>()),
+      );
+
+      final ComplianceFixtures<Q> fixtures = ComplianceFixtures(session.engine);
+      expect(await fixtures.items.repository.peek('rolled-back'), isNull);
+      expect(
+        () => transactionContext.createReference(),
+        throwsA(isA<StateError>()),
+      );
+    });
+
+    test('rejects streams inside a transaction', () async {
+      await expectLater(
+        session.transactionalEngine.transaction<void>((engine) async {
+          final ComplianceFixtures<Q> fixtures = ComplianceFixtures(engine);
+          expect(
+            () => fixtures.items.repository.pull('stream'),
+            throwsA(isA<UnsupportedError>()),
+          );
+        }),
+        completes,
+      );
+    });
+
+    test('rejects nested transactions', () async {
+      await expectLater(
+        session.transactionalEngine.transaction<void>((engine) async {
+          await expectLater(
+            session.transactionalEngine.transaction<void>((_) async {}),
+            throwsA(isA<StateError>()),
+          );
+        }),
+        completes,
+      );
+    });
+  });
+}

@@ -26,3 +26,4 @@ export 'src/reference.dart';
 export 'src/relationship.dart';
 export 'src/repository.dart';
 export 'src/schema.dart';
+export 'src/transaction.dart';

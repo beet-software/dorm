@@ -48,7 +48,8 @@ The amount of work depends on the engine:
 
 - in-memory engines copy or materialize state according to their state model;
 - Firebase maps operations to snapshots and backend events;
-- SQL engines construct statements and may use internal transactions;
+- SQL engines construct statements and may use internal or public transaction
+  boundaries;
 - MongoDB uses document operations and replacement writes;
 - HTTP relationships can issue additional requests and batch operations require
   configured batch endpoints.

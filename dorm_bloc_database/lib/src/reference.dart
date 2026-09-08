@@ -21,6 +21,7 @@ import 'package:dorm_framework/dorm_framework.dart';
 import 'package:uuid/uuid.dart';
 
 import 'query.dart';
+import 'relationship.dart';
 
 class _State {
   final Map<String, _EntityReference<Object, Object, Object>> references;
@@ -46,6 +47,7 @@ class _EntityReference<Data, Model extends Data, I extends Object>
   final Entity<Data, Model, I, Creation<Data, I>> entity;
   StreamSubscription<void>? _subscription;
   late final StreamController<Map<I, Model>> _controller;
+  bool emitEvents = true;
 
   _EntityReference(this.entity) : super(_EntityState<I, Model>({})) {
     _controller = StreamController.broadcast(
@@ -54,14 +56,30 @@ class _EntityReference<Data, Model extends Data, I extends Object>
     _subscription = stream.map((state) => state.models).listen(_controller.add);
   }
 
+  _EntityReference<Data, Model, I> copyForTransaction() {
+    final _EntityReference<Data, Model, I> copy =
+        _EntityReference<Data, Model, I>(entity);
+    copy.state.models.addAll(state.models);
+    copy.emitEvents = false;
+    return copy;
+  }
+
   Stream<Map<I, Model>> get dataStream => _controller.stream;
 
   R _emit<R>(R Function(Map<I, Model> models) action) {
     final Map<I, Model> models = Map.of(state.models);
     final R result = action(models);
-    emit(_EntityState(models));
+    if (emitEvents) {
+      emit(_EntityState(models));
+    } else {
+      state.models
+        ..clear()
+        ..addAll(models);
+    }
     return result;
   }
+
+  void notify() => emit(_EntityState(Map.of(state.models)));
 
   void pop(I id) {
     _emit((models) => models.remove(id));
@@ -190,7 +208,8 @@ class _EntityReference<Data, Model extends Data, I extends Object>
 /// A [BaseReference] implementation backed by a [Bloc].
 class Reference extends Cubit<_State>
     implements BaseReference<Query, OffsetPageRequest> {
-  Reference() : super(const _State({}));
+  bool _transactionActive = false;
+  Reference() : super(_State({}));
 
   _EntityReference<Data, Model, I>
       _access<Data, Model extends Data, I extends Object>(
@@ -203,8 +222,78 @@ class Reference extends Cubit<_State>
     if (current != null) return current as _EntityReference<Data, Model, I>;
     final _EntityReference<Data, Model, I> bloc = _EntityReference(entity);
     blocs[tableName] = bloc as _EntityReference<Object, Object, Object>;
-    emit(_State(blocs));
+    bloc.emitEvents = !_transactionActive;
+    if (_transactionActive) {
+      state.references[tableName] =
+          bloc as _EntityReference<Object, Object, Object>;
+    } else {
+      emit(_State(blocs));
+    }
     return bloc;
+  }
+
+  Future<T> transaction<T>(
+    Future<T> Function(BaseEngine<Query, OffsetPageRequest> engine) action,
+  ) async {
+    if (_transactionActive) {
+      throw StateError('Nested dORM transactions are not supported.');
+    }
+    final Reference transactionReference = Reference._forTransaction(this);
+    _transactionActive = true;
+    final _TransactionEngine transactionEngine =
+        _TransactionEngine(transactionReference);
+    try {
+      final T result = await action(transactionEngine);
+      await _commit(transactionReference);
+      transactionEngine.active = false;
+      _transactionActive = false;
+      return result;
+    } catch (_) {
+      _transactionActive = false;
+      transactionEngine.active = false;
+      await transactionReference._close();
+      rethrow;
+    }
+  }
+
+  Reference._forTransaction(Reference source) : super(_State({})) {
+    for (final MapEntry<String, _EntityReference<Object, Object, Object>> entry
+        in source.state.references.entries) {
+      state.references[entry.key] = entry.value.copyForTransaction();
+    }
+    _transactionActive = true;
+  }
+
+  Future<void> _commit(Reference transactionReference) async {
+    for (final MapEntry<String, _EntityReference<Object, Object, Object>> entry
+        in transactionReference.state.references.entries) {
+      final _EntityReference<Object, Object, Object> transactional =
+          entry.value;
+      final _EntityReference<Object, Object, Object>? current =
+          state.references[entry.key];
+      if (current == null) {
+        transactional.emitEvents = true;
+        state.references[entry.key] = transactional;
+      } else {
+        current.state.models
+          ..clear()
+          ..addAll(transactional.state.models);
+        current.emitEvents = true;
+        current.notify();
+        await transactional.close();
+      }
+    }
+    transactionReference.state.references.clear();
+    transactionReference._transactionActive = false;
+  }
+
+  Future<void> _close() async {
+    for (final _EntityReference<Object, Object, Object> value
+        in state.references.values) {
+      await value.close();
+    }
+    state.references.clear();
+    _transactionActive = false;
   }
 
   @override
@@ -299,6 +388,9 @@ class Reference extends Cubit<_State>
     Entity<Data, Model, I, Creation<Data, I>> entity,
     I id,
   ) {
+    if (_transactionActive) {
+      throw UnsupportedError('Streams are not available in a transaction.');
+    }
     final _EntityReference<Data, Model, I> bloc = _access(entity);
     return bloc.dataStream.map((models) => models[id]);
   }
@@ -308,6 +400,9 @@ class Reference extends Cubit<_State>
       Entity<Data, Model, I, Creation<Data, I>> entity,
       BaseFilter<Query> filter,
       [QueryOptions options = const QueryOptions()]) {
+    if (_transactionActive) {
+      throw UnsupportedError('Streams are not available in a transaction.');
+    }
     final _EntityReference<Data, Model, I> bloc = _access(entity);
     final Query query = QueryOptions(
       orderBy: options.orderBy,
@@ -377,5 +472,30 @@ class Reference extends Cubit<_State>
   ) async {
     final _EntityReference<Data, Model, I> bloc = _access(entity);
     return bloc.putAll(creations);
+  }
+}
+
+class _TransactionEngine implements BaseEngine<Query, OffsetPageRequest> {
+  final Reference reference;
+  bool active = true;
+
+  _TransactionEngine(this.reference);
+
+  @override
+  BaseReference<Query, OffsetPageRequest> createReference() {
+    _checkActive();
+    return reference;
+  }
+
+  @override
+  BaseRelationship<Query> createRelationship() {
+    _checkActive();
+    return const Relationship();
+  }
+
+  void _checkActive() {
+    if (!active) {
+      throw StateError('The transaction context is no longer active.');
+    }
   }
 }

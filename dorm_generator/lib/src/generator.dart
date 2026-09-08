@@ -2573,6 +2573,72 @@ class OrmGenerator extends Generator {
             }
           }),
         );
+        b.body.add(
+          cb.Class((b) {
+            b.name = 'TransactionalDorm';
+            b.extend = cb.TypeReference((b) {
+              b.symbol = 'Dorm';
+              b.types.add(cb.Reference('Q'));
+              b.types.add(cb.Reference('P'));
+            });
+            b.types.add(_queryTypeParameter());
+            b.types.add(_pageTypeParameter());
+            b.fields.add(
+              cb.Field((b) {
+                b.modifier = cb.FieldModifier.final$;
+                b.type = cb.TypeReference((b) {
+                  b.symbol = 'TransactionalEngine';
+                  b.url = '$_dormUrl';
+                  b.types.add(cb.Reference('Q'));
+                  b.types.add(cb.Reference('P'));
+                });
+                b.name = '_transactionalEngine';
+              }),
+            );
+            b.constructors.add(
+              cb.Constructor((b) {
+                b.constant = true;
+                b.requiredParameters.add(
+                  cb.Parameter((b) {
+                    b.toThis = true;
+                    b.name = '_transactionalEngine';
+                  }),
+                );
+                b.initializers.add(cb.Code('super(_transactionalEngine)'));
+              }),
+            );
+            b.methods.add(
+              cb.Method((b) {
+                b.name = 'transaction';
+                b.lambda = true;
+                b.types.add(cb.TypeReference((b) {
+                  b.symbol = 'T';
+                }));
+                b.returns = cb.Reference('Future<T>');
+                b.requiredParameters.add(
+                  cb.Parameter((b) {
+                    b.name = 'action';
+                    b.type = cb.FunctionType((b) {
+                      b.returnType = cb.Reference('Future<T>');
+                      b.requiredParameters.add(
+                        cb.TypeReference((b) {
+                          b.symbol = 'Dorm';
+                          b.url = '$_dormUrl';
+                          b.types.add(cb.Reference('Q'));
+                          b.types.add(cb.Reference('P'));
+                        }),
+                      );
+                    });
+                  }),
+                );
+                b.body = expressionOf(
+                  '_transactionalEngine.transaction((engine) => action('
+                  'Dorm<Q, P>(engine)))',
+                ).code;
+              }),
+            );
+          }),
+        );
         if (relations.isNotEmpty) {
           b.body.addAll(_relationPathSpecs(modelsNamings, relations));
         }

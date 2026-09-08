@@ -76,11 +76,22 @@ Map<String, Object?> _encodeDerived(
 
 class Reference implements BaseReference<Query, OffsetPageRequest> {
   final SessionExecutor executor;
+  final Session? session;
 
-  const Reference(this.executor);
+  const Reference(this.executor, {this.session});
 
   Future<T> _run<T>(Future<T> Function(Session session) action) {
+    if (session case final Session transactionSession) {
+      return action(transactionSession);
+    }
     return executor.run(action);
+  }
+
+  Future<T> _runTx<T>(Future<T> Function(Session session) action) {
+    if (session case final Session transactionSession) {
+      return action(transactionSession);
+    }
+    return executor.runTx(action);
   }
 
   Future<Model?> _peek<Data, Model extends Data, I extends Object>(
@@ -322,7 +333,7 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     Entity<Data, Model, I, Creation<Data, I>> entity,
     List<Model> models,
   ) {
-    return executor.runTx((session) async {
+    return _runTx((session) async {
       for (final Model model in models) {
         await _insert(entity, model, session: session, upsert: true);
       }
@@ -335,7 +346,7 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     I id,
     Model? Function(Model?) update,
   ) {
-    return executor.runTx((session) async {
+    return _runTx((session) async {
       final Model? existing = await _peek(entity, id, session: session);
       final Model? updated = update(existing);
       if (updated == null) {
@@ -450,7 +461,7 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     I extends Object,
     C extends Creation<Data, I>
   >(Entity<Data, Model, I, C> entity, List<C> creations) {
-    return executor.runTx((session) async {
+    return _runTx((session) async {
       final List<Model> models = [];
       for (final C creation in creations) {
         final ResolvedCreation<Data, I> resolved = _resolveCreation(
@@ -479,6 +490,9 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     Entity<Data, Model, I, Creation<Data, I>> entity,
     I id,
   ) async* {
+    if (session != null) {
+      throw UnsupportedError('Streams are not available in a transaction.');
+    }
     yield await peek(entity, id);
   }
 
@@ -488,6 +502,9 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     BaseFilter<Query> filter, [
     QueryOptions options = const QueryOptions(),
   ]) async* {
+    if (session != null) {
+      throw UnsupportedError('Streams are not available in a transaction.');
+    }
     yield await peekAll(entity, filter, options);
   }
 }

@@ -83,8 +83,16 @@ Map<String, Object?> _decodeDerived(
 /// A [BaseReference] that uses MySQL as engine.
 class Reference implements BaseReference<Query, OffsetPageRequest> {
   final MySQLConnection connection;
+  final bool transactionScoped;
 
-  const Reference(this.connection);
+  const Reference(this.connection, {this.transactionScoped = false});
+
+  Future<T> _transaction<T>(
+    Future<T> Function(MySQLConnection connection) action,
+  ) {
+    if (transactionScoped) return action(connection);
+    return connection.transactional(action);
+  }
 
   @override
   Future<void> patch<Data, Model extends Data, I extends Object>(
@@ -92,7 +100,7 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     I id,
     Model? Function(Model?) update,
   ) {
-    return connection.transactional((connection) async {
+    return _transaction((connection) async {
       final Model? existingModel = await peek<Data, Model, I>(
         entity,
         id,
@@ -320,6 +328,9 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     Entity<Data, Model, I, Creation<Data, I>> entity,
     I id,
   ) {
+    if (transactionScoped) {
+      throw UnsupportedError('Streams are not available in a transaction.');
+    }
     // TODO: make pull realtime somehow
     final StreamController<Model?> controller = StreamController.broadcast();
     peek(entity, id).then(controller.add);
@@ -332,6 +343,9 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     BaseFilter<Query> filter, [
     QueryOptions options = const QueryOptions(),
   ]) {
+    if (transactionScoped) {
+      throw UnsupportedError('Streams are not available in a transaction.');
+    }
     // TODO: make pullAll realtime somehow
     final StreamController<List<Model>> controller =
         StreamController.broadcast();
@@ -372,7 +386,7 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     Entity<Data, Model, I, Creation<Data, I>> entity,
     List<Model> models,
   ) {
-    return connection.transactional((connection) async {
+    return _transaction((connection) async {
       for (Model model in models) {
         await push<Data, Model, I>(entity, model, connection: connection);
       }
@@ -481,7 +495,7 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     C extends Creation<Data, I>
   >(Entity<Data, Model, I, C> entity, List<C> creations) async {
     final List<Model> models = [];
-    await connection.transactional((connection) async {
+    await _transaction((connection) async {
       for (final C creation in creations) {
         models.add(
           await put<Data, Model, I, C>(

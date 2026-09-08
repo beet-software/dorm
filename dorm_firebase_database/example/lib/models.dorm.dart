@@ -106,3 +106,14 @@ class Dorm<Q extends BaseQuery<Q>, P extends PageRequest> {
   DatabaseEntity<UserData, User, String, Q, SimpleCreation<UserData, String>, P>
   get users => DatabaseEntity(const UserEntity(), engine: _engine);
 }
+
+class TransactionalDorm<Q extends BaseQuery<Q>, P extends PageRequest>
+    extends Dorm<Q, P> {
+  const TransactionalDorm(this._transactionalEngine)
+    : super(_transactionalEngine);
+
+  final TransactionalEngine<Q, P> _transactionalEngine;
+
+  Future<T> transaction<T>(Future<T> Function(Dorm<Q, P>) action) =>
+      _transactionalEngine.transaction((engine) => action(Dorm<Q, P>(engine)));
+}

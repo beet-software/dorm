@@ -32,6 +32,7 @@ nav:
       - Using filters: build-the-store/using-filters.md
       - Using sorting: build-the-store/using-sorting.md
       - Using pagination: build-the-store/using-pagination.md
+      - Using transactions: build-the-store/using-transactions.md
   - Engines:
       - Choose an engine: apply/choose-an-engine.md
       - Run with memory: apply/use-memory.md

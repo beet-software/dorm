@@ -75,7 +75,7 @@ same application role.
 | External server required | No | No | Firebase project or emulator | Firebase project or emulator | Yes | Yes | Yes | HTTP API |
 | Streams | State-backed | State-backed | Firebase value events | Firestore snapshots | Initial read only | Initial read only | Initial read only | Initial read only |
 | Filter execution | In memory | In memory | Firebase query | Firestore query | SQL query | PostgreSQL SQL query | MongoDB selector | URL parameters |
-| Public transaction API | No | No | No | No | No | No | No | No |
+| Public transaction API | Yes | Yes | No | No | Yes | Yes | No | No |
 | Pagination | Offset pages | Offset pages | Offset pages with client-side skipping | Offset pages with client-side skipping | Offset pages | Offset pages | Offset pages | Offset pages |
 | Composite creation | Explicit identity | Explicit identity | Unsupported | Unsupported | Explicit identity | Explicit identity | Explicit identity | Explicit identity |
 

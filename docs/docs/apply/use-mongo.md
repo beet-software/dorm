@@ -123,6 +123,17 @@ MongoDB permissions and network access are enforced by the MongoDB deployment.
 The engine translates framework filters into driver selectors; authorization
 remains at the application and MongoDB boundaries.
 
+## Understand the transaction boundary
+
+MongoDB itself supports transactions across documents and collections, but the
+current dORM engine receives an application-owned `Db` and uses its collection
+operations directly. It does not receive or create a transaction session, so
+`TransactionalDorm` is not available for this engine.
+
+The current limitation is at the engine and driver integration boundary. A
+MongoDB server transaction is not automatically applied to the existing
+repository operations.
+
 ## Observe performance characteristics
 
 Direct MongoDB operations map to collection reads, replacements, and deletes.

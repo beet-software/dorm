@@ -102,8 +102,10 @@ identity. push persists an already identified model. patch receives the
 current model or null; returning null removes the record.
 
 The framework documentation describes popKeys, popAll, pushAll, and patch as
-operations expected to be atomic, but the public API does not expose a general
-transaction object. Engine behavior can differ.
+operations expected to be atomic where the selected engine provides that
+behavior. `TransactionalDorm` is the separate public contract for composing
+multiple repository operations; engines that do not implement it retain their
+individual operation semantics.
 
 ## Filter and query contracts
 
@@ -195,6 +197,32 @@ implements these contracts and exposes a concrete Engine.
 See [Implement a custom engine](../development/custom-engine.md) for the
 extension boundary and [Engine capability reference](engine-capabilities.md)
 for concrete implementations.
+
+## Transaction capability
+
+An engine that supports the portable transaction API also implements:
+
+~~~dart
+abstract interface class TransactionalEngine<
+  Q extends BaseQuery<Q>,
+  P extends PageRequest
+> implements BaseEngine<Q, P> {
+  Future<T> transaction<T>(
+    Future<T> Function(BaseEngine<Q, P> engine) action,
+  );
+}
+~~~
+
+The generator emits `TransactionalDorm<Q, P>` for the same model set as
+`Dorm<Q, P>`. Its `transaction` callback receives a temporary `Dorm<Q, P>`
+whose repositories use the active engine context. The callback can compose
+repository reads, writes, relationships, and pages. `pull` and `pullAll` are
+not available in that context and nested transactions are rejected.
+
+`TransactionalDorm` requires `TransactionalEngine<Q, P>` statically. A
+regular `BaseEngine<Q, P>` cannot be passed to its constructor without a
+cast or type erasure. Memory, BLoC, MySQL, and PostgreSQL currently implement
+the capability.
 
 ## Error contract
 

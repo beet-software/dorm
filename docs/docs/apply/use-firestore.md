@@ -195,6 +195,18 @@ it into non-atomic requests. `popAll` and `purge` first read matching
 documents and then delete them in a batch; the selection and deletion are not
 one public transaction.
 
+## Understand the transaction boundary
+
+Cloud Firestore provides native transactions, and this engine uses one
+internally for `patch`. The current Dart transaction object reads individual
+documents through `DocumentReference`; it does not provide the collection
+query operation used by dORM's `peekAll`, pagination, and relationship
+fallbacks.
+
+For that reason, the engine does not implement `TransactionalDorm`. Its
+internal `patch` transaction remains separate from a public transaction that
+could compose multiple repositories.
+
 ## Run against the Firestore Emulator
 
 Start the emulator from the Flutter project that contains your Firebase

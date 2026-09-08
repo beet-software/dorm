@@ -6,7 +6,7 @@ import 'package:dorm_test/dorm_test.dart';
 import 'package:postgres/postgres.dart';
 import 'package:test/test.dart';
 
-class _PostgresAdapter implements EngineTestAdapter<Query> {
+class _PostgresAdapter implements TransactionalEngineTestAdapter<Query> {
   _PostgresAdapter(this.config);
 
   final _PostgresConfig config;
@@ -15,7 +15,7 @@ class _PostgresAdapter implements EngineTestAdapter<Query> {
   String get name => 'PostgreSQL';
 
   @override
-  Future<EngineTestSession<Query>> open() async {
+  Future<TransactionalEngineTestSession<Query>> open() async {
     final Connection connection = await Connection.open(
       Endpoint(
         host: config.host,
@@ -70,7 +70,7 @@ class _PostgresAdapter implements EngineTestAdapter<Query> {
   }
 }
 
-class _PostgresSession implements EngineTestSession<Query> {
+class _PostgresSession implements TransactionalEngineTestSession<Query> {
   _PostgresSession(this.connection) : _engine = Engine(connection);
 
   final Connection connection;
@@ -80,8 +80,12 @@ class _PostgresSession implements EngineTestSession<Query> {
   BaseEngine<Query, OffsetPageRequest> get engine => _engine;
 
   @override
+  TransactionalEngine<Query, OffsetPageRequest> get transactionalEngine =>
+      _engine;
+
+  @override
   EngineCapabilities get capabilities =>
-      const EngineCapabilities(compositeIdentities: true);
+      const EngineCapabilities(compositeIdentities: true, transactions: true);
 
   @override
   Future<void> reset() async {
@@ -149,4 +153,5 @@ void main() {
     return;
   }
   defineEngineComplianceTests(_PostgresAdapter(config));
+  defineEngineTransactionComplianceTests(_PostgresAdapter(config));
 }
