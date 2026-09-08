@@ -65,7 +65,10 @@ nav:
       - Repository: model-anatomy/repository.md
       - Dorm: model-anatomy/dorm.md
       - Relationship paths: model-anatomy/relations.md
-  - Development:
+  - User guide:
+      - Best practices: user-guide/best-practices.md
+      - Migration to v2: user-guide/migration-to-v2.md
+  - Developer guide:
       - Work on dORM locally: development/index.md
       - Implement a custom engine: development/custom-engine.md
       - Test an engine: development/test-an-engine.md
