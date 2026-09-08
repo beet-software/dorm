@@ -414,7 +414,7 @@ class CartEntity
   Cart fromData(ResolvedCreation<CartData, String> creation) {
     return Cart(
       id: creation.identitySource == CreationIdentitySource.generated
-          ? _Cart._generate(
+          ? _Cart.$dorm$generateId(
               _$Cart.fromData(
                 creation.dependency as CartDependency,
                 creation.data,

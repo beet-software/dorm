@@ -344,8 +344,10 @@ abstract class _Healing implements _Action {
 
 ### Unique identification
 
-The default identifier type is `String`. A custom primary-key generator receives the generated
-model and the default `String` id, and returns the id that should be persisted:
+The default identifier type is `String`. A custom generated identity method is
+declared directly on the annotated class. It receives the generated model and
+the initially generated identity, and returns the identity that should be
+persisted:
 
 ```dart
 import 'package:dorm_annotations/dorm_annotations.dart';
@@ -353,16 +355,16 @@ import 'package:dorm_annotations/dorm_annotations.dart';
 @Model(name: 'country', as: #countries)
 abstract class _Country {}
 
-@Model(name: 'capital', as: #capitals, primaryKeyGenerator: _Capital.generateId)
+@Model(name: 'capital', as: #capitals)
 abstract class _Capital {
-  static String generateId(_Capital model, String id) => model.countryId;
+  static String $dorm$generateId(_Capital model, String id) => model.countryId;
 
   @ForeignField(name: 'country-id', referTo: _Country)
   String get countryId;
 }
 ```
 
-The generator validates the callback signature when it compiles the generated source. A custom
+The generator validates the method signature while generating the source. A custom
 generated key type can be declared through `GeneratedIdSpec(type: ...)`. A
 database-assigned key can be declared through
 `DatabaseGeneratedIdSpec(type: ...)`; each database engine

@@ -17,6 +17,7 @@
 // ignore_for_file: invalid_use_of_visible_for_testing_member
 
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:build/build.dart';
 import 'package:code_builder/code_builder.dart' as cb;
 import 'package:dart_style/dart_style.dart';
@@ -40,6 +41,7 @@ final Uri _dormUrl = Uri(
   scheme: 'package',
   pathSegments: ['dorm', 'dorm.dart'],
 );
+const String _identityGeneratorName = r'$dorm$generateId';
 
 cb.Expression expressionOf(String code) => cb.CodeExpression(cb.Code(code));
 
@@ -81,6 +83,15 @@ class ModelNaming extends Naming<ModelOrmNode> {
   final Map<String, FieldOrmNode>? fields;
 
   const ModelNaming({required super.name, required super.node, this.fields});
+
+  MethodElement? get identityGenerator {
+    final ClassElement? element = node.element;
+    if (element == null) return null;
+    for (final MethodElement method in element.methods) {
+      if (method.name == _identityGeneratorName) return method;
+    }
+    return null;
+  }
 
   /// _User
   String get schemaName => name;
@@ -815,10 +826,10 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
   });
 
   cb.Expression get _primaryKeyExpression {
-    final Function? generator = annotation.primaryKeyGenerator;
+    final MethodElement? generator = naming.identityGenerator;
     if (generator == null) return expressionOf('creation.id');
     final cb.Expression generated = cb.InvokeExpression.newOf(
-      cb.Reference(generator(null, '')),
+      cb.Reference('${naming.schemaName}.$_identityGeneratorName'),
       [
         cb.InvokeExpression.newOf(
           cb.Reference(naming.dummyName),
@@ -1556,7 +1567,7 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
 
   @override
   void accept(cb.LibraryBuilder b) {
-    if (annotation.primaryKeyGenerator != null) b.body.add(_dummyClass);
+    if (naming.identityGenerator != null) b.body.add(_dummyClass);
     b.body.add(
       newClass(
         name: naming.dataName,
@@ -2013,13 +2024,12 @@ class OrmGenerator extends Generator {
       );
     }
 
+    final MethodElement? identityGenerator = naming.identityGenerator;
+    if (identityGenerator != null) {
+      _validateIdentityGenerator(naming, identityGenerator, specs);
+    }
+
     if (specs.length > 1) {
-      if (naming.node.annotation.primaryKeyGenerator != null) {
-        throw StateError(
-          '${naming.schemaName} cannot use primaryKeyGenerator with a '
-          'composite primary key.',
-        );
-      }
       for (final IdSpec spec in specs) {
         switch (spec) {
           case ExistingIdSpec():
@@ -2048,13 +2058,6 @@ class OrmGenerator extends Generator {
 
     switch (specs.single) {
       case ExistingIdSpec():
-        final _PrimaryKeyNaming primaryKey = naming._primaryKey;
-        if (naming.node.annotation.primaryKeyGenerator != null) {
-          throw StateError(
-            '${naming.schemaName} cannot use primaryKeyGenerator with an '
-            'ExistingIdSpec for ${primaryKey.fieldName}.',
-          );
-        }
         return;
       case GeneratedIdSpec spec:
         _validateGeneratedPrimaryKeySpec(
@@ -2066,12 +2069,6 @@ class OrmGenerator extends Generator {
         );
         return;
       case DatabaseGeneratedIdSpec spec:
-        if (naming.node.annotation.primaryKeyGenerator != null) {
-          throw StateError(
-            '${naming.schemaName} cannot use primaryKeyGenerator with a '
-            'DatabaseGeneratedIdSpec.',
-          );
-        }
         _validateGeneratedPrimaryKeySpec(
           naming,
           fields,
@@ -2079,6 +2076,78 @@ class OrmGenerator extends Generator {
           name: spec.name,
           type: spec.type,
         );
+    }
+  }
+
+  void _validateIdentityGenerator(
+    ModelNaming naming,
+    MethodElement method,
+    List<IdSpec> specs,
+  ) {
+    if (specs.length != 1 || specs.single is! GeneratedIdSpec) {
+      throw StateError(
+        '${naming.schemaName} cannot use $_identityGeneratorName with '
+        'an ExistingIdSpec, DatabaseGeneratedIdSpec, or composite primary '
+        'key.',
+      );
+    }
+
+    if (!method.isStatic) {
+      throw StateError(
+        '${naming.schemaName}.$_identityGeneratorName must be static.',
+      );
+    }
+
+    final List<FormalParameterElement> parameters = method.formalParameters;
+    if (parameters.length != 2 ||
+        parameters.any((parameter) => !parameter.isRequiredPositional)) {
+      throw StateError(
+        '${naming.schemaName}.$_identityGeneratorName must declare exactly '
+        'two required positional parameters.',
+      );
+    }
+
+    final ClassElement? modelElement = naming.node.element;
+    if (modelElement == null) {
+      throw StateError(
+        '${naming.schemaName}.$_identityGeneratorName cannot be validated '
+        'without its annotated class.',
+      );
+    }
+
+    final FormalParameterElement modelParameter = parameters[0];
+    if (modelParameter.type != modelElement.thisType) {
+      throw StateError(
+        '${naming.schemaName}.$_identityGeneratorName first parameter must '
+        'have type ${modelElement.thisType.getDisplayString()}.',
+      );
+    }
+
+    final GeneratedIdSpec spec = specs.single as GeneratedIdSpec;
+    final String expectedTypeName = switch (spec.type) {
+      $Type type => type.name ?? type.toString(),
+      _ => spec.type.toString(),
+    };
+    final DartType? expectedType = switch (spec.type) {
+      $Type type => type.dartType,
+      _ => null,
+    };
+    bool matchesIdentityType(DartType actual) {
+      if (expectedType != null) return actual == expectedType;
+      return actual.getDisplayString() == expectedTypeName;
+    }
+
+    if (!matchesIdentityType(parameters[1].type)) {
+      throw StateError(
+        '${naming.schemaName}.$_identityGeneratorName second parameter must '
+        'have identity type $expectedTypeName.',
+      );
+    }
+    if (!matchesIdentityType(method.returnType)) {
+      throw StateError(
+        '${naming.schemaName}.$_identityGeneratorName must return identity '
+        'type $expectedTypeName.',
+      );
     }
   }
 

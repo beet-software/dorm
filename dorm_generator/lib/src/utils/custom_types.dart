@@ -14,8 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import 'package:analyzer/dart/constant/value.dart';
-import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
 import 'package:source_gen/source_gen.dart';
 
@@ -25,17 +24,6 @@ extension AdditionalReads on ConstantReader {
   T? enumValueFrom<T extends Enum>(List<T> values) {
     if (isNull) return null;
     return values[objectValue.getField('index')!.toIntValue()!];
-  }
-
-  String get functionName {
-    final DartObject obj = objectValue;
-    final ExecutableElement element = obj.toFunctionValue()!;
-
-    final String name = element.name!;
-    assert(element.isStatic);
-    final String? className = element.enclosingElement?.name;
-    final String prefix = className == null ? '' : '$className.';
-    return '$prefix$name';
   }
 }
 
@@ -48,6 +36,11 @@ class $Type implements Type {
     if (reader.isNull) return null;
     if (!reader.isType) return null;
     return reader.typeValue.getDisplayString();
+  }
+
+  DartType? get dartType {
+    if (reader.isNull || !reader.isType) return null;
+    return reader.typeValue;
   }
 
   @override

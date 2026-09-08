@@ -176,7 +176,7 @@ class SchoolEntity
   School fromData(ResolvedCreation<SchoolData, String> creation) {
     return School(
       id: creation.identitySource == CreationIdentitySource.generated
-          ? _School._generate(
+          ? _School.$dorm$generateId(
               _$School.fromData(
                 creation.dependency as SchoolDependency,
                 creation.data,

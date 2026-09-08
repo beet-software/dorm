@@ -115,8 +115,9 @@ abstract class Entity<
   /// );
   /// print(student.id);            // The generated implementation uses the
   ///                               // final `creation.id`. A generated
-  ///                               // primaryKeyGenerator may transform it only
-  ///                               // when `creation.identitySource` is
+  ///                               // A generated `$dorm$generateId` method may
+  ///                               // transform it only when
+  ///                               // `creation.identitySource` is
   ///                               // `CreationIdentitySource.generated`.
   ///
   /// print(student.name);          // 'John'

@@ -12,9 +12,9 @@ declarations to the same `lib/models.dart` file used in the earlier Quickstart
 pages, after the `User` and `Product` declarations:
 
 ```dart title="lib/models.dart"
-@Model(name: 'Carts', as: #carts, primaryKeyGenerator: _Cart._generate)
+@Model(name: 'Carts', as: #carts)
 abstract class _Cart {
-  static String _generate(_Cart cart, String id) => cart.userId;
+  static String $dorm$generateId(_Cart cart, String id) => cart.userId;
 
   @Field(name: 'timestamp')
   DateTime get timestamp;
@@ -61,7 +61,7 @@ final Cart cart = await dorm.carts.repository.put(
 );
 ```
 
-The `Cart` model declares a primary-key generator based on `userId`. For this model, the generated cart identity is the user identity, so `cart.id == user.id` after creation.
+The `Cart` model declares a `$dorm$generateId` method based on `userId`. For this model, the generated cart identity is the user identity, so `cart.id == user.id` after creation.
 
 Create an item with both foreign identities in `CartItemDependency`:
 

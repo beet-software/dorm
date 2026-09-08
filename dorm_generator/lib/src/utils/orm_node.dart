@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'package:analyzer/dart/element/element.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
 
 import 'custom_types.dart';
@@ -61,7 +62,9 @@ class DataOrmNode extends ClassOrmNode<Data> {
 }
 
 class ModelOrmNode extends ClassOrmNode<Model> {
-  const ModelOrmNode({required super.annotation});
+  final ClassElement? element;
+
+  const ModelOrmNode({required super.annotation, this.element});
 }
 
 class PolymorphicDataTag {

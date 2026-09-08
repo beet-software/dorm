@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Filter` is now `BaseFilter<Q extends BaseQuery<Q>>` and has better API
 - `put` and `putAll` now receive `Creation` objects, and `Entity.fromData`
   now receives `ResolvedCreation`. This is a breaking change.
+- `@Model.primaryKeyGenerator` was removed. Generated identities can now use a
+  directly declared static `$dorm$generateId` method. This is a breaking change.
 
 
 ## 1.0.0-alpha.6 - 2023-09-11

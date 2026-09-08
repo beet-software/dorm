@@ -56,9 +56,9 @@ abstract class _Product {
   String get _qName;
 }
 
-@Model(name: 'Carts', as: #carts, primaryKeyGenerator: _Cart._generate)
+@Model(name: 'Carts', as: #carts)
 abstract class _Cart {
-  static String _generate(_Cart cart, String id) => cart.userId;
+  static String $dorm$generateId(_Cart cart, String id) => cart.userId;
   @Field(name: 'timestamp')
   DateTime get timestamp;
 

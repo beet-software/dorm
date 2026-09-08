@@ -41,18 +41,10 @@ class Model {
   /// Name for the Dart repository accessor of this model.
   final Symbol? as;
 
-  /// Unique identification type for this model.
-  ///
-  /// Should accept the annotated class and the generated ID value, and return
-  /// the model's generated primary-key value. The generated ID argument and
-  /// return type must match the active generated identity specification type.
-  final Function? primaryKeyGenerator;
-
   /// Creates a [Model] by its attributes.
   const Model({
     this.name,
     this.primaryKey = const [GeneratedIdSpec()],
     this.as,
-    this.primaryKeyGenerator,
   });
 }

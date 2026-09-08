@@ -211,7 +211,6 @@ class ModelParser extends ClassNodeParser<Model> {
 
   @override
   Model _parse(ConstantReader reader) {
-    final ConstantReader primaryKeyReader = reader.read('primaryKeyGenerator');
     final ConstantReader primaryKeySpecsReader = reader.read('primaryKey');
     return Model(
       name: reader.read('name').stringValue,
@@ -220,15 +219,12 @@ class ModelParser extends ClassNodeParser<Model> {
           _parseIdSpec(ConstantReader(object)),
       ],
       as: $Symbol(reader: reader.read('as')),
-      primaryKeyGenerator: primaryKeyReader.isNull
-          ? null
-          : (_, __) => primaryKeyReader.revive().accessor,
     );
   }
 
   @override
   ModelOrmNode _convert(Model annotation, ClassElement element) {
-    return ModelOrmNode(annotation: annotation);
+    return ModelOrmNode(annotation: annotation, element: element);
   }
 }
 

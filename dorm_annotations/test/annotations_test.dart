@@ -3,8 +3,6 @@ import 'package:test/test.dart';
 
 class _Profile {}
 
-Object _generateId(Object model, String id) => id;
-
 void main() {
   test('Data has no additional metadata', () {
     const Data annotation = Data();
@@ -56,7 +54,6 @@ void main() {
       primaryKey: const [
         GeneratedIdSpec(as: #userId, name: 'user_id', type: int),
       ],
-      primaryKeyGenerator: _generateId,
     );
 
     expect(defaults.name, isNull);
@@ -65,7 +62,6 @@ void main() {
     expect(defaults.primaryKey.single, isA<GeneratedIdSpec>());
     expect(custom.name, 'users');
     expect(custom.as, #users);
-    expect(custom.primaryKeyGenerator, same(_generateId));
     final GeneratedIdSpec key = custom.primaryKey.single as GeneratedIdSpec;
     expect(key.as, #userId);
     expect(key.name, 'user_id');

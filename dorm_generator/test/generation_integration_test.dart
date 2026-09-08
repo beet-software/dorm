@@ -101,6 +101,10 @@ part 'models.g.dart';
 
 @Model(name: 'users', as: #users)
 abstract class _User {
+  static String \$dorm\$generateId(_User model, String generatedId) {
+    return model.name;
+  }
+
   @Field()
   String get name;
 
@@ -157,6 +161,7 @@ abstract class _Sequence {
         expect(generatedCode, contains('class PostEntity'));
         expect(generatedCode, contains('class SequenceEntity'));
         expect(generatedCode, contains('IdentityGenerationStrategy.database'));
+        expect(generatedCode, contains('_User.\$dorm\$generateId('));
         expect(
           generatedCode,
           contains('class Dorm<Q extends BaseQuery<Q>, P extends PageRequest>'),
@@ -286,6 +291,34 @@ Future<Page<User>> readCursor(
         expect(
           '${invalidPageAnalysis.stdout}\n${invalidPageAnalysis.stderr}',
           contains('CursorPageRequest'),
+        );
+
+        await File(
+          '${lib.path}${Platform.pathSeparator}invalid_identity_generator.dart',
+        ).writeAsString('''
+import 'package:dorm_annotations/dorm_annotations.dart';
+
+part 'invalid_identity_generator.dorm.dart';
+
+@Model(name: 'invalid-users')
+abstract class _InvalidUser {
+  String \$dorm\$generateId(_InvalidUser model, String generatedId) {
+    return generatedId;
+  }
+
+  @Field()
+  String get name;
+}
+''');
+        final ProcessResult invalidGeneratorBuild = await _runDart(project, [
+          'run',
+          'build_runner',
+          'build',
+        ]);
+        expect(invalidGeneratorBuild.exitCode, isNot(0));
+        expect(
+          '${invalidGeneratorBuild.stdout}\n${invalidGeneratorBuild.stderr}',
+          contains('must be static'),
         );
       } finally {
         await project.delete(recursive: true);

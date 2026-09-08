@@ -267,9 +267,10 @@ void main() async {
 
 ### Unique identification
 
-The default identifier type is `String`. Use `primaryKeyGenerator` to derive an identifier from the
-generated model; the callback receives the model and the default `String` id. The examples below
-show the supported callback shape.
+The default identifier type is `String`. Declare `$dorm$generateId` directly
+on the annotated class to derive an identifier from the generated model. The
+method receives the model and the initially generated identity. The examples
+below show the supported method shape.
 
 #### Simple
 
@@ -303,13 +304,23 @@ void main() async {
 If
 
 ```dart
-@Model(name: 'state', as: #states)
+@Model(
+  name: 'state',
+  as: #states,
+  primaryKey: [
+    ExistingIdSpec(referTo: #countryId),
+    ExistingIdSpec(referTo: #stateCode),
+  ],
+)
 abstract class _State {
+  @Field(name: 'country-id')
+  String get countryId;
+
+  @Field(name: 'state-code')
+  String get stateCode;
+
   @Field(name: 'name')
   String get name;
-
-  @ForeignField(name: 'country-id', referTo: _Country)
-  String get countryId;
 }
 ```
 
@@ -317,14 +328,15 @@ then
 
 ```dart
 void main() async {
-  final State state = await dorm.states.repository.put(
-    Creation.auto(
-      dependency: StateDependency(countryId: '27f04af67a1f'),
-      data: StateData(name: 'Rio de Janeiro'),
+  final State state = await dorm.states.repository.push(
+    State(
+      id: CompositeKey(['27f04af67a1f', 'RJ']),
+      name: 'Rio de Janeiro',
+      countryId: '27f04af67a1f',
+      stateCode: 'RJ',
     ),
   );
-  // ${countryId}_uuid
-  assert(country.id == '27f04af67a1f_367f1672f637');
+  assert(state.id == CompositeKey(['27f04af67a1f', 'RJ']));
 }
 ```
 
@@ -333,9 +345,9 @@ void main() async {
 If
 
 ```dart
-@Model(name: 'capital', as: #capitals, primaryKeyGenerator: _Capital.generateId)
+@Model(name: 'capital', as: #capitals)
 abstract class _Capital {
-  static String generateId(_Capital model, String id) => model.countryId;
+  static String $dorm$generateId(_Capital model, String id) => model.countryId;
 
   @Field(name: 'name')
   String get name;
@@ -365,11 +377,10 @@ void main() async {
 If
 
 ```dart
-String _identifyCitizen(_Citizen data, String id) =>
-    data.visaCode ?? data.socialSecurity ?? id;
-
-@Model(name: 'citizen', as: #citizens, primaryKeyGenerator: _identifyCitizen)
+@Model(name: 'citizen', as: #citizens)
 abstract class _Citizen {
+  static String $dorm$generateId(_Citizen data, String id) =>
+      data.visaCode ?? data.socialSecurity ?? id;
   @Field(name: 'name')
   String get name;
 
