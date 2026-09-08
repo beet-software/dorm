@@ -34,24 +34,21 @@ selected storage engine.
 
 Add a derived field to the annotated source when the application needs text
 search through a generated, normalized value. The complete `@DerivedField`
-and `DerivedTransform` contract is centralized in the
-[Annotations reference](../annotations/index.md); the declaration below shows
-only the part needed for this search task:
+contract is centralized in the [Annotations reference](../annotations/index.md);
+the declaration below shows only the part needed for this search task:
 
 ```dart title="lib/models.dart"
-@DerivedField(
-  name: '_q-username',
-  referTo: [DerivedToken(#username, DerivedTransform.text)],
-)
-// ignore: unused_element
-String get _qUsername;
+@DerivedField(name: '_q-username')
+static String $dorm$derived$qUsername(
+  _User model,
+  DerivedTransformations transformations,
+) => transformations.text(model.username) ?? '';
 
-@DerivedField(
-  name: '_q-name',
-  referTo: [DerivedToken(#name, DerivedTransform.text)],
-)
-// ignore: unused_element
-String get _qName;
+@DerivedField(name: '_q-name')
+static String $dorm$derived$qName(
+  _Product model,
+  DerivedTransformations transformations,
+) => transformations.text(model.name) ?? '';
 ```
 
 Regenerate the model after changing the annotated source. The `User` model can
@@ -72,8 +69,8 @@ final List<Product> matches = await dorm.products.repository.peekAll(
 ```
 
 `Filter.text` matches values that start with the supplied text according to the
-query implementation. The derived-field declaration determines which model
-fields contribute to the searchable value and how those values are normalized.
+query implementation. The callback determines which model fields contribute to
+the searchable value and how those values are normalized.
 
 ## Filter dates and ranges
 

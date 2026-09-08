@@ -29,12 +29,11 @@ abstract class _User {
   @ModelField(name: 'profile', referTo: _Profile)
   get profile;
 
-  @DerivedField(
-    name: '_q-username',
-    referTo: [DerivedToken(#username, DerivedTransform.text)],
-  )
-  // ignore: unused_element
-  String get _qUsername;
+  @DerivedField(name: '_q-username')
+  static String $dorm$derived$qUsername(
+    _User model,
+    DerivedTransformations transformations,
+  ) => transformations.text(model.username) ?? '';
 }
 
 @Model(name: 'Products', as: #products)
@@ -48,12 +47,11 @@ abstract class _Product {
   @Field(name: 'price')
   Decimal get price;
 
-  @DerivedField(
-    name: '_q-name',
-    referTo: [DerivedToken(#name, DerivedTransform.text)],
-  )
-  // ignore: unused_element
-  String get _qName;
+  @DerivedField(name: '_q-name')
+  static String $dorm$derived$qName(
+    _Product model,
+    DerivedTransformations transformations,
+  ) => transformations.text(model.name) ?? '';
 }
 
 @Model(name: 'Carts', as: #carts)
@@ -112,17 +110,14 @@ abstract class _Review {
   @PolymorphicField(name: 'content', pivotName: 'type')
   _ReviewContent get content;
 
+  ReviewContentType get type;
+
   @ForeignField(name: 'user-id', referTo: _User, inverseAs: #reviews)
   String get userId;
 
-  @DerivedField(
-    name: '_q-type',
-    referTo: [
-      DerivedToken(#userId),
-      DerivedToken(#type, DerivedTransform.enumeration),
-    ],
-    joinBy: '_',
-  )
-  // ignore: unused_element
-  String get _qUserIdType;
+  @DerivedField(name: '_q-type')
+  static String $dorm$derived$qUserIdType(
+    _Review model,
+    DerivedTransformations transformations,
+  ) => '${model.userId}_${transformations.enumeration(model.type) ?? ''}';
 }

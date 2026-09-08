@@ -32,12 +32,11 @@ abstract class _School {
   @Field(name: 'contatos', defaultValue: [])
   List<String> get phoneNumbers;
 
-  @DerivedField(
-    name: '_query/nome',
-    referTo: [DerivedToken(#name, DerivedTransform.text)],
-  )
-  // ignore: unused_element
-  String get _q0;
+  @DerivedField(name: '_query/nome')
+  static String $dorm$derived$q0(
+    _School model,
+    DerivedTransformations transformations,
+  ) => transformations.text(model.name) ?? '';
 }
 
 enum StudentType { regular, special }
@@ -53,22 +52,17 @@ abstract class _Student {
   @ForeignField(name: 'id-escola', referTo: _School, inverseAs: #students)
   String get schoolId;
 
-  @DerivedField(
-    name: '_query/nome',
-    referTo: [DerivedToken(#name, DerivedTransform.text)],
-  )
-  // ignore: unused_element
-  String get _q0;
+  @DerivedField(name: '_query/nome')
+  static String $dorm$derived$q0(
+    _Student model,
+    DerivedTransformations transformations,
+  ) => transformations.text(model.name) ?? '';
 
-  @DerivedField(
-    name: '_query/id-escola_nome',
-    referTo: [
-      DerivedToken(#schoolId),
-      DerivedToken(#name, DerivedTransform.text),
-    ],
-  )
-  // ignore: unused_element
-  String get _q1;
+  @DerivedField(name: '_query/id-escola_nome')
+  static String $dorm$derived$q1(
+    _Student model,
+    DerivedTransformations transformations,
+  ) => '${model.schoolId}_${transformations.text(model.name) ?? ''}';
 }
 
 @Model(name: 'professor', as: #teachers)
@@ -79,9 +73,11 @@ abstract class _Teacher {
   @Field(name: 'cpf')
   String? get ssn;
 
-  @DerivedField(name: '_query/cpf', referTo: [DerivedToken(#ssn)])
-  // ignore: unused_element
-  String get _q0;
+  @DerivedField(name: '_query/cpf')
+  static String $dorm$derived$q0(
+    _Teacher model,
+    DerivedTransformations transformations,
+  ) => model.ssn ?? '';
 }
 
 @Model(name: 'historico', as: #histories)

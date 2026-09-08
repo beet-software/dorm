@@ -19,63 +19,27 @@ import 'package:meta/meta_meta.dart';
 import 'field.dart';
 import 'helpers.dart';
 
-/// Defines how a derived value should be transformed.
-enum DerivedTransform {
-  /// Applies the [$normalizeText] transformation.
-  ///
-  /// This transformation should only be applied to [String]s.
-  ///
-  /// This should replace diacritics with their ASCII representations, remove
-  /// spaces and remove capitalization (all uppercase or all lowercase).
-  text,
+/// Common transformations available to derived-field callbacks.
+class DerivedTransformations {
+  /// Creates the transformations helper.
+  const DerivedTransformations();
 
-  /// Applies the [$normalizeEnum] transformation.
-  ///
-  /// This transformation can be applied to any value, but it is optimized
-  /// for [Enum]s and objects whose [Object.toString] representation is
-  /// formatted as `ClassName.value`.
-  enumeration,
+  /// Normalizes text for matching.
+  String? text(String? value) => $normalizeText(value);
 
-  /// Applies the [$normalizeDate] transformation.
-  ///
-  /// This transformation should only be applied to [DateTime]s. It keeps the
-  /// calendar date as a fixed-width `YYYYMMDD` value.
-  date,
+  /// Normalizes an enum-like value for matching.
+  String? enumeration(Object? value) => $normalizeEnum(value);
 
-  /// Applies the [$normalizeDateTime] transformation.
-  ///
-  /// This transformation should only be applied to [DateTime]s. It keeps the
-  /// local calendar date and time as a fixed-width
-  /// `YYYYMMDDHHmmssSSS` value.
-  datetime,
+  /// Formats a date as `YYYYMMDD`.
+  String? date(DateTime? value) => $normalizeDate(value);
+
+  /// Formats a local date and time as `YYYYMMDDHHmmssSSS`.
+  String? datetime(DateTime? value) => $normalizeDateTime(value);
 }
 
-/// Defines a persisted value derived from other fields in a model class.
-@Target({TargetKind.getter})
+/// Defines a persisted value produced by a derived-field callback.
+@Target({TargetKind.method})
 class DerivedField extends Field {
-  /// Tokens that are combined to produce the derived value.
-  final List<DerivedToken> referTo;
-
-  /// String by which the query tokens will be joined by.
-  final String joinBy;
-
   /// Creates a [DerivedField] by its attributes.
-  const DerivedField({
-    super.name,
-    required this.referTo,
-    this.joinBy = '_',
-  });
-}
-
-/// Part of a derived value.
-class DerivedToken {
-  /// Name of the getter annotated with [Field] or [ForeignField] that this
-  /// token refers to.
-  final Symbol field;
-
-  /// Transformation applied to this token.
-  final DerivedTransform? transform;
-
-  /// Creates a [DerivedToken] by its attribute.
-  const DerivedToken(this.field, [this.transform]);
+  const DerivedField({super.name});
 }

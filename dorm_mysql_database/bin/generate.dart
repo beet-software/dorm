@@ -57,7 +57,10 @@ void main(List<String> args) {
     };
     for (ClassMember classMemberElement in classElement.body.members) {
       if (classMemberElement is! MethodDeclaration) continue;
-      if (!classMemberElement.isGetter) continue;
+      final bool derived = classMemberElement.metadata.any(
+        (annotation) => annotation.name.name == 'DerivedField',
+      );
+      if (!classMemberElement.isGetter && !derived) continue;
 
       if (primaryKeys.any(
         (primaryKey) => primaryKey.fieldName == classMemberElement.name.lexeme,
@@ -79,10 +82,16 @@ void main(List<String> args) {
           ?.argumentExpression
           .ifType<SimpleStringLiteral>()
           ?.value;
-      final String? columnName = declaredName;
-      if (columnName == null) continue;
+      final String? columnName =
+          declaredName ??
+          (derived &&
+                  classMemberElement.name.lexeme.startsWith(r'$dorm$derived$')
+              ? classMemberElement.name.lexeme.substring(
+                  r'$dorm$derived$'.length,
+                )
+              : null);
+      if (columnName == null || columnName.isEmpty) continue;
 
-      final bool derived = fieldAnnotation.name.name == 'DerivedField';
       final String storageName = derived && columnName.contains('/')
           ? columnName.split('/').first
           : columnName;
@@ -93,14 +102,19 @@ void main(List<String> args) {
 
       final String typeName = methodReturnType.beginToken.lexeme;
       final bool nullable = methodReturnType.question != null;
-      final String columnType = derived && columnName.contains('/')
-          ? 'JSON'
-          : const {
+      final String columnType;
+      if (derived && columnName.contains('/')) {
+        columnType = 'JSON';
+      } else {
+        columnType =
+            const {
               'String': 'VARCHAR',
               'int': 'INTEGER',
               'bool': 'BOOLEAN',
               'double': 'DOUBLE',
-            }[typeName]!;
+            }[typeName] ??
+            (derived ? 'JSON' : 'VARCHAR');
+      }
 
       buffer
         ..write('  ')

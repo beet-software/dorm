@@ -24,6 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   now receives a `FieldSchema` instead of a persisted-name string. This is a
   breaking change; low-level `BaseQuery` methods continue to receive resolved
   string names.
+- `DerivedField` now uses a static `$dorm$derived$<name>` callback. The
+  token-based `DerivedToken` and `DerivedTransform` API, `referTo`, and
+  `joinBy` were removed. This is a breaking change.
+- Added `DerivedTransformations` for the built-in text, enumeration, date, and
+  date-time transformations.
 
 
 ## 1.0.0-alpha.6 - 2023-09-11

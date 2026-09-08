@@ -70,12 +70,12 @@ class User extends UserData implements _User {
   @JsonKey(name: '_id', required: true, disallowNullValue: true)
   final String id;
 
-  @override
-  String get _qUsername => [$normalizeText(username)].join('_');
+  String get qUsername =>
+      _User.$dorm$derived$qUsername(this, const DerivedTransformations());
 
   @override
   Map<String, Object?> toJson() {
-    return {..._$UserToJson(this)..remove('_id'), '_q-username': _qUsername};
+    return {..._$UserToJson(this)..remove('_id'), '_q-username': qUsername};
   }
 }
 
@@ -104,7 +104,7 @@ class UserFields {
   );
 
   final DerivedFieldSchema qUsername = const DerivedFieldSchema(
-    fieldName: '_qUsername',
+    fieldName: 'qUsername',
     columnName: '_q-username',
     path: ['_q-username'],
     storageName: '_q-username',
@@ -207,12 +207,12 @@ class Product extends ProductData implements _Product {
   @JsonKey(name: '_id', required: true, disallowNullValue: true)
   final String id;
 
-  @override
-  String get _qName => [$normalizeText(name)].join('_');
+  String get qName =>
+      _Product.$dorm$derived$qName(this, const DerivedTransformations());
 
   @override
   Map<String, Object?> toJson() {
-    return {..._$ProductToJson(this)..remove('_id'), '_q-name': _qName};
+    return {..._$ProductToJson(this)..remove('_id'), '_q-name': qName};
   }
 }
 
@@ -241,7 +241,7 @@ class ProductFields {
   );
 
   final DerivedFieldSchema qName = const DerivedFieldSchema(
-    fieldName: '_qName',
+    fieldName: 'qName',
     columnName: '_q-name',
     path: ['_q-name'],
     storageName: '_q-name',
@@ -673,12 +673,12 @@ class Review extends ReviewData implements _Review {
   @JsonKey(name: 'user-id', required: true, disallowNullValue: true)
   final String userId;
 
-  @override
-  String get _qUserIdType => [userId, $normalizeEnum(type)].join('_');
+  String get qUserIdType =>
+      _Review.$dorm$derived$qUserIdType(this, const DerivedTransformations());
 
   @override
   Map<String, Object?> toJson() {
-    return {..._$ReviewToJson(this)..remove('_id'), '_q-type': _qUserIdType};
+    return {..._$ReviewToJson(this)..remove('_id'), '_q-type': qUserIdType};
   }
 }
 
@@ -722,7 +722,7 @@ class ReviewFields {
   );
 
   final DerivedFieldSchema qUserIdType = const DerivedFieldSchema(
-    fieldName: '_qUserIdType',
+    fieldName: 'qUserIdType',
     columnName: '_q-type',
     path: ['_q-type'],
     storageName: '_q-type',

@@ -91,9 +91,16 @@ class ClassData {
     required this.timestamp,
   });
 
-  Map<String, Object?> toJson() => _$ClassDataToJson(this);
+Map<String, Object?> toJson() => _$ClassDataToJson(this);
 }
 ```
+
+#### Derived fields
+
+`DerivedField` is declared on a static method named
+`$dorm$derived$<fieldName>`. The generator emits a getter with that suffix and
+calls the method with the generated model and `DerivedTransformations`. The
+callback result is added to the generated model's serialized representation.
 
 #### Model
 

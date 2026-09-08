@@ -65,10 +65,10 @@ annotated source and regenerate. Do not rename the getter directly in a
 
 ## Derived and polymorphic values have backend-sensitive representations
 
-`DerivedField` creates a generated value that can be used by filters. It does
-not automatically create the same index or query strategy in every engine.
-The selected engine translates or evaluates the field in its own
-representation.
+`DerivedField` calls a static Dart callback to create a value that can be used
+by filters. It does not automatically create the same index or query strategy
+in every engine. The selected engine translates or evaluates the persisted
+field in its own representation.
 
 Polymorphic values currently use discriminator and payload data in their
 serialized representation. The generated JSON-compatible shape is observable,

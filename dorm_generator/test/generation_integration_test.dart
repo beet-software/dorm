@@ -111,25 +111,29 @@ abstract class _User {
   @Field()
   DateTime get createdAt;
 
-  @DerivedField(
-    name: '_query/created-date',
-    referTo: [DerivedToken(#createdAt, DerivedTransform.date)],
-  )
-  // ignore: unused_element
-  String get _createdDate;
+  @DerivedField(name: '_query/created-date')
+  static String \$dorm\$derived\$createdDate(
+    _User model,
+    DerivedTransformations transformations,
+  ) => transformations.date(model.createdAt) ?? '';
 
-  @DerivedField(
-    name: '_query/created-datetime',
-    referTo: [DerivedToken(#createdAt, DerivedTransform.datetime)],
-  )
-  // ignore: unused_element
-  String get _createdDateTime;
+  @DerivedField(name: '_query/created-datetime')
+  static String \$dorm\$derived\$createdDateTime(
+    _User model,
+    DerivedTransformations transformations,
+  ) => transformations.datetime(model.createdAt) ?? '';
 }
 
 @Model(name: 'posts', as: #posts)
 abstract class _Post {
   @Field()
   String get title;
+
+  @DerivedField(name: 'title-length')
+  static int \$dorm\$derived\$titleLength(
+    _Post model,
+    DerivedTransformations transformations,
+  ) => model.title.length;
 
   @ForeignField(referTo: _User, inverseAs: #posts)
   String get userId;
@@ -181,8 +185,9 @@ abstract class _Sequence {
         expect(generatedCode, isNot(contains('BaseEngine<Query, P>')));
         expect(generatedCode, contains('SimpleCreation<UserData, String>'));
         expect(generatedCode, contains('toMany('));
-        expect(generatedCode, contains(r'$normalizeDate(createdAt)'));
-        expect(generatedCode, contains(r'$normalizeDateTime(createdAt)'));
+        expect(generatedCode, contains(r'_User.$dorm$derived$createdDate'));
+        expect(generatedCode, contains(r'_User.$dorm$derived$createdDateTime'));
+        expect(generatedCode, contains('int get titleLength'));
 
         _expectSuccess(await _runDart(project, ['analyze']), 'dart analyze');
 
@@ -319,6 +324,35 @@ abstract class _InvalidUser {
         expect(
           '${invalidGeneratorBuild.stdout}\n${invalidGeneratorBuild.stderr}',
           contains('must be static'),
+        );
+
+        await File(
+          '${lib.path}${Platform.pathSeparator}invalid_derived.dart',
+        ).writeAsString('''
+import 'package:dorm_annotations/dorm_annotations.dart';
+
+part 'invalid_derived.dorm.dart';
+
+@Model(name: 'invalid-derived')
+abstract class _InvalidDerived {
+  @Field()
+  String get name;
+
+  @DerivedField(name: 'search-name')
+  static String \$dorm\$derived\$searchName(_InvalidDerived model, Object _) {
+    return model.name;
+  }
+}
+''');
+        final ProcessResult invalidDerivedBuild = await _runDart(project, [
+          'run',
+          'build_runner',
+          'build',
+        ]);
+        expect(invalidDerivedBuild.exitCode, isNot(0));
+        expect(
+          '${invalidDerivedBuild.stdout}\n${invalidDerivedBuild.stderr}',
+          contains('DerivedTransformations'),
         );
       } finally {
         await project.delete(recursive: true);

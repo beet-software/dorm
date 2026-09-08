@@ -170,6 +170,29 @@ abstract class FieldNodeParser<A extends Field>
   }
 }
 
+abstract class MethodFieldNodeParser<A extends Field>
+    extends NodeParser<A, FieldOrmNode, MethodElement> {
+  const MethodFieldNodeParser();
+
+  @override
+  Element? _childOf(MethodElement element) => element;
+
+  @override
+  FieldOrmNode? visitMethodElement(MethodElement element) {
+    return parseElement(element);
+  }
+
+  @override
+  FieldOrmNode _convert(A annotation, MethodElement element) {
+    return FieldOrmNode(
+      annotation: annotation,
+      type: element.returnType.getDisplayString(),
+      required: element.returnType.nullabilitySuffix == NullabilitySuffix.none,
+      method: element,
+    );
+  }
+}
+
 class DataParser extends ClassNodeParser<Data> {
   const DataParser();
 
@@ -340,17 +363,16 @@ class DerivedFieldParser extends FieldNodeParser<DerivedField> {
 
   @override
   DerivedField _parse(ConstantReader reader) {
-    return DerivedField(
-      name: _optionalString(reader, 'name'),
-      referTo: reader.read('referTo').listValue.map((obj) {
-        final ConstantReader reader = ConstantReader(obj);
-        return DerivedToken(
-          $Symbol(reader: reader.read('field')),
-          reader.read('transform').enumValueFrom(DerivedTransform.values),
-        );
-      }).toList(),
-      joinBy: reader.read('joinBy').stringValue,
-    );
+    return DerivedField(name: _optionalString(reader, 'name'));
+  }
+}
+
+class DerivedMethodParser extends MethodFieldNodeParser<DerivedField> {
+  const DerivedMethodParser();
+
+  @override
+  DerivedField _parse(ConstantReader reader) {
+    return DerivedField(name: _optionalString(reader, 'name'));
   }
 }
 

@@ -1099,12 +1099,75 @@ class ModelArgs extends FieldedArgs<Model, ModelNaming> {
     for (MapEntry<String, FieldOrmNode> entry in fields.entries) {
       final Field field = entry.value.annotation;
       if (!field.isDerived) continue;
-      final String declaredName = field.name ?? entry.key;
-      if (entry.value.type.replaceAll('?', '') != 'String') {
+      final MethodElement? method = entry.value.method;
+      if (method == null) {
         throw StateError(
-          'Derived field ${entry.key} must declare a String getter.',
+          'Derived field ${entry.key} must be declared on a method named '
+          '$dormDerivedMethodPrefix<name>.',
         );
       }
+      if (method.enclosingElement != naming.node.element) {
+        throw StateError(
+          'Derived field ${entry.key} must be declared directly on '
+          '${naming.schemaName}.',
+        );
+      }
+      if (!method.name!.startsWith(dormDerivedMethodPrefix)) {
+        throw StateError(
+          'Derived field ${entry.key} must use the reserved method prefix '
+          '$dormDerivedMethodPrefix.',
+        );
+      }
+      final String methodFieldName = method.name!.substring(
+        dormDerivedMethodPrefix.length,
+      );
+      if (methodFieldName != entry.key || methodFieldName.isEmpty) {
+        throw StateError(
+          'Derived field ${entry.key} must use a non-empty valid name after '
+          '$dormDerivedMethodPrefix.',
+        );
+      }
+      if (!method.isStatic) {
+        throw StateError('${naming.schemaName}.${method.name} must be static.');
+      }
+      final List<FormalParameterElement> parameters = method.formalParameters;
+      if (parameters.length != 2 ||
+          parameters.any((parameter) => !parameter.isRequiredPositional)) {
+        throw StateError(
+          '${naming.schemaName}.${method.name} must declare exactly two '
+          'required positional parameters.',
+        );
+      }
+      final ClassElement? modelElement = naming.node.element;
+      if (modelElement == null || parameters[0].type != modelElement.thisType) {
+        throw StateError(
+          '${naming.schemaName}.${method.name} first parameter must have '
+          'type ${modelElement?.thisType.getDisplayString() ?? naming.schemaName}.',
+        );
+      }
+      if (parameters[1].type.getDisplayString() != 'DerivedTransformations') {
+        throw StateError(
+          '${naming.schemaName}.${method.name} second parameter must have '
+          'type DerivedTransformations.',
+        );
+      }
+      final String returnType = method.returnType.getDisplayString();
+      final bool isAsyncOrFunction = switch (method.returnType) {
+        FunctionType() => true,
+        InterfaceType type
+            when type.element.name == 'Future' ||
+                type.element.name == 'FutureOr' ||
+                type.element.name == 'Stream' =>
+          true,
+        _ => false,
+      };
+      if (returnType == 'void' || isAsyncOrFunction) {
+        throw StateError(
+          '${naming.schemaName}.${method.name} must return a synchronous '
+          'serializable value.',
+        );
+      }
+      final String declaredName = field.name ?? entry.key;
       final List<String> path = declaredName.split('/');
       if (path.length > 2 || path.any((segment) => segment.isEmpty)) {
         throw StateError(
@@ -1930,78 +1993,24 @@ extension _BaseWriting on Map<String, FieldOrmNode> {
     for (MapEntry<String, FieldOrmNode> entry in where(
       (field) => field.isA<DerivedField>(),
     ).entries) {
-      final DerivedField field = entry.value.annotation as DerivedField;
-      if (field.referTo.isEmpty) continue;
+      final MethodElement? method = entry.value.method;
+      if (method == null) continue;
 
       yield cb.Method((b) {
-        b.annotations.add(expressionOf('override'));
         b.returns = cb.Reference(entry.value.type);
         b.type = cb.MethodType.getter;
         b.name = entry.key;
         b.lambda = true;
         b.body = cb.ToCodeExpression(
-          cb
-              .literalList(
-                field.referTo.map((token) {
-                  final DerivedTransform? transform = token.transform;
-
-                  final String? symbolName = (token.field as $Symbol).name;
-                  if (symbolName == null) {
-                    throw StateError(
-                      'field ${field.name} must have a symbol for all its tokens',
-                    );
-                  }
-
-                  final FieldOrmNode? referredField =
-                      this[symbolName] ??
-                      where(
-                        (field) => field.isA<PolymorphicField>(),
-                      ).values.firstOrNullWhere((node) {
-                        final PolymorphicField field =
-                            node.annotation as PolymorphicField;
-                        final $ConcreteSymbol pivotSymbol =
-                            field.pivotAs as $ConcreteSymbol;
-                        return pivotSymbol.name == symbolName;
-                      });
-
-                  if (referredField == null ||
-                      referredField.annotation is DerivedField) {
-                    throw StateError(
-                      'field ${field.name}/$symbolName must have a '
-                      'symbol referring to a valid field',
-                    );
-                  }
-
-                  cb.Expression expression = expressionOf(symbolName);
-                  final cb.Expression? callExpression;
-                  switch (transform) {
-                    case DerivedTransform.text:
-                      callExpression = expressionOf('\$normalizeText');
-                      break;
-                    case DerivedTransform.enumeration:
-                      callExpression = expressionOf('\$normalizeEnum');
-                      break;
-                    case DerivedTransform.date:
-                      callExpression = expressionOf('\$normalizeDate');
-                      break;
-                    case DerivedTransform.datetime:
-                      callExpression = expressionOf('\$normalizeDateTime');
-                      break;
-                    case null:
-                      callExpression = null;
-                      break;
-                  }
-                  if (callExpression != null) {
-                    expression = callExpression.call([expression]);
-                  }
-                  if (!referredField.required) {
-                    expression = expression.ifNullThen(cb.literalString(''));
-                  }
-                  return expression;
-                }),
-              )
-              .property('join')
-              .call([cb.literalString(field.joinBy)]),
+          cb.Reference(
+            method.enclosingElement?.name ?? '',
+          ).property(method.name!).call([
+            expressionOf('this'),
+            cb.InvokeExpression.constOf(
+              cb.Reference('DerivedTransformations'),
+              const [],
+            ),
+          ]),
         );
       });
     }

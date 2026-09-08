@@ -20,7 +20,8 @@ query implementations. It retains the storage name declared or inferred by
 the annotation.
 
 Derived fields appear in the generated metadata as queryable fields. Their
-values are assembled from other model fields and persisted with the model.
+values are produced by the static callback declared with `@DerivedField` and
+persisted with the model.
 See [Annotations > DerivedField](../annotations/derived-field.md) for their
 declaration and [Using filters](../build-the-store/using-filters.md) for a
 query example.

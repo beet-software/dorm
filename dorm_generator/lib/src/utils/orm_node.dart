@@ -19,6 +19,8 @@ import 'package:dorm_annotations/dorm_annotations.dart';
 
 import 'custom_types.dart';
 
+const String dormDerivedMethodPrefix = r'$dorm$derived$';
+
 abstract class OrmNode<T> {
   final T annotation;
 
@@ -94,10 +96,12 @@ class PolymorphicDataOrmNode extends ClassOrmNode<PolymorphicData> {
 class FieldOrmNode extends OrmNode<Field> {
   final String type;
   final bool required;
+  final MethodElement? method;
 
   const FieldOrmNode({
     required super.annotation,
     required this.type,
     required this.required,
+    this.method,
   });
 }

@@ -256,19 +256,17 @@ String get searchName;
 The current annotation is:
 
 ```dart title="v2"
-@DerivedField(
-  name: 'search_name',
-  referTo: [
-    DerivedToken(#firstName, DerivedTransform.text),
-    DerivedToken(#lastName, DerivedTransform.text),
-  ],
-)
-String get searchName;
+@DerivedField(name: 'search_name')
+static String $dorm$derived$searchName(
+  _User model,
+  DerivedTransformations transformations,
+) => '${transformations.text(model.firstName) ?? ''}_'
+    '${transformations.text(model.lastName) ?? ''}';
 ```
 
-The field names referenced by `DerivedToken` must be declared fields or foreign
-fields on the same model. The current API also supports `DerivedTransform.date`
-and `DerivedTransform.datetime` for `DateTime` values.
+The generated field name comes from the `$dorm$derived$` suffix. Composition is
+written in the callback, and `DerivedTransformations` provides `text`,
+`enumeration`, `date`, and `datetime` helpers.
 
 ### Use field metadata for filters and sorting
 

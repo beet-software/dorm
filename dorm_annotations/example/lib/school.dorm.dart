@@ -60,10 +60,8 @@ class _$School implements _School {
   @override
   final List<String> phoneNumbers;
 
-  @override
-  String get _q0 => [$normalizeText(name)].join('_');
-
-  void get $dorm$privateFields => [_q0];
+  String get q0 =>
+      _School.$dorm$derived$q0(this, const DerivedTransformations());
 }
 
 @JsonSerializable(anyMap: true, explicitToJson: true)
@@ -104,14 +102,14 @@ class School extends SchoolData implements _School {
   @JsonKey(name: '_id', required: true, disallowNullValue: true)
   final String id;
 
-  @override
-  String get _q0 => [$normalizeText(name)].join('_');
+  String get q0 =>
+      _School.$dorm$derived$q0(this, const DerivedTransformations());
 
   @override
   Map<String, Object?> toJson() {
     return {
       ..._$SchoolToJson(this)..remove('_id'),
-      '_query': {'nome': _q0},
+      '_query': {'nome': q0},
     };
   }
 }
@@ -141,7 +139,7 @@ class SchoolFields {
   );
 
   final DerivedFieldSchema q0 = const DerivedFieldSchema(
-    fieldName: '_q0',
+    fieldName: 'q0',
     columnName: '_query/nome',
     path: ['_query', 'nome'],
     storageName: '_query',
@@ -249,17 +247,17 @@ class Student extends StudentData implements _Student {
   @JsonKey(name: 'id-escola', required: true, disallowNullValue: true)
   final String schoolId;
 
-  @override
-  String get _q0 => [$normalizeText(name)].join('_');
+  String get q0 =>
+      _Student.$dorm$derived$q0(this, const DerivedTransformations());
 
-  @override
-  String get _q1 => [schoolId, $normalizeText(name)].join('_');
+  String get q1 =>
+      _Student.$dorm$derived$q1(this, const DerivedTransformations());
 
   @override
   Map<String, Object?> toJson() {
     return {
       ..._$StudentToJson(this)..remove('_id'),
-      '_query': {'nome': _q0, 'id-escola_nome': _q1},
+      '_query': {'nome': q0, 'id-escola_nome': q1},
     };
   }
 }
@@ -294,14 +292,14 @@ class StudentFields {
   );
 
   final DerivedFieldSchema q0 = const DerivedFieldSchema(
-    fieldName: '_q0',
+    fieldName: 'q0',
     columnName: '_query/nome',
     path: ['_query', 'nome'],
     storageName: '_query',
   );
 
   final DerivedFieldSchema q1 = const DerivedFieldSchema(
-    fieldName: '_q1',
+    fieldName: 'q1',
     columnName: '_query/id-escola_nome',
     path: ['_query', 'id-escola_nome'],
     storageName: '_query',
@@ -397,14 +395,14 @@ class Teacher extends TeacherData implements _Teacher {
   @JsonKey(name: '_id', required: true, disallowNullValue: true)
   final String id;
 
-  @override
-  String get _q0 => [ssn ?? ''].join('_');
+  String get q0 =>
+      _Teacher.$dorm$derived$q0(this, const DerivedTransformations());
 
   @override
   Map<String, Object?> toJson() {
     return {
       ..._$TeacherToJson(this)..remove('_id'),
-      '_query': {'cpf': _q0},
+      '_query': {'cpf': q0},
     };
   }
 }
@@ -429,7 +427,7 @@ class TeacherFields {
   );
 
   final DerivedFieldSchema q0 = const DerivedFieldSchema(
-    fieldName: '_q0',
+    fieldName: 'q0',
     columnName: '_query/cpf',
     path: ['_query', 'cpf'],
     storageName: '_query',

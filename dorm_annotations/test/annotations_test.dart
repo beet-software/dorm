@@ -3,6 +3,8 @@ import 'package:test/test.dart';
 
 class _Profile {}
 
+enum _State { ready }
+
 void main() {
   test('Data has no additional metadata', () {
     const Data annotation = Data();
@@ -74,27 +76,23 @@ void main() {
     expect(spec.referTo, #id);
   });
 
-  test('DerivedField preserves tokens and join configuration', () {
-    const DerivedField annotation = DerivedField(
-      name: 'search_name',
-      referTo: [
-        DerivedToken(#firstName, DerivedTransform.text),
-        DerivedToken(#status, DerivedTransform.enumeration),
-        DerivedToken(#createdAt, DerivedTransform.date),
-        DerivedToken(#createdAt, DerivedTransform.datetime),
-      ],
-      joinBy: '|',
-    );
+  test('DerivedField preserves its optional storage name', () {
+    const DerivedField annotation = DerivedField(name: 'search_name');
 
     expect(annotation.name, 'search_name');
-    expect(annotation.joinBy, '|');
-    expect(annotation.referTo, hasLength(4));
-    expect(annotation.referTo[0].field, #firstName);
-    expect(annotation.referTo[0].transform, DerivedTransform.text);
-    expect(annotation.referTo[1].field, #status);
-    expect(annotation.referTo[1].transform, DerivedTransform.enumeration);
-    expect(annotation.referTo[2].transform, DerivedTransform.date);
-    expect(annotation.referTo[3].transform, DerivedTransform.datetime);
+    expect(const DerivedField().name, isNull);
+  });
+
+  test('DerivedTransformations delegate to the normalization helpers', () {
+    const DerivedTransformations transformations = DerivedTransformations();
+
+    expect(transformations.text('Olá mundo'), 'OLAMUNDO');
+    expect(transformations.enumeration(_State.ready), 'ready');
+    expect(transformations.date(DateTime(2024, 2, 3)), '20240203');
+    expect(
+      transformations.datetime(DateTime(2024, 2, 3, 4, 5, 6, 7)),
+      '20240203040506007',
+    );
   });
 
   test('Polymorphic annotations preserve pivot and discriminator metadata', () {

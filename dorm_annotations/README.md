@@ -120,18 +120,14 @@ abstract class _Post {
 
 ### Derived fields
 
-The `DerivedField` annotation defines a persisted `String` value built from other Dart fields within a
-model class. It does not create a database index. A SQL engine stores a simple name as a scalar
-column and a `root/child` name inside a backend-specific JSON value.
+The `DerivedField` annotation marks a static callback whose result is materialized
+with the model. It does not create a database index. A SQL engine stores a simple
+name as a scalar column and a `root/child` name inside a backend-specific JSON
+value.
 
-It accepts the following parameters:
-
-- `name`: Optional name of the column in the underlying database. When omitted,
-  the generator uses the annotated getter name.
-- `referTo`: Specifies the derived tokens that the field refers to.
-- `joinBy`: Specifies the separator used between token values.
-
-#### Single derived value
+The callback name must start with `$dorm$derived$`. The suffix becomes the
+generated getter and schema field name. The annotation's `name` is the persisted
+storage name; when omitted, the suffix is used.
 
 ```dart
 import 'package:dorm_annotations/dorm_annotations.dart';
@@ -141,78 +137,38 @@ abstract class _School {
   @Field(name: 'name')
   String get name;
 
-  @Field(name: 'active', defaultValue: true)
-  bool get active;
-
-  @DerivedField(name: '_query_active', referTo: [DerivedToken(#active)])
-  String get _qActive;
+  @DerivedField(name: '_query/name')
+  static String $dorm$derived$qName(
+    _School model,
+    DerivedTransformations transformations,
+  ) => transformations.text(model.name) ?? '';
 }
 ```
 
-Applying `Filter.value(true, field: const FieldSchema(fieldName: '_qActive', columnName: '_query_active'))` (described in the
-[`dorm_framework` package](https://pub.dev/packages/dorm_framework)) compares the persisted derived
-value.
+The generator creates `qName` on the generated model and includes its value in
+the serialized representation. Query the field through its generated
+`DerivedFieldSchema`.
 
-#### Combining multiple fields
-
-A derived field can combine two or more source fields into one persisted value. For example, a
-combined value can be compared with `Filter.value`:
+The callback can combine values directly, without a token list or automatic
+separator:
 
 ```dart
-import 'package:dorm_annotations/dorm_annotations.dart';
-
-@Model(name: 'school-address', as: #schoolAddresses)
-abstract class _SchoolAddress {
-  @Field(name: 'zip-code')
-  String get zipCode;
-
-  @Field(name: 'number')
-  int get number;
-
-  @DerivedField(
-    name: '_query_address',
-    referTo: [DerivedToken(#zipCode), DerivedToken(#number)],
-    joinBy: '_',
-  )
-  String get _qAddress;
-}
+@DerivedField(name: '_query/address')
+static String $dorm$derived$qAddress(
+  _SchoolAddress model,
+  DerivedTransformations transformations,
+) => '${model.zipCode}_${model.number}';
 ```
 
-Applying `Filter.value('99950_13', field: const FieldSchema(fieldName: '_qAddress', columnName: '_query_address'))` compares the materialized value for an
-address with zip code 99950 and number 13.
+`DerivedTransformations` provides `text`, `enumeration`, `date`, and `datetime`.
+Each method delegates to the corresponding normalization helper and returns a
+nullable `String`. The callback may also return another synchronous value that
+the existing serialization and database engine can represent, such as a number,
+boolean, list, map, date, or `null`.
 
-#### Text normalization
-
-A token can use `DerivedTransform.text` before it is joined into the persisted value. The resulting
-value can be used with a text filter:
-
-```dart
-import 'package:dorm_annotations/dorm_annotations.dart';
-
-@Model(name: 'student', as: #students)
-abstract class _Student {
-  @Field(name: 'name')
-  String get name;
-
-  @ForeignField(name: 'id-school', referTo: _School)
-  String get schoolId;
-
-  @DerivedField(
-    name: '_query_sbn',
-    referTo: [DerivedToken(#schoolId), DerivedToken(#name, DerivedTransform.text)],
-    joinBy: '#',
-  )
-  String get _qSchoolByName;
-}
-```
-
-Applying `Filter.text('school7319004#Paul', field: const FieldSchema(fieldName: '_qSchoolByName', columnName: '_query_sbn'))` compares the materialized value for
-the selected school and name prefix.
-
-`DerivedTransform.date` normalizes a `DateTime` token as `YYYYMMDD`, and
-`DerivedTransform.datetime` normalizes it as `YYYYMMDDHHmmssSSS`. Both values
-use the local date and time components and can be joined with other tokens in
-a derived field.
+Derived callbacks are synchronous, are declared directly on the annotated class,
+and receive the model plus a `DerivedTransformations` instance. The generator
+does not inspect the callback body to prove that its result is serializable.
 
 ### Composite fields
 

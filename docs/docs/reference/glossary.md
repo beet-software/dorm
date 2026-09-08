@@ -12,8 +12,9 @@ operational details.
 | Field | Annotation and schema concept for a stored scalar or value field. |
 | ForeignField | Field containing a related model identity and relationship metadata. |
 | ModelField | Field containing an embedded Model or Data value. |
-| DerivedField | Generated/stored value assembled from fields and exposed as a queryable field. |
+| DerivedField | Annotation on a static callback whose generated result is stored and exposed as a queryable field. |
 | DerivedFieldSchema | Metadata for a generated derived field, including its path and storage root. |
+| DerivedTransformations | Helper passed to derived callbacks for text, enum, date, and date-time normalization. |
 | PolymorphicField | Field with payload data and a discriminator/pivot value. |
 | EntitySchema | Engine-neutral description of an entity's fields, keys, and foreign keys. |
 | FieldSchema | Engine-neutral description of one stored field. |

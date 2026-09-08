@@ -142,6 +142,11 @@ ordering, read windows, and offset-page metadata. See [Using filters](../build-t
 [Using sorting](../build-the-store/using-sorting.md), and
 [Using pagination](../build-the-store/using-pagination.md).
 
+`DerivedField` is declared on a static callback. The callback name uses the
+`$dorm$derived$` prefix, and the generated suffix identifies the query field.
+`DerivedTransformations` provides the built-in normalization helpers. See
+[DerivedField](../annotations/derived-field.md).
+
 ## Relationship APIs
 
 The framework exposes:

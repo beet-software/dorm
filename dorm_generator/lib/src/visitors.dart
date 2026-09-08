@@ -71,6 +71,16 @@ const Map<ClassNodeParser<Object>, List<FieldNodeParser<Field>>> _visiting = {
 /// }
 /// ```
 Map<String, FieldedOrmNode<Object>> parseLibrary(LibraryReader reader) {
+  for (final TopLevelFunctionElement function
+      in reader.element.topLevelFunctions) {
+    if (function.name!.startsWith(dormDerivedMethodPrefix)) {
+      throw StateError(
+        '${function.name} must be declared as a static method on the '
+        'annotated model class and annotated with DerivedField.',
+      );
+    }
+  }
+
   final Map<String, FieldedOrmNode<Object>> nodes = {};
   for (ClassElement classElement in reader.classes) {
     for (MapEntry<ClassNodeParser<Object>, List<FieldNodeParser<Field>>> entry
@@ -90,6 +100,51 @@ Map<String, FieldedOrmNode<Object>> parseLibrary(LibraryReader reader) {
           if (fieldNode == null) continue;
           fields[fieldElement.name!] = fieldNode;
           break;
+        }
+      }
+      if (classNode is ModelOrmNode) {
+        for (final ExecutableElement inheritedMember
+            in classElement.inheritedMembers.values) {
+          if (inheritedMember is MethodElement &&
+              inheritedMember.name!.startsWith(dormDerivedMethodPrefix)) {
+            throw StateError(
+              '${classElement.name}.${inheritedMember.name} is inherited. '
+              'DerivedField callbacks must be declared directly on the '
+              'annotated model class.',
+            );
+          }
+        }
+        const DerivedMethodParser methodParser = DerivedMethodParser();
+        for (final MethodElement methodElement in classElement.methods) {
+          final FieldOrmNode? methodNode = methodParser.parseElement(
+            methodElement,
+          );
+          final bool isReserved = methodElement.name!.startsWith(
+            dormDerivedMethodPrefix,
+          );
+          if (methodNode == null) {
+            if (isReserved) {
+              throw StateError(
+                '${classElement.name}.${methodElement.name} must be '
+                'annotated with DerivedField.',
+              );
+            }
+            continue;
+          }
+          if (!isReserved) {
+            fields[methodElement.name!] = methodNode;
+            continue;
+          }
+          final String derivedName = methodElement.name!.substring(
+            dormDerivedMethodPrefix.length,
+          );
+          if (fields.containsKey(derivedName)) {
+            throw StateError(
+              '${classElement.name}.${methodElement.name} conflicts with '
+              'the generated field or getter $derivedName.',
+            );
+          }
+          fields[derivedName] = methodNode;
         }
       }
       nodes[classElement.name!] = FieldedOrmNode(
