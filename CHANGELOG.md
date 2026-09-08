@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   now receives `ResolvedCreation`. This is a breaking change.
 - `@Model.primaryKeyGenerator` was removed. Generated identities can now use a
   directly declared static `$dorm$generateId` method. This is a breaking change.
+- Structured filters now require a `FieldSchema` through `field:`. `OrderBy`
+  now receives a `FieldSchema` instead of a persisted-name string. This is a
+  breaking change; low-level `BaseQuery` methods continue to receive resolved
+  string names.
 
 
 ## 1.0.0-alpha.6 - 2023-09-11

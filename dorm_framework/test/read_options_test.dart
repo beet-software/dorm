@@ -36,15 +36,18 @@ void main() {
   test('query options apply ordering, limit, and offset', () {
     final _Query query = const QueryOptions(
       orderBy: [
-        OrderBy('createdAt'),
-        OrderBy('name', direction: SortDirection.descending),
+        OrderBy(FieldSchema(fieldName: 'createdAt', columnName: 'created_at')),
+        OrderBy(
+          FieldSchema(fieldName: 'name', columnName: 'name'),
+          direction: SortDirection.descending,
+        ),
       ],
       limit: 11,
       offset: 20,
     ).apply(_Query());
 
     expect(query.operations, [
-      'sort:createdAt:asc',
+      'sort:created_at:asc',
       'sort:name:desc',
       'limit:11',
       'offset:20',

@@ -15,14 +15,15 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import 'query.dart';
+import 'schema.dart';
 
 enum SortDirection { ascending, descending }
 
 class OrderBy {
-  final String key;
+  final FieldSchema field;
   final SortDirection direction;
 
-  const OrderBy(this.key, {this.direction = SortDirection.ascending});
+  const OrderBy(this.field, {this.direction = SortDirection.ascending});
 }
 
 class QueryOptions {
@@ -38,7 +39,7 @@ class QueryOptions {
     Q result = query;
     for (final OrderBy order in orderBy) {
       result = result.sorted(
-        order.key,
+        order.field.columnName,
         ascending: order.direction == SortDirection.ascending,
       );
     }

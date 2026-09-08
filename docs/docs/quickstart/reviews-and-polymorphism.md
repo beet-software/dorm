@@ -106,7 +106,7 @@ The model also declares `_q-type`, a derived field composed from `userId` and th
 final List<Review> productReviews = await dorm.reviews.repository.peekAll(
   Filter.text(
     '${user.id}_product',
-    key: '_q-type',
+    field: ReviewEntity.fields.qType,
   ),
 );
 ```

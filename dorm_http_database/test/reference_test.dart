@@ -145,7 +145,10 @@ void main() {
 
     final List<_Model> models = await reference.peekAll(
       entity,
-      const Filter.text('A', key: 'name'),
+      const Filter.text(
+        'A',
+        field: FieldSchema(fieldName: 'name', columnName: 'name'),
+      ),
     );
 
     expect(models.single.name, 'Ada');

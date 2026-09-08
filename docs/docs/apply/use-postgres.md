@@ -94,7 +94,7 @@ await dorm.posts.repository.push(
 );
 
 final List<User> users = await dorm.users.repository.peekAll(
-  Filter.text('Ad', key: 'name'),
+  Filter.text('Ad', field: UserEntity.fields.name),
 );
 
 final List<Join<User, Post>> posts =

@@ -22,7 +22,9 @@ class _Query extends ValueNotifier<AsyncSnapshot<List<Review>>> {
         .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
         .reviews
         .repository
-        .pullAll(dorm_bloc.Filter.value(userId, key: 'user-id'))
+        .pullAll(
+          dorm_bloc.Filter.value(userId, field: ReviewEntity.fields.userId),
+        )
         .map((users) => AsyncSnapshot.withData(ConnectionState.active, users))
         .listen((snapshot) => value = snapshot);
   }
@@ -43,7 +45,9 @@ class _Query extends ValueNotifier<AsyncSnapshot<List<Review>>> {
         .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
         .reviews
         .repository
-        .pullAll(dorm_bloc.Filter.text(query, key: '_q-type'))
+        .pullAll(
+          dorm_bloc.Filter.text(query, field: ReviewEntity.fields.qUserIdType),
+        )
         .map((users) => AsyncSnapshot.withData(ConnectionState.active, users))
         .listen((snapshot) => value = snapshot);
   }

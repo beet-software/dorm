@@ -391,7 +391,7 @@ abstract class BaseRelationship<Q extends BaseQuery<Q>> {
   ///   on: (school) => school.principalId,
   /// );
   /// final Stream<List<Join<School, Principal?>>> result = association
-  ///     .pullAll(const Filter.value(true, key: 'active'));
+  ///     .pullAll(Filter.value(true, field: SchoolEntity.fields.active));
   /// ```
   OneToOneAssociation<L, I, R, Q>
   oneToOne<L, I extends Object, R, J extends Object>(
@@ -416,7 +416,7 @@ abstract class BaseRelationship<Q extends BaseQuery<Q>> {
   ///   on: (school) => Filter.value(school.id, field: StudentEntity.fields.schoolId),
   /// );
   /// final Stream<List<Join<School, List<Student>>>> result = association
-  ///     .pullAll(const Filter.value(true, key: 'active'));
+  ///     .pullAll(Filter.value(true, field: StudentEntity.fields.active));
   /// ```
   OneToManyAssociation<L, I, R, Q>
   oneToMany<L, I extends Object, R, J extends Object>(
@@ -444,7 +444,7 @@ abstract class BaseRelationship<Q extends BaseQuery<Q>> {
   ///   on: (student) => student.schoolId,
   /// );
   /// final Stream<List<Join<School, List<Student>>>> result = association
-  ///     .pullAll(Filter.date(DateTime(2018), key: 'birth-date', unit: DateFilterUnit.year));
+  ///     .pullAll(Filter.date(DateTime(2018), field: StudentEntity.fields.birthDate, unit: DateFilterUnit.year));
   /// ```
   ManyToOneAssociation<L, I, R, J, Q>
   manyToOne<L, I extends Object, R, J extends Object>(
@@ -473,7 +473,7 @@ abstract class BaseRelationship<Q extends BaseQuery<Q>> {
   ///   onRight: (teaching) => teaching.schoolId,
   /// );
   /// final Stream<List<Join<Teaching, (School?, Student?)>>> result = association
-  ///     .pullAll(Filter.value(true, key: 'active'));
+  ///     .pullAll(Filter.value(true, field: StudentEntity.fields.active));
   /// ```
   ManyToManyAssociation<M, I, L, R, Q>
   manyToMany<M, I extends Object, L, J extends Object, R, K extends Object>(
@@ -631,7 +631,7 @@ class ModelRelationship<L, I extends Object, Q extends BaseQuery<Q>> {
   ///   on: (school) => school.principalId,
   /// );
   /// final Stream<List<Join<School, Principal?>>> result = association
-  ///     .pullAll(const Filter.value(true, key: 'active'));
+  ///     .pullAll(Filter.value(true, field: SchoolEntity.fields.active));
   /// ```
   RelationshipDefinedAssociation<L, I, R?, Q> oneToOne<R, J extends Object>(
     RelationSource<R, J, Q> right, {
@@ -658,7 +658,7 @@ class ModelRelationship<L, I extends Object, Q extends BaseQuery<Q>> {
   ///   on: (school) => Filter.value(school.id, field: StudentEntity.fields.schoolId),
   /// );
   /// final Stream<List<Join<School, List<Student>>>> result = association
-  ///     .pullAll(const Filter.value(true, key: 'active'));
+  ///     .pullAll(Filter.value(true, field: StudentEntity.fields.active));
   /// ```
   RelationshipDefinedAssociation<L, I, List<R>, Q> oneToMany<
     R,
@@ -688,7 +688,7 @@ class ModelRelationship<L, I extends Object, Q extends BaseQuery<Q>> {
   ///   on: (student) => student.schoolId,
   /// );
   /// final Stream<List<Join<School, List<Student>>>> result = association
-  ///     .pullAll(Filter.date(DateTime(2018), key: 'birth-date', unit: DateFilterUnit.year));
+  ///     .pullAll(Filter.date(DateTime(2018), field: StudentEntity.fields.birthDate, unit: DateFilterUnit.year));
   /// ```
   ManyToOneAssociation<L, I, R, J, Q> manyToOne<R, J extends Object>(
     RelationSource<R, J, Q> right, {
@@ -716,7 +716,7 @@ class ModelRelationship<L, I extends Object, Q extends BaseQuery<Q>> {
   ///   onRight: (teaching) => teaching.schoolId,
   /// );
   /// final Stream<List<Join<Teaching, (School?, Student?)>>> result = association
-  ///     .pullAll(Filter.value(true, key: 'active'));
+  ///     .pullAll(Filter.value(true, field: StudentEntity.fields.active));
   /// ```
   RelationshipDefinedAssociation<L, I, (RL?, RR?), Q>
   manyToMany<RL, J extends Object, RR, K extends Object>({

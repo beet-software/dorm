@@ -4,6 +4,23 @@ import 'package:test/test.dart';
 import 'adapter.dart';
 import 'fixtures.dart';
 
+const FieldSchema _nameField = FieldSchema(
+  fieldName: 'name',
+  columnName: 'name',
+);
+const FieldSchema _valueField = FieldSchema(
+  fieldName: 'value',
+  columnName: 'value',
+);
+const FieldSchema _activeField = FieldSchema(
+  fieldName: 'active',
+  columnName: 'active',
+);
+const FieldSchema _parentIdField = FieldSchema(
+  fieldName: 'parentId',
+  columnName: 'parent_id',
+);
+
 /// Registers the shared dORM engine conformance tests.
 void defineEngineComplianceTests<Q extends BaseQuery<Q>>(
   EngineTestAdapter<Q> adapter,
@@ -140,14 +157,14 @@ void defineEngineComplianceTests<Q extends BaseQuery<Q>>(
         ]);
 
         final List<ComplianceItem> result = await repository.peekAll(
-          BaseFilter<Q>.text('alph', key: 'name'),
-          const QueryOptions(orderBy: [OrderBy('value')], limit: 1),
+          BaseFilter<Q>.text('alph', field: _nameField),
+          const QueryOptions(orderBy: [OrderBy(_valueField)], limit: 1),
         );
         expect(result.map((model) => model.id), ['c']);
 
         expect(
           (await repository.peekAll(
-            BaseFilter<Q>.value(true, key: 'active'),
+            BaseFilter<Q>.value(true, field: _activeField),
           )).map((model) => model.id),
           containsAll(['a', 'b']),
         );
@@ -166,7 +183,7 @@ void defineEngineComplianceTests<Q extends BaseQuery<Q>>(
           const OffsetPageRequest(
             size: 1,
             offset: 1,
-            orderBy: [OrderBy('value')],
+            orderBy: [OrderBy(_valueField)],
           ),
         );
 
@@ -186,7 +203,9 @@ void defineEngineComplianceTests<Q extends BaseQuery<Q>>(
         ]);
         await repository.popKeys(['a']);
         expect(await repository.peek('a'), isNull);
-        await repository.popAll(BaseFilter<Q>.value(false, key: 'active'));
+        await repository.popAll(
+          BaseFilter<Q>.value(false, field: _activeField),
+        );
         expect(await repository.peek('c'), isNull);
         expect(await repository.peek('b'), isNotNull);
         await repository.purge();
@@ -321,7 +340,7 @@ void defineEngineComplianceTests<Q extends BaseQuery<Q>>(
                     .oneToMany(
                       children,
                       on: (parent) =>
-                          BaseFilter<Q>.value('parent', key: 'parent_id'),
+                          BaseFilter<Q>.value('parent', field: _parentIdField),
                     )
                     .peekAll(BaseFilter<Q>.empty()))
                 .single

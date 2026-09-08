@@ -118,7 +118,7 @@ final List<Join<Cart, CartItem>> rows = await dorm
     .relations
     .carts
     .items
-    .peekAll(Filter.value(cart.id, key: 'id'));
+    .peekAll(Filter.value(cart.id, field: CartItemEntity.fields.id));
 ```
 
 `items` flattens the matching cart items. A cart with no matching items produces no row in this path. Use `itemsOrEmpty` when the cart must remain in the result:
@@ -128,7 +128,7 @@ final List<Join<Cart, List<CartItem>>> grouped = await dorm
     .relations
     .carts
     .itemsOrEmpty
-    .peekAll(Filter.value(cart.id, key: 'id'));
+    .peekAll(Filter.value(cart.id, field: CartItemEntity.fields.id));
 
 final List<CartItem> cartItems = grouped.single.right;
 ```
@@ -146,7 +146,7 @@ final List<Join<User, Product?>> rows = await dorm
     .carts
     .items
     .productOrNull
-    .peekAll(Filter.value(user.id, key: 'id'));
+    .peekAll(Filter.value(user.id, field: UserEntity.fields.id));
 ```
 
 The path is built by its getters. The first database read occurs when `peekAll` or `pullAll` is called. The intermediate `Cart` and `CartItem` values are used to resolve the path and are not exposed as nested `Join` objects in the final result.

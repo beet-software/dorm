@@ -11,8 +11,8 @@ Pass `QueryOptions` as the optional second argument to `peekAll`:
 ```dart title="Sort by product name"
 final List<Product> products = await dorm.products.repository.peekAll(
   Filter.empty(),
-  const QueryOptions(
-    orderBy: [OrderBy('name')],
+  QueryOptions(
+    orderBy: [OrderBy(ProductEntity.fields.name)],
   ),
 );
 ```
@@ -22,17 +22,20 @@ Use `SortDirection.descending` for descending order:
 ```dart
 final List<Product> products = await dorm.products.repository.peekAll(
   Filter.empty(),
-  const QueryOptions(
+  QueryOptions(
     orderBy: [
-      OrderBy('price', direction: SortDirection.descending),
+      OrderBy(
+        ProductEntity.fields.price,
+        direction: SortDirection.descending,
+      ),
     ],
   ),
 );
 ```
 
-The field names in `OrderBy` refer to the persisted fields exposed by the
-entity schema. Generated `FieldSchema` values can be used when the application
-needs to avoid repeating a string column name.
+`OrderBy` receives the `FieldSchema` for the persisted field. Generated values
+such as `ProductEntity.fields.name` keep the storage name in the model
+metadata instead of repeating it in the query.
 
 ## Combine sorting with a filter and a limit
 
@@ -42,10 +45,10 @@ needs to avoid repeating a string column name.
 final List<Product> firstProducts = await dorm.products.repository.peekAll(
   Filter.numericRange(
     const FilterRange<double>(from: 10, to: 50),
-    key: 'price',
+    field: ProductEntity.fields.price,
   ),
-  const QueryOptions(
-    orderBy: [OrderBy('name')],
+  QueryOptions(
+    orderBy: [OrderBy(ProductEntity.fields.name)],
     limit: 10,
   ),
 );
@@ -61,10 +64,10 @@ Offset pagination carries its ordering on the page request itself:
 ```dart
 final Page<Product> page = await dorm.products.repository.peekPage(
   Filter.empty(),
-  const OffsetPageRequest(
+  OffsetPageRequest(
     size: 10,
     offset: 20,
-    orderBy: [OrderBy('name')],
+    orderBy: [OrderBy(ProductEntity.fields.name)],
   ),
 );
 ```

@@ -78,7 +78,7 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     Query result = filter.accept(Query(_collection(entity)));
     for (final OrderBy order in options.orderBy) {
       result = result.sorted(
-        order.key,
+        order.field.columnName,
         ascending: order.direction == SortDirection.ascending,
       );
     }

@@ -38,7 +38,7 @@ Future<void> main() async {
   );
 
   final List<User> users = await dorm.users.repository.peekAll(
-    const Filter.text('Ad', key: 'name'),
+    Filter.text('Ad', field: UserEntity.fields.name),
   );
   final List<Join<User, Post>> posts = await dorm.relations.users.posts
       .peekAll();

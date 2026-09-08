@@ -62,7 +62,7 @@ final User created = await dorm.users.repository.put(
 );
 
 final List<Product> products = await dorm.products.repository.peekAll(
-  Filter.value('Notebook', key: 'name'),
+  Filter.value('Notebook', field: ProductEntity.fields.name),
 );
 ```
 

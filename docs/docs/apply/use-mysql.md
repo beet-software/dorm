@@ -90,7 +90,7 @@ final User user = await dorm.users.repository.put(
 );
 
 final List<User> users = await dorm.users.repository.peekAll(
-  Filter.text('ada', key: '_q-username'),
+  Filter.text('ada', field: UserEntity.fields.qUsername),
 );
 
 await dorm.users.repository.push(
@@ -114,7 +114,7 @@ final List<Join<Cart, CartItem>> rows = await dorm
     .relations
     .carts
     .items
-    .peekAll(Filter.value(cart.id, key: 'id'));
+    .peekAll(Filter.value(cart.id, field: CartItemEntity.fields.id));
 ```
 
 For direct table sources, the engine can use relation plan metadata. Relationship sources that do not expose a direct table plan use readable repository operations.

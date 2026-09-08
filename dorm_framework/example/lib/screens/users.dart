@@ -40,7 +40,9 @@ class _Query extends ValueNotifier<AsyncSnapshot<List<User>>> {
           .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
           .users
           .repository
-          .pullAll(dorm_bloc.Filter.text(query, key: '_q-username'))
+          .pullAll(
+            dorm_bloc.Filter.text(query, field: UserEntity.fields.qUsername),
+          )
           .map((users) => AsyncSnapshot.withData(ConnectionState.active, users))
           .listen((snapshot) => value = snapshot);
 

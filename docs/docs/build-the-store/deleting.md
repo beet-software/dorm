@@ -27,7 +27,10 @@ identity representation generated for that entity.
 
 ```dart
 await dorm.users.repository.popAll(
-  Filter.value('ada@example.org', key: 'email'),
+  Filter.value(
+    'ada@example.org',
+    field: UserEntity.fields.email,
+  ),
 );
 ```
 

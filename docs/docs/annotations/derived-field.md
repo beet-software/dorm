@@ -41,7 +41,7 @@ String get _qAddress;
 
 The generated value for `zipCode == '99950'` and `number == 13` is
 `99950_13`. A repository can query that persisted value with
-`Filter.value('99950_13', key: '_q-address')`.
+`Filter.value('99950_13', field: AddressEntity.fields.qAddress)`.
 
 For a date or date-time query value, apply the corresponding transformation to
 the token:

@@ -50,6 +50,11 @@ class ModelDependency extends Dependency<ModelData> {
 
 class Query extends MockBaseQuery<Query> {}
 
+const FieldSchema _valueField = FieldSchema(
+  fieldName: 'value',
+  columnName: 'value',
+);
+
 @GenerateNiceMocks([
   MockSpec<BaseReference>(),
   MockSpec<BaseRelationship>(),
@@ -160,7 +165,7 @@ void main() {
       mockito.verifyZeroInteractions(relationshipMock);
     });
     test('peekAll', () async {
-      const BaseFilter<Query> filter = BaseFilter.value(1, key: 'value');
+      const BaseFilter<Query> filter = BaseFilter.value(1, field: _valueField);
       mockito
           .when(referenceMock.peekAll(entityMock, filter))
           .thenAnswer((_) async => [const Model(1, id: '1')]);
@@ -173,7 +178,7 @@ void main() {
       mockito.verifyZeroInteractions(relationshipMock);
     });
     test('pullAll', () async {
-      const BaseFilter<Query> filter = BaseFilter.value(1, key: 'value');
+      const BaseFilter<Query> filter = BaseFilter.value(1, field: _valueField);
       mockito
           .when(referenceMock.pullAll(entityMock, filter))
           .thenAnswer((_) => Stream.value([const Model(1, id: '1')]));
@@ -221,7 +226,7 @@ void main() {
       mockito.verifyZeroInteractions(relationshipMock);
     });
     test('popAll', () async {
-      const BaseFilter<Query> filter = BaseFilter.value(1, key: 'value');
+      const BaseFilter<Query> filter = BaseFilter.value(1, field: _valueField);
 
       await repository.popAll(filter);
 

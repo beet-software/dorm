@@ -121,12 +121,21 @@ Common filter factories include:
 | Factory | Input |
 | --- | --- |
 | `Filter.empty()` | No condition. |
-| `Filter.value(...)` | Exact value, using a key or generated field schema. |
+| `Filter.value(...)` | Exact value, using a `FieldSchema`. |
 | `Filter.text(...)` | Text-prefix condition. |
 | `Filter.textRange(...)` | Text bounds. |
 | `Filter.numericRange(...)` | Numeric bounds. |
 | `Filter.date(...)` | Date comparison at a `DateFilterUnit`. |
 | `Filter.dateRange(...)` | Date bounds. |
+
+All filter factories except `Filter.empty()` require a `FieldSchema` through
+their `field:` parameter. `OrderBy` receives a `FieldSchema` as its first
+argument:
+
+```dart
+Filter.value(value, field: UserEntity.fields.email);
+OrderBy(UserEntity.fields.createdAt);
+```
 
 `QueryOptions`, `OrderBy`, `OffsetPageRequest`, and `Page` provide
 ordering, read windows, and offset-page metadata. See [Using filters](../build-the-store/using-filters.md),

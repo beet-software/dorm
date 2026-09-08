@@ -39,48 +39,43 @@ abstract class BaseFilter<Q extends BaseQuery<Q>> {
   // Evaluates to true for all the rows in the table.
   const factory BaseFilter.empty() = _EmptyFilter;
 
-  /// Evaluates to true for rows where its [key] attribute is equal to [value].
-  ///
-  /// Use [field] with a generated [FieldSchema] when the field belongs to a
-  /// generated entity. This keeps the persisted name in the model definition
-  /// instead of repeating it at every call site. Exactly one of [key] or
-  /// [field] must be provided.
-  const factory BaseFilter.value(
-    Object? value, {
-    String? key,
-    FieldSchema? field,
-  }) = ValueFilter;
+  /// Evaluates to true for rows where the persisted [field] is equal to
+  /// [value].
+  const factory BaseFilter.value(Object? value, {required FieldSchema field}) =
+      ValueFilter;
 
-  /// Evaluates to true for rows where its [key] attribute starts with [text].
-  const factory BaseFilter.text(String text, {required String key}) =
+  /// Evaluates to true for rows where the persisted [field] starts with
+  /// [text].
+  const factory BaseFilter.text(String text, {required FieldSchema field}) =
       _TextFilter;
 
-  /// Evaluates to true for rows where its [key] attribute is lexicographically
+  /// Evaluates to true for rows where the persisted [field] is lexicographically
   /// between [FilterRange.from] and [FilterRange.to], provided by [range].
   const factory BaseFilter.textRange(
     FilterRange<String> range, {
-    required String key,
+    required FieldSchema field,
   }) = _TextRangeFilter;
 
-  /// Evaluates to true for rows where its [key] attribute is numerically
+  /// Evaluates to true for rows where the persisted [field] is numerically
   /// between [FilterRange.from] and [FilterRange.to], provided by [range].
   const factory BaseFilter.numericRange(
     FilterRange<double> range, {
-    required String key,
+    required FieldSchema field,
   }) = _NumericRangeFilter;
 
-  /// Evaluates to true for rows where its [key] attribute is temporally
+  /// Evaluates to true for rows where the persisted [field] is temporally
   /// between [FilterRange.from] and [FilterRange.to], provided by [range].
   const factory BaseFilter.dateRange(
     DateFilterRange range, {
-    required String key,
+    required FieldSchema field,
   }) = _DateRangeFilter;
 
-  /// Evaluates to true for rows where its [key] attribute is a [DateTime] or a
-  /// ISO-8901 formatted [String], and matches [date] at a certain [unit].
+  /// Evaluates to true for rows where the value of the persisted [field] is a
+  /// [DateTime] or an ISO-8601 formatted [String], and matches [date] at a
+  /// certain [unit].
   const factory BaseFilter.date(
     DateTime date, {
-    required String key,
+    required FieldSchema field,
     DateFilterUnit unit,
   }) = _DateFilter;
 
@@ -107,50 +102,45 @@ class _EmptyFilter<Q extends BaseQuery<Q>> implements BaseFilter<Q> {
 /// Engines may inspect this structured value instead of parsing a generated
 /// query string when planning a batch operation or a relationship.
 class ValueFilter<Q extends BaseQuery<Q>> implements BaseFilter<Q> {
-  final String? _key;
   final Object? value;
-  final FieldSchema? field;
+  final FieldSchema field;
 
-  const ValueFilter(this.value, {String? key, this.field})
-    : assert((key == null) != (field == null)),
-      _key = key;
-
-  String get key => _key ?? field!.columnName;
+  const ValueFilter(this.value, {required this.field});
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is ValueFilter &&
           runtimeType == other.runtimeType &&
-          key == other.key &&
+          field == other.field &&
           value == other.value;
 
   @override
-  int get hashCode => key.hashCode ^ value.hashCode;
+  int get hashCode => field.hashCode ^ value.hashCode;
 
   @override
-  Q accept(Q query) => query.whereValue(key, value);
+  Q accept(Q query) => query.whereValue(field.columnName, value);
 }
 
 class _TextFilter<Q extends BaseQuery<Q>> implements BaseFilter<Q> {
-  final String key;
+  final FieldSchema field;
   final String text;
 
-  const _TextFilter(this.text, {required this.key});
+  const _TextFilter(this.text, {required this.field});
 
   @override
-  Q accept(Q query) => query.whereText(key, text);
+  Q accept(Q query) => query.whereText(field.columnName, text);
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is _TextFilter &&
           runtimeType == other.runtimeType &&
-          key == other.key &&
+          field == other.field &&
           text == other.text;
 
   @override
-  int get hashCode => key.hashCode ^ text.hashCode;
+  int get hashCode => field.hashCode ^ text.hashCode;
 }
 
 enum DateFilterUnit {
@@ -182,42 +172,42 @@ enum DateFilterUnit {
 }
 
 class _DateFilter<Q extends BaseQuery<Q>> implements BaseFilter<Q> {
-  final String key;
+  final FieldSchema field;
   final DateTime value;
   final DateFilterUnit unit;
 
   const _DateFilter(
     this.value, {
-    required this.key,
+    required this.field,
     this.unit = DateFilterUnit.milliseconds,
   });
 
   @override
-  Q accept(Q query) => query.whereDate(key, value, unit);
+  Q accept(Q query) => query.whereDate(field.columnName, value, unit);
 }
 
 abstract class _RangeFilter<R, Q extends BaseQuery<Q>>
     implements BaseFilter<Q> {
-  final String key;
+  final FieldSchema field;
   final FilterRange<R> range;
 
-  const _RangeFilter(this.range, {required this.key});
+  const _RangeFilter(this.range, {required this.field});
 
   @override
-  Q accept(Q query) => query.whereRange(key, range);
+  Q accept(Q query) => query.whereRange(field.columnName, range);
 }
 
 class _TextRangeFilter<Q extends BaseQuery<Q>>
     extends _RangeFilter<String?, Q> {
-  const _TextRangeFilter(super.range, {required super.key});
+  const _TextRangeFilter(super.range, {required super.field});
 }
 
 class _NumericRangeFilter<Q extends BaseQuery<Q>>
     extends _RangeFilter<double?, Q> {
-  const _NumericRangeFilter(super.range, {required super.key});
+  const _NumericRangeFilter(super.range, {required super.field});
 }
 
 class _DateRangeFilter<Q extends BaseQuery<Q>>
     extends _RangeFilter<DateTime?, Q> {
-  const _DateRangeFilter(super.range, {required super.key});
+  const _DateRangeFilter(super.range, {required super.field});
 }

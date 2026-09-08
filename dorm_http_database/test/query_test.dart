@@ -9,12 +9,16 @@ void main() {
   );
 
   test('encodes REST filters and modifiers', () {
-    final Query query = const Filter.value(true, key: 'active')
-        .accept(const Query(schema: schema))
-        .whereText('name', 'Al')
-        .whereRange('score', const FilterRange<double>(from: 1, to: 3))
-        .sorted('name', ascending: false)
-        .limit(10);
+    final Query query =
+        const Filter.value(
+              true,
+              field: FieldSchema(fieldName: 'active', columnName: 'active'),
+            )
+            .accept(const Query(schema: schema))
+            .whereText('name', 'Al')
+            .whereRange('score', const FilterRange<double>(from: 1, to: 3))
+            .sorted('name', ascending: false)
+            .limit(10);
 
     final Map<String, String> parameters = const DefaultHttpQueryCodec().encode(
       query,

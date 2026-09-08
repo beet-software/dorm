@@ -23,7 +23,9 @@ class CartScreen extends StatelessWidget {
               .relations
               .cartItems
               .productOrNull
-              .pullAll(BaseFilter.value(cartId, key: 'cart-id'))
+              .pullAll(
+                BaseFilter.value(cartId, field: CartItemEntity.fields.cartId),
+              )
               .map(
                 (event) =>
                     AsyncSnapshot.withData(ConnectionState.active, event),

@@ -93,7 +93,7 @@ Use `pullAll` for a changing list:
 final StreamSubscription<List<Product>> subscription = dorm
     .products
     .repository
-    .pullAll(Filter.text('note', key: '_q-name'))
+    .pullAll(Filter.text('note', field: ProductEntity.fields.qName))
     .listen((products) {
       for (final Product product in products) {
         print(product.name);

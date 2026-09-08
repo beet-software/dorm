@@ -90,7 +90,9 @@ class _Source<Model> implements RelationSource<Model, String, _Query> {
   ]) async {
     if (filter is! ValueFilter<_Query>) return values;
     return values
-        .where((model) => fields(model)[filter.key] == filter.value)
+        .where(
+          (model) => fields(model)[filter.field.columnName] == filter.value,
+        )
         .toList();
   }
 
@@ -145,7 +147,10 @@ void main() {
               source: FieldSchema(fieldName: 'id', columnName: 'id'),
               target: FieldSchema(fieldName: 'userId', columnName: 'user-id'),
             ),
-            on: (user) => const BaseFilter.value('u1', key: 'user-id'),
+            on: (user) => const BaseFilter.value(
+              'u1',
+              field: FieldSchema(fieldName: 'userId', columnName: 'user-id'),
+            ),
           )
           .toMany(
             items,
@@ -154,7 +159,13 @@ void main() {
               source: FieldSchema(fieldName: 'id', columnName: 'id'),
               target: FieldSchema(fieldName: 'cartId', columnName: 'cart-id'),
             ),
-            on: (cart) => BaseFilter.value(cart.id, key: 'cart-id'),
+            on: (cart) => BaseFilter.value(
+              cart.id,
+              field: const FieldSchema(
+                fieldName: 'cartId',
+                columnName: 'cart-id',
+              ),
+            ),
           )
           .toOne(
             products,
@@ -233,7 +244,13 @@ void main() {
                 source: FieldSchema(fieldName: 'id', columnName: 'id'),
                 target: FieldSchema(fieldName: 'userId', columnName: 'user-id'),
               ),
-              on: (user) => BaseFilter.value(user.id, key: 'user-id'),
+              on: (user) => BaseFilter.value(
+                user.id,
+                field: const FieldSchema(
+                  fieldName: 'userId',
+                  columnName: 'user-id',
+                ),
+              ),
             )
             .peekAll();
 

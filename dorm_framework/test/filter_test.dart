@@ -45,15 +45,6 @@ void main() {
     expect(const BaseFilter<_Query>.empty().accept(query), same(query));
   });
 
-  test('value filter accepts a literal key', () {
-    final _Query query = const BaseFilter<_Query>.value(
-      7,
-      key: 'school_id',
-    ).accept(_Query());
-
-    expect(query.operations, ['value:school_id=7']);
-  });
-
   test('value filter resolves a FieldSchema column name', () {
     const FieldSchema field = FieldSchema(
       fieldName: 'schoolId',
@@ -66,14 +57,24 @@ void main() {
     ).accept(_Query());
 
     expect(query.operations, ['value:school_id=7']);
+    expect(
+      (const BaseFilter<_Query>.value(7, field: field) as ValueFilter<_Query>)
+          .field
+          .fieldName,
+      'schoolId',
+    );
   });
 
   test('text, date, and range filters delegate to the query', () {
     final DateTime date = DateTime(2024, 2, 3, 4, 5, 6);
-    final _Query query = const BaseFilter<_Query>.text('Ada', key: 'name')
-        .accept(_Query())
-        .whereDate('created_at', date, DateFilterUnit.day)
-        .whereRange('score', const FilterRange<double>(from: 1, to: 10));
+    final _Query query =
+        const BaseFilter<_Query>.text(
+              'Ada',
+              field: FieldSchema(fieldName: 'name', columnName: 'name'),
+            )
+            .accept(_Query())
+            .whereDate('created_at', date, DateFilterUnit.day)
+            .whereRange('score', const FilterRange<double>(from: 1, to: 10));
 
     expect(query.operations, [
       'text:name=Ada',
@@ -85,11 +86,11 @@ void main() {
   test('range filter factories preserve their range types and values', () {
     final _Query text = BaseFilter<_Query>.textRange(
       const FilterRange<String>(from: 'A', to: 'M'),
-      key: 'name',
+      field: FieldSchema(fieldName: 'name', columnName: 'name'),
     ).accept(_Query());
     final _Query numeric = BaseFilter<_Query>.numericRange(
       const FilterRange<double>(from: 1, to: 10),
-      key: 'score',
+      field: FieldSchema(fieldName: 'score', columnName: 'score'),
     ).accept(_Query());
     final _Query date = BaseFilter<_Query>.dateRange(
       DateFilterRange(
@@ -97,7 +98,7 @@ void main() {
         to: DateTime(2025),
         unit: DateFilterUnit.year,
       ),
-      key: 'created_at',
+      field: FieldSchema(fieldName: 'createdAt', columnName: 'created_at'),
     ).accept(_Query());
 
     expect(text.operations, ['range:name=A:M']);
@@ -111,7 +112,10 @@ void main() {
     final DateTime value = DateTime(2024, 2, 3);
     final _Query query = BaseFilter<_Query>.date(
       value,
-      key: 'created_at',
+      field: const FieldSchema(
+        fieldName: 'createdAt',
+        columnName: 'created_at',
+      ),
       unit: DateFilterUnit.month,
     ).accept(_Query());
 
@@ -120,8 +124,16 @@ void main() {
 
   test('query options are applied after the filter', () {
     final _Query query =
-        const QueryOptions(orderBy: [OrderBy('name')], limit: 5).apply(
-          const BaseFilter<_Query>.value(true, key: 'active').accept(_Query()),
+        const QueryOptions(
+          orderBy: [
+            OrderBy(FieldSchema(fieldName: 'name', columnName: 'name')),
+          ],
+          limit: 5,
+        ).apply(
+          const BaseFilter<_Query>.value(
+            true,
+            field: FieldSchema(fieldName: 'active', columnName: 'active'),
+          ).accept(_Query()),
         );
 
     expect(query.operations, ['value:active=true', 'sort:name', 'limit:5']);
@@ -137,17 +149,5 @@ void main() {
     expect(DateFilterUnit.minute.access(date), 5);
     expect(DateFilterUnit.second.access(date), 6);
     expect(DateFilterUnit.milliseconds.access(date), 7);
-  });
-
-  test('value filters require exactly one field selector', () {
-    expect(() => BaseFilter<_Query>.value(7), throwsA(isA<AssertionError>()));
-    expect(
-      () => BaseFilter<_Query>.value(
-        7,
-        key: 'id',
-        field: FieldSchema(fieldName: 'id', columnName: 'id'),
-      ),
-      throwsA(isA<AssertionError>()),
-    );
   });
 }

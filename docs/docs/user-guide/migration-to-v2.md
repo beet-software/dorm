@@ -270,6 +270,39 @@ The field names referenced by `DerivedToken` must be declared fields or foreign
 fields on the same model. The current API also supports `DerivedTransform.date`
 and `DerivedTransform.datetime` for `DateTime` values.
 
+### Use field metadata for filters and sorting
+
+The structured filter and sorting APIs now receive field metadata instead of
+raw persisted-name strings. This keeps the Dart field name and its persisted
+column name together, including when they are different.
+
+```dart title="v1"
+Filter.text('Ada', key: 'name');
+Filter.empty().sorted('created-at');
+```
+
+```dart title="v2"
+Filter.text('Ada', field: UserEntity.fields.name);
+QueryOptions(orderBy: [OrderBy(UserEntity.fields.createdAt)]);
+```
+
+For a field that is not generated, provide both names explicitly:
+
+```dart title="v2"
+const externalName = FieldSchema(
+  fieldName: 'externalName',
+  columnName: 'external_name',
+);
+
+Filter.value(value, field: externalName);
+```
+
+`BaseQuery.whereValue`, `BaseQuery.whereText`, `BaseQuery.whereDate`,
+`BaseQuery.whereRange`, and `BaseQuery.sorted` remain low-level engine
+operations that receive the already resolved `columnName` string. Custom
+engines should resolve `FieldSchema.columnName` at the structured API
+boundary.
+
 ### Update identity generation
 
 #### Replace the old `put` calls
@@ -565,6 +598,9 @@ values. It is separate from `IdentityGenerationStrategy`, which describes how
 - Replace `QueryField` with `DerivedField` where applicable.
 - Replace `primaryKeyGenerator` with a directly declared static
   `$dorm$generateId` method.
+- Replace `key:` in structured filters with `field:` and pass the matching
+  generated or manually declared `FieldSchema`.
+- Replace string arguments in `OrderBy` with the corresponding `FieldSchema`.
 - Replace `put(dependency, data)` with `put(Creation.auto(...))` or
   `put(Creation.explicit(...))`.
 - Replace the old two-argument `putAll` call with one `Creation` per item.
@@ -609,6 +645,14 @@ let Dart infer both types from `Dorm(engine)`.
 
 Current engines expose `OffsetPageRequest`. Passing `CursorPageRequest` through
 a statically typed current repository is not supported.
+
+### A filter or `OrderBy` rejects `key:` or a string
+
+Structured filters require `field: FieldSchema`, and `OrderBy` requires a
+`FieldSchema` positional argument. Use generated metadata such as
+`UserEntity.fields.name`, or construct a `FieldSchema` with explicit
+`fieldName` and `columnName` values. The lower-level `BaseQuery` methods still
+receive resolved strings.
 
 ### `$dorm$generateId` is rejected during generation
 

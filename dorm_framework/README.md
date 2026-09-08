@@ -628,10 +628,10 @@ If you want to match models whose field is equal to a certain value, you can use
 ```dart
 void main(Repository<SchoolData, School> repository) async {
   // Peek all active schools
-  await repository.peekAll(const Filter.value(true, key: 'active'));
+  await repository.peekAll(const Filter.value(true, field: FieldSchema(fieldName: 'active', columnName: 'active')));
 
   // Peek all schools that belongs to US
-  await repository.peekAll(const Filter.value('US', key: 'country-name'));
+  await repository.peekAll(const Filter.value('US', field: FieldSchema(fieldName: 'country', columnName: 'country-name')));
 }
 ```
 
@@ -644,10 +644,10 @@ If you want to match models whose field *starts* with a certain string, you can 
 ```dart
 void main(Repository<SchoolData, School> repository) async {
   // Peek all active schools
-  await repository.peekAll(const Filter.value(true, key: 'active'));
+  await repository.peekAll(const Filter.value(true, field: FieldSchema(fieldName: 'active', columnName: 'active')));
 
   // Peek all schools that belongs to US
-  await repository.peekAll(const Filter.value('US', key: 'country-name'));
+  await repository.peekAll(const Filter.value('US', field: FieldSchema(fieldName: 'country', columnName: 'country-name')));
 }
 ```
 
@@ -661,7 +661,7 @@ void main(Repository<SchoolData, School> repository) async {
 
   // Since the stored school name is "Lincoln Elementary"
   // (note the uppercase letters and spaces), nothing will be found
-  await repository.peekAll(Filter.text(userInput, key: 'name'));
+  await repository.peekAll(Filter.text(userInput, field: FieldSchema(fieldName: 'name', columnName: 'name')));
 }
 ```
 
@@ -695,7 +695,7 @@ void main(Repository<SchoolData, School> repository) async {
 
   // Successfully finds the desired school
   final String query = userInput.toUpperCase().replaceAll(' ', '');
-  await repository.peekAll(Filter.text(query, key: '.name'));
+  await repository.peekAll(Filter.text(query, field: FieldSchema(fieldName: 'normalizedName', columnName: '.name')));
 }
 ```
 
@@ -734,16 +734,16 @@ void main() {
   Filter? filter;
 
   // Select entries occurred at 13/06/2021, 16:05:12.111
-  filter = Filter.date(dt, key: 'birth-date');
+  filter = Filter.date(dt, field: FieldSchema(fieldName: 'birthDate', columnName: 'birth-date'));
 
   // Select entries occurred at 2021
-  filter = Filter.date(dt, key: 'birth-date', unit: DateFilterUnit.year);
+  filter = Filter.date(dt, field: FieldSchema(fieldName: 'birthDate', columnName: 'birth-date'), unit: DateFilterUnit.year);
 
   // Select entries occurred at 13/06/2021
-  filter = Filter.date(dt, key: 'birth-date', unit: DateFilterUnit.day);
+  filter = Filter.date(dt, field: FieldSchema(fieldName: 'birthDate', columnName: 'birth-date'), unit: DateFilterUnit.day);
 
   // Select entries occurred at 13/06/2021, from 16:00 to 16:59
-  filter = Filter.date(dt, key: 'birth-date', unit: DateFilterUnit.hour);
+  filter = Filter.date(dt, field: FieldSchema(fieldName: 'birthDate', columnName: 'birth-date'), unit: DateFilterUnit.hour);
 }
 ```
 
@@ -761,7 +761,7 @@ void main(Repository<SchoolData, School> repository) async {
 
   // Peek 20 schools with a name prefixed with DEF
   await repository.peekAll(
-    Filter.text('DEF', key: 'name'),
+    Filter.text('DEF', field: FieldSchema(fieldName: 'name', columnName: 'name')),
     const QueryOptions(limit: 20),
   );
 }

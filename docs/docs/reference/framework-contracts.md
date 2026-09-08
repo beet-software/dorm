@@ -136,8 +136,31 @@ returned items and continuation metadata. Current engine contracts use
 `OffsetPageRequest` as `P`. A `CursorPageRequest` passed through a statically
 typed current engine repository is rejected by the analyzer.
 
-ValueFilter accepts either a string key or a FieldSchema; the current
-constructor requires exactly one of those addressing forms.
+Structured filters require a `FieldSchema` and resolve its `columnName` before
+calling `BaseQuery`. `OrderBy` also requires a `FieldSchema`. The `BaseQuery`
+contract receives the resolved storage name as a string because it is the
+engine-level query construction contract.
+
+The structured constructors are equivalent to:
+
+```dart
+Filter.value(value, field: entityField);
+Filter.text(prefix, field: entityField);
+Filter.textRange(range, field: entityField);
+Filter.numericRange(range, field: entityField);
+Filter.dateRange(range, field: entityField);
+Filter.date(date, field: entityField);
+const OrderBy(entityField);
+```
+
+For fields that are not generated, create the metadata explicitly:
+
+```dart
+const FieldSchema(
+  fieldName: 'externalName',
+  columnName: 'external_name',
+)
+```
 
 ## Relationship contracts
 

@@ -149,7 +149,7 @@ abstract class _School {
 }
 ```
 
-Applying `Filter.value(true, key: '_query_active')` (described in the
+Applying `Filter.value(true, field: const FieldSchema(fieldName: '_qActive', columnName: '_query_active'))` (described in the
 [`dorm_framework` package](https://pub.dev/packages/dorm_framework)) compares the persisted derived
 value.
 
@@ -178,7 +178,7 @@ abstract class _SchoolAddress {
 }
 ```
 
-Applying `Filter.value('99950_13', key: '_query_address')` compares the materialized value for an
+Applying `Filter.value('99950_13', field: const FieldSchema(fieldName: '_qAddress', columnName: '_query_address'))` compares the materialized value for an
 address with zip code 99950 and number 13.
 
 #### Text normalization
@@ -206,7 +206,7 @@ abstract class _Student {
 }
 ```
 
-Applying `Filter.text('school7319004#Paul', key: '_query_sbn')` compares the materialized value for
+Applying `Filter.text('school7319004#Paul', field: const FieldSchema(fieldName: '_qSchoolByName', columnName: '_query_sbn'))` compares the materialized value for
 the selected school and name prefix.
 
 `DerivedTransform.date` normalizes a `DateTime` token as `YYYYMMDD`, and

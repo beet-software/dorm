@@ -9,10 +9,10 @@ continuation metadata. The current engines expose offset pagination through
 ```dart title="Read the third page of products"
 final Page<Product> page = await dorm.products.repository.peekPage(
   Filter.empty(),
-  const OffsetPageRequest(
+  OffsetPageRequest(
     size: 10,
     offset: 20,
-    orderBy: [OrderBy('name')],
+    orderBy: [OrderBy(ProductEntity.fields.name)],
   ),
 );
 
@@ -32,12 +32,12 @@ Pass the same filter used by a normal collection read:
 final Page<Product> page = await dorm.products.repository.peekPage(
   Filter.numericRange(
     const FilterRange<double>(from: 10, to: 50),
-    key: 'price',
+    field: ProductEntity.fields.price,
   ),
-  const OffsetPageRequest(
+  OffsetPageRequest(
     size: 20,
     offset: 0,
-    orderBy: [OrderBy('name')],
+    orderBy: [OrderBy(ProductEntity.fields.name)],
   ),
 );
 ```

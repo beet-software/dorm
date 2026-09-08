@@ -1,23 +1,21 @@
 # Using filters
 
 Repositories accept structured filters for one-shot reads, stream reads, and
-filtered removals. Start with the persisted field name, then use generated
-field metadata when the model exposes it.
+filtered removals. Pass the generated `FieldSchema` for the field being
+queried. This keeps the Dart field name and its persisted name together.
 
 This guide assumes that the generated `User` and `Product` types are available
 and that `Dorm` is initialized as shown in [Operations in a generated repository](overview.md).
 
 ## Match a stored value
 
-Create a value filter with the persisted field name:
+Create a value filter with generated field metadata:
 
 ```dart
 final List<User> users = await dorm.users.repository.peekAll(
-  Filter.value('ada@example.com', key: 'email'),
+  Filter.value('ada@example.com', field: UserEntity.fields.email),
 );
 ```
-
-For generated fields, use `FieldSchema` metadata when it is available:
 
 ```dart
 final List<Product> products = await dorm.products.repository.peekAll(
@@ -28,10 +26,9 @@ final List<Product> products = await dorm.products.repository.peekAll(
 );
 ```
 
-`key` and `field` identify the same persisted field in two forms. A value
-filter compares the field with the supplied value. The `key` form is useful
-for a dynamic field name; the generated `field` form keeps the model's column
-name in generated metadata.
+A value filter compares the selected field with the supplied value. The
+generated metadata contains both the Dart field name and the name used by the
+selected storage engine.
 
 ## Add a derived field for text search
 
@@ -62,7 +59,7 @@ then be searched through `_q-username`:
 
 ```dart
 final List<User> matches = await dorm.users.repository.peekAll(
-  Filter.text('ada', key: '_q-username'),
+  Filter.text('ada', field: UserEntity.fields.qUsername),
 );
 ```
 
@@ -70,7 +67,7 @@ The `Product` model can use the corresponding `_q-name` field:
 
 ```dart
 final List<Product> matches = await dorm.products.repository.peekAll(
-  Filter.text('note', key: '_q-name'),
+  Filter.text('note', field: ProductEntity.fields.qName),
 );
 ```
 
@@ -86,7 +83,7 @@ Use a date filter when the comparison is made at a specific date unit:
 final List<Review> reviews = await dorm.reviews.repository.peekAll(
   Filter.date(
     DateTime(2025, 1, 1),
-    key: 'timestamp',
+    field: ReviewEntity.fields.timestamp,
     unit: DateFilterUnit.year,
   ),
 );
@@ -98,7 +95,7 @@ Use a range filter when the lower or upper bound matters:
 final List<Product> products = await dorm.products.repository.peekAll(
   Filter.numericRange(
     const FilterRange<double>(from: 10, to: 50),
-    key: 'price',
+    field: ProductEntity.fields.price,
   ),
 );
 ```

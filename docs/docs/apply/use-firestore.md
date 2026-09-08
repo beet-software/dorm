@@ -106,7 +106,7 @@ engines:
 final User? user = await dorm.users.repository.peek(userId);
 
 final List<User> users = await dorm.users.repository.peekAll(
-  const Filter.text('Ad', key: 'name'),
+  Filter.text('Ad', field: UserEntity.fields.name),
 );
 
 await dorm.users.repository.push(
@@ -133,9 +133,9 @@ the engine maps to the SDK:
 
 ```dart
 final List<User> users = await dorm.users.repository.peekAll(
-  const Filter.value(true, key: 'active'),
-  const QueryOptions(
-    orderBy: [OrderBy('name')],
+  Filter.value(true, field: UserEntity.fields.active),
+  QueryOptions(
+    orderBy: [OrderBy(UserEntity.fields.name)],
     limit: 20,
   ),
 );
@@ -149,7 +149,7 @@ page reads enough documents to skip the requested prefix and detect
 ```dart
 final Page<User> page = await dorm.users.repository.peekPage(
   const Filter.empty(),
-  const OffsetPageRequest(size: 20, offset: 40),
+  OffsetPageRequest(size: 20, offset: 40),
 );
 ```
 
@@ -163,7 +163,7 @@ caller.
 ```dart
 final Stream<User?> userChanges = dorm.users.repository.pull(userId);
 final Stream<List<User>> activeUsers = dorm.users.repository.pullAll(
-  const Filter.value(true, key: 'active'),
+  Filter.value(true, field: UserEntity.fields.active),
 );
 ```
 
