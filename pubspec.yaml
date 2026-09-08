@@ -18,6 +18,7 @@ workspace:
   - dorm_memory_database
   - dorm_http_database
   - dorm_firestore_database
+  - dorm_sqlite_database
   - dorm_test
 
 dev_dependencies:

@@ -6,7 +6,7 @@ have too much repeated code around that data.
 It generates models and repositories from annotated Dart classes. Those
 repositories provide common create, read, update, delete, filtering, and
 relationship operations across in-memory data, Firebase, SQL databases,
-MongoDB, and REST-shaped HTTP APIs.
+MongoDB, REST-shaped HTTP APIs, and SQLite.
 
 ## A helper around the code you already have
 
@@ -43,6 +43,7 @@ The same framework can work with very different kinds of data sources:
 | PostgreSQL | An opened `Connection` or `Pool`. |
 | MongoDB | An opened `mongo_dart` `Db`. |
 | REST-shaped API | An `http.Client`, base URI, and HTTP mapping. |
+| SQLite | An application-owned `sqlite_async` `SqliteDatabase`. |
 
 The engine adapts the common dORM operations to that data source:
 
@@ -85,7 +86,7 @@ every backend behave identically.
 | --- | --- |
 | Create, read, update, delete, and common filters | Available through the common repository API. |
 | Pagination | Current engines accept offset pagination. Cursor requests are not accepted by their typed APIs. |
-| Streams | Memory, BLoC, and Firebase can provide later changes. PostgreSQL, MongoDB, and HTTP currently emit the initial read only; MySQL streams are not fully implemented. |
+| Streams | Memory, BLoC, Firebase, Firestore, and SQLite can provide later changes. PostgreSQL, MongoDB, and HTTP currently emit the initial read only; MySQL streams are not fully implemented. |
 | Authorization | Configured by the application and the selected backend. |
 | Backend-specific features | Continue to belong to the native database, driver, or HTTP client when dORM does not model them. |
 
@@ -102,7 +103,7 @@ PostgreSQL, MongoDB, Firebase, and HTTP setup also remain application- or
 backend-specific.
 
 dORM provides a public transaction callback through `TransactionalDorm` for
-the Memory, BLoC, MySQL, and PostgreSQL engines. The callback can compose
+the Memory, BLoC, MySQL, PostgreSQL, and SQLite engines. The callback can compose
 repository reads and writes across entities and rolls back when it fails.
 Streams are not available inside the callback. Firestore, Firebase Realtime
 Database, MongoDB, and HTTP do not expose this common capability; their

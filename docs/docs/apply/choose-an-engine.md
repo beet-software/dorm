@@ -16,6 +16,7 @@ filters, relationships, and streams for a specific storage system.
 | PostgreSQL | PostgreSQL through `postgres` | An opened `Connection` or `Pool` |
 | MongoDB | MongoDB through `mongo_dart` | An opened `Db` |
 | HTTP/JSON | A REST-shaped service | An owned `http.Client`, base URI, and resource mapping |
+| SQLite | SQLite through `sqlite_async` | An application-owned `SqliteDatabase` |
 
 The application owns the lifecycle of the backend object when the engine
 accepts one. The engine does not automatically open or close an application-
@@ -43,7 +44,8 @@ Use [MySQL](use-mysql.md) or [PostgreSQL](use-postgres.md) when the
 database is relational and SQL is part of the application's storage boundary.
 Use [MongoDB](use-mongo.md) for document storage. Use [HTTP/JSON](use-http.md)
 when the application talks to a REST-shaped API rather than directly to a
-database.
+database. Use [SQLite](use-sqlite.md) for local relational storage through the
+asynchronous `sqlite_async` API.
 
 ## Keep the application surface stable
 
@@ -70,14 +72,14 @@ same application role.
 
 ## Compare the current capability boundaries
 
-| Capability | Memory | BLoC | Firebase | Firestore | MySQL | PostgreSQL | MongoDB | HTTP |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| External server required | No | No | Firebase project or emulator | Firebase project or emulator | Yes | Yes | Yes | HTTP API |
-| Streams | State-backed | State-backed | Firebase value events | Firestore snapshots | Initial read only | Initial read only | Initial read only | Initial read only |
-| Filter execution | In memory | In memory | Firebase query | Firestore query | SQL query | PostgreSQL SQL query | MongoDB selector | URL parameters |
-| Public transaction API | Yes | Yes | No | No | Yes | Yes | No | No |
-| Pagination | Offset pages | Offset pages | Offset pages with client-side skipping | Offset pages with client-side skipping | Offset pages | Offset pages | Offset pages | Offset pages |
-| Composite creation | Explicit identity | Explicit identity | Unsupported | Unsupported | Explicit identity | Explicit identity | Explicit identity | Explicit identity |
+| Capability | Memory | BLoC | Firebase | Firestore | MySQL | PostgreSQL | MongoDB | HTTP | SQLite |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| External server required | No | No | Firebase project or emulator | Firebase project or emulator | Yes | Yes | Yes | HTTP API | No |
+| Streams | State-backed | State-backed | Firebase value events | Firestore snapshots | Initial read only | Initial read only | Initial read only | Initial read only | SQLite table watches |
+| Filter execution | In memory | In memory | Firebase query | Firestore query | SQL query | PostgreSQL SQL query | MongoDB selector | URL parameters | SQLite SQL query |
+| Public transaction API | Yes | Yes | No | No | Yes | Yes | No | No | Yes |
+| Pagination | Offset pages | Offset pages | Offset pages with client-side skipping | Offset pages with client-side skipping | Offset pages | Offset pages | Offset pages | Offset pages | Offset pages |
+| Composite creation | Explicit identity | Explicit identity | Unsupported | Unsupported | Explicit identity | Explicit identity | Explicit identity | Explicit identity | Explicit identity |
 
 This table describes current engine behavior. It does not promise that future
 versions will preserve every backend capability or limitation.

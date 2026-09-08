@@ -43,6 +43,7 @@ nav:
       - Run with PostgreSQL: apply/use-postgres.md
       - Run with MongoDB: apply/use-mongo.md
       - Run with HTTP/JSON: apply/use-http.md
+      - Run with SQLite: apply/use-sqlite.md
   - Annotations:
       - Learn the annotations: annotations/index.md
       - Data: annotations/data.md

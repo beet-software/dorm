@@ -48,7 +48,7 @@ jobs:
     needs: build
     strategy:
       matrix:
-        pkg: [dorm_generator, dorm_firebase_database, dorm_firestore_database, dorm_bloc_database, dorm_memory_database, dorm_mysql_database, dorm_postgres_database, dorm_mongo_database, dorm_http_database]
+        pkg: [dorm_generator, dorm_firebase_database, dorm_firestore_database, dorm_bloc_database, dorm_memory_database, dorm_mysql_database, dorm_postgres_database, dorm_mongo_database, dorm_http_database, dorm_sqlite_database]
     steps:
       - uses: actions/checkout@v3
       - uses: subosito/flutter-action@v2
@@ -102,7 +102,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        pkg: [dorm_bloc_database, dorm_memory_database, dorm_mysql_database, dorm_postgres_database, dorm_mongo_database, dorm_http_database]
+        pkg: [dorm_bloc_database, dorm_memory_database, dorm_mysql_database, dorm_postgres_database, dorm_mongo_database, dorm_http_database, dorm_sqlite_database]
     steps:
       - uses: actions/checkout@v3
       - uses: subosito/flutter-action@v2

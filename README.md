@@ -17,6 +17,7 @@
 [![pub package](https://img.shields.io/pub/v/dorm_postgres_database.svg?label=dorm_postgres_database)](https://pub.dev/packages/dorm_postgres_database)
 [![pub package](https://img.shields.io/pub/v/dorm_mongo_database.svg?label=dorm_mongo_database)](https://pub.dev/packages/dorm_mongo_database)
 [![pub package](https://img.shields.io/pub/v/dorm_http_database.svg?label=dorm_http_database)](https://pub.dev/packages/dorm_http_database)
+[![pub package](https://img.shields.io/pub/v/dorm_sqlite_database.svg?label=dorm_sqlite_database)](https://pub.dev/packages/dorm_sqlite_database)
 
 
 A language-agnostic Object Relational Mapper library for Dart.
@@ -113,6 +114,7 @@ Here's a step-by-step guide:
    - Integrate using PostgreSQL, explained by [`dorm_postgres_database`](https://pub.dev/packages/dorm_postgres_database)
    - Integrate using MongoDB, explained by [`dorm_mongo_database`](https://pub.dev/packages/dorm_mongo_database)
    - Integrate with REST-shaped HTTP/JSON APIs, explained by [`dorm_http_database`](https://pub.dev/packages/dorm_http_database)
+   - Integrate with SQLite through [`dorm_sqlite_database`](https://pub.dev/packages/dorm_sqlite_database)
    - Using another engine? Take a look at the "Implementing your own engine" section below
 
 You can find an *example/* folder inside *every* package mentioned above, containing specific examples
@@ -122,7 +124,7 @@ just one of the packages above. Each documentation complements the other.
 ## Current scope
 
 dORM exposes an optional public transaction API through `TransactionalDorm`.
-Memory, BLoC, MySQL, and PostgreSQL implement it. Firestore, Firebase
+Memory, BLoC, MySQL, PostgreSQL, and SQLite implement it. Firestore, Firebase
 Realtime Database, MongoDB, and HTTP do not; some of those engines still use
 backend transactions internally for individual operations.
 Repository reads support offset-based pages through `peekPage`. Current engines

@@ -19,6 +19,7 @@ Use these package entry points for application code:
 | MySQL engine | `package:dorm_mysql_database/dorm_mysql_database.dart` |
 | PostgreSQL engine | `package:dorm_postgres_database/dorm_postgres_database.dart` |
 | HTTP engine | `package:dorm_http_database/dorm_http_database.dart` |
+| SQLite engine | `package:dorm_sqlite_database/dorm_sqlite_database.dart` |
 
 Concrete classes below `lib/src/` are not automatically part of the barrel
 surface. A class being importable by an internal package path does not by
@@ -153,6 +154,7 @@ and [Framework contracts](framework-contracts.md).
 | MySQL | `Engine(MySQLConnection)`, `Filter`, and `Query`. |
 | PostgreSQL | `Engine(SessionExecutor)`, `Filter`, and `Query`. PostgreSQL driver types are imported from `package:postgres/postgres.dart`. |
 | HTTP | `Engine({client, baseUri, mapping, headers})`, `Filter`, `Query`, `HttpMapping`, `HttpResourceMapping`, `HttpEndpoint`, `HttpJsonCodec`, `HttpQueryCodec`, and `HttpDatabaseException`. |
+| SQLite | `Engine(SqliteDatabase)`, `Filter`, and `Query`; import `SqliteDatabase` from `package:sqlite_async/sqlite_async.dart`. |
 
 The generated `Dorm` receives one concrete engine and exposes generated
 `DatabaseEntity` accessors. See [Engine capability reference](engine-capabilities.md)
@@ -179,8 +181,8 @@ final result = await dorm.transaction((tx) async {
 The callback result is returned and callback or backend errors are propagated.
 Supported engines roll back the transaction when the callback fails. Streams
 are rejected inside the callback, and nested transactions are not supported.
-The capability is currently implemented by Memory, BLoC, MySQL, and
-PostgreSQL.
+The capability is currently implemented by Memory, BLoC, MySQL, PostgreSQL,
+and SQLite.
 
 ## Errors and status
 

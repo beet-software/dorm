@@ -7,7 +7,7 @@ status that is not established by the available contracts.
 
 | Area | Current status |
 | --- | --- |
-| Published package version in the twelve workspace manifests | 1.0.0-alpha.5 |
+| Published package version in the thirteen workspace manifests | 1.0.0-alpha.5 |
 | Workspace root Dart SDK | >=3.9.0 <4.0.0 |
 | Workspace member SDK declarations | >=3.5.0 <4.0.0 for the members that use the workspace resolution; some packages declare >=3.11.5 <4.0.0 |
 | Firebase package | Flutter/Firebase integration, not a backend-neutral Dart implementation |
@@ -16,6 +16,7 @@ status that is not established by the available contracts.
 | PostgreSQL client | postgres |
 | MongoDB client | mongo_dart |
 | HTTP client | http |
+| SQLite client | sqlite_async and sqlite3 |
 | Generator tooling | build_runner, source_gen, analyzer, json_serializable, and copy_with_extension_gen |
 | Workspace mechanism | Dart Pub Workspace with Melos configuration in the root pubspec.yaml |
 
@@ -35,6 +36,7 @@ compatibility matrix.
 | PostgreSQL | Pure Dart package using postgres and an external PostgreSQL server. |
 | MongoDB | Pure Dart package using mongo_dart and an external MongoDB server; the driver requires a runtime compatible with dart:io. |
 | HTTP | Pure Dart package using `package:http`; the application supplies the HTTP client, base URI, and REST/JSON mapping. |
+| SQLite | Pure Dart package using `sqlite_async`; the application supplies an open `SqliteDatabase` and schema. |
 
 The common generated API is observed with these engines. That observation is
 not a promise that every operation has identical semantics across them.
@@ -44,7 +46,7 @@ not a promise that every operation has identical semantics across them.
 - The default generated identity shape is String.
 - Firebase reference operations require String identities.
 - Firestore reference operations use simple String document IDs and do not support composite identities.
-- Memory, BLoC, MySQL, PostgreSQL, MongoDB, and HTTP currently generate UUID-backed String identities in their
+- Memory, BLoC, MySQL, PostgreSQL, MongoDB, HTTP, and SQLite currently generate UUID-backed String identities in their
   automatic identity paths.
 - Generated composite-key repositories accept explicit identities through
   `Creation.explicit`; `Creation.auto` is a compile-time error for those
@@ -62,10 +64,10 @@ identity details.
 | Feature | Status |
 | --- | --- |
 | CRUD | Implemented in the framework and engine paths with engine-specific behavior. |
-| Filters | Implemented by Memory, BLoC, Firebase, Firestore, MySQL, PostgreSQL, MongoDB, and HTTP through different query representations. |
+| Filters | Implemented by Memory, BLoC, Firebase, Firestore, MySQL, PostgreSQL, MongoDB, HTTP, and SQLite through different query representations. |
 | Relationships | Implemented in the common framework and engine adapters; direct and fallback paths differ. |
-| Streams | Memory, BLoC, Firebase, and Firestore currently provide state/value/snapshot events; MySQL, PostgreSQL, MongoDB, and HTTP currently perform an initial read only. |
-| Transactions | `TransactionalDorm` is currently implemented by Memory, BLoC, MySQL, and PostgreSQL. Other engines may still use internal transactions for individual operations. |
+| Streams | Memory, BLoC, Firebase, Firestore, and SQLite currently provide state/value/snapshot/table-watch events; MySQL, PostgreSQL, MongoDB, and HTTP currently perform an initial read only. |
+| Transactions | `TransactionalDorm` is currently implemented by Memory, BLoC, MySQL, PostgreSQL, and SQLite. Other engines may still use internal transactions for individual operations. |
 | Pagination | Current engines expose `OffsetPageRequest` as their page type; cursor requests are rejected by the typed repository surface. |
 | Polymorphic serialization across every engine | Current serialized behavior exists, but universal cross-engine compatibility is not established. |
 | MongoDB change streams | Not exposed by the current MongoDB engine. |
@@ -75,7 +77,7 @@ identity details.
 
 ## Public API and generated output
 
-The documented import surface is the twelve package barrel files listed in
+The documented import surface is the thirteen package barrel files listed in
 [Public API reference](public-api.md). Changes to exported barrels,
 framework contracts, annotations, generator output, generated class names,
 identity codecs, filters, or relationships affect the observable API surface.
