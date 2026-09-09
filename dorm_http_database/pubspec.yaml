@@ -9,7 +9,7 @@ environment:
   sdk: '>=3.11.5 <4.0.0'
 
 dependencies:
-  dorm_framework: ^1.0.0-alpha.3
+  dorm_framework: ^2.0.0-dev.1
   http: ^1.6.0
   uuid: ^4.6.0
 

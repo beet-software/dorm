@@ -23,4 +23,4 @@ dev_dependencies:
   meta: ^1.15.0
   test: ^1.25.8
   build_runner: ^2.16.1
-  dorm_framework: ^1.0.0-alpha.5
+  dorm_framework: ^2.0.0-dev.1

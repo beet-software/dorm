@@ -8,7 +8,7 @@ environment:
   sdk: '>=3.9.0 <4.0.0'
 
 dependencies:
-  dorm_framework: ^1.0.0-alpha.3
+  dorm_framework: ^2.0.0-dev.1
   mongo_dart: ^0.10.9
   uuid: ^4.6.0
 

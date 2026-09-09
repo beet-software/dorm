@@ -11,7 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
   cloud_firestore: ^6.9.0
-  dorm_framework: ^1.0.0-alpha.3
+  dorm_framework: ^2.0.0-dev.1
   rxdart: ^0.28.0
 
 dev_dependencies:
