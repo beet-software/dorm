@@ -1,984 +1,247 @@
 # dorm_framework
 
-[![pub package](https://img.shields.io/pub/v/dorm_framework.svg?label=dorm_framework)](https://pub.dev/packages/dorm_framework)
-[![pub popularity](https://img.shields.io/pub/popularity/dorm_framework?logo=dart)](https://pub.dev/packages/dorm_framework)
-[![pub likes](https://img.shields.io/pub/likes/dorm_framework?logo=dart)](https://pub.dev/packages/dorm_framework)
-[![pub points](https://img.shields.io/pub/points/dorm_framework?logo=dart)](https://pub.dev/packages/dorm_framework)
+<p>
+  <a href="https://pub.dev/packages/dorm_framework"><img src="https://img.shields.io/pub/v/dorm_framework.svg?label=dorm_framework" alt="dorm_framework on pub.dev"></a>
+  <a href="https://pub.dev/packages/dorm_framework"><img src="https://img.shields.io/pub/points/dorm_framework?logo=dart" alt="dorm_framework pub points"></a>
+  <a href="https://pub.dev/packages/dorm_framework"><img src="https://img.shields.io/pub/popularity/dorm_framework?logo=dart" alt="dorm_framework popularity"></a>
+  <a href="https://pub.dev/packages/dorm_framework"><img src="https://img.shields.io/pub/likes/dorm_framework?logo=dart" alt="dorm_framework likes"></a>
+  <a href="https://ezgrs.github.io/dorm/reference/framework-contracts/"><img src="https://img.shields.io/badge/documentation-dORM-4c8bf5?style=flat" alt="dorm_framework documentation"></a>
+  <a href="https://github.com/beet-software/dorm"><img src="https://img.shields.io/badge/repository-GitHub-181717?logo=github&style=flat" alt="dORM repository"></a>
+  <a href="https://github.com/beet-software/dorm"><img src="https://img.shields.io/github/license/beet-software/dorm?style=flat" alt="License"></a>
+  <a href="https://github.com/beet-software/dorm/actions/workflows/dart.yml"><img src="https://github.com/beet-software/dorm/actions/workflows/dart.yml/badge.svg" alt="Dart CI"></a>
+</p>
 
-An Object Relational Mapper framework for Dart.
+<p>
+  <a href="https://pub.dev/packages/dorm_annotations"><img src="https://img.shields.io/pub/v/dorm_annotations.svg?label=annotations" alt="dorm_annotations"></a>
+  <a href="https://pub.dev/packages/dorm_generator"><img src="https://img.shields.io/pub/v/dorm_generator.svg?label=generator" alt="dorm_generator"></a>
+  <a href="https://pub.dev/packages/dorm_memory_database"><img src="https://img.shields.io/pub/v/dorm_memory_database.svg?label=memory" alt="dorm_memory_database"></a>
+  <a href="https://pub.dev/packages/dorm_bloc_database"><img src="https://img.shields.io/pub/v/dorm_bloc_database.svg?label=bloc" alt="dorm_bloc_database"></a>
+  <a href="https://pub.dev/packages/dorm_firebase_database"><img src="https://img.shields.io/pub/v/dorm_firebase_database.svg?label=firebase" alt="dorm_firebase_database"></a>
+  <a href="https://pub.dev/packages/dorm_firestore_database"><img src="https://img.shields.io/pub/v/dorm_firestore_database.svg?label=firestore" alt="dorm_firestore_database"></a>
+  <a href="https://pub.dev/packages/dorm_http_database"><img src="https://img.shields.io/pub/v/dorm_http_database.svg?label=http" alt="dorm_http_database"></a>
+  <a href="https://pub.dev/packages/dorm_mongo_database"><img src="https://img.shields.io/pub/v/dorm_mongo_database.svg?label=mongo" alt="dorm_mongo_database"></a>
+  <a href="https://pub.dev/packages/dorm_mysql_database"><img src="https://img.shields.io/pub/v/dorm_mysql_database.svg?label=mysql" alt="dorm_mysql_database"></a>
+  <a href="https://pub.dev/packages/dorm_postgres_database"><img src="https://img.shields.io/pub/v/dorm_postgres_database.svg?label=postgres" alt="dorm_postgres_database"></a>
+  <a href="https://pub.dev/packages/dorm_sqlite_database"><img src="https://img.shields.io/pub/v/dorm_sqlite_database.svg?label=sqlite" alt="dorm_sqlite_database"></a>
+  <a href="https://pub.dev/packages/dorm_example"><img src="https://img.shields.io/pub/v/dorm_example.svg?label=showcase" alt="dorm_example"></a>
+</p>
 
-## Table of contents
+dorm_framework defines the engine-independent types used by dORM
+applications. It describes how generated models become entities and
+repositories, how reads and writes are expressed, and how engines expose
+their backend-specific execution through one common contract.
 
-- [Getting started](#getting-started)
-- [Model](#model)
-  - [Object structure](#object-structure)
-  - [Serialization](#serialization)
-  - [Dependency](#dependency)
-  - [Instantiation](#instantiation)
-  - [Entity](#entity)
-- [Engine](#engine)
-- [Controller](#controller)
-  - [Operations](#operations)
-    - [Creating](#creating)
-    - [Reading](#reading)
-    - [Updating](#updating)
-    - [Deleting](#deleting)
-  - [Filters](#filters)
-    - [By value](#by-value)
-    - [By text](#by-text)
-    - [By dates](#by-dates)
-    - [By amount](#by-amount)
-  - [Relationships](#relationships)
-    - [One-to-one](#one-to-one)
-    - [One-to-many](#one-to-many)
-    - [Many-to-one](#many-to-one)
-    - [Many-to-many](#many-to-many)
+## Install
 
-## Getting started
+Add the framework to the application:
 
-Run the following commands in your Dart or Flutter project:
-
-```bash
+~~~shell
 dart pub add dorm_framework
-dart pub get
-```
-
-## Model
-
-> **Note**: This is a section that explains the *theoretical* concept of dORM: it uses the ideas and
-> abstract principles related to dORM rather than the practical uses of it. You can automatize all
-> of the steps below using code generation, provided by
-> [`dorm_annotations`](https://pub.dev/packages/dorm_annotations) and
-> [`dorm_generator`](https://pub.dev/packages/dorm_generator) packages. If you are interested on how
-> dORM works behind the scenes, keep reading! Otherwise, go to the next section.
-
-### Object structure
-
-An object in this framework is split into two views: *data* and *model*.
-
-Its *data* view contains all the information used by the real world to represent it. Consider a
-database schema containing two tables: student and school. The school's data view is composed by its
-name, its phone number and its address, while the student's data view is composed by its name, its
-birth date, and its email. These are fields the system user can fill in forms, for example.
-
-You can represent the data view of an object in Dart using a simple class:
-
-```dart
-class SchoolData {
-  final String name;
-  final String phoneNumber;
-  final String address;
-
-  const SchoolData({required this.name, required this.phoneNumber, required this.address});
-}
-
-class StudentData {
-  final String name;
-  final DateTime birthDate;
-  final String email;
-
-  const StudentData({required this.name, required this.birthDate, required this.email});
-}
-```
-
-In the other hand, the *model* view of an object contains all the information used by the database
-logic to represent it, such as identification and relationships. Every database object must have a
-unique identification, therefore this field is included in the model view. A school does not need a
-student to be created, so its model view has no further attributes. However, a student needs to be
-associated with a school, so its model view has to be a reference to it.
-
-You can represent the model view of an object in Dart also using a class, that inherits from the
-data view class:
-
-```dart
-class School extends SchoolData {
-  final String id;
-
-  const School({
-    required this.id,
-    /* required super.declarations */
-  });
-}
-
-class Student extends StudentData {
-  final String id;
-  final String schoolId;
-
-  const Student({
-    required this.id,
-    required this.schoolId,
-    /* required super.declarations */
-  });
-}
-```
-
-These fields aren't kept in a single class because of *separation of concerns*. A form should
-only be concerned about real world information of a schema, not their primary or foreign keys. So
-when using a form, use the *data* view. When reading from database, use the *model* view.
-
-### Serialization
-
-It's highly recommended to add serialization methods to each class, commonly implemented using
-`fromJson` and `toJson`:
-
-```dart
-class SchoolData {
-  // ...
-
-  factory SchoolData.fromJson(Map<String, Object?> json) {
-    return SchoolData(/* decode from JSON */);
-  }
-
-  // ...
-
-  Map<String, Object?> toJson() =>
-      {
-        /*  encode to JSON */
-      };
-}
-
-class School extends SchoolData {
-  // ...
-
-  // Since this is a schema model, you must pass an `id` parameter
-  factory School.fromJson(String id, Map<String, Object?> json) {
-    final SchoolData data = SchoolData.fromJson(json);
-    return School(id: id, /* decode from data */);
-  }
-
-  // ...
-
-  @override
-  Map<String, Object?> toJson() =>
-      {
-        ...super.toJson(),
-        /* encode to JSON */
-      };
-}
-```
-
-### Dependency
-
-The dependency of an object *O* contains all the references to other objects that *O* depends to be
-created (a.k.a. foreign keys). A school can exist without any student. Since there are no more
-models in our schema, we can say that `School` does not depend on any model to exist, so its entity
-type is *strong*. A student cannot exist without a school, since they study there. Since there are
-no more models in this system, we can say that `Student` depends on `School` to exist, so its entity
-type is *weak*. This reasoning is important to implement a dependency for a schema data, which is
-used when you want to create a new model (an INSERT operation, for example) in the database.
-
-You can represent the dependency of an object in Dart using a class that inherits from `Dependency`,
-a class that this package exports:
-
-```dart
-import 'package:dorm_framework/dorm_framework.dart';
-
-class SchoolDependency extends Dependency<SchoolData> {
-  const SchoolDependency() : super.strong();
-}
-
-class StudentDependency extends Dependency<StudentData> {
-  final String schoolId;
-
-  StudentDependency({required this.schoolId}) : super.weak([schoolId]);
-}
-```
-
-### Instantiation
-
-To create a complete object, you can use two methods: create or update.
-
-The following represents the update method:
-
-```dart
-void main() {
-  // The model view you want to update
-  final Student existing = Student(/*...*/);
-
-  // The data view you want to overwrite
-  final StudentData data = StudentData(/*...*/);
-
-  // The updated object
-  final Student updated = Student(
-    id: existing.id,
-    schoolId: existing.schoolId,
-    name: data.name,
-    birthDate: data.birthDate,
-    email: data.email,
-  );
-}
-```
-
-Note that, for an update, you need an existing object to inherit from.
-
-In a create transformation, this existing object is replaced by a `Dependency`:
-
-```dart
-void main() {
-  // The data view you want to upgrade
-  final StudentData data = StudentData(/*...*/);
-
-  // The dependency you want to inject into the model view
-  final StudentDependency dependency = StudentDependency(/*...*/);
-
-  // The created model
-  final Student current = Student(
-    /* id: ..., */
-    schoolId: dependency.schoolId,
-    name: data.name,
-    birthDate: data.birthDate,
-    email: data.email,
-  );
-}
-```
-
-What can we use as primary key here? You can use some techniques depending on how your object should
-be identified:
-
-- If your object needs to be uniquely identified across the system, use an unique identifier such as
-  the one provided by the [`uuid` package](https://pub.dev/packages/uuid):
-
-  ```dart
-  import 'package:uuid/uuid.dart';
-
-  String createId() => const Uuid().v4();
-  ```
-
-- If your object depends *exclusively* on another object (an one-to-one relationship), use a foreign
-  primary key. For example, since a `Grade` belongs to a single `Student`, we could define its
-  primary key as being the following:
-
-  ```dart
-  String createId(GradeDependency dependency) => dependency.studentId;
-  ```
-
-- If your object depends on other attributes of your object, use a logical primary key:
-
-  ```dart
-  String createId(StudentData data) => data.schoolCode == null ? data.ssn : data.schoolCode!;
-  ```
-
-These are only some methods that can be used to identify an object. Note that our fictional function
-`createId` defined above can receive any kind of arguments (nothing, a data view, a dependency).
-Therefore, we need to find a way to abstract it.
-
-### Entity
-
-The entity of an object acts as a bridge that can be used to manipulate the database. This is a
-single and robust class, exported by this package, that joins data view, model view and dependency
-into a single place.
-
-You can represent the entity of an object in Dart using a class that inherits from `Entity`,
-a class that this package exports:
-
-```dart
-class SchoolEntity implements Entity<SchoolData, School> {
-  const SchoolEntity();
-
-  @override
-  String identify(School model) => model.id;
-
-  @override
-  School fromJson(String id, Map data) => School.fromJson(id, data);
-
-  @override
-  Map<String, Object?> toJson(SchoolData data) => data.toJson();
-
-  // The persisted schema of this entity.
-  @override
-  EntitySchema get schema => const EntitySchema(
-        tableName: 'schools',
-        primaryKeys: [
-          FieldSchema(fieldName: 'id', columnName: 'id'),
-        ],
-      );
-
-  // This represents the UPDATE method, see the previous section
-  @override
-  School convert(School model, SchoolData data) =>
-      School(
-        id: model.id,
-        name: data.name,
-        phoneNumber: data.phoneNumber,
-        address: data.address,
-      );
-
-  // This represents the CREATE method, see the previous section
-  @override
-  School fromData(ResolvedCreation<SchoolData, String> creation) {
-    return School(
-      id: creation.id,
-      name: creation.data.name,
-      phoneNumber: creation.data.phoneNumber,
-      address: creation.data.address,
-    );
-  }
-}
-```
-
-## Engine
-
-An engine is a dORM component that enables communication between the model (defined in the previous
-section) and the controller. It behaves as a *pointer* to where the serialized models should be
-located and as a *guide* to how the controller should use its syntax to execute queries.
-
-You can represent an engine in Dart using a class that inherits from `BaseEngine`, a class that this
-package exports:
-
-```dart
-class Engine implements BaseEngine {
-  BaseReference createReference() {}
-
-  BaseRelationship createRelationship() {}
-} 
-```
-
-Note that every engine must provide a reference, which allows the controller to execute queries, and
-a relationship, which allows the controller to associate tables and join records.
-
-At the moment, dORM exports two database engines through Dart packages: `dorm_bloc_database` and
-`dorm_firebase_database`. These two packages exports a class named `Engine`, which extends from
-`BaseEngine`. You can access it by adding one of them to your *pubspec.yaml*, importing them
-within your code and accessing the exported class:
-
-```dart
-import 'package:dorm_*_database/dorm_*_database.dart' show Engine;
-
-void main() {
-  final BaseEngine engine = Engine(/* any required arguments */);
-}
-```
-
-## Controller
-
-In the Model section, we have created four classes for each table object in our database:
-`TableData`, `Table`, `TableDependency` and `TableEntity`.
-In the Engine section, we have chosen a database engine and its respective `Engine` class.
-
-These classes now can be used to be integrated with dORM using a database entity. It contains
-all the concrete methods necessary for you to use the framework.
-
-You can represent it in Dart by instantiating `DatabaseEntity`, a class that this package
-exports:
-
-```dart
-import 'package:dorm_*_database/dorm_*_database.dart' show Engine;
-
-void main() {
-  final BaseEngine engine /* = ... */;
-  const SchoolEntity entity = SchoolEntity();
-
-  final DatabaseEntity<SchoolData, School> schoolController = DatabaseEntity(
-    engine: engine,
-    entity: entity,
-  );
-}
-```
-
-Since `DatabaseEntity` inherits from `Entity`, you can access all its methods:
-
-```dart
-void main() {
-  School school;
-  final DatabaseEntity<SchoolData, School> controller /* = ... */;
-
-  // Access the table name
-  print(controller.schema.tableName); // schools
-
-  // Decode a row
-  school = controller.fromJson('123456', {'name': 'School'});
-
-  // Encode a row
-  final Map<String, Object?> data = controller.toJson(school);
-
-  // Identify a model
-  print(controller.identify(school)); // 123456
-
-  // Create a model
-  school = controller.fromData(
-    ResolvedCreation(
-      dependency: SchoolDependency(),
-      id: '123456',
-      data: SchoolData(name: 'School'),
-      identitySource: CreationIdentitySource.explicit,
-    ),
-  );
-
-  // Update a model
-  school = controller.convert(school, SchoolData(name: 'College'));
-}
-```
-
-### Operations
-
-This class provides a `repository` field you can use to access all the CRUD methods
-(which conveniently all start with the letter *p*).
-
-#### Creating
-
-There are two methods available for creating: `put` and `putAll`.
-
-The `put` method receives a `Creation` object containing a dependency, data,
-and identity strategy. Its primary concept is to create a new row on the table.
-It returns the created model:
-
-```dart
-void main(Repository<SchoolData, School> repository) async {
-  final School school = await repository.put(
-    Creation.auto(
-      dependency: const SchoolDependency(),
-      data: SchoolData(
-        name: 'Harmony Academy',
-        phoneNumber: '(555) 123-4567',
-        address: '123 Main Street, Anytown, USA',
+~~~
+
+A working generated model also needs dorm_annotations, dorm_generator,
+build_runner, and one engine. The framework package is the center of those
+contracts; it does not open a database by itself.
+
+## The model and repository boundary
+
+dORM separates three values that are easy to confuse:
+
+- Data is input used to create or update a model.
+- Model is an identified value that can be persisted or returned by a read.
+- Dependency carries identities needed to construct related data.
+- Entity connects generated data/model types to schema and repository behavior.
+- Repository is the application-facing object for CRUD and reads.
+
+A typical generated flow looks like this:
+
+~~~dart
+final User user = await dorm.users.repository.put(
+  Creation.auto(
+    dependency: const UserDependency(),
+    data: UserData(
+      username: 'ada',
+      email: 'ada@example.com',
+      profile: Profile(
+        name: 'Ada Lovelace',
+        birthDate: DateTime(1815, 12, 10),
+        bio: 'Mathematician',
       ),
     ),
-  );
-}
-```
-
-The `putAll` method receives one `Creation` object per model. Each item can
-have its own dependency, data, and identity strategy. It returns the created
-models:
-
-```dart
-void main(Repository<SchoolData, School> repository) async {
-  final List<School> schools = await repository.putAll(
-    [
-      Creation.auto(
-        dependency: const SchoolDependency(),
-        data: SchoolData(
-          name: 'Oakwood High School',
-          phoneNumber: '(555) 987-6543',
-          address: '456 Elm Avenue, Springfield, USA',
-        ),
-      ),
-      Creation.auto(
-        dependency: const SchoolDependency(),
-        data: SchoolData(
-          name: 'Maplewood Elementary',
-          phoneNumber: '(555) 555-5555',
-          address: '789 Oak Street, Willowbrook, USA',
-        ),
-      ),
-    ],
-  );
-}
-```
-
-Note that, even though these schools share the same dependency, they will be
-created with different IDs.
-
-#### Reading
-
-There are five methods available for reading: `peek`, `peekAll`, `pull`, `pullAll`
-and `peekAllKeys`.
-
-The `peek` and `pull` methods receive a model ID and evaluates its respective model
-in the underlying database table. If the ID does not exist, the method evaluates to null.
-The difference between them is that `peek` returns a `Future` (read once and return) and
-`pull` returns a `Stream` (read once and listen for changes):
-
-```dart
-void main(Repository<SchoolData, School> repository) async {
-  final School? school = await repository.peek('123456');
-  final Stream<School?> streamedSchool = repository.pull('123456');
-}
-```
-
-The `peekAll` and `pullAll` methods evaluate all models in the underlying database table as
-a `List`. They optionally receive a `Filter` argument, but for now just assume they evaluates
-all models. If there are no models in the table, the method evaluates to an empty list. Similar
-as before, the difference between then is that `peek` returns a `Future` and `pull` returns a
-`Stream`:
-
-```dart
-void main(Repository<SchoolData, School> repository) async {
-  final List<School> schools = await repository.peekAll();
-  final Stream<List<School>> streamedSchools = repository.pullAll();
-}
-```
-
-The `peekAllKeys` method makes more sense in non-relational databases: it returns all primary
-keys on the database. If you use custom IDs and want to filter them based on a condition, this
-method is preferred rather than calling `peekAll` and reading the returned IDs:
-
-```dart
-void main(Repository<SchoolData, School> repository) async {
-  final List<String> ids = await repository.peekAllKeys();
-}
-```
-
-#### Updating
-
-There are three methods available for update: `push`, `pushAll` and `patch`.
-
-The `push` method receives a model *M* and writes it to the table. If this model ID
-does not exist yet, it will be created. If it exists, the previous data will be
-overwritten by *M*. It returns nothing:
-
-```dart
-void main(Repository<SchoolData, School> repository) async {
-  await repository.push(School(
-    id: '123456',
-    name: 'Sunflower Preparatory School',
-    phoneNumber: '(555) 222-3333',
-    address: '321 Sunflower Lane, Sunnyville, USA',
-  ));
-}
-```
-
-The `pushAll` method receives a collection of models. If you have more than two
-or more models you want to update at the same time, this method is preferred rather
-than calling `push` repeatedly. It returns nothing:
-
-```dart
-void main(Repository<SchoolData, School> repository) async {
-  await repository.pushAll([
-    School(
-      id: '123',
-      name: 'Crestview Middle School',
-      phoneNumber: '(555) 777-8888',
-      address: '654 Hillcrest Road, Mountainview, USA',
-    ),
-    School(
-      id: '456',
-      name: 'Riverside Academy',
-      phoneNumber: '(555) 444-9999',
-      address: '987 Riverfront Drive, Riverdale, USA',
-    ),
-  ]);
-}
-```
-
-The `patch` method receives a model ID and a callback that receives a model and returns
-a model. If you want to read a model from the database given its ID, apply some
-operation to it locally and write it back to the database, this method is preferred
-rather than calling `peek` and `push` sequentially. It returns nothing:
-
-```dart
-void main(Repository<SchoolData, School> repository) async {
-  const String id = '789';
-  await repository.patch(id, (School? school) {
-    return School(
-      id: school?.id ?? id,
-      name: 'Willowbrook High School',
-      phoneNumber: '(555) 333-1111',
-      address: '246 Willow Avenue, Greenfield, USA',
-    );
-  });
-}
-```
-
-#### Deleting
-
-There are four methods available for deleting: `pop`, `popAll`, `popKeys` and `purge`.
-
-The `pop` method receives a model ID and removes its respective model from the underlying database
-table. If the ID does not exist, nothing is done. It returns nothing:
-
-```dart
-void main(Repository<SchoolData, School> repository) async {
-  await repository.pop('123');
-}
-```
-
-The `popKeys` method receives a collection of IDs. If you have more than two or more models
-you want to delete at the same time, this method is preferred rather than calling `pop` repeatedly.
-It returns nothing:
-
-```dart
-void main(Repository<SchoolData, School> repository) async {
-  await repository.popKeys(['123', '456', '789']);
-}
-```
-
-The `popAll` method receives a `Filter` and remove all models that match this filter. You'll read
-more about filtering later, but for now keep in mind that `Filter.empty()` matches all models.
-Therefore, if you use it in this method, it'll be the equivalent to removing all models from the
-table. It returns nothing:
-
-```dart
-void main(Repository<SchoolData, School> repository) async {
-  await repository.popAll(const Filter.empty());
-}
-``` 
-
-The `purge` method drops the underlying database table (removes all models). If you want to remove
-all models from a table, this method is preferred rather than calling `popAll` passing
-`Filter.empty()`. It returns nothing:
-
-```dart
-void main(Repository<SchoolData, School> repository) async {
-  await repository.purge();
-}
-```
-
-### Filters
-
-Batch methods of repositories, such as `peekAll`, `pullAll` and `popAll`, can receive a `Filter` as
-parameter. In read operations, this parameter defaults to `Filter.empty()`, which matches all models
-from that repository. If you want to limit how many models are matched, you can change it to your
-appropriate use case.
-
-#### By value
-
-If you want to match models whose field is equal to a certain value, you can use `Filter.value`:
-
-```dart
-void main(Repository<SchoolData, School> repository) async {
-  // Peek all active schools
-  await repository.peekAll(const Filter.value(true, field: FieldSchema(fieldName: 'active', columnName: 'active')));
-
-  // Peek all schools that belongs to US
-  await repository.peekAll(const Filter.value('US', field: FieldSchema(fieldName: 'country', columnName: 'country-name')));
-}
-```
-
-Pass the generated or manually declared `FieldSchema` for the field. Its
-`columnName` is resolved before the engine builds the query.
-
-#### Comparisons and composition
-
-The common filter set also includes text-prefix and date/range filters. Query
-implementations may expose additional typed capabilities for comparisons,
-set-membership and null checks, `allOf`/`anyOf` composition, `not`, and
-collection membership:
-
-```dart
-final BaseFilter<Query> affordable = BaseFilter.lessThan<Query>(
-  25,
-  field: ProductEntity.fields.price,
+  ),
 );
 
-final BaseFilter<Query> available = BaseFilter.allOf<Query>([
-  affordable,
-  BaseFilter.isNotNull<Query>(field: ProductEntity.fields.name),
-]);
-```
+final User? loaded = await dorm.users.repository.peek(user.id);
+~~~
 
-These factories require the concrete query to implement the corresponding
-capability interface. An engine that does not advertise a capability does not
-fall back to downloading and filtering the full collection in Dart. `text`
-continues to mean prefix matching, while `contains` is reserved for persisted
-collection values.
+Creation resolves the identity and passes a ResolvedCreation to the generated
+Entity. The resulting Model is the identified form returned by the repository.
 
-#### By text
+## Creating the generated facade
 
-If you want to match models whose field *starts* with a certain string, you can use `Filter.text`:
+The generated Dorm class is parameterized by the engine query and page types.
+Type inference normally handles both:
 
-```dart
-void main(Repository<SchoolData, School> repository) async {
-  // Peek all active schools
-  await repository.peekAll(const Filter.value(true, field: FieldSchema(fieldName: 'active', columnName: 'active')));
+~~~dart
+final Engine engine = Engine();
+final dorm = Dorm(engine);
+~~~
 
-  // Peek all schools that belongs to US
-  await repository.peekAll(const Filter.value('US', field: FieldSchema(fieldName: 'country', columnName: 'country-name')));
-}
-```
+The facade exposes generated accessors such as dorm.users and dorm.products.
+Each accessor carries its Entity, Repository, schema fields, and relationship
+paths.
 
-Note that this is a exact and case-sensitive search, so the following will not work:
+## Creating and updating data
 
-```dart
-void main(Repository<SchoolData, School> repository) async {
-  // User wants to find the Lincoln Elementary school,
-  // so they type in the search bar "lincoln el"
-  final String userInput = 'lincoln el';
+Use put for new Data values. Use push when a Model already has its final
+identity:
 
-  // Since the stored school name is "Lincoln Elementary"
-  // (note the uppercase letters and spaces), nothing will be found
-  await repository.peekAll(Filter.text(userInput, field: FieldSchema(fieldName: 'name', columnName: 'name')));
-}
-```
+~~~dart
+final User created = await dorm.users.repository.put(
+  Creation.auto(
+    dependency: const UserDependency(),
+    data: UserData(
+      username: 'ada',
+      email: 'ada@example.com',
+      profile: Profile(
+        name: 'Ada Lovelace',
+        birthDate: DateTime(1815, 12, 10),
+        bio: 'Mathematician',
+      ),
+    ),
+  ),
+);
 
-If you want a case-insensitive search, you can create a new serialization field, normalize
-your field value, and applying the same normalization to your query. For this, update the
-`toJson` method of your object's model view to include this new field:
+await dorm.users.repository.push(
+  created.copyWith(email: 'ada@lovelace.org'),
+);
+~~~
 
-```dart
-class Student {
-  // ...
+Use Creation.explicit when the application already owns the final identity:
 
-  @override
-  Map<String, Object?> toJson() {
-    return {
-      'name': name,
-      // ...
-      '.name': name.toUpperCase().replaceAll(' ', ''),
-      // It can be any key, such as `_name` or `_query/name`
-    };
+~~~dart
+final User imported = await dorm.users.repository.put(
+  Creation.explicit(
+    dependency: const UserDependency(),
+    data: UserData(
+      username: 'grace',
+      email: 'grace@example.com',
+      profile: Profile(
+        name: 'Grace Hopper',
+        birthDate: DateTime(1906, 12, 9),
+        bio: 'Computer scientist',
+      ),
+    ),
+    identity: 'external-user-42',
+  ),
+);
+~~~
+
+For a model whose backend supplies its identity, Creation.auto uses the
+declared DatabaseGeneratedIdSpec and returns the model after the backend has
+returned the key.
+
+## Reading, filtering, sorting, and pages
+
+Filters resolve application fields through generated FieldSchema values:
+
+~~~dart
+final List<User> users = await dorm.users.repository.peekAll(
+  Filter.text('ada', field: UserEntity.fields.username),
+  QueryOptions(
+    orderBy: [
+      OrderBy(UserEntity.fields.username),
+    ],
+  ),
+);
+~~~
+
+The filter API describes the condition. The engine Query turns the resolved
+field name into SQL, a selector, a Firebase query, or an HTTP parameter.
+OffsetPageRequest is the page request accepted by current engines:
+
+~~~dart
+final Page<User> page = await dorm.users.repository.peekPage(
+  const BaseFilter.empty(),
+  const OffsetPageRequest(size: 20, offset: 0),
+);
+~~~
+
+## Relationships
+
+Foreign fields become generated relationship paths. The application uses
+the same relationship vocabulary regardless of whether the selected engine
+joins SQL tables, reads documents, or performs several repository reads:
+
+~~~dart
+final List<Join<Cart, CartItem>> items = await dorm
+    .relations
+    .carts
+    .items
+    .peekAll();
+~~~
+
+Relationship cardinality is declared by the model metadata and the generated
+path. Backend query counts and relation optimizations can differ by engine.
+
+## Transactions
+
+Engines that implement TransactionalEngine also generate TransactionalDorm:
+
+~~~dart
+final txDorm = TransactionalDorm(engine);
+
+await txDorm.transaction((tx) async {
+  final User? user = await tx.users.repository.peek(userId);
+  if (user != null) {
+    await tx.users.repository.push(user.copyWith(email: 'new@example.com'));
   }
-}
-```
+});
+~~~
 
-Now, search for this new field and apply the same transformation to user's query:
+The callback receives a temporary Dorm context. Streams are not available in
+that context. Engines without the capability keep the normal Dorm API.
 
-```dart
-void main(Repository<SchoolData, School> repository) async {
-  // User wants to find the Lincoln Elementary school,
-  // so they type in the search bar "lincoln el"
-  final String userInput = 'lincoln el';
+## Swapping engines
 
-  // Successfully finds the desired school
-  final String query = userInput.toUpperCase().replaceAll(' ', '');
-  await repository.peekAll(Filter.text(query, field: FieldSchema(fieldName: 'normalizedName', columnName: '.name')));
-}
-```
+The generated model source is independent of the backend object. To change
+engines, construct a different Engine and regenerate only when the selected
+engine changes the generated type context:
 
-#### By dates
+~~~dart
+final engine = Engine(databaseOrClient);
+final dorm = Dorm(engine);
+~~~
 
-To filter on dates, you must transform your date field using `DateTime`'s
-`toIso8601String` method when serializing it inside `toJson`:
+The repository calls stay the same. Backend-specific capabilities do not:
+identity types, live streams, transactions, query operators, schema setup, and
+atomicity depend on the selected engine.
 
-```dart
-class Student {
-  // ...
+## Implementing an engine
 
-  @override
-  Map<String, Object?> toJson() {
-    return {
-      // ...
-      'birth-date': birthDate.toIso8601String(),
-    };
-  }
-}
-```
+A custom engine implements BaseEngine<Q, P>, creates references and
+relationships, and provides a concrete BaseQuery<Q>. Reference methods receive
+generated Entity metadata and perform the backend operation. The engine owns
+connection setup and backend-specific serialization details; the framework does
+not create or close external connections.
 
-You can now use another date to belong to your filter, using the `unit`
-parameter to control how exact do you want this matching:
+Use dorm_test from development code to exercise the portable contract. Keep
+engine-specific behavior in separate tests.
 
-```dart
-void main() {
-  final DateTime dt = DateTime(
-      2021,
-      06,
-      13,
-      16,
-      05,
-      12,
-      111);
-  Filter? filter;
+## Important boundaries
 
-  // Select entries occurred at 13/06/2021, 16:05:12.111
-  filter = Filter.date(dt, field: FieldSchema(fieldName: 'birthDate', columnName: 'birth-date'));
+dorm_framework does not create schemas or migrations. It does not make every
+backend transactional or reactive. A stream may represent a live subscription
+or only the initial read, depending on the engine. Query features must be
+supported by the selected backend; dORM does not silently download and filter
+data on the client.
 
-  // Select entries occurred at 2021
-  filter = Filter.date(dt, field: FieldSchema(fieldName: 'birthDate', columnName: 'birth-date'), unit: DateFilterUnit.year);
+## Learn more
 
-  // Select entries occurred at 13/06/2021
-  filter = Filter.date(dt, field: FieldSchema(fieldName: 'birthDate', columnName: 'birth-date'), unit: DateFilterUnit.day);
-
-  // Select entries occurred at 13/06/2021, from 16:00 to 16:59
-  filter = Filter.date(dt, field: FieldSchema(fieldName: 'birthDate', columnName: 'birth-date'), unit: DateFilterUnit.hour);
-}
-```
-
-#### By amount
-
-For any filter, you can use its `limit` method to evaluate the only first or last *N* models:
-
-```dart
-void main(Repository<SchoolData, School> repository) async {
-  // Peek first 10 schools
-  await repository.peekAll(
-    const Filter.empty(),
-    const QueryOptions(limit: 10),
-  );
-
-  // Peek 20 schools with a name prefixed with DEF
-  await repository.peekAll(
-    Filter.text('DEF', field: FieldSchema(fieldName: 'name', columnName: 'name')),
-    const QueryOptions(limit: 20),
-  );
-}
-```
-
-### Relationships
-
-With a database entity ready to be used, we want to ask the database questions related to
-relationships between schemas, such as "What are the students of a given school?". These questions
-can be asked through the `relationships` field of a database entity.
-
-Relationship operands are `RelationSource`s. Repositories expose a
-`TableRelationPlan`, while associations created from other relationships expose a
-`CompositeRelationPlan`. Database engines may use these plans to batch or optimize
-relationship reads; callback-based relationships remain supported as a fallback.
-
-The generator also emits a typed `DormRelations` navigator when models declare
-`ForeignField`s. Direct and explicitly named inverse relations can be composed without
-writing `on` callbacks:
-
-```dart
-final Stream<List<Join<User, Product>>> products =
-    dorm.relations.users.carts.items.product.pullAll();
-```
-
-Generated paths are lazy and currently flatten the result to the root and terminal model.
-Their `RelationSpec` metadata is available to future engine-specific planners. The current
-fallback evaluates each step through the target source. Use `on` for computed, custom, or
-otherwise non-inferable relationships.
-
-For a to-one path, the generated relation name is an inner join and keeps only matching
-targets. Its `${relation}OrNull` variant is a left join and returns `Target?`, preserving
-the source when the target is missing. For an inverse to-many path, the generated relation
-name is the flattened form; its `${relation}OrEmpty` variant is terminal and returns
-`Join<Root, List<Target>>`, including roots without targets. For example:
-
-```dart
-final Stream<List<Join<CartItem, Product?>>> items =
-    dorm.relations.cartItems.productOrNull.pullAll();
-
-final Future<List<Join<User, List<Cart>>>> carts =
-    dorm.relations.users.cartsOrEmpty.peekAll();
-```
-
-#### One-to-one
-
-An one-to-one relationship between two models refers to a unique and bidirectional association where
-each record in one model is linked to at most one corresponding record in the other model. The
-relationship is established through a shared key or a foreign key in the database tables.
-
-For instance, consider the models `School` and `Principal`. In this scenario, each school can have
-only one principal, and each principal can be assigned to only one school. This creates a one-to-one
-association between the school and principal models:
-
-```dart
-void main() async {
-  final DatabaseEntity<SchoolData, School> schoolController /* = ... */;
-  final DatabaseEntity<PrincipalData, Principal> principalController /* = ... */;
-
-  final OneToOneAssociation<School, Principal> association;
-  association = schoolController.relationships.oneToOne(
-    principalController.repository,
-    on: (School school) => school.id,
-  );
-
-  final Join<School, Principal?>? join = await association.peek('123456');
-  if (join == null) {
-    // There is no school associated with the '123456' primary key 
-  } else {
-    final School school = join.left;
-    final Principal? principal = join.right;
-    if (principal == null) {
-      // There is no principal associated with the referred school
-    }
-  }
-}
-```
-
-#### One-to-many
-
-An one-to-many relationship between two models represents a type of association where a record in
-one model (the "one" side) can be related to multiple records in the other model (the "many" side).
-However, each record in the second model can only be associated with one record in the first model.
-This relationship is established through a foreign key in the "many" side table, which references
-the primary key of the "one" side table.
-
-For instance, consider the models `School` and `Student`. In this scenario, each school can have
-zero or more students, while each student can be assigned to only one school. This creates an
-one-to-many association between the school and student models:
-
-```dart
-void main() async {
-  final DatabaseEntity<SchoolData, School> schoolController /* = ... */;
-  final DatabaseEntity<StudentData, Student> studentController /* = ... */;
-
-  final OneToManyAssociation<School, Student> association;
-  association = schoolController.relationships.oneToMany(
-    studentController.repository,
-    on: (School school) =>
-        Filter.value(school.id, field: StudentEntity.fields.schoolId),
-  );
-
-  final Join<School, List<Student>>? join = await association.peek('123456');
-  if (join == null) {
-    // There is no school associated with the '123456' primary key 
-  } else {
-    final School school = join.left;
-    final List<Student> students = join.right;
-    if (students.isEmpty) {
-      // There are no students associated with the referred school
-    }
-  }
-}
-```
-
-#### Many-to-one
-
-In an one-to-many relationship, all records from the "left" table (the "one" side) are included,
-along with any matching records from the "right" table (the "many" side). If there are no matches in
-the "right" table, the result still includes the record from the "left" table.
-
-A many-to-one relationship is the same as the one-to-many relationship. However, in an many-to-one
-relationship, if there are no matches in the "right" table, the result will *not* include the record
-from the "left" table. In the example above, this allows you to assert that `students` will never be
-empty:
-
-```dart
-void main() async {
-  final DatabaseEntity<SchoolData, School> schoolController /* = ... */;
-  final DatabaseEntity<StudentData, Student> studentController /* = ... */;
-
-  final ManyToOneAssociation<Student, School> association;
-  association = studentController.relationships.oneToMany(
-    schoolController.repository,
-    on: (Student student) => student.schoolId,
-  );
-
-  final Join<School, List<Student>>? join = await association.peek('123456');
-  if (join == null) {
-    // There is no school associated with the '123456' primary key 
-  } else {
-    final School school = join.left;
-    final List<Student> students = join.right;
-    assert(students.isNotEmpty);
-  }
-}
-```
-
-#### Many-to-many
-
-A many-to-many relationship between two models represents an association where multiple records in
-one model can be related to multiple records in the other model. This type of relationship cannot be
-directly represented by a single foreign key in either model. Instead, an intermediary table (also
-known as a junction table or association table) is used to connect the two models. This intermediary
-table contains foreign keys that reference the primary keys of both models, establishing the link
-between them.
-
-Now, let's consider the models `School` and `Teacher`. In this scenario, a many-to-many association
-exists them: a school can have multiple teachers, and a teacher can work in multiple schools. To
-create this association, an additional `Teaching` model (intermediary table) is introduced,
-containing foreign keys that reference the primary keys of both the school and teacher models. Each
-record in the teaching model represents a connection between a specific teacher and a specific
-school. This way, the many-to-many relationship is effectively managed through the teaching model,
-allowing multiple teachers to be associated with multiple schools while maintaining data integrity:
-
-```dart
-void main() async {
-  final DatabaseEntity<SchoolData, School> schoolController /* = ... */;
-  final DatabaseEntity<TeacherData, Teacher> teacherController /* = ... */;
-  final DatabaseEntity<TeachingData, Teaching> teachingController /* = ... */;
-
-  final ManyToManyAssociation<Student, School> association;
-  association = teachingController.relationships.manyToMany(
-    left: schoolController.repository,
-    onLeft: (Teaching teaching) => teaching.schoolId,
-    right: teacherController.repository,
-    onRight: (Teaching teaching) => teaching.teacherId,
-  );
-
-  final Join<Teaching, (School?, Teacher?)>? join = await association.peek('123456');
-  if (join == null) {
-    // There is no teaching associated with the '123456' primary key 
-  } else {
-    final Teaching teaching = join.left;
-    final (School? school, Teacher? teacher) = join.right;
-    if (school == null) {
-      // There is no school associated with the referred teaching
-    }
-    if (teacher == null) {
-      // There is no teacher associated with the referred teaching
-    }
-  }
-}
-```
+- [Framework contracts](https://ezgrs.github.io/dorm/reference/framework-contracts/)
+- [Public API](https://ezgrs.github.io/dorm/reference/public-api/)
+- [Model anatomy](https://ezgrs.github.io/dorm/model-anatomy/)
+- [dorm_annotations](https://pub.dev/packages/dorm_annotations)
+- [dorm_generator](https://pub.dev/packages/dorm_generator)
+- [Choose an engine](https://ezgrs.github.io/dorm/apply/choose-an-engine/)
+- [GitHub repository](https://github.com/beet-software/dorm)

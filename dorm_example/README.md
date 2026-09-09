@@ -1,31 +1,132 @@
 # dorm_example
 
-`dorm_example` generates a complete starter project for one dORM engine.
+<p>
+  <a href="https://pub.dev/packages/dorm_example"><img src="https://img.shields.io/pub/v/dorm_example.svg?label=dorm_example" alt="dorm_example on pub.dev"></a>
+  <a href="https://pub.dev/packages/dorm_example"><img src="https://img.shields.io/pub/points/dorm_example?logo=dart" alt="dorm_example pub points"></a>
+  <a href="https://pub.dev/packages/dorm_example"><img src="https://img.shields.io/pub/popularity/dorm_example?logo=dart" alt="dorm_example popularity"></a>
+  <a href="https://pub.dev/packages/dorm_example"><img src="https://img.shields.io/pub/likes/dorm_example?logo=dart" alt="dorm_example likes"></a>
+  <a href="https://ezgrs.github.io/dorm/quickstart/generate-a-showcase/"><img src="https://img.shields.io/badge/documentation-dORM-4c8bf5?style=flat" alt="dorm_example documentation"></a>
+  <a href="https://github.com/ezgrs/dorm"><img src="https://img.shields.io/badge/repository-GitHub-181717?logo=github&style=flat" alt="dORM repository"></a>
+  <a href="https://github.com/ezgrs/dorm"><img src="https://img.shields.io/github/license/ezgrs/dorm?style=flat" alt="License"></a>
+  <a href="https://github.com/ezgrs/dorm/actions/workflows/dart.yml"><img src="https://github.com/ezgrs/dorm/actions/workflows/dart.yml/badge.svg" alt="Dart CI"></a>
+</p>
 
-```shell
+dorm_example is a command-line generator for complete dORM showcase projects.
+It creates the annotated source, generated-code commands, application flow,
+and backend configuration for one selected engine.
+
+## Install the generator
+
+Install the executable globally:
+
+~~~shell
 dart pub global activate dorm_example
-dorm_example -e memory
-```
+~~~
 
-The generated project contains annotated models, a runnable showcase, setup
-instructions, and the commands required to generate `*.dorm.dart` and
-`*.g.dart` files.
+Check the available options:
 
-Use `--output` to choose another directory:
+~~~shell
+dorm_example --help
+~~~
 
-```shell
-dorm_example -e postgres --output store_example
-```
+## Generate a project
 
-The generator never overwrites a non-empty directory and does not execute
-package installation, code generation, or Docker commands automatically.
+Choose one engine and, optionally, an output directory:
 
-The generated Firebase, Firestore, and HTTP profiles include a local
-`docker-compose.yml`. It starts only infrastructure; the Flutter application
-still runs on the host. Firebase profiles use `spine3/firebase-emulator` with
-the Realtime Database or Firestore emulator and Emulator UI on port `4000`.
-The HTTP profile includes a small in-memory Dart server in `server/`.
+~~~shell
+dorm_example --engine memory
+dorm_example --engine postgres --output store_example
+~~~
 
-For the SQLite profile, run the generated Dart application from its project
-root. It reads `sql/schema.sql` and executes that rendered file before creating
-the engine; the schema is a demonstration setup, not a migration system.
+The output directory must be empty or must not exist. The generator does not
+overwrite existing files, run pub get, run build_runner, start Docker, or start
+the generated application.
+
+## Generated profiles
+
+| Profile | Application | Infrastructure |
+| --- | --- | --- |
+| memory | Flutter Web | None |
+| bloc | Flutter Web | None |
+| firebase | Flutter Web | Firebase Emulator Suite |
+| firestore | Flutter Web | Firebase Emulator Suite |
+| http | Flutter Web | Local Dart HTTP server |
+| postgres | Pure Dart | PostgreSQL in Docker Compose |
+| mysql | Pure Dart | MySQL in Docker Compose |
+| mongo | Pure Dart | MongoDB in Docker Compose |
+| sqlite | Pure Dart | Local SQLite file |
+
+All profiles use the same store domain with users, products, categories, carts,
+cart items, wishlists, and reviews. SQL profiles keep the model surface
+portable and avoid JSON-specific annotations such as ModelField,
+PolymorphicField, and DerivedField.
+
+## Run a generated project
+
+After generation, enter the output directory and follow the generated README.
+A typical pure Dart profile uses:
+
+~~~shell
+cd store_example
+docker compose up -d
+dart pub get
+dart run build_runner build
+dart analyze
+dart run
+~~~
+
+A Flutter profile uses:
+
+~~~shell
+cd store_example
+flutter pub get
+dart run build_runner build
+flutter analyze
+flutter run -d chrome
+~~~
+
+Docker Compose starts infrastructure only. The Dart or Flutter application runs
+on the host so that local environment variables, browser access, and Flutter
+development tools remain available.
+
+## Backend configuration
+
+- PostgreSQL, MySQL, and MongoDB generate Docker Compose files, environment
+  templates, and backend-specific startup instructions.
+- SQLite generates sql/schema.sql and reads that rendered file when the
+  application starts.
+- Firebase and Firestore generate local Firebase Emulator configuration.
+- HTTP generates a local in-memory Dart server and a configured HttpMapping.
+- Memory and BLoC run without an external service.
+
+The generated .env.example file documents required variables. It is a reference
+file; the generated application does not load it automatically.
+
+## Modify the showcase
+
+Edit the generated lib/models.dart file when changing models. Then regenerate
+the model API:
+
+~~~shell
+dart run build_runner build --delete-conflicting-outputs
+~~~
+
+The generated *.dorm.dart and *.g.dart files are derived output. Keep the
+annotated source as the file you edit.
+
+## Troubleshooting
+
+- A non-empty output directory fails by design; choose another path or remove
+  only the generated directory.
+- A missing generated API means build_runner has not been run in the project
+  root.
+- A database profile cannot connect until its Compose service is running and
+  its environment values match the generated configuration.
+- A Flutter profile needs Flutter and a browser target installed.
+- The HTTP profile requires its generated http-api service to be running.
+
+## Links
+
+- [dORM documentation](https://ezgrs.github.io/dorm/)
+- [Showcase guide](https://ezgrs.github.io/dorm/quickstart/generate-a-showcase/)
+- [GitHub repository](https://github.com/ezgrs/dorm)

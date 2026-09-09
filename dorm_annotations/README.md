@@ -1,327 +1,269 @@
 # dorm_annotations
 
-[![pub package](https://img.shields.io/pub/v/dorm_annotations.svg?label=dorm_annotations)](https://pub.dev/packages/dorm_annotations)
-[![pub popularity](https://img.shields.io/pub/popularity/dorm_annotations?logo=dart)](https://pub.dev/packages/dorm_annotations)
-[![pub likes](https://img.shields.io/pub/likes/dorm_annotations?logo=dart)](https://pub.dev/packages/dorm_annotations)
-[![pub points](https://img.shields.io/pub/points/dorm_annotations?logo=dart)](https://pub.dev/packages/dorm_annotations)
+<p>
+  <a href="https://pub.dev/packages/dorm_annotations"><img src="https://img.shields.io/pub/v/dorm_annotations.svg?label=dorm_annotations" alt="dorm_annotations on pub.dev"></a>
+  <a href="https://pub.dev/packages/dorm_annotations"><img src="https://img.shields.io/pub/points/dorm_annotations?logo=dart" alt="dorm_annotations pub points"></a>
+  <a href="https://pub.dev/packages/dorm_annotations"><img src="https://img.shields.io/pub/popularity/dorm_annotations?logo=dart" alt="dorm_annotations popularity"></a>
+  <a href="https://pub.dev/packages/dorm_annotations"><img src="https://img.shields.io/pub/likes/dorm_annotations?logo=dart" alt="dorm_annotations likes"></a>
+  <a href="https://ezgrs.github.io/dorm/annotations/"><img src="https://img.shields.io/badge/documentation-dORM-4c8bf5?style=flat" alt="dorm_annotations documentation"></a>
+  <a href="https://github.com/beet-software/dorm"><img src="https://img.shields.io/badge/repository-GitHub-181717?logo=github&style=flat" alt="dORM repository"></a>
+  <a href="https://github.com/beet-software/dorm"><img src="https://img.shields.io/github/license/beet-software/dorm?style=flat" alt="License"></a>
+  <a href="https://github.com/beet-software/dorm/actions/workflows/dart.yml"><img src="https://github.com/beet-software/dorm/actions/workflows/dart.yml/badge.svg" alt="Dart CI"></a>
+</p>
 
-Provides annotations related with dORM code generation.
+dorm_annotations contains the annotations that describe dORM models, fields,
+identities, and relationships. It is the declarative layer used by
+dorm_generator.
 
-## Getting started
+## Install
 
-Run the following commands inside your project:
+Add the annotations to the application that owns the model declarations:
 
-```shell
+~~~shell
 dart pub add dorm_annotations
-dart pub get
-```
+~~~
 
-Take a look at the [`dorm_generator` package](https://pub.dev/packages/dorm_generator) to learn how
-to generate code for these annotations.
+Add dorm_generator and build_runner as development dependencies when the
+application is ready to generate its model API:
 
-## Usage
+~~~shell
+dart pub add --dev dorm_generator
+dart pub add --dev build_runner
+~~~
 
-### Models
+## Declare a model
 
-The `Model` annotation is used to link a database table to a Dart class.
+A model declaration gives dORM the storage name and the repository accessor
+name. The annotated class is the source declaration; generated model types are
+created later.
 
-It accepts two parameters:
-
-- `name`: Specifies the name of the table in the underlying database.
-- `as`: Provides a name for the repository accessor of the model.
-
-```dart
+~~~dart
 import 'package:dorm_annotations/dorm_annotations.dart';
 
-@Model(name: 'user', as: #users)
-abstract class _User {}
-```
-
-### Fields
-
-The `Field` annotation is used to link a database column to a Dart field within a model class.
-
-It accepts the following parameters:
-
-- `name`: Optional name of the column in the underlying database. When omitted,
-  the generator uses the annotated getter name.
-- `defaultValue`: Provides an optional default value for the field. If not explicitly set and
-  the return type of the getter is nullable, the field will default to null.
-
-```dart
-import 'package:dorm_annotations/dorm_annotations.dart';
-
-@Model(name: 'user', as: #users)
+@Model(name: 'users', as: #users)
 abstract class _User {
-  @Field(name: 'name')
-  String? get name;
+  @Field(name: 'username')
+  String get username;
 
-  @Field(name: 'birth-date')
-  DateTime get birthDate;
-
-  @Field(name: 'emails', defaultValue: [])
-  List<String> get emails;
-
-  @Field(name: 'picture-url')
-  Uri get pictureUrl;
+  @Field(name: 'email')
+  String get email;
 }
-```
+~~~
 
-The return type of the getters can be any of the specified on the
-[`json_serializable` package](https://pub.dev/packages/json_serializable#supported-types):
+Always declare the persisted name when the field is part of a storage contract.
+The generated schema then remains explicit even when a Dart getter is renamed.
 
-> `BigInt`, `bool`, `DateTime`, `double`, `Duration`, `Enum`, `int`, `Iterable`, `List`, `Map`,
-> `num`, `Object`, `Record`, `Set`, `String` and `Uri`.
->
-> The collection types - `Iterable`, `List`, `Map`, `Record`, `Set` - can contain values of all the
-> above types.
->
-> For `Map`, the key value must be one of `BigInt`, `DateTime`, `Enum`, `int`, `Object`, `String`
-> and `Uri`.
->
-> If you own/control the desired type, add a `fromJson` constructor and a `toJson` function to the
-> type.
+## Fields and defaults
 
-### Foreign fields
+Field annotations map getters to persisted values:
 
-The `ForeignField` annotation is used to link a database foreign key to a Dart field within a model
-class.
+~~~dart
+@Field(name: 'display_name', defaultValue: 'Anonymous')
+String get displayName;
 
-In a relational database, a foreign key is a column in a table that establishes a relationship or
-association with the primary key column of another table. The foreign column helps enforce 
-referential integrity, which ensures that the referenced data exists and remains consistent.
+@Field(name: 'birth_date')
+DateTime? get birthDate;
+~~~
 
-It accepts the following parameters:
+The generated API keeps the Dart property name and the persisted column or
+document name as separate values. A nullable field without an explicit default
+uses null as its default.
 
-- `name`: Optional name of the foreign key column in the underlying database.
-  When omitted, the generator uses the annotated getter name.
-- `referTo`: Specifies the model class that the foreign key references.
-- `unique`: Indicates that the foreign key is unique in the source model. A
-  non-unique foreign key is many-to-one; a unique foreign key can be
-  one-to-one.
-- `as`: Optional name of the generated forward relationship accessor.
-- `inverseAs`: Optional explicit name of the generated inverse relationship accessor.
+## Identities
 
-```dart
-import 'package:dorm_annotations/dorm_annotations.dart';
+The Model annotation declares the primary-key specification. A generated
+identity is created by the selected engine:
 
-@Model(name: 'post', as: #posts)
-abstract class _Post {
-  @Field(name: 'contents')
-  String get contents;
+~~~dart
+@Model(
+  name: 'products',
+  as: #products,
+  primaryKey: [
+    GeneratedIdSpec(as: #id, name: 'id', type: String),
+  ],
+)
+abstract class _Product {
+  @Field(name: 'name')
+  String get name;
+}
+~~~
 
-  @Field(name: 'creation-date')
-  DateTime get creationDate;
+A database or remote backend can provide a simple identity after creation:
 
-  @ForeignField(name: 'user-id', referTo: _User, inverseAs: #posts)
+~~~dart
+@Model(
+  name: 'products',
+  as: #products,
+  primaryKey: [
+    DatabaseGeneratedIdSpec(as: #id, name: 'id', type: int),
+  ],
+)
+abstract class _Product {
+  @Field(name: 'name')
+  String get name;
+}
+~~~
+
+An existing getter can be the identity:
+
+~~~dart
+@Model(
+  name: 'users',
+  as: #users,
+  primaryKey: [
+    ExistingIdSpec(referTo: #username),
+  ],
+)
+abstract class _User {
+  @Field(name: 'username')
+  String get username;
+}
+~~~
+
+A composite identity lists its existing key fields in their declared order:
+
+~~~dart
+@Model(
+  name: 'cart_items',
+  as: #cartItems,
+  primaryKey: [
+    ExistingIdSpec(referTo: #cartId),
+    ExistingIdSpec(referTo: #productId),
+  ],
+)
+abstract class _CartItem {
+  @Field(name: 'cart_id')
+  String get cartId;
+
+  @Field(name: 'product_id')
+  String get productId;
+}
+~~~
+
+The engine must support the identity strategy used by the model. Composite
+identities are supplied explicitly when creating records.
+
+## Foreign fields and relationships
+
+ForeignField keeps a related identity in the model and generates relationship
+accessors:
+
+~~~dart
+@Model(name: 'carts', as: #carts)
+abstract class _Cart {
+  @ForeignField(
+    name: 'user_id',
+    referTo: _User,
+    as: #user,
+    inverseAs: #cart,
+  )
   String get userId;
 }
-```
+~~~
 
-### Derived fields
+The referTo type identifies the target model. as names the forward relationship
+accessor. inverseAs names the accessor generated on the target model. Use
+unique: true when the foreign key is unique in the source model.
 
-The `DerivedField` annotation marks a static callback whose result is materialized
-with the model. It does not create a database index. A SQL engine stores a simple
-name as a scalar column and a `root/child` name inside a backend-specific JSON
-value.
+## Embedded model values
 
-The callback name must start with `$dorm$derived$`. The suffix becomes the
-generated getter and schema field name. The annotation's `name` is the persisted
-storage name; when omitted, the suffix is used.
+ModelField represents a nested model or data value. Its template describes the
+Dart shape generated for the getter:
 
-```dart
-import 'package:dorm_annotations/dorm_annotations.dart';
+~~~dart
+@Model(name: 'users', as: #users)
+abstract class _User {
+  @ModelField(
+    name: 'profile',
+    referTo: _Profile,
+    template: ModelFieldTemplate<_Profile?>(),
+  )
+  _Profile? get profile;
+}
+~~~
 
-@Model(name: 'school', as: #schools)
-abstract class _School {
-  @Field(name: 'name')
-  String get name;
+Use ModelFieldTemplate<List<_Profile>>() for a list of nested values. This
+feature is most useful when the backend stores JSON-like or document-shaped
+values.
 
-  @DerivedField(name: '_query/name')
-  static String $dorm$derived$qName(
-    _School model,
+## Derived values
+
+DerivedField declares a synchronous static callback. The callback result is
+materialized with the model and can then be queried through its persisted name:
+
+~~~dart
+@Model(name: 'users', as: #users)
+abstract class _User {
+  @Field(name: 'username')
+  String get username;
+
+  @DerivedField(name: 'q-username')
+  static String $dorm$derived$qUsername(
+    _User model,
     DerivedTransformations transformations,
-  ) => transformations.text(model.name) ?? '';
+  ) {
+    return transformations.text(model.username) ?? '';
+  }
 }
-```
+~~~
 
-The generator creates `qName` on the generated model and includes its value in
-the serialized representation. Query the field through its generated
-`DerivedFieldSchema`.
+The callback runs in Dart before persistence. DerivedTransformations provides
+text, enumeration, date, and datetime normalization. The callback may also
+compose values manually. The result must be serializable by the selected
+backend.
 
-The callback can combine values directly, without a token list or automatic
-separator:
+## Polymorphic values
 
-```dart
-@DerivedField(name: '_query/address')
-static String $dorm$derived$qAddress(
-  _SchoolAddress model,
-  DerivedTransformations transformations,
-) => '${model.zipCode}_${model.number}';
-```
+PolymorphicData describes the possible data variants stored in a polymorphic
+field:
 
-`DerivedTransformations` provides `text`, `enumeration`, `date`, and `datetime`.
-Each method delegates to the corresponding normalization helper and returns a
-nullable `String`. The callback may also return another synchronous value that
-the existing serialization and database engine can represent, such as a number,
-boolean, list, map, date, or `null`.
+~~~dart
+abstract class _ReviewContent {}
 
-Derived callbacks are synchronous, are declared directly on the annotated class,
-and receive the model plus a `DerivedTransformations` instance. The generator
-does not inspect the callback body to prove that its result is serializable.
-
-### Composite fields
-
-The `ModelField` annotation is used to link a database composite column to a Dart field within a
-model class.
-
-In a non-relational database, a composite column refers to a field that can hold a collection of
-values or sub-attributes within a single column. Unlike a simple column that holds a single value, a
-composite column allows for the grouping or nesting of multiple values or sub-attributes together.
-This can be useful for representing complex or structured data within a single field in a
-non-relational database model.
-
-It accepts the following parameters:
-
-- `name`: Optional name of the column in the underlying database. When omitted,
-  the generator uses the annotated getter name.
-- `referTo`: Specifies the model class that should be represented within this field.
-
-```dart
-import 'package:dorm_annotations/dorm_annotations.dart';
-
-@Model(name: 'school-address', as: #schoolAddresses)
-abstract class _SchoolAddress {
-  @Field(name: 'zip-code')
-  String get zipCode;
+@PolymorphicData(name: 'text', as: #text)
+abstract class _TextReviewContent implements _ReviewContent {
+  @Field(name: 'text')
+  String get text;
 }
 
-@Model(name: 'school', as: #schools)
-abstract class _School {
-  @Field(name: 'name')
-  String get name;
-
-  @ModelField(name: 'address', referTo: _SchoolAddress)
-  get address;
-}
-```
-
-### Plain models
-
-The `Data` annotation is used to simply serialize a class.
-
-It accepts no arguments.
-
-```dart
-import 'package:dorm_annotations/dorm_annotations.dart';
-
-@Data()
-abstract class _SchoolAddress {
-  @Field(name: 'zip-code')
-  String get zipCode;
-
-  @Field(name: 'district')
-  String get district;
-
-  @Field(name: 'house-number')
-  int get number;
-}
-```
-
-You can also use a class annotated with `Data` as an argument to `referTo` of a `ModelField`
-annotation.
-
-### Polymorphism
-
-The `PolymorphicField` annotation is used to link a database composite column and a pivot column
-to a Dart field within a model class.
-
-In a non-relational database, polymorphism refers to the ability to store different types of objects
-in a single table. It allows for flexible data modeling, where objects of various types can be
-stored together, and the specific type of each object is determined by a pivot column. A composite
-column stores the specific contents of each sub-table, while the remaining columns store the common
-attributes of the base table.
-
-- The pivot column, represented as a string, is used to identify the specific type or sub-table
-  to which each object belongs. It acts as a discriminator, indicating the type of the object stored
-  in the composite column.
-- The composite column holds the contents or attributes specific to each sub-table or object type.
-  Depending on the value of the pivot column, the composite column stores the corresponding data
-  structure or format for that specific object type.
-- The remaining columns in the table represent the common attributes shared by all object types.
-  These columns store the general or shared properties that are applicable to all objects,
-  regardless of their specific type.
-
-It accepts the following parameters:
-
-- `name`: Optional name of the composite column in the underlying database.
-  When omitted, the generator uses the annotated getter name.
-- `pivotName`: Specifies the name of the pivot column in the underlying database.
-- `pivotAs`: Specifies the name of the pivot field in the Dart class.
-
-```dart
-import 'package:dorm_annotations/dorm_annotations.dart';
-
-abstract class _Action {}
-
-@Model(name: 'operation', as: #operations)
-abstract class _Operation {
-  @Field(name: 'name')
-  String get name;
-
-  @PolymorphicField(name: 'action', pivotName: 'type', pivotAs: #type)
-  _Action get action;
-}
-```
-
-The `PolymorphicData` is used to create a composite object of a polymorphic field:
-
-```dart
-import 'package:dorm_annotations/dorm_annotations.dart';
-
-@PolymorphicData(name: 'attack')
-abstract class _Attack implements _Action {
-  @Field(name: 'strength')
-  int get strength;
+@PolymorphicData(name: 'rating', as: #rating)
+abstract class _RatingReviewContent implements _ReviewContent {
+  @Field(name: 'rating')
+  int get rating;
 }
 
-@PolymorphicData(name: 'defence')
-abstract class _Defense implements _Action {
-  @Field(name: 'resistance')
-  int get resistance;
+@Model(name: 'reviews', as: #reviews)
+abstract class _Review {
+  @PolymorphicField(
+    name: 'content',
+    pivotName: 'content_type',
+  )
+  _ReviewContent get content;
 }
+~~~
 
-@PolymorphicData(name: 'healing')
-abstract class _Healing implements _Action {
-  @Field(name: 'health')
-  int get health;
-}
-```
+Use this feature when a single persisted value can have different model
+shapes. The generated serializer stores the discriminator and the selected
+variant according to the generated schema.
 
-### Unique identification
+## Source and generated code
 
-The default identifier type is `String`. A custom generated identity method is
-declared directly on the annotated class. It receives the generated model and
-the initially generated identity, and returns the identity that should be
-persisted:
+Keep the annotations in a normal Dart source file, commonly lib/models.dart:
 
-```dart
-import 'package:dorm_annotations/dorm_annotations.dart';
+~~~dart
+part 'models.dorm.dart';
+part 'models.g.dart';
+~~~
 
-@Model(name: 'country', as: #countries)
-abstract class _Country {}
+The annotations package describes the source. dorm_generator creates the
+entities, repositories, schema metadata, and serialization parts. Edit the
+annotated source and regenerate; do not edit generated files manually.
 
-@Model(name: 'capital', as: #capitals)
-abstract class _Capital {
-  static String $dorm$generateId(_Capital model, String id) => model.countryId;
+## Next steps
 
-  @ForeignField(name: 'country-id', referTo: _Country)
-  String get countryId;
-}
-```
-
-The generator validates the method signature while generating the source. A custom
-generated key type can be declared through `GeneratedIdSpec(type: ...)`. A
-database-assigned key can be declared through
-`DatabaseGeneratedIdSpec(type: ...)`; each database engine
-decides which ID types it supports.
+- [dorm_generator](https://pub.dev/packages/dorm_generator)
+- [dorm_framework](https://pub.dev/packages/dorm_framework)
+- [Annotation reference](https://ezgrs.github.io/dorm/annotations/)
+- [Model annotation](https://ezgrs.github.io/dorm/annotations/model/)
+- [DerivedField](https://ezgrs.github.io/dorm/annotations/derived-field/)
+- [GitHub repository](https://github.com/beet-software/dorm)
