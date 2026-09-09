@@ -278,7 +278,7 @@ not available in that context and nested transactions are rejected.
 
 `TransactionalDorm` requires `TransactionalEngine<Q, P>` statically. A
 regular `BaseEngine<Q, P>` cannot be passed to its constructor without a
-cast or type erasure. Memory, BLoC, MySQL, PostgreSQL, and SQLite currently implement
+cast or type erasure. The in-memory, BLoC, MySQL, PostgreSQL, and SQLite engines currently implement
 the capability.
 
 ## Error contract

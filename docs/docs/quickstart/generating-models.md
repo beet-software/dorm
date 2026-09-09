@@ -145,5 +145,5 @@ class Dorm<Q extends BaseQuery<Q>, P extends PageRequest> {
 
 The `as: #users` value in `@Model` is reflected by the `users` accessor. Application code reaches the repository through `dorm.users.repository`.
 
-Continue with [Connect the memory engine](creating-the-engine.md) to connect
-this generated API to the memory engine.
+Continue with [Connect the in-memory engine](creating-the-engine.md) to connect
+this generated API to the in-memory engine.

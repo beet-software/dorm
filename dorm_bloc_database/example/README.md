@@ -1,29 +1,30 @@
 # dorm_bloc_database example
 
-An example app to demonstrate how to initialize and use dORM with BLoC.
+<p>
+  <a href="https://ezgrs.github.io/dorm/"><img src="https://img.shields.io/badge/documentation-dORM-4c8bf5?style=flat" alt="dORM documentation"></a>
+  <a href="https://github.com/ezgrs/dorm"><img src="https://img.shields.io/badge/repository-GitHub-181717?logo=github&style=flat" alt="dORM repository"></a>
+  <a href="https://github.com/ezgrs/dorm"><img src="https://img.shields.io/github/license/ezgrs/dorm?style=flat" alt="License"></a>
+  <a href="https://github.com/ezgrs/dorm/actions/workflows/dart.yml"><img src="https://github.com/ezgrs/dorm/actions/workflows/dart.yml/badge.svg" alt="Dart CI"></a>
+</p>
 
-Explore the example project! Check out
+This Flutter example shows a generated dORM model using the BLoC-backed
+in-memory engine. It does not require an external database service.
 
-- *pubspec.yaml* to see what dependencies are required for dORM to work
-- *lib/models.dart* to have an insight on how to declare your model classes
-- *lib/main.dart* to learn how to use it in practice in your application
-- *lib/models.dorm.dart* and *lib/models.g.dart* to understand what classes are generated
+## Run it
 
-## Getting started
+Execute these commands from this directory:
 
-Clone this repository:
-
-```shell
-git clone https://github.com/beet-software/dorm.git
-cd dorm/dorm_bloc_database/example
-```
-
-## Usage
-
-Install the dependencies, generate the dORM code and run the application:
-
-```shell
+~~~shell
 flutter pub get
-flutter pub run build_runner build
+dart run build_runner build
+flutter analyze
 flutter run
-```
+~~~
+
+The annotated source is lib/models.dart. The generated model API is produced
+in lib/models.dorm.dart and lib/models.g.dart. Edit the annotated source and
+run build_runner again after changing models or fields.
+
+The application creates Engine, constructs Dorm, and exercises generated
+repositories and streams. Reuse the Engine instance when the application
+needs shared in-memory state.

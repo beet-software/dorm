@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+library;
 import 'package:build/build.dart';
 import 'package:source_gen/source_gen.dart';
 
@@ -21,4 +22,4 @@ import 'src/generator.dart';
 
 /// Creates the code generator.
 Builder generateOrm(BuilderOptions options) =>
-    PartBuilder([OrmGenerator()], '.dorm.dart');
+    PartBuilder([const OrmGenerator()], '.dorm.dart');

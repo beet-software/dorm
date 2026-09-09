@@ -1,9 +1,15 @@
 # Generate a showcase project
 
-Use `dorm_example` when you want a complete starting point instead of adding
-the dORM packages one by one. The command creates a project with annotated
-models, a generated-code workflow, the store domain used throughout the
-showcase, and setup instructions for the selected engine.
+Use `dorm_example` when you want to see the portable ORM workflow before
+connecting it to your own application. The command creates a complete project
+with annotated models, generated repositories, the store domain used
+throughout the showcase, and setup instructions for the selected engine.
+
+Choose `memory` to focus on the generated application surface without external
+infrastructure. Choose another profile when you want to see the same store
+operations connected to PostgreSQL, MySQL, MongoDB, SQLite, Firebase,
+Firestore, or HTTP. The profile changes the backend setup and capabilities;
+the recurring model and repository operations remain recognizable.
 
 ## Install the generator
 
@@ -37,7 +43,7 @@ Run `build_runner` after creation to produce `lib/models.dorm.dart` and
 
 | Engine | Generated project | External setup |
 | --- | --- | --- |
-| Memory | Flutter Web | None |
+| In-memory | Flutter Web | None |
 | BLoC | Flutter Web | None |
 | Firebase | Flutter Web | Docker Compose with a local Firebase emulator |
 | Firestore | Flutter Web | Docker Compose with a local Firestore emulator |
@@ -110,7 +116,7 @@ The server listens on port `8080`, accepts the resource mappings generated in
 the Flutter application, and loses its data when its container restarts. The
 default `HTTP_BASE_URI` already points to this local service.
 
-## Run the Memory profile
+## Run the in-memory profile
 
 Generate and enter the project:
 

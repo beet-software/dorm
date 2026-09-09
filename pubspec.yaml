@@ -1,7 +1,7 @@
 name: dorm_workspace
 description: Workspace for the dORM Dart and Flutter packages.
 publish_to: none
-repository: https://github.com/beet-software/dorm.git
+repository: https://github.com/ezgrs/dorm.git
 
 environment:
   sdk: ">=3.9.0 <4.0.0"

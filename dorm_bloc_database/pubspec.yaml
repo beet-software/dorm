@@ -1,18 +1,18 @@
 name: dorm_bloc_database
-version: 1.0.0-alpha.5
+version: 2.0.0-dev.1
 resolution: workspace
 description: An implementation of a database engine for dORM using bloc and in-memory storage.
-homepage: https://github.com/beet-software/dorm/tree/main/dorm_bloc_database
-repository: https://github.com/beet-software/dorm.git
+homepage: https://github.com/ezgrs/dorm/tree/main/dorm_bloc_database
+repository: https://github.com/ezgrs/dorm.git
 environment:
   sdk: '>=3.5.0 <4.0.0'
 
 dependencies:
   bloc: ^8.1.4
-  uuid: ^4.4.0
+  uuid: ^4.5.1
   rxdart: ^0.28.0
-  dorm_framework: ^1.0.0-alpha.3
+  dorm_framework: ^2.0.0-dev.1
 dev_dependencies:
-  dorm_test: ^1.0.0-alpha.5
+  dorm_test: ^2.0.0-dev.1
   lints: ^5.0.0
   test: ^1.25.4

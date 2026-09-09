@@ -12,7 +12,7 @@ Use these package entry points for application code:
 | Annotations | `package:dorm_annotations/dorm_annotations.dart` |
 | Framework | `package:dorm_framework/dorm_framework.dart` |
 | Generator | `package:dorm_generator/dorm_generator.dart` |
-| Memory engine | `package:dorm_memory_database/dorm_memory_database.dart` |
+| In-memory engine | `package:dorm_memory_database/dorm_memory_database.dart` |
 | BLoC engine | `package:dorm_bloc_database/dorm_bloc_database.dart` |
 | Firebase engine | `package:dorm_firebase_database/dorm_firebase_database.dart` |
 | Firestore engine | `package:dorm_firestore_database/dorm_firestore_database.dart` |
@@ -237,7 +237,7 @@ final result = await dorm.transaction((tx) async {
 The callback result is returned and callback or backend errors are propagated.
 Supported engines roll back the transaction when the callback fails. Streams
 are rejected inside the callback, and nested transactions are not supported.
-The capability is currently implemented by Memory, BLoC, MySQL, PostgreSQL,
+The capability is currently implemented by the in-memory engine, BLoC, MySQL, PostgreSQL,
 and SQLite.
 
 ## Errors and status

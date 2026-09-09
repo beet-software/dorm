@@ -2800,3 +2800,4 @@ class OrmGenerator extends Generator {
     ).format(spec.accept(emitter).toString());
   }
 }
+

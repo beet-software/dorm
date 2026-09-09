@@ -9,7 +9,7 @@ start with [Quickstart](../quickstart/index.md) or [Choose an engine](../apply/c
 Install Git and the Dart SDK, then clone the project and enter its directory:
 
 ```shell title="Clone dORM"
-git clone https://github.com/beet-software/dorm.git
+git clone https://github.com/ezgrs/dorm.git
 cd dorm
 ```
 
@@ -109,6 +109,20 @@ dart run tool/prepare_package.dart --package dorm_framework
 
 This is a release-preparation command. Do not run publication or versioning
 commands as part of an ordinary package change.
+
+## Synchronize showcase dependency versions
+
+`dorm_example` renders the current dORM release into the generated project's
+`pubspec.yaml`. After Melos updates the workspace package versions, synchronize
+the embedded version before committing the release:
+
+```shell title="Synchronize the generated project version"
+dart run tool/sync_dorm_example_version.dart
+```
+
+The script reads `dorm_example/pubspec.yaml`, verifies that the published dORM
+packages share that version, and updates the version metadata used by the
+Mustache templates. Run it from the repository root.
 
 Continue with [Implement a custom engine](custom-engine.md) when the change is
 a new backend, or [Test an engine](test-an-engine.md) when the change needs

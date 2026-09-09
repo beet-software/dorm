@@ -1,7 +1,7 @@
-# Connect the memory engine
+# Connect the in-memory engine
 
 The annotated source and generated parts now exist in `lib/models.dart`. The
-next step is to construct the memory engine and pass it to the generated
+next step is to construct the in-memory engine and pass it to the generated
 `Dorm` facade.
 
 ## Create one engine instance

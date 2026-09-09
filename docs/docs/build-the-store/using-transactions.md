@@ -1,7 +1,7 @@
 # Use transactions
 
 Use `TransactionalDorm` when several repository operations must commit or
-roll back as one unit. This API is available with the Memory, BLoC, MySQL, and
+roll back as one unit. This API is available with the in-memory, BLoC, MySQL, and
 PostgreSQL engines.
 
 ## Create the transactional facade
@@ -78,7 +78,7 @@ SQL command, native selector, or backend-specific transaction object.
 
 ## Understand engine-specific transaction limits
 
-Memory and BLoC keep transaction state in process memory. MySQL reuses the
+The in-memory and BLoC engines keep transaction state in process memory. MySQL reuses the
 connection transaction supplied by `mysql_client`, and PostgreSQL reuses the
 `Session` supplied by `SessionExecutor.runTx`.
 

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dorm_example/dorm_example.dart';
+import 'package:dorm_example/src/release.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -58,6 +59,10 @@ void main() {
       expect(File('${output.path}/lib/main.dart').existsSync(), isTrue);
       expect(File('${output.path}/web/index.html').existsSync(), isTrue);
       expect(File('${output.path}/bin/main.dart').existsSync(), isFalse);
+      expect(
+        File('${output.path}/pubspec.yaml').readAsStringSync(),
+        contains('dorm_framework: ^$dormReleaseVersion'),
+      );
       expect(
         File('${output.path}/lib/models.dart').readAsStringSync(),
         contains('@DerivedField'),
@@ -232,6 +237,10 @@ void main() {
         expect(
           File('${output.path}/pubspec.yaml').readAsStringSync(),
           isNot(contains('{{')),
+        );
+        expect(
+          File('${output.path}/pubspec.yaml').readAsStringSync(),
+          contains('dorm_generator: ^$dormReleaseVersion'),
         );
         expect(
           File(

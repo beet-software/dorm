@@ -25,7 +25,7 @@ application uses the Flutter toolchain and must initialize Firebase before
 constructing its dORM engine. The engine pages contain the backend-specific
 startup sequence:
 
-- [Run with memory](../apply/use-memory.md)
+- [Run in-memory](../apply/use-memory.md)
 - [Run with BLoC](../apply/use-bloc.md)
 - [Run with Firebase](../apply/use-firebase.md)
 - [Run with MySQL](../apply/use-mysql.md)

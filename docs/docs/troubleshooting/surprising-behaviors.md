@@ -11,7 +11,7 @@ sources differ:
 
 | Engine | Current behavior |
 | --- | --- |
-| Memory and BLoC | Backed by in-process state changes. |
+| In-memory and BLoC | Backed by in-process state changes. |
 | Firebase | Backed by Realtime Database value events. Offline configuration changes which local and remote events are available. |
 | MySQL | Performs an initial read without a live database-change listener. |
 | PostgreSQL | Performs an initial read without a `LISTEN`/`NOTIFY` listener. |

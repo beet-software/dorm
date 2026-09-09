@@ -1,28 +1,33 @@
-# HTTP dORM example
+# dorm_http_database example
 
-This is a pure Dart example. It expects an HTTP/JSON API whose resources are
-available under the URI in `HTTP_BASE_URI`.
+<p>
+  <a href="https://ezgrs.github.io/dorm/"><img src="https://img.shields.io/badge/documentation-dORM-4c8bf5?style=flat" alt="dORM documentation"></a>
+  <a href="https://github.com/ezgrs/dorm"><img src="https://img.shields.io/badge/repository-GitHub-181717?logo=github&style=flat" alt="dORM repository"></a>
+  <a href="https://github.com/ezgrs/dorm"><img src="https://img.shields.io/github/license/ezgrs/dorm?style=flat" alt="License"></a>
+  <a href="https://github.com/ezgrs/dorm/actions/workflows/dart.yml"><img src="https://github.com/ezgrs/dorm/actions/workflows/dart.yml/badge.svg" alt="Dart CI"></a>
+</p>
 
-The API must provide `users` and `posts` resources. Single-item operations use
-`/{resource}/{id}`. Batch creation, batch replacement, and deletion by keys use
-the paths configured in `lib/main.dart`.
+This pure Dart example connects the HTTP engine to a REST-shaped API configured
+in lib/main.dart. It expects users and posts resources and uses the generated
+mapping for collection and item operations.
 
-Run it from this directory:
+## Run it
 
-```shell
+Execute these commands from this directory:
+
+~~~shell
 dart pub get
 dart run build_runner build
 dart analyze
-```
+~~~
 
-Set the API base URI, including a trailing slash, then run:
+Set the API base URI, including its trailing slash:
 
-```shell
-set HTTP_BASE_URI=https://example.test/api/
+~~~powershell
+$env:HTTP_BASE_URI = 'https://example.test/api/'
 dart run
-```
+~~~
 
-On PowerShell, use `$env:HTTP_BASE_URI = 'https://example.test/api/'` instead.
-
-The generated files are produced from `lib/models.dart`. Edit that source and
-run `build_runner` again after changing its annotations.
+The generated HTTP engine does not create a server. The remote API must
+implement the endpoints and response shapes configured by HttpMapping. The
+model source is lib/models.dart.

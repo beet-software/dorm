@@ -1,454 +1,193 @@
 # dorm_generator
 
-[![pub package](https://img.shields.io/pub/v/dorm_generator.svg?label=dorm_generator)](https://pub.dev/packages/dorm_generator)
-[![pub popularity](https://img.shields.io/pub/popularity/dorm_generator?logo=dart)](https://pub.dev/packages/dorm_generator)
-[![pub likes](https://img.shields.io/pub/likes/dorm_generator?logo=dart)](https://pub.dev/packages/dorm_generator)
-[![pub points](https://img.shields.io/pub/points/dorm_generator?logo=dart)](https://pub.dev/packages/dorm_generator)
+<p>
+  <a href="https://pub.dev/packages/dorm_generator"><img src="https://img.shields.io/pub/v/dorm_generator.svg?label=dorm_generator" alt="dorm_generator on pub.dev"></a>
+  <a href="https://pub.dev/packages/dorm_generator"><img src="https://img.shields.io/pub/points/dorm_generator?logo=dart" alt="dorm_generator pub points"></a>
+  <a href="https://pub.dev/packages/dorm_generator"><img src="https://img.shields.io/pub/popularity/dorm_generator?logo=dart" alt="dorm_generator popularity"></a>
+  <a href="https://pub.dev/packages/dorm_generator"><img src="https://img.shields.io/pub/likes/dorm_generator?logo=dart" alt="dorm_generator likes"></a>
+  <a href="https://ezgrs.github.io/dorm/reference/generated-api/"><img src="https://img.shields.io/badge/documentation-dORM-4c8bf5?style=flat" alt="dorm_generator documentation"></a>
+  <a href="https://github.com/ezgrs/dorm"><img src="https://img.shields.io/badge/repository-GitHub-181717?logo=github&style=flat" alt="dORM repository"></a>
+  <a href="https://github.com/ezgrs/dorm"><img src="https://img.shields.io/github/license/ezgrs/dorm?style=flat" alt="License"></a>
+  <a href="https://github.com/ezgrs/dorm/actions/workflows/dart.yml"><img src="https://github.com/ezgrs/dorm/actions/workflows/dart.yml/badge.svg" alt="Dart CI"></a>
+</p>
 
-Provides code adapted to work with the dORM framework.
+dorm_generator is the build_runner generator that turns dORM annotations
+into model types, schema metadata, repositories, relationship paths, and
+serialization code.
 
-## Getting started
+## Install
 
-Run the following commands inside your project:
+Add annotations and the framework as runtime dependencies, then add the
+generator and build_runner as development dependencies:
 
-```shell
-dart pub add dev:dorm_generator
-dart pub add dev:build_runner
-dart pub get
-```
+~~~shell
+dart pub add dorm_annotations
+dart pub add dorm_framework
+dart pub add --dev dorm_generator
+dart pub add --dev build_runner
+~~~
 
-## Usage
+The generator is a build-time dependency. Your application imports the
+annotations and generated API, while build_runner executes the generator.
 
-> **Note**: This document assumes that you have already seen the
-> [`dorm_annotations` documentation](https://pub.dev/packages/dorm_annotations).
+## Prepare the annotated source
 
-### Generating
+Create a Dart file under lib, commonly lib/models.dart:
 
-Create a file inside the *lib* folder of your Dart project. In this example, it will be
-*lib/models.dart*.
-
-Write the classes, their getters and their annotations to this file. Add the following directives to
-top of this file:
-
-```dart
+~~~dart
 import 'package:dorm_annotations/dorm_annotations.dart';
 import 'package:dorm_framework/dorm_framework.dart';
 
+part 'models.dorm.dart';
 part 'models.g.dart';
 
-part 'models.dorm.dart';
-```
+@Model(name: 'users', as: #users)
+abstract class _User {
+  @Field(name: 'username')
+  String get username;
+}
+~~~
 
-Run the following line in your command prompt:
+The part names must match the source filename. For a different source name,
+change both part directives to match it.
 
-```shell
+## Generate the API
+
+Run generation from the application root:
+
+~~~shell
 dart run build_runner build
-```
+~~~
 
-This will generate all the files based on the annotated classes.
+After changing annotations, fields, identities, relationships, or generator
+configuration, run the command again. Use the delete-conflicting option when
+old generated files prevent a clean build:
 
-### Models
+~~~shell
+dart run build_runner build --delete-conflicting-outputs
+~~~
 
-Any class `_Class` annotated with [`Model`](https://pub.dev/documentation/dorm_annotations/latest/dorm_annotations/Model-class.html) will create four new classes: `ClassData`, `Class`,
-`ClassDependency` and `ClassEntity`.
+Generated files include:
 
-```dart
-@Model(name: 'class', as: #classes)
-abstract class _Class {
-  @Field(name: 'name')
-  String? get name;
+- models.dorm.dart for dORM entities, schema metadata, repositories, accessors,
+  relationship paths, and the Dorm facade;
+- models.g.dart for JSON serialization and copyWith support.
 
-  @Field(name: 'timestamp')
-  DateTime get timestamp;
+The generated files are source files consumed by the application. Do not edit
+them manually.
 
-  @ForeignField(name: 'school-id', referTo: _School)
-  String get schoolId;
-}
-```
+## Generated types
 
-#### Data
+For a model such as _User, generation produces distinct application-facing
+types:
 
-A `ClassData` will contain only the getters annotated with 
-[`Field`](https://pub.dev/documentation/dorm_annotations/latest/dorm_annotations/Field-class.html),
-[`PolymorphicField`](https://pub.dev/documentation/dorm_annotations/latest/dorm_annotations/PolymorphicField-class.html)
-and
-[`ModelField`](https://pub.dev/documentation/dorm_annotations/latest/dorm_annotations/ModelField-class.html).
-In the above example is defined as:
+- UserData contains input data;
+- User is the identified model;
+- UserDependency carries related identities;
+- UserEntity connects the model to framework contracts;
+- UserRepository exposes repository operations;
+- UserEntity.fields exposes FieldSchema values for filters and ordering;
+- Dorm exposes users and other generated accessors.
 
-```dart
-@JsonSerializable(anyMap: true, explicitToJson: true)
-class ClassData {
-  @JsonKey(name: 'name')
-  final String? name;
+The generated facade carries the query and page types inferred from the engine:
 
-  @JsonKey(name: 'timestamp', required: true, disallowNullValue: true)
-  final DateTime timestamp;
+~~~dart
+final engine = Engine();
+final dorm = Dorm(engine);
 
-  factory ClassData.fromJson(Map json) => _$ClassDataFromJson(json);
+final User? user = await dorm.users.repository.peek(userId);
+~~~
 
-  const ClassData({
-    required this.name,
-    required this.timestamp,
-  });
+If the engine implements the optional transaction capability, the generator
+also emits TransactionalDorm for callback-scoped multi-repository operations.
 
-Map<String, Object?> toJson() => _$ClassDataToJson(this);
-}
-```
+## Identity generation hooks
 
-#### Derived fields
+For an engine-generated identity, declare the reserved static method directly
+on the annotated class:
 
-`DerivedField` is declared on a static method named
-`$dorm$derived$<fieldName>`. The generator emits a getter with that suffix and
-calls the method with the generated model and `DerivedTransformations`. The
-callback result is added to the generated model's serialized representation.
-
-#### Model
-
-A `Class` extends `ClassData`, implements `_Class`, has an additional `id` field and will
-contain only the getters annotated with 
-[`ForeignField`](https://pub.dev/documentation/dorm_annotations/latest/dorm_annotations/ForeignField-class.html)
-and
-[`DerivedField`](https://pub.dev/documentation/dorm_annotations/latest/dorm_annotations/DerivedField-class.html).
-In the above example is defined as:
-
-```dart
-@JsonSerializable(anyMap: true, explicitToJson: true)
-class Class extends ClassData implements _Class {
-  @JsonKey(name: '_id', required: true, disallowNullValue: true)
-  final String id;
-
-  @JsonKey(name: 'school-id', required: true, disallowNullValue: true)
-  final String schoolId;
-
-  factory Class.fromJson(String id, Map json) =>
-      _$ClassFromJson({...json, '_id': id});
-
-  const Class({
-    required this.id,
-    required this.schoolId,
-    required super.name,
-    required super.timestamp,
-  });
-
-  Map<String, Object?> toJson() =>
-      _$ClassToJson(this)
-        ..remove('_id');
-}
-```
-
-#### dORM components
-
-A `ClassDependency` and a `ClassEntity` extends respectively `Dependency<ClassData>`
-and `Entity<ClassData, Class>`, exported by the
-[`dorm_framework` package](https://pub.dev/packages/dorm_framework).
-
-#### Accessors
-
-The code generation will also create a new class named `Dorm`, which will contain the
-repository accessors. In the above example, it is defined as:
-
-```dart
-class Dorm {
-  final BaseEngine _engine;
-
-  const Dorm(this._engine);
-
-  DatabaseEntity<ClassData, Class> get classes =>
-      DatabaseEntity(const ClassEntity(), engine: _engine);
-}
-```
-
-Refer to the `dorm_*_database` packages to read more about how to obtain a `Engine`.
-With a `Dorm` instance, you can operate on classes using a `Repository`, also exported by
-`dorm_framework`:
-
-```dart
-void main() async {
-  final Dorm dorm /* =  ... */;
-
-  // Create
-  final Class c = await dorm.classes.repository.put(
-    Creation.auto(
-      dependency: ClassDependency(schoolId: 'school-0'),
-      data: ClassData(name: 'A class.', timestamp: DateTime.now()),
-    ),
-  );
-
-  // Read
-  final Future<Class> fc = await dorm.classes.repository.peek('class-1');
-  final Future<List<Class>> fcs = await dorm.classes.repository.peekAll();
-  final Stream<Class> sc = dorm.classes.repository.pull('class-1');
-  final Stream<List<Class>> scs = dorm.classes.repository.pullAll();
-
-  // Update
-  final Class uc = await dorm.classes.repository.push(Class(
-    id: 'class-1',
-    schoolId: 'school-1',
-    name: 'A new class.',
-    timestamp: DateTime.now(),
-  ));
-
-  // Delete
-  await dorm.classes.repository.pop('class-1');
-}
-```
-
-### Polymorphism
-
-Consider the following annotated code:
-
-```dart
-abstract class _Action {}
-
-@PolymorphicData(name: 'attack')
-abstract class _Attack implements _Action {
-  @Field(name: 'strength')
-  int get strength;
-}
-
-@PolymorphicData(name: 'defence')
-abstract class _Defense implements _Action {
-  @Field(name: 'resistence')
-  int get resistence;
-}
-
-@PolymorphicData(name: 'healing', as: #heal)
-abstract class _Healing implements _Action {
-  @Field(name: 'health')
-  int get health;
-}
-
-@Model(name: 'operation', as: #operations)
-abstract class _Operation {
-  @Field(name: 'name')
-  String get name;
-
-  @PolymorphicField(name: 'action', pivotName: 'type', pivotAs: #type)
-  _Action get action;
-}
-```
-
-The generated code will contain an abstract class named `Action` with three subclasses:
-`Attack`, `Defense` and `Healing`. It'll also contain an enum named `ActionType` with three
-values: `attack`, `defense` and `heal` (not `healing`; see its `PolymorphicData`'s `as` argument).
-
-The `_Operation` model will be generated as described previously, except that will contain an
-additional field named `type` of type `ActionType`, which will allow the user to check the runtime
-type of the `action` field.
-
-The following code explains how to manipulate generated code for a `Model` with a field annotated
-with `PolymorphicField`:
-
-```dart
-void main() async {
-  final Operation o1 = await dorm.operations.repository.put(
-    Creation.auto(
-      dependency: const OperationDependency(),
-      data: OperationData(
-        name: 'AoT',
-        action: Attack(strength: 42),
-        type: ActionType.attack,
-      ),
-    ),
-  );
-
-  final Operation o2 = await dorm.operations.repository.peek('543f2f8da023');
-
-  final int value;
-  switch (operation.type) {
-    case ActionType.attack:
-      final Attack attack = operation.action as Attack;
-      value = attack.strength;
-      break;
-    case ActionType.defense:
-      final Defense defense = operation.action as Defense;
-      value = defense.resistence;
-      break;
-    case ActionType.heal:
-      final Healing healing = operation.action as Healing;
-      value = healing.health;
-      break;
+~~~dart
+@Model(name: 'users', as: #users)
+abstract class _User {
+  static String $dorm$generateId(_User model, String generatedId) {
+    return model.username;
   }
+
+  @Field(name: 'username')
+  String get username;
 }
-```
+~~~
 
-### Unique identification
+The method receives the intermediate model and the identity initially generated
+by the engine. It is applied only to Creation.auto for GeneratedIdSpec. Explicit
+identities and database-generated identities do not pass through it.
 
-The default identifier type is `String`. Declare `$dorm$generateId` directly
-on the annotated class to derive an identifier from the generated model. The
-method receives the model and the initially generated identity. The examples
-below show the supported method shape.
+## Derived-field hooks
 
-#### Simple
+Derived fields use a synchronous static method with the reserved prefix:
 
-If
+~~~dart
+@Model(name: 'users', as: #users)
+abstract class _User {
+  @DerivedField(name: 'q-username')
+  static String $dorm$derived$qUsername(
+    _User model,
+    DerivedTransformations transformations,
+  ) {
+    return transformations.text(model.username) ?? '';
+  }
 
-```dart
-@Model(name: 'country', as: #countries)
-abstract class _Country {
-  @Field(name: 'name')
-  String get name;
+  @Field(name: 'username')
+  String get username;
 }
-```
+~~~
 
-then
+The suffix becomes the generated getter name. The callback result is serialized
+with the model and is available through the persisted derived field.
 
-```dart
-void main() async {
-  final Country country = await dorm.countries.repository.put(
-    Creation.auto(
-      dependency: CountryDependency(),
-      data: CountryData(name: 'Brazil'),
-    ),
-  );
-  // uuid
-  assert(country.id == '27f04af67a1f');
-}
-```
+## Relationships and schema metadata
 
-#### Composite
+The generator reads ForeignField annotations and emits relationship paths with
+the declared forward and inverse names. It also emits EntitySchema and
+FieldSchema metadata used by engines to translate identifiers, filters,
+relationships, and serialization.
 
-If
+Use generated FieldSchema values at the application boundary:
 
-```dart
-@Model(
-  name: 'state',
-  as: #states,
-  primaryKey: [
-    ExistingIdSpec(referTo: #countryId),
-    ExistingIdSpec(referTo: #stateCode),
-  ],
-)
-abstract class _State {
-  @Field(name: 'country-id')
-  String get countryId;
+~~~dart
+final products = await dorm.products.repository.peekAll(
+  Filter.text('phone', field: ProductEntity.fields.name),
+);
+~~~
 
-  @Field(name: 'state-code')
-  String get stateCode;
+The engine receives the resolved persisted field name. This keeps application
+code tied to declared schema metadata instead of repeated string literals.
 
-  @Field(name: 'name')
-  String get name;
-}
-```
+## Polymorphism and nested values
 
-then
+ModelField, PolymorphicField, and DerivedField are generated into the same
+entity and serialization surface. The generator preserves the declared Dart
+shape for nested values and emits the metadata needed by document-oriented
+engines.
 
-```dart
-void main() async {
-  final State state = await dorm.states.repository.push(
-    State(
-      id: CompositeKey(['27f04af67a1f', 'RJ']),
-      name: 'Rio de Janeiro',
-      countryId: '27f04af67a1f',
-      stateCode: 'RJ',
-    ),
-  );
-  assert(state.id == CompositeKey(['27f04af67a1f', 'RJ']));
-}
-```
+For SQL engines, use only the model features supported by the schema and
+serialization path of that engine.
 
-#### Same-as
+## Common diagnostics
 
-If
+- A missing part file usually means the part name does not match the source
+  filename or generation has not been run.
+- A stale generated API means the annotated source changed without another
+  build_runner invocation.
+- An invalid reserved method signature is reported during generation.
+- An identity or relation error usually points to a missing getter, an invalid
+  referenced type, or an inconsistent primary-key declaration.
+- A filter should receive a generated FieldSchema, not a storage-name string.
 
-```dart
-@Model(name: 'capital', as: #capitals)
-abstract class _Capital {
-  static String $dorm$generateId(_Capital model, String id) => model.countryId;
+## Links
 
-  @Field(name: 'name')
-  String get name;
-
-  @ForeignField(name: 'country-id', referTo: _Country)
-  String get countryId;
-}
-```
-
-then
-
-```dart
-void main() async {
-  final Capital capital = await dorm.capitals.repository.put(
-    Creation.auto(
-      dependency: CapitalDependency(countryId: '27f04af67a1f'),
-      data: CapitalData(name: 'Brasilia'),
-    ),
-  );
-  // countryId
-  assert(capital.id == '27f04af67a1f');
-}
-```
-
-#### Custom
-
-If
-
-```dart
-@Model(name: 'citizen', as: #citizens)
-abstract class _Citizen {
-  static String $dorm$generateId(_Citizen data, String id) =>
-      data.visaCode ?? data.socialSecurity ?? id;
-  @Field(name: 'name')
-  String get name;
-
-  @Field(name: 'is-foreigner', defaultValue: false)
-  bool get isForeigner;
-
-  @Field(name: 'visa-code')
-  String? get visaCode;
-
-  @Field(name: 'ssn')
-  String? get socialSecurity;
-
-  @ForeignField(name: 'country-id', referTo: _Country)
-  String get countryId;
-}
-```
-
-then
-
-```dart
-void main() async {
-  final Citizen c1 = await dorm.citizens.repository.put(
-    Creation.auto(
-      dependency: CitizenDependency(countryId: '27f04af67a1f'),
-      data: CitizenData(
-        name: 'Rodrigo Maia',
-        isForeigner: true,
-        visaCode: '4bb6',
-        socialSecurity: '11111111111',
-      ),
-    ),
-  );
-  // visaCode
-  assert(c1.id == '4bb6');
-
-  final Citizen c2 = await dorm.citizens.repository.put(
-    Creation.auto(
-      dependency: CitizenDependency(countryId: '27f04af67a1f'),
-      data: CitizenData(
-        name: 'Arthur Lira',
-        isForeigner: false,
-        visaCode: null,
-        socialSecurity: '22222222222',
-      ),
-    ),
-  );
-  // socialSecurity
-  assert(c2.id == '22222222222');
-
-  final Citizen c3 = await dorm.citizens.repository.put(
-    Creation.auto(
-      dependency: CitizenDependency(countryId: '27f04af67a1f'),
-      data: CitizenData(
-        name: 'Capivara Filó',
-        isForeigner: false,
-        visaCode: null,
-        socialSecurity: null,
-      ),
-    ),
-  );
-  // uuid
-  assert(c3.id == 'b2a6304807a0');
-}
-```
+- [Annotations](https://pub.dev/packages/dorm_annotations)
+- [Framework](https://pub.dev/packages/dorm_framework)
+- [Generated API reference](https://ezgrs.github.io/dorm/reference/generated-api/)
+- [Code generation troubleshooting](https://ezgrs.github.io/dorm/troubleshooting/code-generation-problems/)
+- [GitHub repository](https://github.com/ezgrs/dorm)

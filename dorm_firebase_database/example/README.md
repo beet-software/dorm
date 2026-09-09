@@ -1,62 +1,43 @@
 # dorm_firebase_database example
 
-An example app to demonstrate how to initialize and use dORM with Firebase Realtime Database.
+<p>
+  <a href="https://ezgrs.github.io/dorm/"><img src="https://img.shields.io/badge/documentation-dORM-4c8bf5?style=flat" alt="dORM documentation"></a>
+  <a href="https://github.com/ezgrs/dorm"><img src="https://img.shields.io/badge/repository-GitHub-181717?logo=github&style=flat" alt="dORM repository"></a>
+  <a href="https://github.com/ezgrs/dorm"><img src="https://img.shields.io/github/license/ezgrs/dorm?style=flat" alt="License"></a>
+  <a href="https://github.com/ezgrs/dorm/actions/workflows/dart.yml"><img src="https://github.com/ezgrs/dorm/actions/workflows/dart.yml/badge.svg" alt="Dart CI"></a>
+</p>
 
-Explore the example project! Check out
+This Flutter example uses the Firebase Realtime Database engine. It can run
+against a Firebase project or a local Realtime Database emulator.
 
-- *pubspec.yaml* to see what dependencies are required for dORM to work
-- *lib/models.dart* to have an insight on how to declare your model classes
-- *lib/main.dart* to learn how to use it in practice in your application
-- *lib/models.dorm.dart* and *lib/models.g.dart* to understand what classes are generated
+## Prerequisites
 
-## Getting started
+Install the Firebase CLI and configure a Firebase application or emulator.
+The Flutter application must have the Firebase platform configuration required
+by its target.
 
-1. Download the Firebase CLI
-from [the official site](https://firebase.google.com/docs/cli?install_the_firebase_cli).
+## Run it
 
-2. It requires at least Java 11, which you can download
-from [the official site](https://www.oracle.com/br/java/technologies/javase/jdk11-archive-downloads.html).
+Execute these commands from this directory:
 
-3. Clone this repository:
+~~~shell
+flutter pub get
+dart run build_runner build
+flutter analyze
+~~~
 
-    ```shell
-    git clone https://github.com/beet-software/dorm.git
-    cd dorm/dorm_firebase_database/example
-    ```
+For a local database emulator, start the database service separately:
 
-## Usage
+~~~shell
+firebase emulators:start --only database
+~~~
 
-1. Run the following line in your command prompt:
+Then run the Flutter application:
 
-    ```shell
-    firebase init
-    ```
+~~~shell
+flutter run
+~~~
 
-    - For "You're about to initialize a Firebase project in this directory. Are you ready to proceed?",
-      answer *Yes*.
-    - For "Which Firebase features do you want to set up for this directory?", select *Realtime
-      Database* and *Emulators*.
-    - For "Let's associate this project directory with a Firebase project", select *Don't set up a
-      default project*
-    - For "What file should be used for Realtime Database Security Rules?", answer
-      *database.rules.json* (the default)
-    - For "Which Firebase emulators do you want to set up?", select *Database Emulator*
-    - For "Which port do you want to use for the database emulator?", answer *9000* (the default)
-    - For "Would you like to enable the Emulator UI?", answer as you like
-    - For "Would you like to download the emulators now?", answer *Yes*
-
-2. Activate the emulator by running the following command:
-
-    ```cmd
-    firebase emulators:start --only database
-    ```
-
-    Wait for the "All emulators ready! It is now safe to connect your app" message.
-
-3. Install the dependencies, generate the dORM code and run the application:
-
-    ```shell
-    flutter pub get
-    flutter pub run build_runner build
-    flutter run
-    ```
+The model source is lib/models.dart. Generated files are created from that
+source. The example initializes Firebase, creates FirebaseInstance, constructs
+Engine, and demonstrates repository reads and writes with live streams.

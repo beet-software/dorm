@@ -62,7 +62,7 @@ melos run analyze
 melos run test --no-select
 ```
 
-The memory and BLoC engines can run their compliance tests without a database
+The in-memory and BLoC engines can run their compliance tests without a database
 server. Database and service-backed engines skip their integration groups when
 the required environment is not configured.
 

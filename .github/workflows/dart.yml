@@ -6,6 +6,9 @@ on:
       - main
     tags:
       - "v*"
+    paths-ignore:
+      - "docs/**"
+      - ".github/workflows/docs.yml"
 
 jobs:
   build:
@@ -32,14 +35,18 @@ jobs:
   publish-children:
     if: ${{ github.event_name == 'push' && github.ref_type == 'tag' && startsWith(github.ref_name, 'v') }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     needs:
       - publish-core
     strategy:
       matrix:
         pkg: [dorm_generator, dorm_firebase_database, dorm_firestore_database, dorm_bloc_database, dorm_memory_database, dorm_mysql_database, dorm_postgres_database, dorm_mongo_database, dorm_http_database, dorm_sqlite_database, dorm_example]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
+      - uses: dart-lang/setup-dart@v1
 
       - name: Install workspace dependencies
         run: dart pub get
@@ -57,19 +64,22 @@ jobs:
             exit 1
           }
 
-      - name: Dart and Flutter Package Publisher
-        uses: k-paxian/dart-package-publisher@v1.6
-        with:
-          accessToken: ${{ secrets.OAUTH_ACCESS_TOKEN }}
-          refreshToken: ${{ secrets.OAUTH_REFRESH_TOKEN }}
-          relativePath: ${{ matrix.pkg }}
-          flutter: true
-          skipTests: true
-          suppressBuildRunner: true
+      - name: Publish to pub.dev
+        working-directory: ./${{ matrix.pkg }}
+        shell: bash
+        run: |
+          if grep -Eq 'sdk:[[:space:]]*flutter' pubspec.yaml; then
+            flutter pub publish --force
+          else
+            dart pub publish --force
+          fi
 
   publish-core:
     if: ${{ github.event_name == 'push' && github.ref_type == 'tag' && startsWith(github.ref_name, 'v') }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     needs:
       - build
       - verify-mongo
@@ -82,8 +92,9 @@ jobs:
       matrix:
         pkg: [dorm_framework, dorm_annotations]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
+      - uses: dart-lang/setup-dart@v1
 
       - name: Install workspace dependencies
         run: dart pub get
@@ -102,14 +113,14 @@ jobs:
         run: dart run tool/prepare_package.dart --package ${{ matrix.pkg }}
 
       - name: Publish to pub.dev
-        uses: k-paxian/dart-package-publisher@v1.6
-        with:
-          accessToken: ${{ secrets.OAUTH_ACCESS_TOKEN }}
-          refreshToken: ${{ secrets.OAUTH_REFRESH_TOKEN }}
-          relativePath: ${{ matrix.pkg }}
-          flutter: true
-          skipTests: true
-          suppressBuildRunner: true
+        working-directory: ./${{ matrix.pkg }}
+        shell: bash
+        run: |
+          if grep -Eq 'sdk:[[:space:]]*flutter' pubspec.yaml; then
+            flutter pub publish --force
+          else
+            dart pub publish --force
+          fi
 
   verify-mongo:
     runs-on: ubuntu-latest

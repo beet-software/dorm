@@ -6,15 +6,10 @@ targets.
 
 ## What every operation crosses
 
-Repository calls pass through generated mapping before reaching the engine:
-
-```text
-Data or Model
-    -> generated Entity mapping
-    -> engine query or storage operation
-    -> backend result
-    -> generated Model or collection
-```
+Repository calls first use generated entity mapping to turn application values
+into the representation expected by the selected engine. The engine performs
+the query or storage operation, then the generated mapping turns the result
+back into a model or collection for the application.
 
 Writes can allocate serialized maps and identity values. Reads can allocate
 model objects, result lists, and deserialized nested values. These are code-

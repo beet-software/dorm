@@ -1,17 +1,32 @@
-# MongoDB dORM example
+# dorm_mongo_database example
 
-This is a pure Dart example. It connects to the MongoDB URI in `MONGO_URI`,
-or to `mongodb://127.0.0.1:27017/dorm_example` when the variable is absent.
-The example clears its two development collections before and after running.
+<p>
+  <a href="https://ezgrs.github.io/dorm/"><img src="https://img.shields.io/badge/documentation-dORM-4c8bf5?style=flat" alt="dORM documentation"></a>
+  <a href="https://github.com/ezgrs/dorm"><img src="https://img.shields.io/badge/repository-GitHub-181717?logo=github&style=flat" alt="dORM repository"></a>
+  <a href="https://github.com/ezgrs/dorm"><img src="https://img.shields.io/github/license/ezgrs/dorm?style=flat" alt="License"></a>
+  <a href="https://github.com/ezgrs/dorm/actions/workflows/dart.yml"><img src="https://github.com/ezgrs/dorm/actions/workflows/dart.yml/badge.svg" alt="Dart CI"></a>
+</p>
 
-Run it from this directory:
+This pure Dart example connects to MongoDB through the mongo_dart driver. It
+uses MONGO_URI when present and otherwise targets a local development database.
 
-```shell
+## Run it
+
+Execute these commands from this directory:
+
+~~~shell
 dart pub get
 dart run build_runner build
 dart analyze
 dart run
-```
+~~~
 
-The generated files come from `lib/models.dart`. Edit that source and run
-`build_runner` again after changing model annotations or fields.
+Set the connection URI before running against another database:
+
+~~~powershell
+$env:MONGO_URI = 'mongodb://127.0.0.1:27017/dorm_example'
+dart run
+~~~
+
+The example clears its development collections around the showcase flow. Its
+model source is lib/models.dart; generated files are derived from that source.

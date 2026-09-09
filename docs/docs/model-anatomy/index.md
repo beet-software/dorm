@@ -19,15 +19,13 @@ when you already know which type or member you need.
 8. [Dorm](dorm.md) groups generated entities and engine access.
 9. [Relationship paths](relations.md) resolve related models through generated metadata.
 
-## See the complete path
+## How the pieces work together
 
-```text
-annotated source
-    -> generated Data, Model, Dependency, Fields, Entity, and Dorm
-    -> generated Repository
-    -> dORM engine
-    -> backend storage or client
-```
+The annotated source is where the application declares its model shape. The
+generator turns that source into `Data`, `Model`, `Dependency`, field metadata,
+`Entity`, `Repository`, and `Dorm` types. The generated repository then uses
+the selected engine to perform the operation against its backend or in-memory
+store.
 
 The application normally edits the annotated source and uses the generated
 types. Generated files are outputs of the builder and should be regenerated
