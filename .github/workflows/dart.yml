@@ -2,9 +2,10 @@ name: Dart
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
+    tags:
+      - "v*"
 
 jobs:
   build:
@@ -28,24 +29,11 @@ jobs:
         working-directory: ./${{ matrix.pkg }}
         run: dart analyze
 
-      - name: Prepare packages for publishing
-        run: dart run tool/prepare_package.dart --package ${{ matrix.pkg }}
-
-      - name: Publish to pub.dev
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-        uses: k-paxian/dart-package-publisher@v1.6
-        with:
-          accessToken: ${{ secrets.OAUTH_ACCESS_TOKEN }}
-          refreshToken: ${{ secrets.OAUTH_REFRESH_TOKEN }}
-          relativePath: ${{ matrix.pkg }}
-          flutter: true
-          skipTests: true
-          suppressBuildRunner: true
-
   publish-children:
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    if: ${{ github.event_name == 'push' && github.ref_type == 'tag' && startsWith(github.ref_name, 'v') }}
     runs-on: ubuntu-latest
-    needs: build
+    needs:
+      - publish-core
     strategy:
       matrix:
         pkg: [dorm_generator, dorm_firebase_database, dorm_firestore_database, dorm_bloc_database, dorm_memory_database, dorm_mysql_database, dorm_postgres_database, dorm_mongo_database, dorm_http_database, dorm_sqlite_database, dorm_example]
@@ -59,7 +47,61 @@ jobs:
       - name: Prepare packages for publishing
         run: dart run tool/prepare_package.dart --package ${{ matrix.pkg }}
 
+      - name: Verify release tag matches package version
+        shell: bash
+        run: |
+          expected="${GITHUB_REF_NAME#v}"
+          actual="$(sed -n 's/^version:[[:space:]]*//p' "${{ matrix.pkg }}/pubspec.yaml" | head -n 1)"
+          test "$actual" = "$expected" || {
+            echo "${{ matrix.pkg }} declares $actual, but the release tag is $expected."
+            exit 1
+          }
+
       - name: Dart and Flutter Package Publisher
+        uses: k-paxian/dart-package-publisher@v1.6
+        with:
+          accessToken: ${{ secrets.OAUTH_ACCESS_TOKEN }}
+          refreshToken: ${{ secrets.OAUTH_REFRESH_TOKEN }}
+          relativePath: ${{ matrix.pkg }}
+          flutter: true
+          skipTests: true
+          suppressBuildRunner: true
+
+  publish-core:
+    if: ${{ github.event_name == 'push' && github.ref_type == 'tag' && startsWith(github.ref_name, 'v') }}
+    runs-on: ubuntu-latest
+    needs:
+      - build
+      - verify-mongo
+      - verify-engine-compliance
+      - verify-example-generator
+      - verify-http
+      - verify-firebase-compliance
+      - verify-firestore-compliance
+    strategy:
+      matrix:
+        pkg: [dorm_framework, dorm_annotations]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: subosito/flutter-action@v2
+
+      - name: Install workspace dependencies
+        run: dart pub get
+
+      - name: Verify release tag matches package version
+        shell: bash
+        run: |
+          expected="${GITHUB_REF_NAME#v}"
+          actual="$(sed -n 's/^version:[[:space:]]*//p' "${{ matrix.pkg }}/pubspec.yaml" | head -n 1)"
+          test "$actual" = "$expected" || {
+            echo "${{ matrix.pkg }} declares $actual, but the release tag is $expected."
+            exit 1
+          }
+
+      - name: Prepare package for publishing
+        run: dart run tool/prepare_package.dart --package ${{ matrix.pkg }}
+
+      - name: Publish to pub.dev
         uses: k-paxian/dart-package-publisher@v1.6
         with:
           accessToken: ${{ secrets.OAUTH_ACCESS_TOKEN }}
