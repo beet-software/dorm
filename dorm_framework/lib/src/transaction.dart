@@ -26,7 +26,8 @@ import 'read_options.dart';
 abstract interface class TransactionalEngine<
   Q extends BaseQuery<Q>,
   P extends PageRequest
-> implements BaseEngine<Q, P> {
+>
+    implements BaseEngine<Q, P> {
   /// Runs [action] inside one transaction context.
   Future<T> transaction<T>(Future<T> Function(BaseEngine<Q, P> engine) action);
 }

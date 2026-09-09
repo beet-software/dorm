@@ -565,7 +565,8 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
       final List<Model> models = [];
       for (final C creation in creations) {
         if (creation case AutoCreation<Data, I>()) {
-          if (entity.identityGeneration == IdentityGenerationStrategy.database) {
+          if (entity.identityGeneration ==
+              IdentityGenerationStrategy.database) {
             final Result result = await _insert(
               entity,
               creation.data,
