@@ -69,7 +69,11 @@ DateTime _endOf(DateTime value, DateFilterUnit unit) {
   };
 }
 
-class Query implements BaseQuery<Query> {
+class Query
+    implements
+        ComparisonQuery<Query>,
+        LogicalQuery<Query>,
+        NegationQuery<Query> {
   final String query;
   final Map<String, Object?> params;
   final EntitySchema? schema;
@@ -109,10 +113,107 @@ class Query implements BaseQuery<Query> {
 
   String _parameterName(int offset) => 'p${_nextParameter + offset}';
 
+  Query _filterQuery(BaseFilter filter) {
+    return filter.accept(
+          Query(
+            '',
+            params: params,
+            schema: schema,
+            nextParameter: _nextParameter,
+          ),
+        )
+        as Query;
+  }
+
+  String _filterExpression(Query query) {
+    final int where = query.query.indexOf(' WHERE ');
+    if (where < 0) return 'TRUE';
+    return query.query.substring(where + ' WHERE '.length);
+  }
+
+  Map<String, Object?> _newParameters(Query query) {
+    return Map<String, Object?>.fromEntries(
+      query.params.entries.where((entry) => !params.containsKey(entry.key)),
+    );
+  }
+
   @override
   Query whereValue(String key, Object? value) {
     final String name = _parameterName(0);
     return _append('${_field(key)} = @$name', {name: value});
+  }
+
+  @override
+  Query whereComparison(
+    String key,
+    FilterComparisonOperator operator,
+    Object? value,
+  ) {
+    final String name = _parameterName(0);
+    final String symbol = switch (operator) {
+      FilterComparisonOperator.notEqual => '<>',
+      FilterComparisonOperator.lessThan => '<',
+      FilterComparisonOperator.lessThanOrEqual => '<=',
+      FilterComparisonOperator.greaterThan => '>',
+      FilterComparisonOperator.greaterThanOrEqual => '>=',
+    };
+    return _append('${_field(key)} $symbol @$name', {name: value});
+  }
+
+  @override
+  Query whereSet(
+    String key,
+    Iterable<Object?> values, {
+    required bool negated,
+  }) {
+    final List<Object?> list = values.toList(growable: false);
+    if (list.isEmpty) return _append(negated ? 'TRUE' : 'FALSE', const {});
+    final Map<String, Object?> params = <String, Object?>{};
+    final List<String> names = <String>[];
+    for (int index = 0; index < list.length; index++) {
+      final String name = _parameterName(index);
+      names.add('@$name');
+      params[name] = list[index];
+    }
+    return _append(
+      '${_field(key)} ${negated ? 'NOT ' : ''}IN (${names.join(', ')})',
+      params,
+    );
+  }
+
+  @override
+  Query whereNull(String key, {required bool isNull}) {
+    return _append('${_field(key)} IS ${isNull ? '' : 'NOT '}NULL', const {});
+  }
+
+  @override
+  Query whereAll(Iterable<BaseFilter> filters) {
+    Query result = this;
+    for (final BaseFilter filter in filters) {
+      result = filter.accept(result) as Query;
+    }
+    return result;
+  }
+
+  @override
+  Query whereAny(Iterable<BaseFilter> filters) {
+    final List<Query> queries = filters
+        .map(_filterQuery)
+        .toList(growable: false);
+    if (queries.isEmpty) return _append('FALSE', const {});
+    final Map<String, Object?> values = <String, Object?>{};
+    final List<String> expressions = <String>[];
+    for (final Query child in queries) {
+      expressions.add('(${_filterExpression(child)})');
+      values.addAll(_newParameters(child));
+    }
+    return _append(expressions.join(' OR '), values);
+  }
+
+  @override
+  Query whereNot(BaseFilter filter) {
+    final Query child = _filterQuery(filter);
+    return _append('NOT (${_filterExpression(child)})', _newParameters(child));
   }
 
   @override

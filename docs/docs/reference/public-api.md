@@ -127,6 +127,14 @@ Common filter factories include:
 | `Filter.numericRange(...)` | Numeric bounds. |
 | `Filter.date(...)` | Date comparison at a `DateFilterUnit`. |
 | `Filter.dateRange(...)` | Date bounds. |
+| `Filter.notEqual(...)` | Scalar inequality. |
+| `Filter.lessThan(...)`, `lessThanOrEqual(...)` | Open or inclusive lower bound. |
+| `Filter.greaterThan(...)`, `greaterThanOrEqual(...)` | Open or inclusive upper bound. |
+| `Filter.inValues(...)`, `notInValues(...)` | Set membership or exclusion. |
+| `Filter.isNull(...)`, `isNotNull(...)` | Null checks. |
+| `Filter.allOf(...)`, `anyOf(...)` | Conjunction or disjunction of filters. |
+| `Filter.not(...)` | Negated filter. |
+| `Filter.contains(...)`, `containsAny(...)` | Membership in a persisted collection. |
 
 All filter factories except `Filter.empty()` require a `FieldSchema` through
 their `field:` parameter. `OrderBy` receives a `FieldSchema` as its first
@@ -141,6 +149,22 @@ OrderBy(UserEntity.fields.createdAt);
 ordering, read windows, and offset-page metadata. See [Using filters](../build-the-store/using-filters.md),
 [Using sorting](../build-the-store/using-sorting.md), and
 [Using pagination](../build-the-store/using-pagination.md).
+
+The additional factories are capability-based. Their generic bounds require
+the concrete query to implement `ComparisonQuery`, `LogicalQuery`,
+`NegationQuery`, or `CollectionQuery` as appropriate. Basic filters remain
+available through `BaseQuery` on every engine. Use the engine capability
+reference before relying on an additional operator when the storage backend
+may change.
+
+`FilterComparisonOperator` is the framework enum used by
+`ComparisonQuery.whereComparison`; its values are `notEqual`, `lessThan`,
+`lessThanOrEqual`, `greaterThan`, and `greaterThanOrEqual`.
+
+`BaseQuery<Q>` remains the low-level engine contract and receives resolved
+persisted field names as strings. The structured application API receives
+`FieldSchema` so that generated or manually declared field metadata resolves
+the storage name before query construction.
 
 `DerivedField` is declared on a static callback. The callback name uses the
 `$dorm$derived$` prefix, and the generated suffix identifies the query field.

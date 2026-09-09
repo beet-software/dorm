@@ -63,3 +63,52 @@ abstract class BaseQuery<Q extends BaseQuery<Q>> {
   /// From previous queries, sorts the query by the field [key].
   Q sorted(String key, {bool ascending = true});
 }
+
+/// Operators for scalar comparisons supported by an extended query.
+enum FilterComparisonOperator {
+  notEqual,
+  lessThan,
+  lessThanOrEqual,
+  greaterThan,
+  greaterThanOrEqual,
+}
+
+/// A query that can execute scalar comparisons and set membership filters.
+///
+/// This is an optional capability. Engines that do not implement this
+/// interface intentionally do not expose the corresponding [BaseFilter]
+/// factories through their concrete query type.
+abstract interface class ComparisonQuery<Q extends ComparisonQuery<Q>>
+    implements BaseQuery<Q> {
+  Q whereComparison(
+    String key,
+    FilterComparisonOperator operator,
+    Object? value,
+  );
+
+  Q whereSet(String key, Iterable<Object?> values, {required bool negated});
+
+  Q whereNull(String key, {required bool isNull});
+}
+
+/// A query that can combine filters with boolean conjunction or disjunction.
+abstract interface class LogicalQuery<Q extends LogicalQuery<Q>>
+    implements BaseQuery<Q> {
+  Q whereAll(Iterable<BaseFilter> filters);
+
+  Q whereAny(Iterable<BaseFilter> filters);
+}
+
+/// A query that can negate a filter expression.
+abstract interface class NegationQuery<Q extends NegationQuery<Q>>
+    implements BaseQuery<Q> {
+  Q whereNot(BaseFilter filter);
+}
+
+/// A query that can test values inside persisted collections.
+abstract interface class CollectionQuery<Q extends CollectionQuery<Q>>
+    implements BaseQuery<Q> {
+  Q whereContains(String key, Object? value);
+
+  Q whereContainsAny(String key, Iterable<Object?> values);
+}

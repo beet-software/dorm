@@ -26,6 +26,9 @@ class _SqliteSession implements TransactionalEngineTestSession<Query> {
     atomicBatchWrites: true,
     atomicPatch: true,
     transactions: true,
+    comparisonFilters: true,
+    logicalFilters: true,
+    negationFilters: true,
   );
 
   @override
@@ -77,5 +80,8 @@ class _SqliteAdapter implements TransactionalEngineTestAdapter<Query> {
 
 void main() {
   defineEngineComplianceTests(_SqliteAdapter());
+  defineEngineComparisonFilterTests(_SqliteAdapter());
+  defineEngineLogicalFilterTests(_SqliteAdapter());
+  defineEngineNegationFilterTests(_SqliteAdapter());
   defineEngineTransactionComplianceTests(_SqliteAdapter());
 }

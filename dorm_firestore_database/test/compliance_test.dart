@@ -61,6 +61,9 @@ class _FirestoreSession implements EngineTestSession<Query> {
     reactiveStreams: true,
     atomicBatchWrites: true,
     atomicPatch: true,
+    comparisonFilters: true,
+    logicalFilters: true,
+    collectionFilters: true,
   );
 
   @override
@@ -93,4 +96,6 @@ void main() {
     return;
   }
   defineEngineComplianceTests(_FirestoreAdapter());
+  defineEngineComparisonFilterTests(_FirestoreAdapter());
+  defineEngineLogicalFilterTests(_FirestoreAdapter());
 }

@@ -635,7 +635,33 @@ void main(Repository<SchoolData, School> repository) async {
 }
 ```
 
-The argument passed to `key` should match the serialization field name.
+Pass the generated or manually declared `FieldSchema` for the field. Its
+`columnName` is resolved before the engine builds the query.
+
+#### Comparisons and composition
+
+The common filter set also includes text-prefix and date/range filters. Query
+implementations may expose additional typed capabilities for comparisons,
+set-membership and null checks, `allOf`/`anyOf` composition, `not`, and
+collection membership:
+
+```dart
+final BaseFilter<Query> affordable = BaseFilter.lessThan<Query>(
+  25,
+  field: ProductEntity.fields.price,
+);
+
+final BaseFilter<Query> available = BaseFilter.allOf<Query>([
+  affordable,
+  BaseFilter.isNotNull<Query>(field: ProductEntity.fields.name),
+]);
+```
+
+These factories require the concrete query to implement the corresponding
+capability interface. An engine that does not advertise a capability does not
+fall back to downloading and filtering the full collection in Dart. `text`
+continues to mean prefix matching, while `contains` is reserved for persisted
+collection values.
 
 #### By text
 

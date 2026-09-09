@@ -126,15 +126,49 @@ Q sorted(String key, {bool ascending = true});
 The concrete query determines how these operations become in-memory
 predicates, Firebase query clauses, or SQL.
 
+Optional query capabilities extend `BaseQuery` without changing the portable
+contract:
+
+```dart
+abstract interface class ComparisonQuery<Q extends ComparisonQuery<Q>>
+    implements BaseQuery<Q> {
+  Q whereComparison(String key, FilterComparisonOperator operator, Object? value);
+  Q whereSet(String key, Iterable<Object?> values, {required bool negated});
+  Q whereNull(String key, {required bool isNull});
+}
+
+abstract interface class LogicalQuery<Q extends LogicalQuery<Q>>
+    implements BaseQuery<Q> {
+  Q whereAll(Iterable<BaseFilter> filters);
+  Q whereAny(Iterable<BaseFilter> filters);
+}
+```
+
+`NegationQuery` and `CollectionQuery` provide the corresponding `whereNot`,
+`whereContains`, and `whereContainsAny` operations. A query advertises a
+capability by implementing the interface; the structured filter factories use
+the same generic bound. This keeps unsupported operations from being silently
+translated into a different query.
+
 ### BaseFilter<Q>
 
 A filter applies a condition or modifier through Q accept(Q query).
 Factories cover empty, value, text, text-range, numeric-range, date, and
-date-range filters. QueryOptions applies OrderBy, limit, and offset to a
-query. PageRequest describes an offset or cursor page, and Page contains the
-returned items and continuation metadata. Current engine contracts use
-`OffsetPageRequest` as `P`. A `CursorPageRequest` passed through a statically
-typed current engine repository is rejected by the analyzer.
+date-range filters. Capability-based factories add scalar comparisons, set
+membership, null checks, collection membership, and `allOf`, `anyOf`, and
+`not` composition. `allOf([])` is the empty filter; `anyOf([])` throws
+`ArgumentError`.
+
+QueryOptions applies OrderBy, limit, and offset to a query. PageRequest
+describes an offset or cursor page, and Page contains the returned items and
+continuation metadata. Current engine contracts use `OffsetPageRequest` as
+`P`. A `CursorPageRequest` passed through a statically typed current engine
+repository is rejected by the analyzer.
+
+Values remain structured parameters passed to the engine. The framework does
+not define regex, full-text, aggregation, geospatial, JSON-path, or arbitrary
+backend-selector filters, and it does not fall back to client-side filtering
+when an engine cannot translate a supported capability.
 
 Structured filters require a `FieldSchema` and resolve its `columnName` before
 calling `BaseQuery`. `OrderBy` also requires a `FieldSchema`. The `BaseQuery`

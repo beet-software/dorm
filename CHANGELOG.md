@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `sort` extension method to `Filter`
+- Typed comparison, set-membership, null, logical, negation, and collection
+  filter capabilities for engines that implement them.
 - Optional portable transactions through `TransactionalEngine` and the
   generated `TransactionalDorm` facade for Memory, BLoC, MySQL, and PostgreSQL.
 
@@ -24,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   now receives a `FieldSchema` instead of a persisted-name string. This is a
   breaking change; low-level `BaseQuery` methods continue to receive resolved
   string names.
+- Advanced filter factories are capability-based. `ComparisonQuery`,
+  `LogicalQuery`, `NegationQuery`, and `CollectionQuery` are optional query
+  contracts; engines that do not implement a capability do not accept its
+  corresponding filter factories.
 - `DerivedField` now uses a static `$dorm$derived$<name>` callback. The
   token-based `DerivedToken` and `DerivedTransform` API, `referTo`, and
   `joinBy` were removed. This is a breaking change.

@@ -77,12 +77,20 @@ same application role.
 | External server required | No | No | Firebase project or emulator | Firebase project or emulator | Yes | Yes | Yes | HTTP API | No |
 | Streams | State-backed | State-backed | Firebase value events | Firestore snapshots | Initial read only | Initial read only | Initial read only | Initial read only | SQLite table watches |
 | Filter execution | In memory | In memory | Firebase query | Firestore query | SQL query | PostgreSQL SQL query | MongoDB selector | URL parameters | SQLite SQL query |
+| Comparisons and set membership | Yes | Yes | Basic filters only | Where supported by Firestore | Yes | Yes | Yes | Not declared | Yes |
+| `allOf` / `anyOf` | Yes | Yes | No | Where supported by Firestore | Yes | Yes | Yes | Not declared | Yes |
+| `not` | Yes | Yes | No | No general support | Yes | Yes | Yes | Not declared | Yes |
+| Collection membership | Yes | Yes | No | Where supported by Firestore | No | No | Yes | Not declared | No |
 | Public transaction API | Yes | Yes | No | No | Yes | Yes | No | No | Yes |
 | Pagination | Offset pages | Offset pages | Offset pages with client-side skipping | Offset pages with client-side skipping | Offset pages | Offset pages | Offset pages | Offset pages | Offset pages |
 | Composite creation | Explicit identity required | Explicit identity required | Unsupported | Unsupported | Explicit identity required | Explicit identity required | Explicit identity required | Explicit identity required | Explicit identity required |
 
 This table describes current engine behavior. It does not promise that future
 versions will preserve every backend capability or limitation.
+
+The additional filter rows describe typed query capabilities, not client-side
+fallbacks. A `No` entry means the engine does not advertise that capability;
+the repository will not download a larger result set to imitate it.
 
 ## Continue with the engine page
 

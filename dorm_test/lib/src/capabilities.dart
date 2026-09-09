@@ -7,6 +7,10 @@ class EngineCapabilities {
     this.atomicBatchWrites = false,
     this.atomicPatch = false,
     this.transactions = false,
+    this.comparisonFilters = false,
+    this.logicalFilters = false,
+    this.negationFilters = false,
+    this.collectionFilters = false,
   });
 
   /// Whether explicit composite identities are supported by the engine.
@@ -24,4 +28,17 @@ class EngineCapabilities {
 
   /// Whether the engine exposes the portable multi-operation transaction API.
   final bool transactions;
+
+  /// Whether scalar comparisons, set membership, and null filters are
+  /// supported by the engine query.
+  final bool comparisonFilters;
+
+  /// Whether the engine supports all-of and any-of filter composition.
+  final bool logicalFilters;
+
+  /// Whether the engine supports negating a filter expression.
+  final bool negationFilters;
+
+  /// Whether the engine supports filters over persisted collections.
+  final bool collectionFilters;
 }

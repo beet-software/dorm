@@ -50,6 +50,16 @@ and [Create records](../build-the-store/creating.md).
 | Repository | Application-facing object that delegates CRUD, filtering, and stream operations to a reference. |
 | Query | Engine-specific query value implementing BaseQuery. |
 | Filter | BaseFilter value that applies a condition or modifier to a Query. |
+| Filter capability | Optional query interface that makes an additional filter family available to a concrete engine query. |
+| ComparisonQuery | Optional capability for scalar comparisons, set membership, and null checks. |
+| LogicalQuery | Optional capability for `allOf` and `anyOf` filter composition. |
+| NegationQuery | Optional capability for negating one filter with `not`. |
+| CollectionQuery | Optional capability for `contains` and `containsAny` on persisted collections. |
+| FilterExpression | Framework representation of a filter's resolved field name, values, and composition structure. |
+| `allOf` | Filter composition requiring every child filter to match; an empty list is the empty filter. |
+| `anyOf` | Filter composition requiring at least one child filter to match; an empty list is invalid. |
+| `not` | Filter composition that negates one child filter when the query supports `NegationQuery`. |
+| `contains` | Collection-membership filter; it does not mean text substring search. |
 | RelationSource | Readable source used by relationship associations. |
 | RelationPlan | Metadata describing how an association source can be read and decoded. |
 | RelationPath | Lazy generated chain of relationship steps. |

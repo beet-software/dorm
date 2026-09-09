@@ -375,6 +375,161 @@ void defineEngineComplianceTests<Q extends BaseQuery<Q>>(
   });
 }
 
+/// Registers scalar, set, and null-filter conformance tests.
+void defineEngineComparisonFilterTests<Q extends ComparisonQuery<Q>>(
+  EngineTestAdapter<Q> adapter,
+) {
+  group('${adapter.name} comparison filters', () {
+    late EngineTestSession<Q> session;
+    EngineTestSession<Q>? openedSession;
+
+    setUp(() async {
+      openedSession = await adapter.open();
+      session = openedSession!;
+      if (!session.capabilities.comparisonFilters) {
+        markTestSkipped(
+          'Comparison filters are not supported by this session.',
+        );
+      }
+      await session.reset();
+    });
+
+    tearDown(() async {
+      await openedSession?.close();
+      openedSession = null;
+    });
+
+    test('supports comparisons, sets, and null checks', () async {
+      final ComplianceFixtures<Q> fixtures = ComplianceFixtures(session.engine);
+      final repository = fixtures.items.repository;
+      await repository.pushAll(const [
+        ComplianceItem(id: 'low', name: 'low', value: 1, active: true),
+        ComplianceItem(id: 'high', name: 'high', value: 10, active: false),
+      ]);
+
+      expect(
+        (await repository.peekAll(
+          BaseFilter.greaterThan<Q>(2, field: _valueField),
+        )).map((model) => model.id),
+        ['high'],
+      );
+      expect(
+        (await repository.peekAll(
+          BaseFilter.inValues<Q>(const [1], field: _valueField),
+        )).map((model) => model.id),
+        ['low'],
+      );
+      expect(
+        (await repository.peekAll(
+          BaseFilter.isNotNull<Q>(field: _nameField),
+        )).map((model) => model.id),
+        containsAll(['low', 'high']),
+      );
+    });
+  });
+}
+
+/// Registers boolean-composition conformance tests.
+void defineEngineLogicalFilterTests<Q extends LogicalQuery<Q>>(
+  EngineTestAdapter<Q> adapter,
+) {
+  group('${adapter.name} logical filters', () {
+    late EngineTestSession<Q> session;
+    EngineTestSession<Q>? openedSession;
+
+    setUp(() async {
+      openedSession = await adapter.open();
+      session = openedSession!;
+      if (!session.capabilities.logicalFilters) {
+        markTestSkipped('Logical filters are not supported by this session.');
+      }
+      await session.reset();
+    });
+
+    tearDown(() async {
+      await openedSession?.close();
+      openedSession = null;
+    });
+
+    test('supports allOf and anyOf', () async {
+      final ComplianceFixtures<Q> fixtures = ComplianceFixtures(session.engine);
+      final repository = fixtures.items.repository;
+      await repository.pushAll(const [
+        ComplianceItem(id: 'a', name: 'alpha', value: 1, active: true),
+        ComplianceItem(id: 'b', name: 'beta', value: 2, active: false),
+        ComplianceItem(id: 'c', name: 'charlie', value: 3, active: true),
+      ]);
+
+      final BaseFilter<Q> active = BaseFilter<Q>.value(
+        true,
+        field: _activeField,
+      );
+      final BaseFilter<Q> named = BaseFilter<Q>.text('al', field: _nameField);
+      expect(
+        (await repository.peekAll(
+          BaseFilter.allOf<Q>([active, named]),
+        )).map((model) => model.id),
+        ['a'],
+      );
+      expect(
+        (await repository.peekAll(
+          BaseFilter.anyOf<Q>([active, named]),
+        )).map((model) => model.id),
+        containsAll(['a', 'c']),
+      );
+    });
+  });
+}
+
+/// Registers negation conformance tests.
+void defineEngineNegationFilterTests<Q extends NegationQuery<Q>>(
+  EngineTestAdapter<Q> adapter,
+) {
+  group('${adapter.name} negation filters', () {
+    late EngineTestSession<Q> session;
+    EngineTestSession<Q>? openedSession;
+
+    setUp(() async {
+      openedSession = await adapter.open();
+      session = openedSession!;
+      if (!session.capabilities.negationFilters) {
+        markTestSkipped('Negation filters are not supported by this session.');
+      }
+      await session.reset();
+    });
+
+    tearDown(() async {
+      await openedSession?.close();
+      openedSession = null;
+    });
+
+    test('supports not', () async {
+      final ComplianceFixtures<Q> fixtures = ComplianceFixtures(session.engine);
+      final repository = fixtures.items.repository;
+      await repository.pushAll(const [
+        ComplianceItem(id: 'active', name: 'active', value: 1, active: true),
+        ComplianceItem(
+          id: 'inactive',
+          name: 'inactive',
+          value: 2,
+          active: false,
+        ),
+      ]);
+
+      final BaseFilter<Q> active = BaseFilter<Q>.value(
+        true,
+        field: _activeField,
+      );
+      expect(
+        (await repository.peekAll(
+          BaseFilter.not<Q>(active),
+        )).map((model) => model.id),
+        ['inactive'],
+      );
+    });
+  });
+}
+
 /// Registers the optional portable transaction conformance tests.
 void defineEngineTransactionComplianceTests<Q extends BaseQuery<Q>>(
   TransactionalEngineTestAdapter<Q> adapter,

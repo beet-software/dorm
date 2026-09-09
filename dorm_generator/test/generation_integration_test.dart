@@ -248,6 +248,77 @@ Future<User> createUser() async {
         );
 
         await File(
+          '${lib.path}${Platform.pathSeparator}invalid_advanced_filter.dart',
+        ).writeAsString('''
+import 'package:dorm_framework/dorm_framework.dart';
+
+class _BasicQuery implements BaseQuery<_BasicQuery> {
+  @override
+  _BasicQuery whereValue(String key, Object? value) => this;
+
+  @override
+  _BasicQuery whereText(String key, String prefix) => this;
+
+  @override
+  _BasicQuery whereDate(String key, DateTime date, DateFilterUnit unit) => this;
+
+  @override
+  _BasicQuery whereRange<R>(String key, FilterRange<R> range) => this;
+
+  @override
+  _BasicQuery limit(int count) => this;
+
+  @override
+  _BasicQuery offset(int count) => this;
+
+  @override
+  _BasicQuery sorted(String key, {bool ascending = true}) => this;
+}
+
+BaseFilter<_BasicQuery> invalidFilter() {
+  return BaseFilter.anyOf<_BasicQuery>(const [BaseFilter.empty()]);
+}
+
+BaseFilter<_BasicQuery> invalidNegation() {
+  return BaseFilter.not<_BasicQuery>(const BaseFilter.empty());
+}
+
+BaseFilter<_BasicQuery> invalidCollection() {
+  return BaseFilter.contains<_BasicQuery>(
+    'value',
+    field: const FieldSchema(fieldName: 'values', columnName: 'values'),
+  );
+}
+
+BaseFilter<_BasicQuery> invalidComparison() {
+  return BaseFilter.greaterThan<_BasicQuery>(
+    1,
+    field: const FieldSchema(fieldName: 'value', columnName: 'value'),
+  );
+}
+''');
+        final ProcessResult invalidFilterAnalysis = await _runDart(project, [
+          'analyze',
+        ]);
+        expect(invalidFilterAnalysis.exitCode, isNot(0));
+        expect(
+          '${invalidFilterAnalysis.stdout}\n${invalidFilterAnalysis.stderr}',
+          contains('LogicalQuery'),
+        );
+        expect(
+          '${invalidFilterAnalysis.stdout}\n${invalidFilterAnalysis.stderr}',
+          contains('NegationQuery'),
+        );
+        expect(
+          '${invalidFilterAnalysis.stdout}\n${invalidFilterAnalysis.stderr}',
+          contains('CollectionQuery'),
+        );
+        expect(
+          '${invalidFilterAnalysis.stdout}\n${invalidFilterAnalysis.stderr}',
+          contains('ComparisonQuery'),
+        );
+
+        await File(
           '${lib.path}${Platform.pathSeparator}invalid_transaction.dart',
         ).writeAsString('''
 import 'package:dorm_bloc_database/dorm_bloc_database.dart' as dorm_bloc;

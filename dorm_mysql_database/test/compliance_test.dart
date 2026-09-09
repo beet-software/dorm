@@ -85,8 +85,13 @@ class _MySqlSession implements TransactionalEngineTestSession<Query> {
       _engine;
 
   @override
-  EngineCapabilities get capabilities =>
-      const EngineCapabilities(compositeIdentities: true, transactions: true);
+  EngineCapabilities get capabilities => const EngineCapabilities(
+    compositeIdentities: true,
+    transactions: true,
+    comparisonFilters: true,
+    logicalFilters: true,
+    negationFilters: true,
+  );
 
   @override
   Future<void> reset() async {
@@ -155,5 +160,8 @@ void main() {
     return;
   }
   defineEngineComplianceTests(_MySqlAdapter(config));
+  defineEngineComparisonFilterTests(_MySqlAdapter(config));
+  defineEngineLogicalFilterTests(_MySqlAdapter(config));
+  defineEngineNegationFilterTests(_MySqlAdapter(config));
   defineEngineTransactionComplianceTests(_MySqlAdapter(config));
 }

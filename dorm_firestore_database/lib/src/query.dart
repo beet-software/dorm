@@ -12,14 +12,205 @@ import 'package:dorm_framework/dorm_framework.dart';
 import 'helpers.dart';
 
 /// A [BaseQuery] backed by a Cloud Firestore query.
-class Query implements BaseQuery<Query> {
+class Query
+    implements
+        ComparisonQuery<Query>,
+        LogicalQuery<Query>,
+        CollectionQuery<Query> {
   final fs.Query<Map<String, dynamic>> query;
 
   const Query(this.query);
 
+  fs.Filter _and(Iterable<fs.Filter> filters) {
+    final List<fs.Filter> values = filters.toList(growable: false);
+    if (values.isEmpty) {
+      throw ArgumentError.value(
+        filters,
+        'filters',
+        'At least one filter is required.',
+      );
+    }
+    fs.Filter result = values.first;
+    for (final fs.Filter filter in values.skip(1)) {
+      result = fs.Filter.and(result, filter);
+    }
+    return result;
+  }
+
+  fs.Filter _or(Iterable<fs.Filter> filters) {
+    final List<fs.Filter> values = filters.toList(growable: false);
+    if (values.isEmpty) {
+      throw ArgumentError.value(
+        filters,
+        'filters',
+        'At least one filter is required.',
+      );
+    }
+    fs.Filter result = values.first;
+    for (final fs.Filter filter in values.skip(1)) {
+      result = fs.Filter.or(result, filter);
+    }
+    return result;
+  }
+
+  fs.Filter? _toFilter(FilterExpression expression) {
+    return switch (expression) {
+      EmptyFilterExpression() => null,
+      ValueFilterExpression(:final field, :final value) => fs.Filter(
+        field,
+        isEqualTo: value,
+      ),
+      TextFilterExpression(:final field, :final prefix) => _and([
+        fs.Filter(field, isGreaterThanOrEqualTo: prefix),
+        fs.Filter(field, isLessThan: '$prefix\uf8ff'),
+      ]),
+      DateFilterExpression(:final field, :final value, :final unit) =>
+        _toFilter(
+          TextFilterExpression(field, firestoreDatePrefix(value, unit)),
+        ),
+      RangeFilterExpression(:final field, :final range) => _rangeFilter(
+        field,
+        range,
+      ),
+      ComparisonFilterExpression(:final field, :final operator, :final value) =>
+        _comparisonFilter(field, operator, value),
+      SetFilterExpression(:final field, :final values, :final negated) =>
+        fs.Filter(
+          field,
+          whereIn: negated ? null : values,
+          whereNotIn: negated ? values : null,
+        ),
+      NullFilterExpression(:final field, :final isNull) => fs.Filter(
+        field,
+        isNull: isNull,
+      ),
+      ContainsFilterExpression(:final field, :final value) => fs.Filter(
+        field,
+        arrayContains: value,
+      ),
+      ContainsAnyFilterExpression(:final field, :final values) => fs.Filter(
+        field,
+        arrayContainsAny: values,
+      ),
+      AllFilterExpression(:final filters) => _and(
+        filters.map(_toFilter).whereType<fs.Filter>(),
+      ),
+      AnyFilterExpression(:final filters) => _or(
+        filters.map(_toFilter).whereType<fs.Filter>(),
+      ),
+      NotFilterExpression() => throw UnsupportedError(
+        'Cloud Firestore does not expose arbitrary filter negation.',
+      ),
+    };
+  }
+
+  fs.Filter _comparisonFilter(
+    String field,
+    FilterComparisonOperator operator,
+    Object? value,
+  ) => switch (operator) {
+    FilterComparisonOperator.notEqual => fs.Filter(field, isNotEqualTo: value),
+    FilterComparisonOperator.lessThan => fs.Filter(field, isLessThan: value),
+    FilterComparisonOperator.lessThanOrEqual => fs.Filter(
+      field,
+      isLessThanOrEqualTo: value,
+    ),
+    FilterComparisonOperator.greaterThan => fs.Filter(
+      field,
+      isGreaterThan: value,
+    ),
+    FilterComparisonOperator.greaterThanOrEqual => fs.Filter(
+      field,
+      isGreaterThanOrEqualTo: value,
+    ),
+  };
+
+  fs.Filter _rangeFilter<T>(String field, FilterRange<T> range) {
+    Object? from = range.from;
+    Object? to = range.to;
+    final DateFilterUnit? unit = range is DateFilterRange
+        ? (range as DateFilterRange).unit
+        : null;
+    if (from is DateTime && unit != null) {
+      from = firestoreDatePrefix(from, unit);
+    }
+    if (to is DateTime && unit != null) {
+      to = '${firestoreDatePrefix(to, unit)}\uf8ff';
+    }
+    final List<fs.Filter> filters = <fs.Filter>[];
+    if (from != null)
+      filters.add(fs.Filter(field, isGreaterThanOrEqualTo: from));
+    if (to != null) filters.add(fs.Filter(field, isLessThanOrEqualTo: to));
+    return _and(filters);
+  }
+
   @override
   Query whereValue(String key, Object? value) =>
       Query(query.where(key, isEqualTo: value));
+
+  @override
+  Query whereComparison(
+    String key,
+    FilterComparisonOperator operator,
+    Object? value,
+  ) => Query(query.where(_comparisonFilter(key, operator, value)));
+
+  @override
+  Query whereSet(
+    String key,
+    Iterable<Object?> values, {
+    required bool negated,
+  }) => Query(
+    query.where(
+      fs.Filter(
+        key,
+        whereIn: negated ? null : values,
+        whereNotIn: negated ? values : null,
+      ),
+    ),
+  );
+
+  @override
+  Query whereNull(String key, {required bool isNull}) =>
+      Query(query.where(fs.Filter(key, isNull: isNull)));
+
+  @override
+  Query whereAll(Iterable<BaseFilter> filters) {
+    final List<fs.Filter> expressions = filters
+        .map((filter) => _toFilter(filter.expression))
+        .whereType<fs.Filter>()
+        .toList(growable: false);
+    if (expressions.isEmpty) return this;
+    return Query(query.where(_and(expressions)));
+  }
+
+  @override
+  Query whereAny(Iterable<BaseFilter> filters) {
+    final List<BaseFilter> values = filters.toList(growable: false);
+    if (values.any((filter) => filter.expression is EmptyFilterExpression)) {
+      return this;
+    }
+    final List<fs.Filter> expressions = values
+        .map((filter) => _toFilter(filter.expression))
+        .whereType<fs.Filter>()
+        .toList(growable: false);
+    if (expressions.isEmpty) {
+      throw ArgumentError.value(
+        filters,
+        'filters',
+        'At least one filter is required.',
+      );
+    }
+    return Query(query.where(_or(expressions)));
+  }
+
+  @override
+  Query whereContains(String key, Object? value) =>
+      Query(query.where(key, arrayContains: value));
+
+  @override
+  Query whereContainsAny(String key, Iterable<Object?> values) =>
+      Query(query.where(key, arrayContainsAny: values));
 
   @override
   Query whereText(String key, String prefix) {

@@ -24,7 +24,12 @@ typedef TableOperator<I extends Object> =
 typedef RowPredicate = bool Function(TableRow row);
 
 /// An in-memory [BaseQuery] implementation.
-class Query<I extends Object> implements BaseQuery<Query<I>> {
+class Query<I extends Object>
+    implements
+        ComparisonQuery<Query<I>>,
+        LogicalQuery<Query<I>>,
+        NegationQuery<Query<I>>,
+        CollectionQuery<Query<I>> {
   static Map<I, TableRow> _defaultTableOperator<I extends Object>(
     Map<I, TableRow> rows,
   ) {
@@ -50,9 +55,102 @@ class Query<I extends Object> implements BaseQuery<Query<I>> {
     return Query<I>._((data) => operation(operator(data)));
   }
 
+  bool _compare(
+    Object? actual,
+    FilterComparisonOperator operator,
+    Object? expected,
+  ) {
+    if (operator == FilterComparisonOperator.notEqual) {
+      return actual != expected;
+    }
+    if (actual is! Comparable<Object?> || expected == null) return false;
+    final int result = actual.compareTo(expected);
+    return switch (operator) {
+      FilterComparisonOperator.lessThan => result < 0,
+      FilterComparisonOperator.lessThanOrEqual => result <= 0,
+      FilterComparisonOperator.greaterThan => result > 0,
+      FilterComparisonOperator.greaterThanOrEqual => result >= 0,
+      FilterComparisonOperator.notEqual => actual != expected,
+    };
+  }
+
   @override
   Query<I> whereValue(String key, Object? value) {
     return _where((row) => row[key] == value);
+  }
+
+  @override
+  Query<I> whereComparison(
+    String key,
+    FilterComparisonOperator operator,
+    Object? value,
+  ) => _where((row) => _compare(row[key], operator, value));
+
+  @override
+  Query<I> whereSet(
+    String key,
+    Iterable<Object?> values, {
+    required bool negated,
+  }) {
+    final List<Object?> candidates = values.toList(growable: false);
+    return _where((row) {
+      final bool contains = candidates.contains(row[key]);
+      return negated ? !contains : contains;
+    });
+  }
+
+  @override
+  Query<I> whereNull(String key, {required bool isNull}) {
+    return _where((row) => (row[key] == null) == isNull);
+  }
+
+  @override
+  Query<I> whereAll(Iterable<BaseFilter> filters) {
+    Query<I> result = this;
+    for (final BaseFilter filter in filters) {
+      result = filter.accept(result) as Query<I>;
+    }
+    return result;
+  }
+
+  @override
+  Query<I> whereAny(Iterable<BaseFilter> filters) {
+    final List<BaseFilter> values = filters.toList(growable: false);
+    return _operate((rows) {
+      final Map<I, TableRow> combined = <I, TableRow>{};
+      for (final BaseFilter filter in values) {
+        combined.addAll((filter.accept(Query<I>()) as Query<I>).operator(rows));
+      }
+      return combined;
+    });
+  }
+
+  @override
+  Query<I> whereNot(BaseFilter filter) {
+    return _operate((rows) {
+      final Map<I, TableRow> excluded = (filter.accept(Query<I>()) as Query<I>)
+          .operator(rows);
+      return {
+        for (final MapEntry<I, TableRow> entry in rows.entries)
+          if (!excluded.containsKey(entry.key)) entry.key: entry.value,
+      };
+    });
+  }
+
+  @override
+  Query<I> whereContains(String key, Object? value) {
+    return _where(
+      (row) => row[key] is Iterable && (row[key] as Iterable).contains(value),
+    );
+  }
+
+  @override
+  Query<I> whereContainsAny(String key, Iterable<Object?> values) {
+    final List<Object?> candidates = values.toList(growable: false);
+    return _where((row) {
+      final Object? actual = row[key];
+      return actual is Iterable && actual.any(candidates.contains);
+    });
   }
 
   @override

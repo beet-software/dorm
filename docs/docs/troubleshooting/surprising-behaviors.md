@@ -22,6 +22,28 @@ The common method name does not make every engine emit the same event sequence.
 See [Handle input and live reads](../quickstart/forms-and-live-reads.md) and
 the selected engine page before relying on later events.
 
+## Advanced filters can be rejected before execution
+
+The portable filter set is available across engines, but comparison, set,
+logical, negation, and collection filters are optional query capabilities. A
+generated repository preserves the concrete query type, so a filter whose
+generic bound is not implemented by that query produces an analyzer error.
+
+This is different from a backend rejecting a valid query at runtime. For
+example, Firestore may accept a logical expression only when its index and
+query rules allow it, while Firebase Realtime Database does not advertise
+general `allOf`, `anyOf`, or `not` composition. The HTTP engine exposes only
+the filter operations implemented by its current mapping surface.
+
+The engine does not download a larger result set to imitate an unsupported
+filter in Dart. Use a supported condition, change the persisted value used by
+the query, or make a separate local filtering step explicit in application
+code when its data volume and semantics are known.
+
+Remember that `Filter.text` is a prefix filter. It is not a substring search,
+regular expression, or full-text search. `Filter.contains` applies to a
+persisted collection and is not a text operator.
+
 ## Creation of composite identities is restricted by type
 
 Generated entities expose different creation types according to their primary

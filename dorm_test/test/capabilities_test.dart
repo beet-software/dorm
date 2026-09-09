@@ -10,13 +10,25 @@ void main() {
     expect(capabilities.atomicBatchWrites, isFalse);
     expect(capabilities.atomicPatch, isFalse);
     expect(capabilities.transactions, isFalse);
+    expect(capabilities.comparisonFilters, isFalse);
+    expect(capabilities.logicalFilters, isFalse);
+    expect(capabilities.negationFilters, isFalse);
+    expect(capabilities.collectionFilters, isFalse);
   });
 
   test('transaction capability can be declared', () {
     const EngineCapabilities capabilities = EngineCapabilities(
       transactions: true,
+      comparisonFilters: true,
+      logicalFilters: true,
+      negationFilters: true,
+      collectionFilters: true,
     );
 
     expect(capabilities.transactions, isTrue);
+    expect(capabilities.comparisonFilters, isTrue);
+    expect(capabilities.logicalFilters, isTrue);
+    expect(capabilities.negationFilters, isTrue);
+    expect(capabilities.collectionFilters, isTrue);
   });
 }

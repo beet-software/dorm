@@ -19,6 +19,10 @@ class _MemorySession implements TransactionalEngineTestSession<Query> {
     compositeIdentities: true,
     reactiveStreams: true,
     transactions: true,
+    comparisonFilters: true,
+    logicalFilters: true,
+    negationFilters: true,
+    collectionFilters: true,
   );
 
   @override
@@ -39,5 +43,8 @@ class _MemoryAdapter implements TransactionalEngineTestAdapter<Query> {
 
 void main() {
   defineEngineComplianceTests(_MemoryAdapter());
+  defineEngineComparisonFilterTests(_MemoryAdapter());
+  defineEngineLogicalFilterTests(_MemoryAdapter());
+  defineEngineNegationFilterTests(_MemoryAdapter());
   defineEngineTransactionComplianceTests(_MemoryAdapter());
 }

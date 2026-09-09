@@ -80,7 +80,12 @@ Map<String, Object?> _and(
   };
 }
 
-class Query implements BaseQuery<Query> {
+class Query
+    implements
+        ComparisonQuery<Query>,
+        LogicalQuery<Query>,
+        NegationQuery<Query>,
+        CollectionQuery<Query> {
   final Map<String, Object?> filter;
   final Map<String, Object> sort;
   final int offsetCount;
@@ -116,6 +121,15 @@ class Query implements BaseQuery<Query> {
     );
   }
 
+  Query _or(Iterable<Query> queries) {
+    final List<Map<String, Object?>> expressions = queries
+        .map((query) => query.filter)
+        .where((filter) => filter.isNotEmpty)
+        .toList(growable: false);
+    if (expressions.isEmpty) return this;
+    return _where({r'$or': expressions});
+  }
+
   Map<String, Object?> _fieldExpression(String key, Object? value) {
     return {_field(key): value};
   }
@@ -123,6 +137,82 @@ class Query implements BaseQuery<Query> {
   @override
   Query whereValue(String key, Object? value) {
     return _where(_fieldExpression(key, value));
+  }
+
+  @override
+  Query whereComparison(
+    String key,
+    FilterComparisonOperator operator,
+    Object? value,
+  ) {
+    final String name = _field(key);
+    final String symbol = switch (operator) {
+      FilterComparisonOperator.notEqual => r'$ne',
+      FilterComparisonOperator.lessThan => r'$lt',
+      FilterComparisonOperator.lessThanOrEqual => r'$lte',
+      FilterComparisonOperator.greaterThan => r'$gt',
+      FilterComparisonOperator.greaterThanOrEqual => r'$gte',
+    };
+    return _where({
+      name: {symbol: value},
+    });
+  }
+
+  @override
+  Query whereSet(
+    String key,
+    Iterable<Object?> values, {
+    required bool negated,
+  }) {
+    return _where({
+      _field(key): {negated ? r'$nin' : r'$in': values.toList()},
+    });
+  }
+
+  @override
+  Query whereNull(String key, {required bool isNull}) {
+    return _where({
+      _field(key): isNull ? null : {r'$ne': null},
+    });
+  }
+
+  @override
+  Query whereAll(Iterable<BaseFilter> filters) {
+    Query result = this;
+    for (final BaseFilter filter in filters) {
+      result = filter.accept(result) as Query;
+    }
+    return result;
+  }
+
+  @override
+  Query whereAny(Iterable<BaseFilter> filters) {
+    final Query empty = Query(schema: schema);
+    return _or(filters.map((filter) => filter.accept(empty) as Query));
+  }
+
+  @override
+  Query whereNot(BaseFilter filter) {
+    final Query empty = Query(schema: schema);
+    return _where({
+      r'$nor': [(filter.accept(empty) as Query).filter],
+    });
+  }
+
+  @override
+  Query whereContains(String key, Object? value) {
+    return _where({
+      _field(key): {
+        r'$elemMatch': {r'$eq': value},
+      },
+    });
+  }
+
+  @override
+  Query whereContainsAny(String key, Iterable<Object?> values) {
+    return _where({
+      _field(key): {r'$in': values.toList()},
+    });
   }
 
   @override

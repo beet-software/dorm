@@ -89,4 +89,46 @@ void main() {
   test('rejects negative limits', () {
     expect(() => const Query().limit(-1), throwsArgumentError);
   });
+
+  test('builds comparison, logical, negation, and collection selectors', () {
+    const FieldSchema value = FieldSchema(
+      fieldName: 'value',
+      columnName: 'value',
+    );
+    final Query any = BaseFilter.anyOf<Query>([
+      BaseFilter.greaterThan<Query>(10, field: value),
+      BaseFilter.inValues<Query>(const [1, 2], field: value),
+    ]).accept(const Query());
+    expect(any.filter, {
+      r'$or': [
+        {
+          'value': {r'$gt': 10},
+        },
+        {
+          'value': {
+            r'$in': [1, 2],
+          },
+        },
+      ],
+    });
+
+    final Query negated = BaseFilter.not<Query>(
+      BaseFilter.value(true, field: value),
+    ).accept(const Query());
+    expect(negated.filter, {
+      r'$nor': [
+        {'value': true},
+      ],
+    });
+
+    final Query collection = BaseFilter.containsAny<Query>(const [
+      'dart',
+      'sql',
+    ], field: value).accept(const Query());
+    expect(collection.filter, {
+      'value': {
+        r'$in': ['dart', 'sql'],
+      },
+    });
+  });
 }

@@ -84,8 +84,13 @@ class _PostgresSession implements TransactionalEngineTestSession<Query> {
       _engine;
 
   @override
-  EngineCapabilities get capabilities =>
-      const EngineCapabilities(compositeIdentities: true, transactions: true);
+  EngineCapabilities get capabilities => const EngineCapabilities(
+    compositeIdentities: true,
+    transactions: true,
+    comparisonFilters: true,
+    logicalFilters: true,
+    negationFilters: true,
+  );
 
   @override
   Future<void> reset() async {
@@ -153,5 +158,8 @@ void main() {
     return;
   }
   defineEngineComplianceTests(_PostgresAdapter(config));
+  defineEngineComparisonFilterTests(_PostgresAdapter(config));
+  defineEngineLogicalFilterTests(_PostgresAdapter(config));
+  defineEngineNegationFilterTests(_PostgresAdapter(config));
   defineEngineTransactionComplianceTests(_PostgresAdapter(config));
 }

@@ -38,6 +38,83 @@ class _Query extends BaseQuery<_Query> {
   _Query sorted(String key, {bool ascending = true}) => _record('sort:$key');
 }
 
+class _AdvancedQuery
+    implements
+        ComparisonQuery<_AdvancedQuery>,
+        LogicalQuery<_AdvancedQuery>,
+        NegationQuery<_AdvancedQuery>,
+        CollectionQuery<_AdvancedQuery> {
+  final List<String> operations;
+
+  _AdvancedQuery([this.operations = const []]);
+
+  _AdvancedQuery _advanced(String operation) =>
+      _AdvancedQuery([...operations, operation]);
+
+  @override
+  _AdvancedQuery whereValue(String key, Object? value) =>
+      _advanced('value:$key=$value');
+
+  @override
+  _AdvancedQuery whereText(String key, String prefix) =>
+      _advanced('text:$key=$prefix');
+
+  @override
+  _AdvancedQuery whereDate(String key, DateTime date, DateFilterUnit unit) =>
+      _advanced('date:$key=$date:${unit.name}');
+
+  @override
+  _AdvancedQuery whereRange<R>(String key, FilterRange<R> range) =>
+      _advanced('range:$key=${range.from}:${range.to}');
+
+  @override
+  _AdvancedQuery limit(int count) => _advanced('limit:$count');
+
+  @override
+  _AdvancedQuery offset(int count) => _advanced('offset:$count');
+
+  @override
+  _AdvancedQuery sorted(String key, {bool ascending = true}) =>
+      _advanced('sort:$key');
+
+  @override
+  _AdvancedQuery whereComparison(
+    String key,
+    FilterComparisonOperator operator,
+    Object? value,
+  ) => _advanced('comparison:$key:${operator.name}=$value');
+
+  @override
+  _AdvancedQuery whereSet(
+    String key,
+    Iterable<Object?> values, {
+    required bool negated,
+  }) => _advanced('set:$key:${values.join(',')}:$negated');
+
+  @override
+  _AdvancedQuery whereNull(String key, {required bool isNull}) =>
+      _advanced('null:$key=$isNull');
+
+  @override
+  _AdvancedQuery whereAll(Iterable<BaseFilter> filters) =>
+      _advanced('all:${filters.length}');
+
+  @override
+  _AdvancedQuery whereAny(Iterable<BaseFilter> filters) =>
+      _advanced('any:${filters.length}');
+
+  @override
+  _AdvancedQuery whereNot(BaseFilter filter) => _advanced('not');
+
+  @override
+  _AdvancedQuery whereContains(String key, Object? value) =>
+      _advanced('contains:$key=$value');
+
+  @override
+  _AdvancedQuery whereContainsAny(String key, Iterable<Object?> values) =>
+      _advanced('containsAny:$key=${values.join(',')}');
+}
+
 void main() {
   test('empty filter leaves the query unchanged', () {
     final _Query query = _Query();
@@ -150,4 +227,107 @@ void main() {
     expect(DateFilterUnit.second.access(date), 6);
     expect(DateFilterUnit.milliseconds.access(date), 7);
   });
+
+  test(
+    'comparison, set, null, and collection filters use query capabilities',
+    () {
+      const FieldSchema field = FieldSchema(
+        fieldName: 'status',
+        columnName: 'status',
+      );
+
+      final _AdvancedQuery query = BaseFilter.notEqual<_AdvancedQuery>(
+        'archived',
+        field: field,
+      ).accept(_AdvancedQuery());
+      expect(query.operations, ['comparison:status:notEqual=archived']);
+
+      final _AdvancedQuery setQuery = BaseFilter.inValues<_AdvancedQuery>(
+        const ['active', 'pending'],
+        field: field,
+      ).accept(_AdvancedQuery());
+      expect(setQuery.operations, ['set:status:active,pending:false']);
+
+      final _AdvancedQuery nullQuery = BaseFilter.isNull<_AdvancedQuery>(
+        field: field,
+      ).accept(_AdvancedQuery());
+      expect(nullQuery.operations, ['null:status=true']);
+
+      final _AdvancedQuery collectionQuery =
+          BaseFilter.contains<_AdvancedQuery>(
+            'dart',
+            field: field,
+          ).accept(_AdvancedQuery());
+      expect(collectionQuery.operations, ['contains:status=dart']);
+    },
+  );
+
+  test('logical filters preserve their child structure', () {
+    const FieldSchema field = FieldSchema(
+      fieldName: 'status',
+      columnName: 'status',
+    );
+    final BaseFilter<_AdvancedQuery> first = BaseFilter.value(
+      'active',
+      field: field,
+    );
+    final BaseFilter<_AdvancedQuery> second = BaseFilter.value(
+      'pending',
+      field: field,
+    );
+
+    expect(
+      BaseFilter.allOf<_AdvancedQuery>([
+        first,
+        second,
+      ]).accept(_AdvancedQuery()).operations,
+      ['all:2'],
+    );
+    expect(
+      BaseFilter.anyOf<_AdvancedQuery>([
+        first,
+        second,
+      ]).accept(_AdvancedQuery()).operations,
+      ['any:2'],
+    );
+    expect(
+      BaseFilter.not<_AdvancedQuery>(first).accept(_AdvancedQuery()).operations,
+      ['not'],
+    );
+  });
+
+  test('anyOf rejects an empty filter list', () {
+    expect(
+      () => BaseFilter.anyOf<_AdvancedQuery>(const []),
+      throwsArgumentError,
+    );
+  });
+
+  test(
+    'allOf empty is the identity filter and filters compare structurally',
+    () {
+      const FieldSchema field = FieldSchema(
+        fieldName: 'status',
+        columnName: 'status',
+      );
+      final BaseFilter<_AdvancedQuery> empty = BaseFilter.allOf<_AdvancedQuery>(
+        const [],
+      );
+      expect(empty.accept(_AdvancedQuery()).operations, isEmpty);
+
+      final BaseFilter<_AdvancedQuery> left =
+          BaseFilter.inValues<_AdvancedQuery>(const [
+            'active',
+            'pending',
+          ], field: field);
+      final BaseFilter<_AdvancedQuery> right =
+          BaseFilter.inValues<_AdvancedQuery>(const [
+            'active',
+            'pending',
+          ], field: field);
+      expect(left, right);
+      expect(left.hashCode, right.hashCode);
+      expect(left.expression, isA<SetFilterExpression>());
+    },
+  );
 }

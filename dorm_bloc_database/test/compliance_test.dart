@@ -19,6 +19,10 @@ class _BlocSession implements TransactionalEngineTestSession<Query> {
     compositeIdentities: true,
     reactiveStreams: true,
     transactions: true,
+    comparisonFilters: true,
+    logicalFilters: true,
+    negationFilters: true,
+    collectionFilters: true,
   );
 
   @override
@@ -38,5 +42,8 @@ class _BlocAdapter implements TransactionalEngineTestAdapter<Query> {
 
 void main() {
   defineEngineComplianceTests(_BlocAdapter());
+  defineEngineComparisonFilterTests(_BlocAdapter());
+  defineEngineLogicalFilterTests(_BlocAdapter());
+  defineEngineNegationFilterTests(_BlocAdapter());
   defineEngineTransactionComplianceTests(_BlocAdapter());
 }

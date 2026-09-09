@@ -41,8 +41,13 @@ class _MongoSession implements EngineTestSession<Query> {
   BaseEngine<Query, OffsetPageRequest> get engine => _engine;
 
   @override
-  EngineCapabilities get capabilities =>
-      const EngineCapabilities(compositeIdentities: true);
+  EngineCapabilities get capabilities => const EngineCapabilities(
+    compositeIdentities: true,
+    comparisonFilters: true,
+    logicalFilters: true,
+    negationFilters: true,
+    collectionFilters: true,
+  );
 
   @override
   Future<void> reset() async {
@@ -66,4 +71,7 @@ void main() {
     return;
   }
   defineEngineComplianceTests(_MongoAdapter(uri));
+  defineEngineComparisonFilterTests(_MongoAdapter(uri));
+  defineEngineLogicalFilterTests(_MongoAdapter(uri));
+  defineEngineNegationFilterTests(_MongoAdapter(uri));
 }

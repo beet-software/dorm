@@ -203,7 +203,10 @@ Basically,
    }
    ```
 
-   Implement every method inherited from `BaseQuery`.
+   Implement every method inherited from `BaseQuery`. Optional query
+   capabilities such as `ComparisonQuery`, `LogicalQuery`, `NegationQuery`,
+   and `CollectionQuery` can be implemented when the backend can translate
+   their operations without a client-side fallback.
 
 5. Inside *reference.dart*, add the following contents:
 

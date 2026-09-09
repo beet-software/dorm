@@ -106,6 +106,109 @@ The range classes correspond to the value being compared:
 The `from` and `to` values are nullable. A supplied bound limits that side of
 the range.
 
+## Compare values and test membership
+
+Use comparison filters when equality is not enough. The comparison names state
+whether the boundary is included:
+
+```dart
+final List<Product> products = await dorm.products.repository.peekAll(
+  Filter.greaterThanOrEqual<Query>(
+    10,
+    field: ProductEntity.fields.price,
+  ),
+);
+```
+
+`lessThan` and `greaterThan` are open comparisons. `lessThanOrEqual` and
+`greaterThanOrEqual` include the supplied value. `notEqual` excludes it.
+
+Use set filters when a field may match one of several values:
+
+```dart
+final List<Product> products = await dorm.products.repository.peekAll(
+  Filter.inValues<Query>(
+    ['Notebook', 'Mouse'],
+    field: ProductEntity.fields.name,
+  ),
+);
+```
+
+`notInValues` excludes the supplied values. The order of the values passed to
+the filter does not define the order of the returned models; use
+[`OrderBy`](using-sorting.md) when result order matters.
+
+Use `isNull` and `isNotNull` for nullable fields. They are separate from
+`Filter.value(null, ...)` because database engines do not interpret null
+comparisons uniformly.
+
+These operators are capability-based. The concrete `Query` type must implement
+the corresponding framework capability. Write the type argument explicitly when
+Dart cannot infer it from the repository, as in the examples above.
+
+The engine capability table shows which engines expose comparison and set
+filters.
+
+## Combine conditions
+
+Use `allOf` for a conjunction and `anyOf` for a disjunction. These names accept
+lists of filters and make the grouping visible in the code:
+
+```dart
+final BaseFilter<Query> availableNotebook = Filter.allOf<Query>([
+  Filter.greaterThanOrEqual<Query>(
+    10,
+    field: ProductEntity.fields.price,
+  ),
+  Filter.text('Notebook', field: ProductEntity.fields.name),
+]);
+
+final List<Product> products = await dorm.products.repository.peekAll(
+  availableNotebook,
+);
+```
+
+```dart
+final BaseFilter<Query> featuredOrAffordable = Filter.anyOf<Query>([
+  Filter.lessThan<Query>(
+    25,
+    field: ProductEntity.fields.price,
+  ),
+  Filter.text('Notebook', field: ProductEntity.fields.name),
+]);
+```
+
+`allOf([])` is an empty filter. `anyOf([])` throws `ArgumentError` because an
+empty disjunction has no matching condition. Use `Filter.not(filter)` to negate
+one condition when the selected engine supports negation.
+
+The framework does not silently download all records and filter them in Dart
+when a backend cannot express a condition. This preserves the backend's
+pagination, security rules, ordering, and request behavior. For a backend with
+limited query composition, use a supported single condition or make any local
+second-stage filtering explicit in application code.
+
+## Filter collection fields
+
+`contains` and `containsAny` apply to fields whose stored representation is a
+collection:
+
+```dart
+final List<Product> products = await dorm.products.repository.peekAll(
+  Filter.contains<Query>(
+    'wireless',
+    field: [PLACEHOLDER: a generated collection field],
+  ),
+);
+```
+
+`contains` matches one member and `containsAny` matches at least one member of
+the supplied values. These operators do not perform substring search or
+full-text search. Use `Filter.text` for a persisted prefix-search field.
+
+Collection filters are not part of the minimum portable filter set. Check the
+engine capability table before using them in code that may switch engines.
+
 ## Filter a relation source
 
 The same value-filter API applies when reading related records directly. For

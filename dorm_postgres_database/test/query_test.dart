@@ -100,4 +100,20 @@ void main() {
       throwsArgumentError,
     );
   });
+
+  test('builds parameterized composite filters', () {
+    const FieldSchema field = FieldSchema(
+      fieldName: 'value',
+      columnName: 'value',
+    );
+    final Query query = BaseFilter.anyOf<Query>([
+      BaseFilter.greaterThan<Query>(10, field: field),
+      BaseFilter.isNull<Query>(field: field),
+    ]).accept(const Query('SELECT * FROM users'));
+
+    expect(query.query, contains(' OR '));
+    expect(query.query, contains('value > @p0'));
+    expect(query.query, contains('value IS NULL'));
+    expect(query.params, {'p0': 10});
+  });
 }
