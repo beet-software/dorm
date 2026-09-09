@@ -1,5 +1,5 @@
 name: dorm_annotations
-version: 1.0.0-alpha.5
+version: 2.0.0-dev.1
 resolution: workspace
 description: Exposes annotations used to generate code for dORM framework.
 homepage: https://github.com/beet-software/dorm/tree/main/dorm_annotations

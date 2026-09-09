@@ -1,5 +1,5 @@
 name: dorm_http_database
-version: 1.0.0-alpha.5
+version: 2.0.0-dev.1
 resolution: workspace
 description: An HTTP and JSON database engine for dORM.
 homepage: https://github.com/beet-software/dorm/tree/main/dorm_http_database
@@ -14,6 +14,6 @@ dependencies:
   uuid: ^4.6.0
 
 dev_dependencies:
-  dorm_test: ^1.0.0-alpha.5
+  dorm_test: ^2.0.0-dev.1
   lints: ^5.0.0
   test: ^1.32.0

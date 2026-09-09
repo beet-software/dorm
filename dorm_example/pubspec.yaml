@@ -1,5 +1,5 @@
 name: dorm_example
-version: 1.0.0-alpha.5
+version: 2.0.0-dev.1
 description: A CLI that generates dORM example projects.
 repository: https://github.com/beet-software/dorm.git
 homepage: https://github.com/beet-software/dorm/tree/main/dorm_example
