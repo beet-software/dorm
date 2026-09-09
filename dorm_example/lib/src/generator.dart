@@ -78,11 +78,16 @@ class ExampleGenerator {
       final String relativeTemplatePath = templatePath
           .replaceFirst(RegExp(r'^templates/[^/]+/'), '')
           .replaceFirst('.mustache', '');
-      final String relativePath = relativeTemplatePath == 'models.dart'
+      final String publicTemplatePath = switch (relativeTemplatePath) {
+        'gitignore' => '.gitignore',
+        'env.example' => '.env.example',
+        _ => relativeTemplatePath,
+      };
+      final String relativePath = publicTemplatePath == 'models.dart'
           ? 'lib/models.dart'
           : templatePath.startsWith('templates/sql/')
-          ? p.join('sql', relativeTemplatePath)
-          : relativeTemplatePath;
+          ? p.join('sql', publicTemplatePath)
+          : publicTemplatePath;
       final File file = File(p.join(output.path, relativePath));
       await file.parent.create(recursive: true);
       await file.writeAsString(rendered);
@@ -175,7 +180,7 @@ class ExampleGenerator {
     final List<String> paths = [
       'templates/common/pubspec.yaml.mustache',
       'templates/common/analysis_options.yaml.mustache',
-      'templates/common/.gitignore.mustache',
+      'templates/common/gitignore.mustache',
       'templates/common/models.dart.mustache',
       'templates/common/README.md.mustache',
     ];
@@ -191,7 +196,7 @@ class ExampleGenerator {
     if (profile.docker) {
       paths.add('templates/docker/docker-compose.yml.mustache');
       if (profile.requiresEnvironment) {
-        paths.add('templates/docker/.env.example.mustache');
+        paths.add('templates/docker/env.example.mustache');
       }
     }
     if (profile.httpServer) {

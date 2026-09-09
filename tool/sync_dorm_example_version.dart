@@ -16,11 +16,9 @@
 
 import 'dart:io';
 
-const List<String> _excludedPackages = <String>['dorm_test'];
-
 Future<void> main() async {
   final Directory root = Directory.current;
-  final String version = _readVersion(_pubspec(root, 'dorm_example'));
+  final String version = _readReleaseVersion(root);
   final List<Directory> packages = root
       .listSync()
       .whereType<Directory>()
@@ -29,11 +27,6 @@ Future<void> main() async {
             .split(Platform.pathSeparator)
             .last
             .startsWith('dorm_'),
-      )
-      .where(
-        (directory) => !_excludedPackages.contains(
-          directory.path.split(Platform.pathSeparator).last,
-        ),
       )
       .where((directory) => File(_pubspecPath(directory.path)).existsSync())
       .toList();
@@ -56,12 +49,12 @@ Future<void> main() async {
     RegExp(r"const String dormReleaseVersion = '[^']*';"),
     "const String dormReleaseVersion = '$version';",
   );
-  if (source == updated) {
+  if (!RegExp(r"const String dormReleaseVersion = '[^']*';").hasMatch(source)) {
     throw StateError(
       'Could not find dormReleaseVersion in ${releaseFile.path}.',
     );
   }
-  releaseFile.writeAsStringSync(updated);
+  if (source != updated) releaseFile.writeAsStringSync(updated);
 
   stdout.writeln('Synchronized dorm_example with dORM $version.');
 }
@@ -89,4 +82,35 @@ String _readVersion(File pubspec) {
     throw StateError('Missing version in ${pubspec.path}.');
   }
   return match.group(1)!;
+}
+
+String _readReleaseVersion(Directory root) {
+  final File versionFile = File('${root.path}${Platform.pathSeparator}VERSION');
+  if (!versionFile.existsSync()) {
+    throw StateError('Missing release version file: ${versionFile.path}');
+  }
+
+  final String contents = versionFile.readAsStringSync();
+  final String normalized = contents.replaceAll('\r\n', '\n');
+  if (normalized.contains('\r')) {
+    throw StateError('VERSION must contain exactly one line.');
+  }
+  final List<String> lines = normalized.split('\n');
+  if (lines.length == 2 && lines.last.isEmpty) {
+    lines.removeLast();
+  }
+  if (lines.length != 1) {
+    throw StateError('VERSION must contain exactly one line.');
+  }
+
+  final String version = lines.single;
+  if (!RegExp(
+    r'^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)'
+    r'(?:-(?:0|[1-9]\d*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)'
+    r'(?:\.(?:0|[1-9]\d*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*))*)?'
+    r'(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$',
+  ).hasMatch(version)) {
+    throw StateError('VERSION must contain exactly one SemVer value.');
+  }
+  return version;
 }

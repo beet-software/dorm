@@ -28,11 +28,16 @@ dev_dependencies:
 melos:
   command:
     version:
+      branch: main
       mode: fixed
       workspaceTag: true
       workspaceChangelog: true
       includeScopes: true
       linkToCommits: true
+      hooks:
+        preCommit: |
+          dart run tool/sync_dorm_example_version.dart
+          git add dorm_example/lib/src/release.dart
   scripts:
     format:
       description: Format all workspace packages.
