@@ -1,0 +1,56 @@
+CREATE TABLE IF NOT EXISTS users (
+  id VARCHAR(128) PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  cart_id VARCHAR(128)
+);
+
+CREATE TABLE IF NOT EXISTS categories (
+  id VARCHAR(128) PRIMARY KEY,
+  label VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS products (
+  id VARCHAR(128) PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  description TEXT NOT NULL,
+  price DOUBLE PRECISION NOT NULL,
+  stock INTEGER NOT NULL,
+  active BOOLEAN NOT NULL,
+  category_id VARCHAR(128) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS carts (
+  id VARCHAR(128) PRIMARY KEY,
+  created_at TIMESTAMP NOT NULL,
+  user_id VARCHAR(128) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS cart_items (
+  id VARCHAR(128) PRIMARY KEY,
+  quantity INTEGER NOT NULL,
+  cart_id VARCHAR(128) NOT NULL,
+  product_id VARCHAR(128) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS reviews (
+  id VARCHAR(128) PRIMARY KEY,
+  body TEXT NOT NULL,
+  rating INTEGER NOT NULL,
+  created_at TIMESTAMP NOT NULL,
+  user_id VARCHAR(128) NOT NULL,
+  product_id VARCHAR(128) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS wishlist_items (
+  id VARCHAR(128) PRIMARY KEY,
+  user_id VARCHAR(128) NOT NULL,
+  product_id VARCHAR(128) NOT NULL
+);
+
+{{#sql}}
+CREATE TABLE IF NOT EXISTS audit_entries (
+  id {{auditIdDefinition}},
+  message TEXT NOT NULL
+);
+{{/sql}}

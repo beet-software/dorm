@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `dorm_example`, a CLI that generates engine-specific Flutter and pure Dart
+  showcase projects from Mustache templates.
 - `sort` extension method to `Filter`
 - Typed comparison, set-membership, null, logical, negation, and collection
   filter capabilities for engines that implement them.

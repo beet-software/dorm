@@ -22,6 +22,24 @@ The application owns the `http.Client`. This lets the application select the
 client implementation and apply authentication, retry, or other transport
 wrappers before passing it to dORM.
 
+### Run the generated local server
+
+The `dorm_example -e http` profile includes a small Dart server under
+`server/`. Start it with the generated Compose file, then run Flutter on the
+host:
+
+```shell
+docker compose up -d
+flutter pub get
+dart run build_runner build
+flutter run -d chrome --dart-define=HTTP_BASE_URI=http://localhost:8080/api/
+```
+
+The server stores data in memory and loses it when its container restarts. It
+implements the resource paths and basic query parameters used by that
+generated mapping. It is a local demonstration backend, not a convention for
+an arbitrary remote API.
+
 ## Configure a resource
 
 Use one `HttpResourceMapping` for each generated entity. The resource path is

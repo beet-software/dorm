@@ -210,6 +210,24 @@ could compose multiple repositories.
 
 ## Run against the Firestore Emulator
 
+For a generated showcase project, run the local infrastructure and the Flutter
+application separately:
+
+```shell
+docker compose up -d
+flutter pub get
+dart run build_runner build
+flutter run -d chrome
+```
+
+The generated Compose file uses `spine3/firebase-emulator:latest` with the
+fictional project ID `dorm-example`. Firestore is published on `8080` and
+Emulator UI is available on `4000`. The generated Firebase options and
+`useFirestoreEmulator('127.0.0.1', 8080)` call are ready for this local setup.
+
+For a manually configured application, or when using this engine outside the
+showcase generator, use the Firebase CLI flow below.
+
 Start the emulator from the Flutter project that contains your Firebase
 configuration:
 

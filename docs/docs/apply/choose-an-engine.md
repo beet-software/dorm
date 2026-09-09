@@ -10,12 +10,12 @@ filters, relationships, and streams for a specific storage system.
 | --- | --- | --- |
 | Memory | Pure Dart in-process memory | A reusable `Engine()` instance |
 | BLoC | In-memory BLoC state | A reusable `Engine()` instance |
-| Firebase | Firebase Realtime Database | Initialized Firebase services and database configuration |
-| Firestore | Cloud Firestore | Initialized Firebase services and `FirebaseFirestore` |
+| Firebase | Firebase Realtime Database | Initialized Firebase services and database configuration; the showcase generator also provides a local emulator profile |
+| Firestore | Cloud Firestore | Initialized Firebase services and `FirebaseFirestore`; the showcase generator also provides a local emulator profile |
 | MySQL | MySQL through `mysql_client` | An opened `MySQLConnection` |
 | PostgreSQL | PostgreSQL through `postgres` | An opened `Connection` or `Pool` |
 | MongoDB | MongoDB through `mongo_dart` | An opened `Db` |
-| HTTP/JSON | A REST-shaped service | An owned `http.Client`, base URI, and resource mapping |
+| HTTP/JSON | A REST-shaped service | An owned `http.Client`, base URI, and resource mapping; the showcase generator can provide a local demo server |
 | SQLite | SQLite through `sqlite_async` | An application-owned `SqliteDatabase` |
 
 The application owns the lifecycle of the backend object when the engine
@@ -29,6 +29,13 @@ owned database connection, `Db`, or HTTP client.
 
 The framework does not select an engine automatically. The generated `Dorm`
 receives the concrete engine through its constructor.
+
+To create a complete project with the selected setup, use the
+[showcase project generator](../quickstart/generate-a-showcase.md). Its
+profiles follow the platform and capability boundaries listed on this page:
+Flutter profiles are generated for Memory, BLoC, Firebase, Firestore, and
+HTTP; pure Dart profiles are generated for PostgreSQL, MySQL, MongoDB, and
+SQLite.
 
 ## Select by runtime need
 

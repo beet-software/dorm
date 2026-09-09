@@ -7,7 +7,7 @@ status that is not established by the available contracts.
 
 | Area | Current status |
 | --- | --- |
-| Published package version in the thirteen workspace manifests | 1.0.0-alpha.5 |
+| Published package version in the workspace package manifests | 1.0.0-alpha.5 |
 | Workspace root Dart SDK | >=3.9.0 <4.0.0 |
 | Workspace member SDK declarations | >=3.5.0 <4.0.0 for the members that use the workspace resolution; some packages declare >=3.11.5 <4.0.0 |
 | Firebase package | Flutter/Firebase integration, not a backend-neutral Dart implementation |
@@ -77,8 +77,9 @@ identity details.
 
 ## Public API and generated output
 
-The documented import surface is the thirteen package barrel files listed in
-[Public API reference](public-api.md). Changes to exported barrels,
+The documented import surface is the workspace package barrel files listed in
+[Public API reference](public-api.md). The `dorm_example` package also exposes
+the `dorm_example` executable. Changes to exported barrels,
 framework contracts, annotations, generator output, generated class names,
 identity codecs, filters, or relationships affect the observable API surface.
 

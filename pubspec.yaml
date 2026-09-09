@@ -20,6 +20,7 @@ workspace:
   - dorm_firestore_database
   - dorm_sqlite_database
   - dorm_test
+  - dorm_example
 
 dev_dependencies:
   melos: ^8.6.0

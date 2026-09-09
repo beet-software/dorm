@@ -1,0 +1,148 @@
+import 'package:dorm_annotations/dorm_annotations.dart';
+
+part 'models.dorm.dart';
+part 'models.g.dart';
+
+@Model(name: 'users', as: #users)
+abstract class _User {
+  @Field(name: 'name')
+  String get name;
+
+  @Field(name: 'email')
+  String get email;
+
+{{#jsonFeatures}}
+  @ModelField(name: 'profile', referTo: _Profile)
+  _Profile get profile;
+{{/jsonFeatures}}
+
+  @ForeignField(name: 'cart_id', referTo: _Cart, inverseAs: #user, unique: true)
+  String? get cartId;
+}
+
+@Model(name: 'categories', as: #categories)
+abstract class _Category {
+  @Field(name: 'label')
+  String get label;
+}
+
+@Model(name: 'products', as: #products)
+abstract class _Product {
+  @Field(name: 'name')
+  String get name;
+
+  @Field(name: 'description')
+  String get description;
+
+  @Field(name: 'price')
+  double get price;
+
+  @Field(name: 'stock')
+  int get stock;
+
+  @Field(name: 'active', defaultValue: true)
+  bool get active;
+
+  @ForeignField(name: 'category_id', referTo: _Category, inverseAs: #products)
+  String get categoryId;
+
+{{#jsonFeatures}}
+  @DerivedField(name: '_q-name')
+  static String $dorm$derived$qName(
+    _Product model,
+    DerivedTransformations transformations,
+  ) => transformations.text(model.name) ?? '';
+{{/jsonFeatures}}
+}
+
+@Model(name: 'carts', as: #carts)
+abstract class _Cart {
+  static String $dorm$generateId(_Cart cart, String generatedId) => cart.userId;
+
+  @Field(name: 'created_at')
+  DateTime get createdAt;
+
+  @ForeignField(name: 'user_id', referTo: _User, inverseAs: #cart)
+  String get userId;
+}
+
+@Model(name: 'cart_items', as: #cartItems)
+abstract class _CartItem {
+  @Field(name: 'quantity')
+  int get quantity;
+
+  @ForeignField(name: 'cart_id', referTo: _Cart, inverseAs: #items)
+  String get cartId;
+
+  @ForeignField(name: 'product_id', referTo: _Product, inverseAs: #cartItems)
+  String get productId;
+}
+
+@Model(name: 'reviews', as: #reviews)
+abstract class _Review {
+  @Field(name: 'body')
+  String get body;
+
+  @Field(name: 'rating')
+  int get rating;
+
+  @Field(name: 'created_at')
+  DateTime get createdAt;
+
+  @ForeignField(name: 'user_id', referTo: _User, inverseAs: #reviews)
+  String get userId;
+
+  @ForeignField(name: 'product_id', referTo: _Product, inverseAs: #reviews)
+  String get productId;
+
+{{#jsonFeatures}}
+  @PolymorphicField(name: 'content', pivotName: 'content_type')
+  _ReviewContent get content;
+{{/jsonFeatures}}
+}
+
+@Model(name: 'wishlist_items', as: #wishlistItems)
+abstract class _WishlistItem {
+  @ForeignField(name: 'user_id', referTo: _User, inverseAs: #wishlistItems)
+  String get userId;
+
+  @ForeignField(name: 'product_id', referTo: _Product, inverseAs: #wishlistItems)
+  String get productId;
+}
+
+{{#jsonFeatures}}
+@Data()
+abstract class _Profile {
+  @Field(name: 'display-name')
+  String get displayName;
+
+  @Field(name: 'bio')
+  String? get bio;
+}
+
+abstract class _ReviewContent {}
+
+@PolymorphicData(name: 'photo', as: #photo)
+abstract class _PhotoReviewContent implements _ReviewContent {
+  @Field(name: 'caption')
+  String get caption;
+}
+
+@PolymorphicData(name: 'text', as: #text)
+abstract class _TextReviewContent implements _ReviewContent {
+  @Field(name: 'body')
+  String get body;
+}
+{{/jsonFeatures}}
+
+{{#sql}}
+@Model(
+  name: 'audit_entries',
+  as: #auditEntries,
+  primaryKey: [DatabaseGeneratedIdSpec(as: #id, name: 'id', type: int)],
+)
+abstract class _AuditEntry {
+  @Field(name: 'message')
+  String get message;
+}
+{{/sql}}

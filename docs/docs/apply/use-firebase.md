@@ -89,6 +89,24 @@ The default mode is `OfflineMode.include`.
 
 ## Run against the local emulator
 
+For a generated showcase project, the fastest local setup is:
+
+```shell
+docker compose up -d
+flutter pub get
+dart run build_runner build
+flutter run -d chrome
+```
+
+That Compose file starts only `spine3/firebase-emulator:latest`. It uses the
+fictional project ID `dorm-example`, publishes Realtime Database on `9000`,
+and publishes Emulator UI on `4000`. The generated `firebase_options.dart`
+already contains local options, and the generated setup calls
+`useDatabaseEmulator` before creating the engine.
+
+For a manually configured application, or when using this engine outside the
+showcase generator, use the Firebase CLI flow below.
+
 From the Flutter application directory, configure the Firebase Database Emulator with port `9000`:
 
 ```shell title="Initialize Firebase emulator configuration"

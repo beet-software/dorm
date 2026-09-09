@@ -1,0 +1,243 @@
+import 'package:dorm_framework/dorm_framework.dart';
+import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
+{{{engineImport}}}
+
+import 'models.dart'
+    show
+        Category,
+        CategoryData,
+        CategoryDependency,
+        Dorm,
+        Product,
+        ProductData,
+        ProductDependency,
+        ProductEntity,
+        TransactionalDorm;
+
+{{#isHttp}}
+HttpMapping _createMapping() => HttpMapping.byTableName({
+  'users': HttpResourceMapping(path: 'users'),
+  'categories': HttpResourceMapping(path: 'categories'),
+  'products': HttpResourceMapping(path: 'products'),
+  'carts': HttpResourceMapping(path: 'carts'),
+  'cart_items': HttpResourceMapping(path: 'cart_items'),
+  'reviews': HttpResourceMapping(path: 'reviews'),
+  'wishlist_items': HttpResourceMapping(path: 'wishlist_items'),
+});
+{{/isHttp}}
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  {{{engineSetup}}}
+  final Dorm<{{engineQuery}}, OffsetPageRequest> dorm = Dorm(engine);
+  GetIt.instance.registerSingleton(dorm);
+{{#transactions}}
+  GetIt.instance.registerSingleton(
+    TransactionalDorm<{{engineQuery}}, OffsetPageRequest>(engine),
+  );
+{{/transactions}}
+  runApp(const StoreApp());
+}
+
+class StoreApp extends StatelessWidget {
+  const StoreApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: '{{projectName}}',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF4F46E5)),
+        useMaterial3: true,
+      ),
+      home: const StoreHomePage(),
+    );
+  }
+}
+
+class StoreHomePage extends StatelessWidget {
+  const StoreHomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('dORM store showcase')),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final int columns = constraints.maxWidth >= 1000
+              ? 3
+              : constraints.maxWidth >= 650
+              ? 2
+              : 1;
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Store showcase',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'The cards below use the generated repositories and keep the '
+                  'same operations across engine profiles.',
+                ),
+                const SizedBox(height: 24),
+                GridView.count(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisCount: columns,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 1.35,
+                  children: const [
+                    _ShowcaseCard(
+                      title: 'Products',
+                      description: 'Read, filter, sort, and page through products.',
+                      icon: Icons.inventory_2_outlined,
+                    ),
+                    _ShowcaseCard(
+                      title: 'Relations',
+                      description: 'Follow users, carts, products, and reviews.',
+                      icon: Icons.account_tree_outlined,
+                    ),
+                    _ShowcaseCard(
+                      title: 'Persistence',
+                      description: 'Create, update, delete, and observe backend state.',
+                      icon: Icons.sync_alt,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                const _ProductShowcase(),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ProductShowcase extends StatefulWidget {
+  const _ProductShowcase();
+
+  @override
+  State<_ProductShowcase> createState() => _ProductShowcaseState();
+}
+
+class _ProductShowcaseState extends State<_ProductShowcase> {
+  late Future<List<Product>> _products;
+
+  @override
+  void initState() {
+    super.initState();
+    _products = _loadProducts();
+  }
+
+  Future<List<Product>> _loadProducts() async {
+    final Dorm<{{engineQuery}}, OffsetPageRequest> dorm = GetIt.instance.get();
+    final List<Product> existing = await dorm.products.repository.peekAll();
+    if (existing.isEmpty) {
+      final Category category = await dorm.categories.repository.put(
+        Creation.auto<CategoryData, String>(
+          dependency: const CategoryDependency(),
+          data: const CategoryData(label: 'Office'),
+        ),
+      );
+      await dorm.products.repository.put(
+        Creation.auto<ProductData, String>(
+          dependency: const ProductDependency(),
+          data: ProductData(
+            name: 'Desk lamp',
+            description: 'A lamp for the showcase store.',
+            price: 49.90,
+            stock: 12,
+            active: true,
+            categoryId: category.id,
+          ),
+        ),
+      );
+    }
+{{#transactions}}
+    await GetIt.instance
+        .get<TransactionalDorm<{{engineQuery}}, OffsetPageRequest>>()
+        .transaction((tx) => tx.products.repository.peekAll());
+{{/transactions}}
+    return dorm.products.repository.peekAll(
+      Filter.text('Desk', field: ProductEntity.fields.name),
+      const QueryOptions(
+        orderBy: [OrderBy(ProductEntity.fields.price)],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: FutureBuilder<List<Product>>(
+          future: _products,
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Text('Could not load products: ${snapshot.error}');
+            }
+            if (!snapshot.hasData) {
+              return const CircularProgressIndicator();
+            }
+            final List<Product> products = snapshot.data!;
+            if (products.isEmpty) return const Text('No products found.');
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Filtered products', style: Theme.of(context).textTheme.titleLarge),
+                const SizedBox(height: 12),
+                for (final Product product in products)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(product.name),
+                    subtitle: Text(product.description),
+                    trailing: Text(product.price.toStringAsFixed(2)),
+                  ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _ShowcaseCard extends StatelessWidget {
+  final String title;
+  final String description;
+  final IconData icon;
+
+  const _ShowcaseCard({
+    required this.title,
+    required this.description,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 32),
+            const Spacer(),
+            Text(title, style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 8),
+            Text(description),
+          ],
+        ),
+      ),
+    );
+  }
+}

@@ -20,6 +20,19 @@ Use these package entry points for application code:
 | PostgreSQL engine | `package:dorm_postgres_database/dorm_postgres_database.dart` |
 | HTTP engine | `package:dorm_http_database/dorm_http_database.dart` |
 | SQLite engine | `package:dorm_sqlite_database/dorm_sqlite_database.dart` |
+| Showcase generator | `package:dorm_example/dorm_example.dart` and the `dorm_example` executable |
+
+The project generator is installed as a Dart executable rather than imported
+by generated applications:
+
+```shell
+dart pub global activate dorm_example
+dorm_example --engine memory
+```
+
+Its library barrel is `package:dorm_example/dorm_example.dart`, which exposes
+the profile catalog and generator API for tooling integrations. The supported
+application command is the `dorm_example` executable.
 
 Concrete classes below `lib/src/` are not automatically part of the barrel
 surface. A class being importable by an internal package path does not by

@@ -18,6 +18,7 @@ doc/api/
 
 # dotenv environment variables file
 .env*
+!/dorm_example/templates/docker/.env.example.mustache
 
 # Avoid committing generated Javascript files:
 *.dart.js

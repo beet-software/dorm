@@ -1,0 +1,104 @@
+# {{projectName}}
+
+This project was generated with `dorm_example` using the **{{engine}}** engine.
+
+The application uses one store domain throughout the showcase: users,
+categories, products, carts, cart items, reviews, and wishlist items. The
+annotated source is in `lib/models.dart`. The `*.dorm.dart` and `*.g.dart`
+files are generated and should not be edited manually.
+
+## Run the project
+
+{{#docker}}
+Start the local infrastructure first. The Compose file starts services only;
+the generated application still runs on the host.
+
+```shell
+docker compose up -d
+```
+{{#firebaseEmulator}}
+This profile uses a local Firebase Emulator Suite container with the fictional
+project ID `dorm-example`. No Firebase project or credentials are required.
+The Realtime Database emulator is available on port `9000`, the Firestore
+emulator on port `8080`, and Emulator UI on <http://localhost:4000>.
+{{/firebaseEmulator}}
+{{#httpServer}}
+This profile starts a small in-memory Dart REST server from `./server`. It is
+the backend for this generated showcase, not an external production API. Its
+data is lost when the container is restarted.
+{{/httpServer}}
+
+{{#requiresEnvironment}}
+Use `.env.example` as a list of required variables. The generated Dart
+application reads the process environment; it does not load `.env` itself.
+Export the variables in your shell or configure them in your IDE before
+running the application.
+{{/requiresEnvironment}}
+{{/docker}}
+
+{{#isFlutter}}
+Install dependencies, generate the model API, and start the Web application:
+
+```shell
+flutter pub get
+dart run build_runner build
+flutter run -d chrome{{#httpServer}} --dart-define=HTTP_BASE_URI=http://localhost:8080/api/{{/httpServer}}
+```
+{{/isFlutter}}
+{{^isFlutter}}
+Install dependencies, generate the model API, and run the Dart showcase:
+
+```shell
+dart pub get
+dart run build_runner build
+dart analyze
+dart run
+```
+{{/isFlutter}}
+
+## What to inspect
+
+- `lib/models.dart` contains the source annotations.
+- `lib/models.dorm.dart` contains the generated repositories and entities.
+- `lib/models.g.dart` contains serialization and copy-with support.
+{{#jsonFeatures}}
+- The JSON-oriented models demonstrate nested data, polymorphic data, and a
+  materialized derived value.
+{{/jsonFeatures}}
+{{^jsonFeatures}}
+- The model set intentionally stays relational and uses scalar fields and
+  foreign keys instead of JSON-oriented model annotations.
+{{/jsonFeatures}}
+
+{{#requiresEnvironment}}
+Read the engine-specific comments in `lib/main.dart` before running the
+application. Credentials and Firebase configuration are not included in
+generated projects.
+{{#docker}}
+The environment variable names are listed in `.env.example`.
+{{/docker}}
+{{#isFirebase}}
+Replace `lib/firebase_options.dart` with the configuration generated for your
+Firebase project.
+{{/isFirebase}}
+{{#isFirestore}}
+Replace `lib/firebase_options.dart` with the configuration generated for your
+Firebase project.
+{{/isFirestore}}
+{{/requiresEnvironment}}
+{{#isFirebase}}
+The generated Firebase options target the local emulator. Keep
+`docker compose up -d` running before starting Flutter. To connect to a real
+Firebase project, replace `lib/firebase_options.dart` and remove or change the
+local emulator setup in `lib/main.dart`.
+{{/isFirebase}}
+{{#isFirestore}}
+The generated Firebase options target the local emulator. Keep
+`docker compose up -d` running before starting Flutter. To connect to a real
+Firebase project, replace `lib/firebase_options.dart` and remove or change the
+local emulator setup in `lib/main.dart`.
+{{/isFirestore}}
+{{#httpServer}}
+The default HTTP base URI is `http://localhost:8080/api/`. Set a different
+value with `--dart-define=HTTP_BASE_URI=...` when the server is elsewhere.
+{{/httpServer}}

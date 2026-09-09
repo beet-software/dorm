@@ -1,0 +1,215 @@
+import 'dart:convert';
+import 'dart:io';
+
+final Map<String, List<Map<String, Object?>>> _collections = {
+  for (final String name in <String>[
+    'users',
+    'categories',
+    'products',
+    'carts',
+    'cart_items',
+    'reviews',
+    'wishlist_items',
+  ])
+    name: <Map<String, Object?>>[],
+};
+
+int _nextId = 1;
+
+Future<void> main() async {
+  final HttpServer server = await HttpServer.bind(InternetAddress.anyIPv4, 8080);
+  print('dORM HTTP showcase server listening on http://localhost:8080/api/');
+  await for (final HttpRequest request in server) {
+    await _handle(request);
+  }
+}
+
+Future<void> _handle(HttpRequest request) async {
+  _headers(request.response);
+  if (request.method == 'OPTIONS') {
+    request.response.statusCode = HttpStatus.noContent;
+    await request.response.close();
+    return;
+  }
+
+  try {
+    final List<String> segments = request.uri.pathSegments
+        .where((segment) => segment.isNotEmpty)
+        .map(Uri.decodeComponent)
+        .toList();
+    if (segments.isEmpty || segments.first != 'api' || segments.length > 3) {
+      _writeJson(request.response, HttpStatus.notFound, {'error': 'Not found'});
+      return;
+    }
+
+    final String resource = segments.length > 1 ? segments[1] : '';
+    final List<Map<String, Object?>>? items = _collections[resource];
+    if (items == null) {
+      _writeJson(request.response, HttpStatus.notFound, {'error': 'Unknown resource'});
+      return;
+    }
+    final String? id = segments.length == 3 ? segments[2] : null;
+
+    switch (request.method) {
+      case 'GET':
+        _get(request, items, id);
+      case 'POST':
+        await _post(request, items);
+      case 'PUT':
+        await _put(request, items, id);
+      case 'DELETE':
+        _delete(request, items, id);
+      default:
+        _writeJson(request.response, HttpStatus.methodNotAllowed, {'error': 'Method not allowed'});
+    }
+  } on FormatException catch (error) {
+    _writeJson(request.response, HttpStatus.badRequest, {'error': error.message});
+  } catch (error) {
+    _writeJson(request.response, HttpStatus.internalServerError, {'error': '$error'});
+  }
+}
+
+void _get(
+  HttpRequest request,
+  List<Map<String, Object?>> items,
+  String? id,
+) {
+  if (id != null) {
+    final Map<String, Object?>? item = _find(items, id);
+    if (item == null) {
+      _writeJson(request.response, HttpStatus.notFound, {'error': 'Not found'});
+    } else {
+      _writeJson(request.response, HttpStatus.ok, item);
+    }
+    return;
+  }
+
+  final List<Map<String, Object?>> result = _query(items, request.uri.queryParameters);
+  _writeJson(request.response, HttpStatus.ok, result);
+}
+
+Future<void> _post(
+  HttpRequest request,
+  List<Map<String, Object?>> items,
+) async {
+  final Map<String, Object?> body = await _readObject(request);
+  final String id = '${body['id'] ?? _nextId++}';
+  final Map<String, Object?> item = {...body, 'id': id};
+  items.add(item);
+  _writeJson(request.response, HttpStatus.created, item);
+}
+
+Future<void> _put(
+  HttpRequest request,
+  List<Map<String, Object?>> items,
+  String? id,
+) async {
+  if (id == null) {
+    _writeJson(request.response, HttpStatus.badRequest, {'error': 'An item ID is required.'});
+    return;
+  }
+  final Map<String, Object?> body = await _readObject(request);
+  final Map<String, Object?> item = {...body, 'id': id};
+  final int index = items.indexWhere((candidate) => '${candidate['id']}' == id);
+  if (index == -1) {
+    items.add(item);
+  } else {
+    items[index] = item;
+  }
+  _writeJson(request.response, HttpStatus.ok, item);
+}
+
+void _delete(
+  HttpRequest request,
+  List<Map<String, Object?>> items,
+  String? id,
+) {
+  if (id != null) {
+    final int before = items.length;
+    items.removeWhere((item) => '${item['id']}' == id);
+    _writeJson(request.response, items.length == before ? HttpStatus.notFound : HttpStatus.noContent, <String, Object?>{});
+    return;
+  }
+  final List<Map<String, Object?>> matches = _query(items, request.uri.queryParameters);
+  final Set<String> ids = matches.map((item) => '${item['id']}').toSet();
+  items.removeWhere((item) => ids.contains('${item['id']}'));
+  _writeJson(request.response, HttpStatus.noContent, <String, Object?>{});
+}
+
+List<Map<String, Object?>> _query(
+  List<Map<String, Object?>> source,
+  Map<String, String> parameters,
+) {
+  Iterable<Map<String, Object?>> result = source.where(
+    (item) => parameters.entries.every((entry) => _matches(item, entry.key, entry.value)),
+  );
+  final String? sort = parameters['sort'];
+  if (sort != null && sort.isNotEmpty) {
+    final List<String> fields = sort.split(',');
+    final List<Map<String, Object?>> sorted = result.toList();
+    sorted.sort((left, right) {
+      for (final String field in fields) {
+        final bool ascending = !field.startsWith('-');
+        final String key = ascending ? field : field.substring(1);
+        final int comparison = '${left[key] ?? ''}'.compareTo('${right[key] ?? ''}');
+        if (comparison != 0) return ascending ? comparison : -comparison;
+      }
+      return 0;
+    });
+    result = sorted;
+  }
+
+  final int offset = int.tryParse(parameters['offset'] ?? '') ?? 0;
+  if (offset > 0) result = result.skip(offset);
+  final int? limit = int.tryParse(parameters['limit'] ?? '');
+  if (limit != null && limit >= 0) result = result.take(limit);
+  return result.map((item) => {...item}).toList();
+}
+
+bool _matches(Map<String, Object?> item, String key, String expected) {
+  if (key == 'sort' || key == 'offset' || key == 'limit') return true;
+  if (key.endsWith('__startsWith')) {
+    final String field = key.substring(0, key.length - '__startsWith'.length);
+    return '${item[field] ?? ''}'.startsWith(expected);
+  }
+  if (key.endsWith('__gte') || key.endsWith('__lte')) {
+    final bool lower = key.endsWith('__gte');
+    final String suffix = lower ? '__gte' : '__lte';
+    final String field = key.substring(0, key.length - suffix.length);
+    final int comparison = '${item[field] ?? ''}'.compareTo(expected);
+    return lower ? comparison >= 0 : comparison <= 0;
+  }
+  return '${item[key] ?? ''}' == expected;
+}
+
+Map<String, Object?>? _find(
+  List<Map<String, Object?>> items,
+  String id,
+) {
+  for (final Map<String, Object?> item in items) {
+    if ('${item['id']}' == id) return item;
+  }
+  return null;
+}
+
+Future<Map<String, Object?>> _readObject(HttpRequest request) async {
+  final String body = await utf8.decoder.bind(request).join();
+  final Object? decoded = jsonDecode(body);
+  if (decoded is! Map) throw const FormatException('Expected a JSON object.');
+  return decoded.map((key, value) => MapEntry('$key', value));
+}
+
+void _headers(HttpResponse response) {
+  response.headers
+    ..set('Access-Control-Allow-Origin', '*')
+    ..set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+    ..set('Access-Control-Allow-Headers', 'Content-Type');
+}
+
+void _writeJson(HttpResponse response, int status, Object body) {
+  response.statusCode = status;
+  response.headers.contentType = ContentType.json;
+  if (status != HttpStatus.noContent) response.write(jsonEncode(body));
+  response.close();
+}
+

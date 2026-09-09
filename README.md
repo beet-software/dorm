@@ -18,6 +18,7 @@
 [![pub package](https://img.shields.io/pub/v/dorm_mongo_database.svg?label=dorm_mongo_database)](https://pub.dev/packages/dorm_mongo_database)
 [![pub package](https://img.shields.io/pub/v/dorm_http_database.svg?label=dorm_http_database)](https://pub.dev/packages/dorm_http_database)
 [![pub package](https://img.shields.io/pub/v/dorm_sqlite_database.svg?label=dorm_sqlite_database)](https://pub.dev/packages/dorm_sqlite_database)
+[![pub package](https://img.shields.io/pub/v/dorm_example.svg?label=dorm_example)](https://pub.dev/packages/dorm_example)
 
 
 A language-agnostic Object Relational Mapper library for Dart.
@@ -34,6 +35,23 @@ This ORM uses separation of concerns as the main concept of its framework:
 ![](https://i.imgur.com/fBpjhA5.png)
 
 ## Getting started
+
+To create a complete starter project, use the dORM example generator:
+
+```shell
+dart pub global activate dorm_example
+dorm_example -e memory
+```
+
+The generated project contains annotated models, generated-code commands, and
+a small showcase application. Use `-e postgres`, `-e mysql`, or `-e mongo` to
+generate a Dart project with a Docker Compose service for the selected backend.
+Use `-e firestore`, `-e firebase`, or `-e http` for Flutter-specific projects;
+those profiles also generate local emulator or HTTP infrastructure that can be
+started with Docker Compose.
+
+The generator does not overwrite a non-empty output directory and does not run
+package installation or Docker commands automatically.
 
 Inside a Dart (or Flutter) project, run the following lines in your command prompt:
 

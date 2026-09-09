@@ -1,0 +1,77 @@
+services:
+{{#firebaseEmulator}}
+  firebase-emulator:
+    image: spine3/firebase-emulator:latest
+    environment:
+      GCP_PROJECT: dorm-example
+      ENABLE_UI: 'true'
+      EMULATORS_HOST: 0.0.0.0
+    ports:
+      - '9000:9000'
+      - '8080:8080'
+      - '4000:4000'
+{{/firebaseEmulator}}
+{{#httpServer}}
+  http-api:
+    build: ./server
+    ports:
+      - '8080:8080'
+{{/httpServer}}
+{{#postgres}}
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DATABASE:-dorm_example}
+      POSTGRES_USER: ${POSTGRES_USERNAME:-dorm}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dorm}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USERNAME:-dorm} -d ${POSTGRES_DATABASE:-dorm_example}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+{{/postgres}}
+{{#mysql}}
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-dorm_example}
+      MYSQL_USER: ${MYSQL_USERNAME:-dorm}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-dorm}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+    ports:
+      - '${MYSQL_PORT:-3306}:3306'
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+{{/mysql}}
+{{#mongo}}
+  mongo:
+    image: mongo:8
+    ports:
+      - '${MONGO_PORT:-27017}:27017'
+    volumes:
+      - mongo_data:/data/db
+{{/mongo}}
+
+{{#hasVolumes}}
+volumes:
+{{#postgres}}
+  postgres_data:
+{{/postgres}}
+{{#mysql}}
+  mysql_data:
+{{/mysql}}
+{{#mongo}}
+  mongo_data:
+{{/mongo}}
+{{/hasVolumes}}
