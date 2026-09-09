@@ -10,15 +10,9 @@ The same model and repository surface can later be connected to a backend
 engine. That is the main idea behind this path: learn the common operations
 first, then choose the storage system and its capabilities for the application.
 
-The modules use the same application throughout:
-
-```text
-installation
-    -> annotated User, Profile, and Product models
-    -> generated dORM and JSON code
-    -> in-memory Engine and Dorm
-    -> create and read a User
-```
+The modules use the same application throughout. You will first create the
+Dart project, then declare `User`, `Profile`, and `Product`, generate their
+dORM and JSON code, connect the In-memory engine, and create and read a user.
 
 The first result uses `dorm_memory_database`, so no external database service
 is needed. The generated repository shape is the same shape used when the

@@ -55,13 +55,9 @@ replace the backend client or hide every backend detail.
 The application keeps its configured client or connection and places dORM
 around it:
 
-```text
-your database client, service client, or in-memory store
-    -> selected dORM engine
-    -> generated Dorm facade
-    -> generated repositories
-    -> application features
-```
+Application features reach the generated repositories through `Dorm`. The
+selected engine connects those repository calls to the database client,
+service client, or in-memory store that the application already owns.
 
 The same generated model and repository surface can be used with an in-memory
 engine, PostgreSQL, MySQL, SQLite, MongoDB, Firebase, Firestore, or HTTP. The setup

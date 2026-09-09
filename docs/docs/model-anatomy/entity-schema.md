@@ -15,16 +15,10 @@ The primary-key list contains one field for a simple identity and multiple
 ordered fields for a composite identity. The corresponding codec converts
 between the framework identity object and backend key values.
 
-The selected engine maps the schema to its own storage representation:
-
-```text
-EntitySchema
-    -> SQL columns
-    -> Firebase map paths
-    -> MongoDB document fields
-    -> HTTP resource mapping
-    -> in-memory entity table
-```
+The selected engine maps this metadata to its own representation. For example,
+SQL engines use it for columns, Firebase uses it for map paths, MongoDB uses
+it for document fields, HTTP uses it with the resource mapping, and the
+In-memory engine uses it to organize entity tables.
 
 `EntitySchema` does not open a connection, create a table, or execute a query.
 It supplies metadata to references, queries, serializers, and relationship

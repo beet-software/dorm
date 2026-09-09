@@ -15,22 +15,13 @@ Its main members have these roles:
 | `toJson` | Serializes data or model fields for the engine. |
 | `convert` | Applies new data to an existing model while retaining its identity. |
 
-The create path uses `fromData`:
+The create path combines `Data`, `Dependency`, and the identity strategy into a
+`ResolvedCreation`. `Entity.fromData` uses that resolved value to produce the
+identified `Model` returned to the application.
 
-```text
-Data + Dependency + identity strategy
-    -> ResolvedCreation
-    -> Entity.fromData
-    -> identified Model
-```
-
-The read path uses `fromJson`:
-
-```text
-backend map or row + identity
-    -> Entity.fromJson
-    -> generated Model
-```
+The read path gives `Entity.fromJson` the backend map or row together with its
+identity. The entity then creates the generated `Model` that the repository
+returns.
 
 The entity knows the generated schema and conversion rules. It does not own a
 database connection. The engine supplies the backend reference that invokes

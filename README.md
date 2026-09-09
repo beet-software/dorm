@@ -1,9 +1,9 @@
 # dORM: A portable ORM for Dart
 
 <p>
+  <a href="https://ezgrs.github.io/dorm/"><img src="https://img.shields.io/badge/documentation-readthedocs-4c8bf5?style=flat" alt="dORM documentation"></a>
   <a href="https://github.com/ezgrs/dorm"><img src="https://img.shields.io/github/stars/ezgrs/dorm?style=flat" alt="GitHub stars"></a>
   <a href="https://github.com/ezgrs/dorm"><img src="https://img.shields.io/github/license/ezgrs/dorm?style=flat" alt="License"></a>
-  <a href="https://ezgrs.github.io/dorm/"><img src="https://img.shields.io/badge/documentation-dORM-4c8bf5?style=flat" alt="dORM documentation"></a>
   <a href="https://github.com/ezgrs/dorm/actions/workflows/dart.yml"><img src="https://github.com/ezgrs/dorm/actions/workflows/dart.yml/badge.svg" alt="Dart CI"></a>
 </p>
 
@@ -127,19 +127,13 @@ application evaluates another engine. This is the main portability boundary:
 common repository operations remain stable, while backend-specific setup and
 capabilities remain explicit.
 
-```text
-backend client or connection
-    -> selected dORM engine
-    -> generated Dorm facade
-    -> generated repositories
-    -> application code
-```
+Application code calls the generated repositories through `Dorm`. The selected
+engine adapts those calls to the client, connection, service, or in-process
+store supplied by the application.
 
 ## The central trade-off
 
-!!! warning
-    dORM is more portable than a backend-specific ORM, but less expressive
-    than the native API of each backend.
+> dORM is more portable than a backend-specific ORM, but less expressive than the native API of each backend.
 
 CRUD, common filters, relationships, sorting, pagination, and selected
 transaction operations can use a shared API. CTEs, database-specific
@@ -147,7 +141,7 @@ aggregations, migrations, indexes, security rules, native selectors, and
 other backend features remain the responsibility of the database, service, or
 native client.
 
-This boundary is intentional. dORM does not turn different backends into one
+This boundary is intentional: dORM does not turn different backends into one
 identical database. It gives recurring application operations a common home
 while allowing native code to remain available when the backend needs more
 expressiveness.
