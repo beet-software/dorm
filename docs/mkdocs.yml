@@ -68,6 +68,7 @@ nav:
       - Relationship paths: model-anatomy/relations.md
   - User guide:
       - Best practices: user-guide/best-practices.md
+      - Recipes: user-guide/recipes/index.md
       - Migration to v2: user-guide/migration-to-v2.md
   - Developer guide:
       - Work on dORM locally: development/index.md
