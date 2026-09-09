@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'release.dart';
+
 enum ExamplePlatform { flutter, dart }
 
 class ExampleProfile {
@@ -59,6 +61,7 @@ class ExampleProfile {
     'firebaseEmulator': firebaseEmulator,
     'httpServer': httpServer,
     'minimumDart': minimumDart,
+    'dormVersion': dormReleaseVersion,
     'sql': name == 'postgres' || name == 'mysql' || name == 'sqlite',
     'hasVolumes': name == 'postgres' || name == 'mysql' || name == 'mongo',
     'postgres': name == 'postgres',
