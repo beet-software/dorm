@@ -48,6 +48,17 @@ String? $normalizeDate(DateTime? value) {
       '$day'.padLeft(2, '0');
 }
 
+/// Formats a [value] as "YYYYMMDDHHmmssSSS".
+String? $normalizeDateTime(DateTime? value) {
+  if (value == null) return null;
+  final String date = $normalizeDate(value)!;
+  final String hour = '${value.hour}'.padLeft(2, '0');
+  final String minute = '${value.minute}'.padLeft(2, '0');
+  final String second = '${value.second}'.padLeft(2, '0');
+  final String millisecond = '${value.millisecond}'.padLeft(3, '0');
+  return '$date$hour$minute$second$millisecond';
+}
+
 /// Removes the `Class.` component of a [value] string-formatted as `Class.value`.
 String? $normalizeEnum(Object? value) {
   if (value == null) return null;

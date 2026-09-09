@@ -24,14 +24,20 @@ import 'package:source_gen/source_gen.dart';
 import 'custom_types.dart';
 import 'orm_node.dart';
 
-abstract class NodeParser<A, T, E extends Element> {
+String? _optionalString(ConstantReader reader, String field) {
+  final ConstantReader value = reader.read(field);
+  return value.isNull ? null : value.stringValue;
+}
+
+abstract class NodeParser<A, T, E extends Element>
+    implements ElementVisitor2<T?> {
   const NodeParser();
 
   Type get annotation => A;
 
   T? parseElement(Element element) {
     if (element is! E) return null;
-    final TypeChecker checker = TypeChecker.fromRuntime(annotation);
+    final TypeChecker checker = TypeChecker.typeNamed(annotation);
     final DartObject? object = () {
       final DartObject? fieldAnnotation = checker.firstAnnotationOf(element);
       if (fieldAnnotation != null) return fieldAnnotation;
@@ -52,6 +58,81 @@ abstract class NodeParser<A, T, E extends Element> {
   T _convert(A annotation, E element);
 
   Element? _childOf(E element);
+
+  @override
+  T? visitClassElement(ClassElement element) => null;
+
+  @override
+  T? visitConstructorElement(ConstructorElement element) => null;
+
+  @override
+  T? visitEnumElement(EnumElement element) => null;
+
+  @override
+  T? visitExtensionElement(ExtensionElement element) => null;
+
+  @override
+  T? visitExtensionTypeElement(ExtensionTypeElement element) => null;
+
+  @override
+  T? visitFieldElement(FieldElement element) => null;
+
+  @override
+  T? visitFieldFormalParameterElement(FieldFormalParameterElement element) =>
+      null;
+
+  @override
+  T? visitFormalParameterElement(FormalParameterElement element) => null;
+
+  @override
+  T? visitGenericFunctionTypeElement(GenericFunctionTypeElement element) =>
+      null;
+
+  @override
+  T? visitGetterElement(GetterElement element) => null;
+
+  @override
+  T? visitLabelElement(LabelElement element) => null;
+
+  @override
+  T? visitLibraryElement(LibraryElement element) => null;
+
+  @override
+  T? visitLocalFunctionElement(LocalFunctionElement element) => null;
+
+  @override
+  T? visitLocalVariableElement(LocalVariableElement element) => null;
+
+  @override
+  T? visitMethodElement(MethodElement element) => null;
+
+  @override
+  T? visitMixinElement(MixinElement element) => null;
+
+  @override
+  T? visitMultiplyDefinedElement(MultiplyDefinedElement element) => null;
+
+  @override
+  T? visitPrefixElement(PrefixElement element) => null;
+
+  @override
+  T? visitSetterElement(SetterElement element) => null;
+
+  @override
+  T? visitSuperFormalParameterElement(SuperFormalParameterElement element) =>
+      null;
+
+  @override
+  T? visitTopLevelFunctionElement(TopLevelFunctionElement element) => null;
+
+  @override
+  T? visitTopLevelVariableElement(TopLevelVariableElement element) => null;
+
+  @override
+  T? visitTypeAliasElement(TypeAliasElement element) => null;
+
+  @override
+  T? visitTypeParameterElement(TypeParameterElement element) => null;
 }
 
 abstract class ClassNodeParser<A>
@@ -60,6 +141,11 @@ abstract class ClassNodeParser<A>
 
   @override
   Element? _childOf(ClassElement element) => element;
+
+  @override
+  ClassOrmNode<A>? visitClassElement(ClassElement element) {
+    return parseElement(element);
+  }
 }
 
 abstract class FieldNodeParser<A extends Field>
@@ -70,11 +156,39 @@ abstract class FieldNodeParser<A extends Field>
   Element? _childOf(FieldElement element) => element.getter;
 
   @override
+  FieldOrmNode? visitFieldElement(FieldElement element) {
+    return parseElement(element);
+  }
+
+  @override
   FieldOrmNode _convert(Field annotation, FieldElement element) {
     return FieldOrmNode(
       annotation: annotation,
       type: element.type.getDisplayString(),
       required: element.type.nullabilitySuffix == NullabilitySuffix.none,
+    );
+  }
+}
+
+abstract class MethodFieldNodeParser<A extends Field>
+    extends NodeParser<A, FieldOrmNode, MethodElement> {
+  const MethodFieldNodeParser();
+
+  @override
+  Element? _childOf(MethodElement element) => element;
+
+  @override
+  FieldOrmNode? visitMethodElement(MethodElement element) {
+    return parseElement(element);
+  }
+
+  @override
+  FieldOrmNode _convert(A annotation, MethodElement element) {
+    return FieldOrmNode(
+      annotation: annotation,
+      type: element.returnType.getDisplayString(),
+      required: element.returnType.nullabilitySuffix == NullabilitySuffix.none,
+      method: element,
     );
   }
 }
@@ -94,37 +208,46 @@ class DataParser extends ClassNodeParser<Data> {
 class ModelParser extends ClassNodeParser<Model> {
   const ModelParser();
 
-  UidType? _decodeUidType(ConstantReader reader) {
-    if (reader.isNull) return null;
-    final String? uidTypeName = reader.objectValue.type?.getDisplayString();
-    if (uidTypeName == null) return null;
-
-    switch (uidTypeName) {
-      case '_SimpleUidType':
-        return const UidType.simple();
-      case '_CompositeUidType':
-        return const UidType.composite();
-      case '_SameAsUidType':
-        final Type type = $Type(reader: reader.read('type'));
-        return UidType.sameAs(type);
-      case '_CustomUidType':
-        return UidType.custom((_) => $CustomUidValue(reader.read('builder')));
+  IdSpec _parseIdSpec(ConstantReader reader) {
+    final String? typeName = reader.objectValue.type?.getDisplayString();
+    switch (typeName) {
+      case 'GeneratedIdSpec':
+        return GeneratedIdSpec(
+          as: $Symbol(reader: reader.read('as')),
+          name: reader.read('name').stringValue,
+          type: $Type(reader: reader.read('type')),
+        );
+      case 'DatabaseGeneratedIdSpec':
+        return DatabaseGeneratedIdSpec(
+          as: $Symbol(reader: reader.read('as')),
+          name: reader.read('name').stringValue,
+          type: $Type(reader: reader.read('type')),
+        );
+      case 'ExistingIdSpec':
+        return ExistingIdSpec(referTo: $Symbol(reader: reader.read('referTo')));
+      default:
+        throw StateError(
+          'Unsupported primary-key specification: ${typeName ?? 'unknown'}',
+        );
     }
-    return null;
   }
 
   @override
   Model _parse(ConstantReader reader) {
+    final ConstantReader primaryKeySpecsReader = reader.read('primaryKey');
     return Model(
       name: reader.read('name').stringValue,
+      primaryKey: [
+        for (final DartObject object in primaryKeySpecsReader.listValue)
+          _parseIdSpec(ConstantReader(object)),
+      ],
       as: $Symbol(reader: reader.read('as')),
-      uidType: _decodeUidType(reader.read('uidType')) ?? const UidType.simple(),
     );
   }
 
   @override
   ModelOrmNode _convert(Model annotation, ClassElement element) {
-    return ModelOrmNode(annotation: annotation);
+    return ModelOrmNode(annotation: annotation, element: element);
   }
 }
 
@@ -167,8 +290,9 @@ class PolymorphicDataParser extends ClassNodeParser<PolymorphicData> {
     PolymorphicData annotation,
     ClassElement element,
   ) {
-    final InterfaceType supertypeType =
-        element.allSupertypes.singleWhere((type) => !type.isDartCoreObject);
+    final InterfaceType supertypeType = element.allSupertypes.singleWhere(
+      (type) => !type.isDartCoreObject,
+    );
 
     final bool isSealed;
     final InterfaceElement superTypeElement = supertypeType.element;
@@ -193,9 +317,15 @@ class FieldParser extends FieldNodeParser<Field> {
 
   @override
   Field _parse(ConstantReader reader) {
+    late final ConstantReader? defaultValueReader;
+    try {
+      defaultValueReader = reader.read('defaultValue');
+    } on FormatException {
+      defaultValueReader = null;
+    }
     return Field(
-      name: reader.read('name').stringValue,
-      defaultValue: reader.read('defaultValue').literalValue,
+      name: _optionalString(reader, 'name'),
+      defaultValue: defaultValueReader,
     );
   }
 }
@@ -206,8 +336,11 @@ class ForeignFieldParser extends FieldNodeParser<ForeignField> {
   @override
   ForeignField _parse(ConstantReader reader) {
     return ForeignField(
-      name: reader.read('name').stringValue,
+      name: _optionalString(reader, 'name'),
       referTo: $Type(reader: reader.read('referTo')),
+      unique: reader.read('unique').boolValue,
+      as: $Symbol(reader: reader.read('as')),
+      inverseAs: $Symbol(reader: reader.read('inverseAs')),
     );
   }
 }
@@ -218,28 +351,28 @@ class ModelFieldParser extends FieldNodeParser<ModelField> {
   @override
   ModelField _parse(ConstantReader reader) {
     return ModelField(
-      name: reader.read('name').stringValue,
+      name: _optionalString(reader, 'name'),
       referTo: $Type(reader: reader.read('referTo')),
+      template: $ModelFieldTemplate(reader: reader.read('template')),
     );
   }
 }
 
-class QueryFieldParser extends FieldNodeParser<QueryField> {
-  const QueryFieldParser();
+class DerivedFieldParser extends FieldNodeParser<DerivedField> {
+  const DerivedFieldParser();
 
   @override
-  QueryField _parse(ConstantReader reader) {
-    return QueryField(
-      name: reader.read('name').stringValue,
-      referTo: reader.read('referTo').listValue.map((obj) {
-        final ConstantReader reader = ConstantReader(obj);
-        return QueryToken(
-          $Symbol(reader: reader.read('field')),
-          reader.read('type').enumValueFrom(QueryType.values),
-        );
-      }).toList(),
-      joinBy: reader.read('joinBy').stringValue,
-    );
+  DerivedField _parse(ConstantReader reader) {
+    return DerivedField(name: _optionalString(reader, 'name'));
+  }
+}
+
+class DerivedMethodParser extends MethodFieldNodeParser<DerivedField> {
+  const DerivedMethodParser();
+
+  @override
+  DerivedField _parse(ConstantReader reader) {
+    return DerivedField(name: _optionalString(reader, 'name'));
   }
 }
 
@@ -249,7 +382,7 @@ class PolymorphicFieldParser extends FieldNodeParser<PolymorphicField> {
   @override
   PolymorphicField _parse(ConstantReader reader) {
     return PolymorphicField(
-      name: reader.read('name').stringValue,
+      name: _optionalString(reader, 'name'),
       pivotName: reader.read('pivotName').stringValue,
       pivotAs: $ConcreteSymbol(
         reader: reader.read('pivotAs'),
@@ -258,3 +391,4 @@ class PolymorphicFieldParser extends FieldNodeParser<PolymorphicField> {
     );
   }
 }
+

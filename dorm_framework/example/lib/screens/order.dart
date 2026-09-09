@@ -1,4 +1,6 @@
 import 'package:decimal/intl.dart';
+import 'package:dorm_framework/dorm_framework.dart';
+import 'package:dorm_bloc_database/dorm_bloc_database.dart' as dorm_bloc;
 import 'package:flutter/material.dart';
 import 'package:flutter_form_bloc/flutter_form_bloc.dart' as ffb;
 import 'package:flutter_spinbox/flutter_spinbox.dart';
@@ -54,12 +56,14 @@ class OrderScreen extends StatelessWidget {
         StreamProvider<AsyncSnapshot<List<Product>>>(
           initialData: const AsyncSnapshot.waiting(),
           create: (_) => GetIt.instance
-              .get<Dorm>()
+              .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
               .products
               .repository
               .pullAll()
-              .map((event) =>
-                  AsyncSnapshot.withData(ConnectionState.active, event)),
+              .map(
+                (event) =>
+                    AsyncSnapshot.withData(ConnectionState.active, event),
+              ),
         ),
         ffb.BlocProvider<OrderForm>(create: (_) => OrderForm()),
       ],
@@ -69,111 +73,146 @@ class OrderScreen extends StatelessWidget {
             return ffb.FormBlocListener<OrderForm, OrderResult, void>(
               onSuccess: (context, state) =>
                   Navigator.of(context).pop(state.successResponse),
-              child: ffb.BlocSelector<ffb.BooleanFieldBloc<void>,
-                  ffb.BooleanFieldBlocState<void>, bool>(
-                bloc: form.editing,
-                selector: (state) => state.value,
-                builder: (context, editing) {
-                  return Scaffold(
-                    appBar: AppBar(
-                      title: const Text('Amount'),
-                      actions: [
-                        editing
-                            ? IconButton(
-                                icon: const Icon(Icons.list),
-                                onPressed: () =>
-                                    form.editing.updateValue(false),
-                              )
-                            : IconButton(
-                                icon: const Icon(Icons.dashboard_customize),
-                                onPressed: () => form.editing.updateValue(true),
-                              ),
-                      ],
-                    ),
-                    body: ffb.BlocSelector<ffb.InputFieldBloc<String?, void>,
-                        ffb.InputFieldBlocState<String?, void>, String?>(
-                      bloc: form.productId,
-                      selector: (state) => state.value,
-                      builder: (context, selectedProductId) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Expanded(
-                              child: _ProductList(
-                                editing: editing,
-                                isSelected: (product) => editing
-                                    ? false
-                                    : product.id == selectedProductId,
-                                onSelected: editing
-                                    ? null
-                                    : (product) => form.productId.updateValue(
-                                        product.id == selectedProductId
-                                            ? null
-                                            : product.id),
-                              ),
-                            ),
-                            if (!editing && selectedProductId != null)
-                              Padding(
-                                padding: const EdgeInsets.all(10),
-                                child: ffb.BlocSelector<
-                                    ffb.InputFieldBloc<int, void>,
-                                    ffb.InputFieldBlocState<int, void>,
-                                    int>(
-                                  bloc: form.amount,
-                                  selector: (state) => state.value,
-                                  builder: (context, value) {
-                                    return Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.stretch,
-                                      children: [
-                                        SpinBox(
-                                          value: value.toDouble(),
-                                          onChanged: (value) => form.amount
-                                              .updateValue(value.toInt()),
-                                          decoration: const InputDecoration(
-                                            border: OutlineInputBorder(),
-                                            labelText: 'Amount',
-                                          ),
-                                        ),
-                                        const SizedBox(height: 10),
-                                        MaterialButton(
-                                          onPressed: form.submit,
-                                          child: const Padding(
-                                            padding: EdgeInsets.all(10),
-                                            child: Text('submit'),
-                                          ),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                ),
-                              ),
+              child:
+                  ffb.BlocSelector<
+                    ffb.BooleanFieldBloc<void>,
+                    ffb.BooleanFieldBlocState<void>,
+                    bool
+                  >(
+                    bloc: form.editing,
+                    selector: (state) => state.value,
+                    builder: (context, editing) {
+                      return Scaffold(
+                        appBar: AppBar(
+                          title: const Text('Amount'),
+                          actions: [
+                            editing
+                                ? IconButton(
+                                    icon: const Icon(Icons.list),
+                                    onPressed: () =>
+                                        form.editing.updateValue(false),
+                                  )
+                                : IconButton(
+                                    icon: const Icon(Icons.dashboard_customize),
+                                    onPressed: () =>
+                                        form.editing.updateValue(true),
+                                  ),
                           ],
-                        );
-                      },
-                    ),
-                    floatingActionButton: editing
-                        ? FloatingActionButton(
-                            onPressed: () async {
-                              final ProductData? data =
-                                  await Navigator.of(context)
-                                      .push(MaterialPageRoute(
-                                builder: (_) =>
-                                    ProductFormScreen(form: ProductForm()),
-                              ));
-                              if (data == null) return;
-                              await GetIt.instance
-                                  .get<Dorm>()
-                                  .products
-                                  .repository
-                                  .put(const ProductDependency(), data);
-                            },
-                            child: const Icon(Icons.add),
-                          )
-                        : null,
-                  );
-                },
-              ),
+                        ),
+                        body:
+                            ffb.BlocSelector<
+                              ffb.InputFieldBloc<String?, void>,
+                              ffb.InputFieldBlocState<String?, void>,
+                              String?
+                            >(
+                              bloc: form.productId,
+                              selector: (state) => state.value,
+                              builder: (context, selectedProductId) {
+                                return Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    Expanded(
+                                      child: _ProductList(
+                                        editing: editing,
+                                        isSelected: (product) => editing
+                                            ? false
+                                            : product.id == selectedProductId,
+                                        onSelected: editing
+                                            ? null
+                                            : (product) =>
+                                                  form.productId.updateValue(
+                                                    product.id ==
+                                                            selectedProductId
+                                                        ? null
+                                                        : product.id,
+                                                  ),
+                                      ),
+                                    ),
+                                    if (!editing && selectedProductId != null)
+                                      Padding(
+                                        padding: const EdgeInsets.all(10),
+                                        child:
+                                            ffb.BlocSelector<
+                                              ffb.InputFieldBloc<int, void>,
+                                              ffb.InputFieldBlocState<
+                                                int,
+                                                void
+                                              >,
+                                              int
+                                            >(
+                                              bloc: form.amount,
+                                              selector: (state) => state.value,
+                                              builder: (context, value) {
+                                                return Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment
+                                                          .stretch,
+                                                  children: [
+                                                    SpinBox(
+                                                      value: value.toDouble(),
+                                                      onChanged: (value) => form
+                                                          .amount
+                                                          .updateValue(
+                                                            value.toInt(),
+                                                          ),
+                                                      decoration:
+                                                          const InputDecoration(
+                                                            border:
+                                                                OutlineInputBorder(),
+                                                            labelText: 'Amount',
+                                                          ),
+                                                    ),
+                                                    const SizedBox(height: 10),
+                                                    MaterialButton(
+                                                      onPressed: form.submit,
+                                                      child: const Padding(
+                                                        padding: EdgeInsets.all(
+                                                          10,
+                                                        ),
+                                                        child: Text('submit'),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                );
+                                              },
+                                            ),
+                                      ),
+                                  ],
+                                );
+                              },
+                            ),
+                        floatingActionButton: editing
+                            ? FloatingActionButton(
+                                onPressed: () async {
+                                  final ProductData? data =
+                                      await Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => ProductFormScreen(
+                                            form: ProductForm(),
+                                          ),
+                                        ),
+                                      );
+                                  if (data == null) return;
+                                  await GetIt.instance
+                                      .get<
+                                        Dorm<dorm_bloc.Query, OffsetPageRequest>
+                                      >()
+                                      .products
+                                      .repository
+                                      .put(
+                                        Creation.auto(
+                                          dependency: const ProductDependency(),
+                                          data: data,
+                                        ),
+                                      );
+                                },
+                                child: const Icon(Icons.add),
+                              )
+                            : null,
+                      );
+                    },
+                  ),
             );
           },
         ),
@@ -211,8 +250,9 @@ class _ProductList extends StatelessWidget {
             return ListTile(
               leading: Icon(
                 Icons.shopping_bag,
-                color:
-                    isSelected(product) ? Theme.of(context).primaryColor : null,
+                color: isSelected(product)
+                    ? Theme.of(context).primaryColor
+                    : null,
               ),
               title: Text(product.name),
               onTap: (editing || onSelected == null)
@@ -223,23 +263,29 @@ class _ProductList extends StatelessWidget {
                   ? PopupMenuButton<bool>(
                       onSelected: (action) async {
                         if (action) {
-                          final ProductData? data =
-                              await Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) {
-                              return ProductFormScreen(
-                                form: ProductForm(product),
+                          final ProductData? data = await Navigator.of(context)
+                              .push(
+                                MaterialPageRoute(
+                                  builder: (_) {
+                                    return ProductFormScreen(
+                                      form: ProductForm(product),
+                                    );
+                                  },
+                                ),
                               );
-                            }),
-                          );
                           if (data == null) return;
                           await GetIt.instance
-                              .get<Dorm>()
+                              .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
                               .products
                               .repository
-                              .push(GetIt.instance
-                                  .get<Dorm>()
-                                  .products
-                                  .convert(product, data));
+                              .push(
+                                GetIt.instance
+                                    .get<
+                                      Dorm<dorm_bloc.Query, OffsetPageRequest>
+                                    >()
+                                    .products
+                                    .convert(product, data),
+                              );
                         } else {
                           final bool? confirm = await showDialog(
                             context: context,
@@ -269,17 +315,14 @@ class _ProductList extends StatelessWidget {
                           if (!(confirm ?? false)) return;
 
                           await GetIt.instance
-                              .get<Dorm>()
+                              .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
                               .products
                               .repository
                               .pop(product.id);
                         }
                       },
                       itemBuilder: (_) => [
-                        const PopupMenuItem(
-                          value: true,
-                          child: Text('edit'),
-                        ),
+                        const PopupMenuItem(value: true, child: Text('edit')),
                         const PopupMenuItem(
                           value: false,
                           child: Text(
@@ -289,8 +332,11 @@ class _ProductList extends StatelessWidget {
                         ),
                       ],
                     )
-                  : Text(intl.NumberFormat.currency(locale: 'en_US')
-                      .format(DecimalIntl(product.price))),
+                  : Text(
+                      intl.NumberFormat.currency(
+                        locale: 'en_US',
+                      ).format(DecimalIntl(product.price)),
+                    ),
             );
           },
         );

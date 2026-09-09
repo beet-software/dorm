@@ -5,7 +5,7 @@ part 'drawing.dorm.dart';
 
 part 'drawing.g.dart';
 
-abstract class _Shape {}
+sealed class _Shape {}
 
 @PolymorphicData(name: 'retangulo')
 abstract class _Rectangle implements _Shape {

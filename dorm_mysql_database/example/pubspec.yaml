@@ -1,0 +1,32 @@
+name: example
+version: 0.1.0
+publish_to: none
+environment:
+  sdk: '>=3.8.0 <4.0.0'
+
+dependencies:
+  args: ^2.4.2
+  dotenv: ^4.1.0
+  mysql_client: ^0.0.27
+  dorm_framework:
+    path: ../../dorm_framework
+  dorm_annotations:
+    path: ../../dorm_annotations
+  dorm_mysql_database:
+    path: ../../dorm_mysql_database
+  json_annotation: ^4.12.0
+
+dev_dependencies:
+  lints: ^5.0.0
+  build_runner: ^2.4.3
+  dorm_generator:
+    path: ../../dorm_generator
+
+dependency_overrides:
+  meta: 1.18.3
+  dorm_framework:
+    path: ../../dorm_framework
+  dorm_annotations:
+    path: ../../dorm_annotations
+  dorm_generator:
+    path: ../../dorm_generator

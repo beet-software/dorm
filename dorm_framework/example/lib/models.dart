@@ -29,12 +29,11 @@ abstract class _User {
   @ModelField(name: 'profile', referTo: _Profile)
   get profile;
 
-  @QueryField(
-    name: '_q-username',
-    referTo: [QueryToken(#username, QueryType.text)],
-  )
-  // ignore: unused_element
-  String get _qUsername;
+  @DerivedField(name: '_q-username')
+  static String $dorm$derived$qUsername(
+    _User model,
+    DerivedTransformations transformations,
+  ) => transformations.text(model.username) ?? '';
 }
 
 @Model(name: 'Products', as: #products)
@@ -48,20 +47,20 @@ abstract class _Product {
   @Field(name: 'price')
   Decimal get price;
 
-  @QueryField(
-    name: '_q-name',
-    referTo: [QueryToken(#name, QueryType.text)],
-  )
-  // ignore: unused_element
-  String get _qName;
+  @DerivedField(name: '_q-name')
+  static String $dorm$derived$qName(
+    _Product model,
+    DerivedTransformations transformations,
+  ) => transformations.text(model.name) ?? '';
 }
 
-@Model(name: 'Carts', as: #carts, uidType: UidType.sameAs(_User))
+@Model(name: 'Carts', as: #carts)
 abstract class _Cart {
+  static String $dorm$generateId(_Cart cart, String id) => cart.userId;
   @Field(name: 'timestamp')
   DateTime get timestamp;
 
-  @ForeignField(name: 'user-id', referTo: _User)
+  @ForeignField(name: 'user-id', referTo: _User, inverseAs: #carts)
   String get userId;
 }
 
@@ -70,10 +69,10 @@ abstract class _CartItem {
   @Field(name: 'amount')
   int get amount;
 
-  @ForeignField(name: 'product-id', referTo: _Product)
+  @ForeignField(name: 'product-id', referTo: _Product, inverseAs: #cartItems)
   String get productId;
 
-  @ForeignField(name: 'cart-id', referTo: _Cart)
+  @ForeignField(name: 'cart-id', referTo: _Cart, inverseAs: #items)
   String get cartId;
 }
 
@@ -111,14 +110,14 @@ abstract class _Review {
   @PolymorphicField(name: 'content', pivotName: 'type')
   _ReviewContent get content;
 
-  @ForeignField(name: 'user-id', referTo: _User)
+  ReviewContentType get type;
+
+  @ForeignField(name: 'user-id', referTo: _User, inverseAs: #reviews)
   String get userId;
 
-  @QueryField(
-    name: '_q-type',
-    referTo: [QueryToken(#userId), QueryToken(#type, QueryType.enumeration)],
-    joinBy: '_',
-  )
-  // ignore: unused_element
-  String get _qUserIdType;
+  @DerivedField(name: '_q-type')
+  static String $dorm$derived$qUserIdType(
+    _Review model,
+    DerivedTransformations transformations,
+  ) => '${model.userId}_${transformations.enumeration(model.type) ?? ''}';
 }

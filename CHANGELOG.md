@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `dorm_example`, a CLI that generates engine-specific Flutter and pure Dart
+  showcase projects from Mustache templates.
+- `sort` extension method to `Filter`
+- Typed comparison, set-membership, null, logical, negation, and collection
+  filter capabilities for engines that implement them.
+- Optional portable transactions through `TransactionalEngine` and the
+  generated `TransactionalDorm` facade for Memory, BLoC, MySQL, and PostgreSQL.
+
+### Changed
+
+- `Filter` is now `BaseFilter<Q extends BaseQuery<Q>>` and has better API
+- `put` and `putAll` now receive `Creation` objects, and `Entity.fromData`
+  now receives `ResolvedCreation`. This is a breaking change.
+- `@Model.primaryKeyGenerator` was removed. Generated identities can now use a
+  directly declared static `$dorm$generateId` method. This is a breaking change.
+- Structured filters now require a `FieldSchema` through `field:`. `OrderBy`
+  now receives a `FieldSchema` instead of a persisted-name string. This is a
+  breaking change; low-level `BaseQuery` methods continue to receive resolved
+  string names.
+- Advanced filter factories are capability-based. `ComparisonQuery`,
+  `LogicalQuery`, `NegationQuery`, and `CollectionQuery` are optional query
+  contracts; engines that do not implement a capability do not accept its
+  corresponding filter factories.
+- `DerivedField` now uses a static `$dorm$derived$<name>` callback. The
+  token-based `DerivedToken` and `DerivedTransform` API, `referTo`, and
+  `joinBy` were removed. This is a breaking change.
+- Added `DerivedTransformations` for the built-in text, enumeration, date, and
+  date-time transformations.
+
 ## 1.0.0-alpha.7 - 2024-12-08
 
 ### Added

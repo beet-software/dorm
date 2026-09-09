@@ -1,4 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format width=80
 
 part of 'social_network.dart';
 
@@ -6,10 +7,7 @@ part of 'social_network.dart';
 // OrmGenerator
 // **************************************************************************
 
-@JsonSerializable(
-  anyMap: true,
-  explicitToJson: true,
-)
+@JsonSerializable(anyMap: true, explicitToJson: true)
 class UserData {
   factory UserData.fromJson(Map json) => _$UserDataFromJson(json);
 
@@ -23,43 +21,23 @@ class UserData {
   @JsonKey(name: 'name')
   final String? name;
 
-  @JsonKey(
-    name: 'birth-date',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: 'birth-date', required: true, disallowNullValue: true)
   final DateTime birthDate;
 
-  @JsonKey(
-    name: 'email',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: 'email', required: true, disallowNullValue: true)
   final String email;
 
-  @JsonKey(
-    name: 'picture-url',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: 'picture-url', required: true, disallowNullValue: true)
   final Uri pictureUrl;
 
   Map<String, Object?> toJson() => _$UserDataToJson(this);
 }
 
-@JsonSerializable(
-  anyMap: true,
-  explicitToJson: true,
-)
+@JsonSerializable(anyMap: true, explicitToJson: true)
+@CopyWith(skipFields: true)
 class User extends UserData implements _User {
-  factory User.fromJson(
-    String id,
-    Map json,
-  ) =>
-      _$UserFromJson({
-        ...json,
-        '_id': id,
-      });
+  factory User.fromJson(String id, Map json) =>
+      _$UserFromJson({...json, '_id': id});
 
   const User({
     required this.id,
@@ -69,11 +47,7 @@ class User extends UserData implements _User {
     required super.pictureUrl,
   });
 
-  @JsonKey(
-    name: '_id',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: '_id', required: true, disallowNullValue: true)
   final String id;
 
   @override
@@ -86,43 +60,72 @@ class UserDependency extends Dependency<UserData> {
   const UserDependency() : super.strong();
 }
 
-class UserEntity implements Entity<UserData, User> {
+class UserFields {
+  const UserFields();
+
+  final FieldSchema id = const FieldSchema(fieldName: 'id', columnName: 'id');
+
+  final FieldSchema name = const FieldSchema(
+    fieldName: 'name',
+    columnName: 'name',
+  );
+
+  final FieldSchema birthDate = const FieldSchema(
+    fieldName: 'birthDate',
+    columnName: 'birth-date',
+  );
+
+  final FieldSchema email = const FieldSchema(
+    fieldName: 'email',
+    columnName: 'email',
+  );
+
+  final FieldSchema pictureUrl = const FieldSchema(
+    fieldName: 'pictureUrl',
+    columnName: 'picture-url',
+  );
+}
+
+class UserEntity
+    implements
+        Entity<UserData, User, String, SimpleCreation<UserData, String>> {
   const UserEntity();
 
-  @override
-  final String tableName = 'user';
+  static const UserFields fields = UserFields();
+
+  static final EntitySchema _schema = EntitySchema(
+    tableName: 'user',
+    primaryKeys: [fields.id],
+    fields: [fields.name, fields.birthDate, fields.email, fields.pictureUrl],
+    derivedFields: [],
+  );
 
   @override
-  User fromData(
-    UserDependency dependency,
-    String id,
-    UserData data,
-  ) {
+  EntitySchema get schema => _schema;
+
+  @override
+  PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
+
+  @override
+  IdentityGenerationStrategy get identityGeneration =>
+      IdentityGenerationStrategy.engine;
+
+  @override
+  User fromData(ResolvedCreation<UserData, String> creation) {
     return User(
-      id: id,
-      name: data.name,
-      birthDate: data.birthDate,
-      email: data.email,
-      pictureUrl: data.pictureUrl,
+      id: creation.id,
+      name: creation.data.name,
+      birthDate: creation.data.birthDate,
+      email: creation.data.email,
+      pictureUrl: creation.data.pictureUrl,
     );
   }
 
   @override
-  User convert(
-    User model,
-    UserData data,
-  ) =>
-      model.copyWith(data);
+  User convert(User model, UserData data) => model.updateWith(data);
 
   @override
-  User fromJson(
-    String id,
-    Map json,
-  ) =>
-      User.fromJson(
-        id,
-        json,
-      );
+  User fromJson(String id, Map json) => User.fromJson(id, json);
 
   @override
   String identify(User model) => model.id;
@@ -132,7 +135,7 @@ class UserEntity implements Entity<UserData, User> {
 }
 
 extension UserProperties on User {
-  User copyWith(UserData data) {
+  User updateWith(UserData data) {
     return User(
       id: id,
       name: data.name,
@@ -143,48 +146,26 @@ extension UserProperties on User {
   }
 }
 
-@JsonSerializable(
-  anyMap: true,
-  explicitToJson: true,
-)
+@JsonSerializable(anyMap: true, explicitToJson: true)
 class PostData {
   factory PostData.fromJson(Map json) => _$PostDataFromJson(json);
 
-  const PostData({
-    required this.contents,
-    required this.creationDate,
-  });
+  const PostData({required this.contents, required this.creationDate});
 
-  @JsonKey(
-    name: 'contents',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: 'contents', required: true, disallowNullValue: true)
   final String contents;
 
-  @JsonKey(
-    name: 'creation-date',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: 'creation-date', required: true, disallowNullValue: true)
   final DateTime creationDate;
 
   Map<String, Object?> toJson() => _$PostDataToJson(this);
 }
 
-@JsonSerializable(
-  anyMap: true,
-  explicitToJson: true,
-)
+@JsonSerializable(anyMap: true, explicitToJson: true)
+@CopyWith(skipFields: true)
 class Post extends PostData implements _Post {
-  factory Post.fromJson(
-    String id,
-    Map json,
-  ) =>
-      _$PostFromJson({
-        ...json,
-        '_id': id,
-      });
+  factory Post.fromJson(String id, Map json) =>
+      _$PostFromJson({...json, '_id': id});
 
   const Post({
     required this.id,
@@ -193,19 +174,11 @@ class Post extends PostData implements _Post {
     required this.userId,
   });
 
-  @JsonKey(
-    name: '_id',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: '_id', required: true, disallowNullValue: true)
   final String id;
 
   @override
-  @JsonKey(
-    name: 'user-id',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: 'user-id', required: true, disallowNullValue: true)
   final String userId;
 
   @override
@@ -220,42 +193,69 @@ class PostDependency extends Dependency<PostData> {
   final String userId;
 }
 
-class PostEntity implements Entity<PostData, Post> {
+class PostFields {
+  const PostFields();
+
+  final FieldSchema id = const FieldSchema(fieldName: 'id', columnName: 'id');
+
+  final FieldSchema contents = const FieldSchema(
+    fieldName: 'contents',
+    columnName: 'contents',
+  );
+
+  final FieldSchema creationDate = const FieldSchema(
+    fieldName: 'creationDate',
+    columnName: 'creation-date',
+  );
+
+  final ForeignKeySchema userId = const ForeignKeySchema(
+    fieldName: 'userId',
+    columnName: 'user-id',
+    targetTableName: 'user',
+    targetColumnName: 'id',
+    unique: false,
+  );
+}
+
+class PostEntity
+    implements
+        Entity<PostData, Post, String, SimpleCreation<PostData, String>> {
   const PostEntity();
 
-  @override
-  final String tableName = 'post';
+  static const PostFields fields = PostFields();
+
+  static final EntitySchema _schema = EntitySchema(
+    tableName: 'post',
+    primaryKeys: [fields.id],
+    fields: [fields.contents, fields.creationDate, fields.userId],
+    derivedFields: [],
+  );
 
   @override
-  Post fromData(
-    PostDependency dependency,
-    String id,
-    PostData data,
-  ) {
+  EntitySchema get schema => _schema;
+
+  @override
+  PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
+
+  @override
+  IdentityGenerationStrategy get identityGeneration =>
+      IdentityGenerationStrategy.engine;
+
+  @override
+  Post fromData(ResolvedCreation<PostData, String> creation) {
     return Post(
-      id: id,
-      contents: data.contents,
-      creationDate: data.creationDate,
-      userId: dependency.userId,
+      id: creation.id,
+      contents: creation.data.contents,
+      creationDate: creation.data.creationDate,
+      userId: (creation.dependency as PostDependency).userId,
     );
   }
 
   @override
-  Post convert(
-    Post model,
-    PostData data,
-  ) =>
-      model.copyWith(data);
+  Post convert(Post model, PostData data) => model.updateWith(data);
 
   @override
-  Post fromJson(
-    String id,
-    Map json,
-  ) =>
-      Post.fromJson(
-        id,
-        json,
-      );
+  Post fromJson(String id, Map json) => Post.fromJson(id, json);
 
   @override
   String identify(Post model) => model.id;
@@ -265,7 +265,7 @@ class PostEntity implements Entity<PostData, Post> {
 }
 
 extension PostProperties on Post {
-  Post copyWith(PostData data) {
+  Post updateWith(PostData data) {
     return Post(
       id: id,
       contents: data.contents,
@@ -275,48 +275,26 @@ extension PostProperties on Post {
   }
 }
 
-@JsonSerializable(
-  anyMap: true,
-  explicitToJson: true,
-)
+@JsonSerializable(anyMap: true, explicitToJson: true)
 class MessageData {
   factory MessageData.fromJson(Map json) => _$MessageDataFromJson(json);
 
-  const MessageData({
-    required this.contents,
-    required this.creationDate,
-  });
+  const MessageData({required this.contents, required this.creationDate});
 
-  @JsonKey(
-    name: 'contents',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: 'contents', required: true, disallowNullValue: true)
   final String contents;
 
-  @JsonKey(
-    name: 'creation-date',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: 'creation-date', required: true, disallowNullValue: true)
   final DateTime creationDate;
 
   Map<String, Object?> toJson() => _$MessageDataToJson(this);
 }
 
-@JsonSerializable(
-  anyMap: true,
-  explicitToJson: true,
-)
+@JsonSerializable(anyMap: true, explicitToJson: true)
+@CopyWith(skipFields: true)
 class Message extends MessageData implements _Message {
-  factory Message.fromJson(
-    String id,
-    Map json,
-  ) =>
-      _$MessageFromJson({
-        ...json,
-        '_id': id,
-      });
+  factory Message.fromJson(String id, Map json) =>
+      _$MessageFromJson({...json, '_id': id});
 
   const Message({
     required this.id,
@@ -326,27 +304,15 @@ class Message extends MessageData implements _Message {
     required this.receiverId,
   });
 
-  @JsonKey(
-    name: '_id',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: '_id', required: true, disallowNullValue: true)
   final String id;
 
   @override
-  @JsonKey(
-    name: 'sender-id',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: 'sender-id', required: true, disallowNullValue: true)
   final String senderId;
 
   @override
-  @JsonKey(
-    name: 'receiver-id',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: 'receiver-id', required: true, disallowNullValue: true)
   final String receiverId;
 
   @override
@@ -356,56 +322,96 @@ class Message extends MessageData implements _Message {
 }
 
 class MessageDependency extends Dependency<MessageData> {
-  MessageDependency({
-    required this.senderId,
-    required this.receiverId,
-  }) : super.weak([
-          senderId,
-          receiverId,
-        ]);
+  MessageDependency({required this.senderId, required this.receiverId})
+    : super.weak([senderId, receiverId]);
 
   final String senderId;
 
   final String receiverId;
 }
 
-class MessageEntity implements Entity<MessageData, Message> {
+class MessageFields {
+  const MessageFields();
+
+  final FieldSchema id = const FieldSchema(fieldName: 'id', columnName: 'id');
+
+  final FieldSchema contents = const FieldSchema(
+    fieldName: 'contents',
+    columnName: 'contents',
+  );
+
+  final FieldSchema creationDate = const FieldSchema(
+    fieldName: 'creationDate',
+    columnName: 'creation-date',
+  );
+
+  final ForeignKeySchema senderId = const ForeignKeySchema(
+    fieldName: 'senderId',
+    columnName: 'sender-id',
+    targetTableName: 'user',
+    targetColumnName: 'id',
+    unique: false,
+  );
+
+  final ForeignKeySchema receiverId = const ForeignKeySchema(
+    fieldName: 'receiverId',
+    columnName: 'receiver-id',
+    targetTableName: 'user',
+    targetColumnName: 'id',
+    unique: false,
+  );
+}
+
+class MessageEntity
+    implements
+        Entity<
+          MessageData,
+          Message,
+          String,
+          SimpleCreation<MessageData, String>
+        > {
   const MessageEntity();
 
-  @override
-  final String tableName = 'message';
+  static const MessageFields fields = MessageFields();
+
+  static final EntitySchema _schema = EntitySchema(
+    tableName: 'message',
+    primaryKeys: [fields.id],
+    fields: [
+      fields.contents,
+      fields.creationDate,
+      fields.senderId,
+      fields.receiverId,
+    ],
+    derivedFields: [],
+  );
 
   @override
-  Message fromData(
-    MessageDependency dependency,
-    String id,
-    MessageData data,
-  ) {
+  EntitySchema get schema => _schema;
+
+  @override
+  PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
+
+  @override
+  IdentityGenerationStrategy get identityGeneration =>
+      IdentityGenerationStrategy.engine;
+
+  @override
+  Message fromData(ResolvedCreation<MessageData, String> creation) {
     return Message(
-      id: id,
-      contents: data.contents,
-      creationDate: data.creationDate,
-      senderId: dependency.senderId,
-      receiverId: dependency.receiverId,
+      id: creation.id,
+      contents: creation.data.contents,
+      creationDate: creation.data.creationDate,
+      senderId: (creation.dependency as MessageDependency).senderId,
+      receiverId: (creation.dependency as MessageDependency).receiverId,
     );
   }
 
   @override
-  Message convert(
-    Message model,
-    MessageData data,
-  ) =>
-      model.copyWith(data);
+  Message convert(Message model, MessageData data) => model.updateWith(data);
 
   @override
-  Message fromJson(
-    String id,
-    Map json,
-  ) =>
-      Message.fromJson(
-        id,
-        json,
-      );
+  Message fromJson(String id, Map json) => Message.fromJson(id, json);
 
   @override
   String identify(Message model) => model.id;
@@ -415,7 +421,7 @@ class MessageEntity implements Entity<MessageData, Message> {
 }
 
 extension MessageProperties on Message {
-  Message copyWith(MessageData data) {
+  Message updateWith(MessageData data) {
     return Message(
       id: id,
       contents: data.contents,
@@ -426,23 +432,215 @@ extension MessageProperties on Message {
   }
 }
 
-class Dorm {
+class Dorm<Q extends BaseQuery<Q>, P extends PageRequest> {
   const Dorm(this._engine);
 
-  final BaseEngine _engine;
+  final BaseEngine<Q, P> _engine;
 
-  DatabaseEntity<UserData, User> get users => DatabaseEntity(
-        const UserEntity(),
-        engine: _engine,
-      );
+  DatabaseEntity<UserData, User, String, Q, SimpleCreation<UserData, String>, P>
+  get users => DatabaseEntity(const UserEntity(), engine: _engine);
 
-  DatabaseEntity<PostData, Post> get post => DatabaseEntity(
-        const PostEntity(),
-        engine: _engine,
-      );
+  DatabaseEntity<PostData, Post, String, Q, SimpleCreation<PostData, String>, P>
+  get post => DatabaseEntity(const PostEntity(), engine: _engine);
 
-  DatabaseEntity<MessageData, Message> get messages => DatabaseEntity(
-        const MessageEntity(),
-        engine: _engine,
-      );
+  DatabaseEntity<
+    MessageData,
+    Message,
+    String,
+    Q,
+    SimpleCreation<MessageData, String>,
+    P
+  >
+  get messages => DatabaseEntity(const MessageEntity(), engine: _engine);
+
+  DormRelations<Q, P> get relations => DormRelations<Q, P>(this);
+}
+
+class TransactionalDorm<Q extends BaseQuery<Q>, P extends PageRequest>
+    extends Dorm<Q, P> {
+  const TransactionalDorm(this._transactionalEngine)
+    : super(_transactionalEngine);
+
+  final TransactionalEngine<Q, P> _transactionalEngine;
+
+  Future<T> transaction<T>(Future<T> Function(Dorm<Q, P>) action) =>
+      _transactionalEngine.transaction((engine) => action(Dorm<Q, P>(engine)));
+}
+
+class DormRelations<Q extends BaseQuery<Q>, P extends PageRequest> {
+  const DormRelations(this._dorm);
+
+  final Dorm<Q, P> _dorm;
+
+  RelationPath<Dorm<Q, P>, User, User, Q> get users =>
+      RelationPath.root(_dorm.users.repository, context: _dorm);
+
+  RelationPath<Dorm<Q, P>, Post, Post, Q> get post =>
+      RelationPath.root(_dorm.post.repository, context: _dorm);
+
+  RelationPath<Dorm<Q, P>, Message, Message, Q> get messages =>
+      RelationPath.root(_dorm.messages.repository, context: _dorm);
+}
+
+extension UserRelationPaths<Root, Q extends BaseQuery<Q>, P extends PageRequest>
+    on RelationPath<Dorm<Q, P>, Root, User, Q> {
+  RelationPath<Dorm<Q, P>, Root, Post, Q> get posts {
+    return toMany(
+      context.post.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.many,
+        source: UserEntity.fields.id,
+        target: PostEntity.fields.userId,
+      ),
+      on: (model) =>
+          BaseFilter.value(model.id, field: PostEntity.fields.userId),
+    );
+  }
+
+  RelationPath<Dorm<Q, P>, Root, List<Post>, Q> get postsOrEmpty {
+    return toManyOrEmpty(
+      context.post.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.many,
+        source: UserEntity.fields.id,
+        target: PostEntity.fields.userId,
+      ),
+      on: (model) =>
+          BaseFilter.value(model.id, field: PostEntity.fields.userId),
+    );
+  }
+
+  RelationPath<Dorm<Q, P>, Root, Message, Q> get sentMessages {
+    return toMany(
+      context.messages.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.many,
+        source: UserEntity.fields.id,
+        target: MessageEntity.fields.senderId,
+      ),
+      on: (model) =>
+          BaseFilter.value(model.id, field: MessageEntity.fields.senderId),
+    );
+  }
+
+  RelationPath<Dorm<Q, P>, Root, List<Message>, Q> get sentMessagesOrEmpty {
+    return toManyOrEmpty(
+      context.messages.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.many,
+        source: UserEntity.fields.id,
+        target: MessageEntity.fields.senderId,
+      ),
+      on: (model) =>
+          BaseFilter.value(model.id, field: MessageEntity.fields.senderId),
+    );
+  }
+
+  RelationPath<Dorm<Q, P>, Root, Message, Q> get receivedMessages {
+    return toMany(
+      context.messages.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.many,
+        source: UserEntity.fields.id,
+        target: MessageEntity.fields.receiverId,
+      ),
+      on: (model) =>
+          BaseFilter.value(model.id, field: MessageEntity.fields.receiverId),
+    );
+  }
+
+  RelationPath<Dorm<Q, P>, Root, List<Message>, Q> get receivedMessagesOrEmpty {
+    return toManyOrEmpty(
+      context.messages.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.many,
+        source: UserEntity.fields.id,
+        target: MessageEntity.fields.receiverId,
+      ),
+      on: (model) =>
+          BaseFilter.value(model.id, field: MessageEntity.fields.receiverId),
+    );
+  }
+}
+
+extension PostRelationPaths<Root, Q extends BaseQuery<Q>, P extends PageRequest>
+    on RelationPath<Dorm<Q, P>, Root, Post, Q> {
+  RelationPath<Dorm<Q, P>, Root, User, Q> get user {
+    return toOne(
+      context.users.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.one,
+        source: PostEntity.fields.userId,
+        target: UserEntity.fields.id,
+      ),
+      on: (model) => model.userId,
+    );
+  }
+
+  RelationPath<Dorm<Q, P>, Root, User?, Q> get userOrNull {
+    return toOneOrNull(
+      context.users.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.one,
+        source: PostEntity.fields.userId,
+        target: UserEntity.fields.id,
+      ),
+      on: (model) => model.userId,
+    );
+  }
+}
+
+extension MessageRelationPaths<
+  Root,
+  Q extends BaseQuery<Q>,
+  P extends PageRequest
+>
+    on RelationPath<Dorm<Q, P>, Root, Message, Q> {
+  RelationPath<Dorm<Q, P>, Root, User, Q> get sender {
+    return toOne(
+      context.users.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.one,
+        source: MessageEntity.fields.senderId,
+        target: UserEntity.fields.id,
+      ),
+      on: (model) => model.senderId,
+    );
+  }
+
+  RelationPath<Dorm<Q, P>, Root, User?, Q> get senderOrNull {
+    return toOneOrNull(
+      context.users.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.one,
+        source: MessageEntity.fields.senderId,
+        target: UserEntity.fields.id,
+      ),
+      on: (model) => model.senderId,
+    );
+  }
+
+  RelationPath<Dorm<Q, P>, Root, User, Q> get receiver {
+    return toOne(
+      context.users.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.one,
+        source: MessageEntity.fields.receiverId,
+        target: UserEntity.fields.id,
+      ),
+      on: (model) => model.receiverId,
+    );
+  }
+
+  RelationPath<Dorm<Q, P>, Root, User?, Q> get receiverOrNull {
+    return toOneOrNull(
+      context.users.repository,
+      spec: RelationSpec(
+        cardinality: RelationCardinality.one,
+        source: MessageEntity.fields.receiverId,
+        target: UserEntity.fields.id,
+      ),
+      on: (model) => model.receiverId,
+    );
+  }
 }

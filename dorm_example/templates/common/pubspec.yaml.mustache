@@ -1,0 +1,40 @@
+name: {{projectName}}
+publish_to: none
+
+environment:
+  sdk: '>=3.11.5 <4.0.0'
+
+dependencies:
+  {{enginePackage}}: ^1.0.0-alpha.5
+  dorm_annotations: ^1.0.0-alpha.5
+  dorm_framework: ^1.0.0-alpha.5
+{{#isFlutter}}
+  flutter:
+    sdk: flutter
+  get_it: ^7.7.0
+{{#isFirebase}}
+  firebase_core: ^4.14.0
+{{/isFirebase}}
+{{#isFirestore}}
+  firebase_core: ^4.14.0
+  cloud_firestore: ^6.9.0
+{{/isFirestore}}
+{{#isHttp}}
+  http: ^1.6.0
+{{/isHttp}}
+{{/isFlutter}}
+
+dev_dependencies:
+  build_runner: ^2.16.1
+  dorm_generator: ^1.0.0-alpha.5
+{{#isFlutter}}
+  flutter_lints: ^5.0.0
+{{/isFlutter}}
+{{^isFlutter}}
+  lints: ^5.0.0
+{{/isFlutter}}
+
+{{#isFlutter}}
+flutter:
+  uses-material-design: true
+{{/isFlutter}}

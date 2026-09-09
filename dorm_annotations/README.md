@@ -43,7 +43,8 @@ The `Field` annotation is used to link a database column to a Dart field within 
 
 It accepts the following parameters:
 
-- `name`: Specifies the name of the column in the underlying database.
+- `name`: Optional name of the column in the underlying database. When omitted,
+  the generator uses the annotated getter name.
 - `defaultValue`: Provides an optional default value for the field. If not explicitly set and
   the return type of the getter is nullable, the field will default to null.
 
@@ -92,8 +93,14 @@ referential integrity, which ensures that the referenced data exists and remains
 
 It accepts the following parameters:
 
-- `name`: Specifies the name of the foreign key column in the underlying database.
+- `name`: Optional name of the foreign key column in the underlying database.
+  When omitted, the generator uses the annotated getter name.
 - `referTo`: Specifies the model class that the foreign key references.
+- `unique`: Indicates that the foreign key is unique in the source model. A
+  non-unique foreign key is many-to-one; a unique foreign key can be
+  one-to-one.
+- `as`: Optional name of the generated forward relationship accessor.
+- `inverseAs`: Optional explicit name of the generated inverse relationship accessor.
 
 ```dart
 import 'package:dorm_annotations/dorm_annotations.dart';
@@ -106,27 +113,21 @@ abstract class _Post {
   @Field(name: 'creation-date')
   DateTime get creationDate;
 
-  @ForeignField(name: 'user-id', referTo: _User)
+  @ForeignField(name: 'user-id', referTo: _User, inverseAs: #posts)
   String get userId;
 }
 ```
 
-### Query fields
+### Derived fields
 
-The `QueryField` annotation is used to link a database index to a Dart field within a model class.
+The `DerivedField` annotation marks a static callback whose result is materialized
+with the model. It does not create a database index. A SQL engine stores a simple
+name as a scalar column and a `root/child` name inside a backend-specific JSON
+value.
 
-An index is a data structure that improves the speed and efficiency of data retrieval operations on
-database tables. It provides a way to quickly locate and access specific data within a table based
-on the values stored in one or more columns. When a query includes a condition on indexed columns,
-the database engine can use the index to quickly identify the relevant rows, rather than scanning
-the entire table.
-
-It accepts the following parameters:
-
-- `name`: Specifies the name of the column in the underlying database.
-- `referTo`: Specifies the query tokens that the field refers to.
-
-#### Single-column indexing
+The callback name must start with `$dorm$derived$`. The suffix becomes the
+generated getter and schema field name. The annotation's `name` is the persisted
+storage name; when omitted, the suffix is used.
 
 ```dart
 import 'package:dorm_annotations/dorm_annotations.dart';
@@ -136,79 +137,38 @@ abstract class _School {
   @Field(name: 'name')
   String get name;
 
-  @Field(name: 'active', defaultValue: true)
-  bool get active;
-
-  @QueryField(name: '_query_active', referTo: [QueryToken(#active)])
-  String get _qActive;
+  @DerivedField(name: '_query/name')
+  static String $dorm$derived$qName(
+    _School model,
+    DerivedTransformations transformations,
+  ) => transformations.text(model.name) ?? '';
 }
 ```
 
-Applying `Filter.value(true, key: '_query_active')` (described in the
-[`dorm_framework` package](https://pub.dev/packages/dorm_framework)) should optimize the reading of
-all active schools.
+The generator creates `qName` on the generated model and includes its value in
+the serialized representation. Query the field through its generated
+`DerivedFieldSchema`.
 
-#### Multiple-column indexing
-
-Combining two or more columns in a query involves searching for data based on the values present in
-two or more different columns simultaneously. This type of query allows you to perform logical
-operations on the values of two or more columns, such as concatenation, comparison, or matching
-patterns. Examples of combining two columns include searching for records where the values in column
-A and column B are equal:
+The callback can combine values directly, without a token list or automatic
+separator:
 
 ```dart
-import 'package:dorm_annotations/dorm_annotations.dart';
-
-@Model(name: 'school-address', as: #schoolAddresses)
-abstract class _SchoolAddress {
-  @Field(name: 'zip-code')
-  String get zipCode;
-
-  @Field(name: 'number')
-  int get number;
-
-  @QueryField(
-    name: '_query_address',
-    referTo: [QueryToken(#zipCode), QueryToken(#number)],
-    joinBy: '_',
-  )
-  String get _qAddress;
-}
+@DerivedField(name: '_query/address')
+static String $dorm$derived$qAddress(
+  _SchoolAddress model,
+  DerivedTransformations transformations,
+) => '${model.zipCode}_${model.number}';
 ```
 
-Applying `Filter.value('99950_13', key: '_query_address')` should optimize the reading of all
-addresses with zip code 99950 and number 13.
+`DerivedTransformations` provides `text`, `enumeration`, `date`, and `datetime`.
+Each method delegates to the corresponding normalization helper and returns a
+nullable `String`. The callback may also return another synchronous value that
+the existing serialization and database engine can represent, such as a number,
+boolean, list, map, date, or `null`.
 
-#### Text indexing
-
-Searching by prefix involves finding records that match a specific prefix or initial set of
-characters in a given column. This type of query is particularly useful when you want to retrieve
-data based on partial matches or when you only have partial information about the desired data.
-Examples of searching by prefix include searching for names starting with "John" in a column
-containing full names:
-
-```dart
-import 'package:dorm_annotations/dorm_annotations.dart';
-
-@Model(name: 'student', as: #students)
-abstract class _Student {
-  @Field(name: 'name')
-  String get name;
-
-  @ForeignField(name: 'id-school', referTo: _School)
-  String get schoolId;
-
-  @QueryField(
-    name: '_query_sbn',
-    referTo: [QueryToken(#schoolId), QueryToken(#name, QueryType.text)],
-    joinBy: '#',
-  )
-  String get _qSchoolByName;
-}
-```
-
-Applying `Filter.text('school7319004#Paul', key: '_query_sbn')` should optimize the reading of all
-Pauls studying at the school with ID `school7319004`.
+Derived callbacks are synchronous, are declared directly on the annotated class,
+and receive the model plus a `DerivedTransformations` instance. The generator
+does not inspect the callback body to prove that its result is serializable.
 
 ### Composite fields
 
@@ -223,7 +183,8 @@ non-relational database model.
 
 It accepts the following parameters:
 
-- `name`: Specifies the name of the column in the underlying database.
+- `name`: Optional name of the column in the underlying database. When omitted,
+  the generator uses the annotated getter name.
 - `referTo`: Specifies the model class that should be represented within this field.
 
 ```dart
@@ -293,7 +254,8 @@ attributes of the base table.
 
 It accepts the following parameters:
 
-- `name`: Specifies the name of the composite column in the underlying database.
+- `name`: Optional name of the composite column in the underlying database.
+  When omitted, the generator uses the annotated getter name.
 - `pivotName`: Specifies the name of the pivot column in the underlying database.
 - `pivotAs`: Specifies the name of the pivot field in the Dart class.
 
@@ -338,53 +300,28 @@ abstract class _Healing implements _Action {
 
 ### Unique identification
 
-In the context of unique identification types for models, there are four types: simple, composite,
-same-as, and custom. These types determine how the unique identifier (id) of a model is defined and
-generated:
-
-- Simple *(default)*: generates a universally unique identifier as the id for the model. They are
-  highly likely to be unique across different systems. This type of UID is suitable when a globally
-  unique identifier is required for each instance of the model.
-- Composite: creates a string by joining all foreign keys of the model with a given separator and
-  appending a universally unique identifier to it. This type is particularly useful when users
-  frequently query models by their ids and want to include related foreign keys in the id for easier
-  referencing. The resulting id can be used to identify a specific instance of the model and
-  maintain a relationship with its associated foreign keys.
-- Same-as: receives a model class type and creates the same id as the referenced model. This type is
-  ideal for establishing one-to-one relationships between models where both models share the same
-  unique identifier. When two models have a same-as, it means they are linked by the same id,
-  allowing for efficient retrieval and synchronization of related data.
-- Custom: is a function that receives a model class and returns a string as the id. This type allows
-  users to customize the generation of the model's id based on their specific requirements. The
-  function can incorporate any logic or algorithm to generate a unique identifier based on the
-  model's attributes or external factors. This type is useful when users need fine-grained control
-  over how the id is generated, allowing for unique identification according to their own criteria.
-
-You can specify the unique identification of a model through `UidType`:
+The default identifier type is `String`. A custom generated identity method is
+declared directly on the annotated class. It receives the generated model and
+the initially generated identity, and returns the identity that should be
+persisted:
 
 ```dart
 import 'package:dorm_annotations/dorm_annotations.dart';
 
-@Model(name: 'country', as: #countries, uidType: UidType.simple())
+@Model(name: 'country', as: #countries)
 abstract class _Country {}
 
-@Model(name: 'state', as: #states, uidType: UidType.composite())
-abstract class _State {}
+@Model(name: 'capital', as: #capitals)
+abstract class _Capital {
+  static String $dorm$generateId(_Capital model, String id) => model.countryId;
 
-@Model(name: 'capital', as: #capitals, uidType: UidType.sameAs(_Country))
-abstract class _Capital {}
-
-CustomUidValue _identifyCitizen(Object data) {
-  data as _Citizen;
-  if (data.isForeigner) {
-    return CustomUidValue.value(data.visaCode);
-  }
-  if (data.socialSecurity != null) {
-    return CustomUidValue.value(data.socialSecurity);
-  }
-  return const CustomUidValue.simple(); // or const CustomUidValue.composite();
+  @ForeignField(name: 'country-id', referTo: _Country)
+  String get countryId;
 }
-
-@Model(name: 'citizen', as: #citizens, uidType: UidType.custom(_identifyCitizen))
-abstract class _Citizen {}
 ```
+
+The generator validates the method signature while generating the source. A custom
+generated key type can be declared through `GeneratedIdSpec(type: ...)`. A
+database-assigned key can be declared through
+`DatabaseGeneratedIdSpec(type: ...)`; each database engine
+decides which ID types it supports.

@@ -1,8 +1,7 @@
-import 'package:dorm_framework/dorm_framework.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
+import 'package:dorm_framework/dorm_framework.dart';
 
 part 'school.dorm.dart';
-
 part 'school.g.dart';
 
 @Data()
@@ -20,8 +19,10 @@ abstract class _SchoolAddress {
   int get number;
 }
 
-@Model(name: 'escola', as: #schools, uidType: UidType.simple())
+@Model(name: 'escola', as: #schools)
 abstract class _School {
+  static String $dorm$generateId(_School school, String id) => school.name;
+
   @Field(name: 'nome')
   String get name;
 
@@ -31,87 +32,81 @@ abstract class _School {
   @Field(name: 'contatos', defaultValue: [])
   List<String> get phoneNumbers;
 
-  @QueryField(
-    name: '_query/nome',
-    referTo: [QueryToken(#name, QueryType.text)],
-  )
-  // ignore: unused_element
-  String get _q0;
+  @DerivedField(name: '_query/nome')
+  static String $dorm$derived$q0(
+    _School model,
+    DerivedTransformations transformations,
+  ) => transformations.text(model.name) ?? '';
 }
 
-@Model(name: 'aluno', as: #students, uidType: UidType.composite())
+enum StudentType { regular, special }
+
+@Model(name: 'aluno', as: #students)
 abstract class _Student {
   @Field(name: 'nome')
   String get name;
 
-  @Field(name: 'possui-deficiencias', defaultValue: false)
-  bool get hasDisabilities;
+  @Field(name: 'possui-deficiencias', defaultValue: StudentType.regular)
+  StudentType get hasDisabilities;
 
-  @ForeignField(name: 'id-escola', referTo: _School)
+  @ForeignField(name: 'id-escola', referTo: _School, inverseAs: #students)
   String get schoolId;
 
-  @QueryField(
-    name: '_query/nome',
-    referTo: [QueryToken(#name, QueryType.text)],
-  )
-  // ignore: unused_element
-  String get _q0;
+  @DerivedField(name: '_query/nome')
+  static String $dorm$derived$q0(
+    _Student model,
+    DerivedTransformations transformations,
+  ) => transformations.text(model.name) ?? '';
 
-  @QueryField(
-    name: '_query/id-escola_nome',
-    referTo: [QueryToken(#schoolId), QueryToken(#name, QueryType.text)],
-  )
-  // ignore: unused_element
-  String get _q1;
+  @DerivedField(name: '_query/id-escola_nome')
+  static String $dorm$derived$q1(
+    _Student model,
+    DerivedTransformations transformations,
+  ) => '${model.schoolId}_${transformations.text(model.name) ?? ''}';
 }
 
-@Model(name: 'professor', as: #teachers, uidType: UidType.custom(_Teacher._id))
+@Model(name: 'professor', as: #teachers)
 abstract class _Teacher {
-  static CustomUidValue _id(Object data) {
-    data as _Teacher;
-    final String? ssn = data.ssn;
-    if (ssn == null) return const CustomUidValue.composite();
-    return CustomUidValue.value(ssn.replaceAll(RegExp(r'\D'), ''));
-  }
-
   @Field(name: 'nome')
   String get name;
 
   @Field(name: 'cpf')
   String? get ssn;
 
-  @QueryField(name: '_query/cpf', referTo: [QueryToken(#ssn)])
-  // ignore: unused_element
-  String get _q0;
+  @DerivedField(name: '_query/cpf')
+  static String $dorm$derived$q0(
+    _Teacher model,
+    DerivedTransformations transformations,
+  ) => model.ssn ?? '';
 }
 
-@Model(name: 'historico', as: #histories, uidType: UidType.sameAs(_Student))
+@Model(name: 'historico', as: #histories)
 abstract class _History {
-  @ForeignField(name: 'id-aluno', referTo: _Student)
+  @ForeignField(name: 'id-aluno', referTo: _Student, inverseAs: #histories)
   String get studentId;
 }
 
 @Model(name: 'cadastro-professor', as: #teachings)
 abstract class _Teaching {
-  @ForeignField(name: 'id-professor', referTo: _Teacher)
+  @ForeignField(name: 'id-professor', referTo: _Teacher, inverseAs: #teachings)
   String get teacherId;
 
-  @ForeignField(name: 'id-escola', referTo: _School)
+  @ForeignField(name: 'id-escola', referTo: _School, inverseAs: #teachings)
   String? get schoolId;
 
   @Field(name: 'codigo')
   String get code;
 }
 
-@Model(name: 'aula', as: #classes, uidType: UidType.composite())
+@Model(name: 'aula', as: #classes)
 abstract class _Class {
   @ModelField(name: 'paraninfo', referTo: _Teacher)
   get patron;
 
-  @ForeignField(name: 'id-professor', referTo: _Teacher)
+  @ForeignField(name: 'id-professor', referTo: _Teacher, inverseAs: #classes)
   String get teacherId;
 
-  @ForeignField(name: 'id-escola', referTo: _Student)
+  @ForeignField(name: 'id-escola', referTo: _Student, inverseAs: #classes)
   String get studentId;
 
   @Field(name: 'nome-sala')

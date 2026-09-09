@@ -1,4 +1,5 @@
 import 'package:device_preview/device_preview.dart';
+import 'package:dorm_framework/dorm_framework.dart';
 import 'package:dorm_firebase_database/dorm_firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
@@ -35,18 +36,22 @@ void main() async {
   // It's recommended to have a way to access a global instance of the generated
   // `Dorm` class. Here, we are using dependency injection with a great solution
   // called `get_it`, but you are free to use `provider` or any other method.
-  GetIt.instance.registerSingleton<Dorm>(const Dorm(engine));
+  GetIt.instance.registerSingleton<Dorm<Query, OffsetPageRequest>>(
+    const Dorm(engine),
+  );
 
-  runApp(DevicePreview(
-    defaultDevice: DeviceInfo.genericPhone(
-      platform: TargetPlatform.android,
-      id: '',
-      name: '',
-      screenSize: const Size(360, 800),
+  runApp(
+    DevicePreview(
+      defaultDevice: DeviceInfo.genericPhone(
+        platform: TargetPlatform.android,
+        id: '',
+        name: '',
+        screenSize: const Size(360, 800),
+      ),
+      isToolbarVisible: false,
+      builder: (_) => const MyApp(),
     ),
-    isToolbarVisible: false,
-    builder: (_) => const MyApp(),
-  ));
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -75,12 +80,14 @@ class HomeScreen extends StatelessWidget {
         StreamProvider<AsyncSnapshot<List<User>>>(
           initialData: const AsyncSnapshot.waiting(),
           create: (_) => GetIt.instance
-              .get<Dorm>()
+              .get<Dorm<Query, OffsetPageRequest>>()
               .users
               .repository
               .pullAll()
-              .map((event) =>
-                  AsyncSnapshot.withData(ConnectionState.active, event)),
+              .map(
+                (event) =>
+                    AsyncSnapshot.withData(ConnectionState.active, event),
+              ),
         ),
       ],
       child: SafeArea(
@@ -110,13 +117,12 @@ class HomeScreen extends StatelessWidget {
                           onPressed: () async {
                             final String? updatedName = await showDialog(
                               context: context,
-                              builder: (_) => const TextInputDialog(
-                                title: 'Update user',
-                              ),
+                              builder: (_) =>
+                                  const TextInputDialog(title: 'Update user'),
                             );
                             if (updatedName == null) return;
                             await GetIt.instance
-                                .get<Dorm>()
+                                .get<Dorm<Query, OffsetPageRequest>>()
                                 .users
                                 .repository
                                 .push(User(id: user.id, name: updatedName));
@@ -127,7 +133,7 @@ class HomeScreen extends StatelessWidget {
                         OutlinedButton(
                           onPressed: () async {
                             await GetIt.instance
-                                .get<Dorm>()
+                                .get<Dorm<Query, OffsetPageRequest>>()
                                 .users
                                 .repository
                                 .pop(user.id);
@@ -148,16 +154,19 @@ class HomeScreen extends StatelessWidget {
             onPressed: () async {
               final String? name = await showDialog(
                 context: context,
-                builder: (_) => const TextInputDialog(
-                  title: 'Create user',
-                ),
+                builder: (_) => const TextInputDialog(title: 'Create user'),
               );
               if (name == null) return;
               await GetIt.instance
-                  .get<Dorm>()
+                  .get<Dorm<Query, OffsetPageRequest>>()
                   .users
                   .repository
-                  .put(const UserDependency(), UserData(name: name));
+                  .put(
+                    Creation.auto(
+                      dependency: const UserDependency(),
+                      data: UserData(name: name),
+                    ),
+                  );
             },
             child: const Icon(Icons.add),
           ),

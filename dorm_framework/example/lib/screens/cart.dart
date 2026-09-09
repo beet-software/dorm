@@ -1,4 +1,5 @@
 import 'package:dorm_framework/dorm_framework.dart';
+import 'package:dorm_bloc_database/dorm_bloc_database.dart' as dorm_bloc;
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
@@ -18,16 +19,17 @@ class CartScreen extends StatelessWidget {
         StreamProvider<AsyncSnapshot<List<Join<CartItem, Product?>>>>(
           initialData: const AsyncSnapshot.waiting(),
           create: (_) => GetIt.instance
-              .get<Dorm>()
+              .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
+              .relations
               .cartItems
-              .relationships
-              .oneToOne(
-                GetIt.instance.get<Dorm>().products.repository,
-                on: (item) => item.productId,
+              .productOrNull
+              .pullAll(
+                BaseFilter.value(cartId, field: CartItemEntity.fields.cartId),
               )
-              .pullAll(Filter.value(cartId, key: 'cart-id'))
-              .map((event) =>
-                  AsyncSnapshot.withData(ConnectionState.active, event)),
+              .map(
+                (event) =>
+                    AsyncSnapshot.withData(ConnectionState.active, event),
+              ),
         ),
       ],
       child: SafeArea(
@@ -47,7 +49,6 @@ class CartScreen extends StatelessWidget {
                 itemCount: joins.length,
                 itemBuilder: (context, i) {
                   final CartItem order = joins[i].left;
-                  // If `product` is removed during this query
                   final Product? product = joins[i].right;
                   return ListTile(
                     leading: const Icon(Icons.category),
@@ -61,14 +62,23 @@ class CartScreen extends StatelessWidget {
           floatingActionButton: FloatingActionButton(
             child: const Icon(Icons.add),
             onPressed: () async {
-              final OrderResult? result = await Navigator.of(context)
-                  .push(MaterialPageRoute(builder: (_) => const OrderScreen()));
+              final OrderResult? result = await Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const OrderScreen()));
               if (result == null) return;
 
-              await GetIt.instance.get<Dorm>().cartItems.repository.put(
-                    CartItemDependency(
-                        productId: result.productId, cartId: cartId),
-                    CartItemData(amount: result.amount),
+              await GetIt.instance
+                  .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
+                  .cartItems
+                  .repository
+                  .put(
+                    Creation.auto(
+                      dependency: CartItemDependency(
+                        productId: result.productId,
+                        cartId: cartId,
+                      ),
+                      data: CartItemData(amount: result.amount),
+                    ),
                   );
             },
           ),

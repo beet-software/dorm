@@ -15,7 +15,6 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 library;
-
 import 'package:build/build.dart';
 import 'package:source_gen/source_gen.dart';
 

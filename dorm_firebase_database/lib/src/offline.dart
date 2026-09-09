@@ -47,20 +47,24 @@ class OfflineAdapter {
   OfflineAdapter({required this.instance, required this.query}) {
     _controller = StreamController.broadcast(
       onListen: () {
-        _connectivitySubscription =
-            instance.ref('.info/connected').onValue.listen(
-          (event) {
-            final bool isConnected = (event.snapshot.value as bool?) ?? true;
-            final Stream<fd.DatabaseEvent> stream =
-                isConnected ? query.onValue : query.onChildAdded;
+        _connectivitySubscription = instance
+            .ref('.info/connected')
+            .onValue
+            .listen(
+              (event) {
+                final bool isConnected =
+                    (event.snapshot.value as bool?) ?? true;
+                final Stream<fd.DatabaseEvent> stream = isConnected
+                    ? query.onValue
+                    : query.onChildAdded;
 
-            _querySubscription = stream
-                .map((event) => event.snapshot)
-                .listen((snapshot) => _controller.add(snapshot));
-          },
-          cancelOnError: true,
-          onError: (e, s) => _controller.addError(e, s),
-        );
+                _querySubscription = stream
+                    .map((event) => event.snapshot)
+                    .listen((snapshot) => _controller.add(snapshot));
+              },
+              cancelOnError: true,
+              onError: (e, s) => _controller.addError(e, s),
+            );
       },
       onCancel: () async {
         await _connectivitySubscription?.cancel();

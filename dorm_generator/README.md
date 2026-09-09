@@ -14,7 +14,6 @@ Run the following commands inside your project:
 ```shell
 dart pub add dev:dorm_generator
 dart pub add dev:build_runner
-dart pub add dev:json_serializable
 dart pub get
 ```
 
@@ -92,9 +91,16 @@ class ClassData {
     required this.timestamp,
   });
 
-  Map<String, Object?> toJson() => _$ClassDataToJson(this);
+Map<String, Object?> toJson() => _$ClassDataToJson(this);
 }
 ```
+
+#### Derived fields
+
+`DerivedField` is declared on a static method named
+`$dorm$derived$<fieldName>`. The generator emits a getter with that suffix and
+calls the method with the generated model and `DerivedTransformations`. The
+callback result is added to the generated model's serialized representation.
 
 #### Model
 
@@ -102,7 +108,7 @@ A `Class` extends `ClassData`, implements `_Class`, has an additional `id` field
 contain only the getters annotated with 
 [`ForeignField`](https://pub.dev/documentation/dorm_annotations/latest/dorm_annotations/ForeignField-class.html)
 and
-[`QueryField`](https://pub.dev/documentation/dorm_annotations/latest/dorm_annotations/QueryField-class.html).
+[`DerivedField`](https://pub.dev/documentation/dorm_annotations/latest/dorm_annotations/DerivedField-class.html).
 In the above example is defined as:
 
 ```dart
@@ -162,8 +168,10 @@ void main() async {
 
   // Create
   final Class c = await dorm.classes.repository.put(
-    ClassDependency(schoolId: 'school-0'),
-    ClassData(name: 'A class.', timestamp: DateTime.now()),
+    Creation.auto(
+      dependency: ClassDependency(schoolId: 'school-0'),
+      data: ClassData(name: 'A class.', timestamp: DateTime.now()),
+    ),
   );
 
   // Read
@@ -234,8 +242,14 @@ with `PolymorphicField`:
 ```dart
 void main() async {
   final Operation o1 = await dorm.operations.repository.put(
-    const OperationDependency(),
-    OperationData(name: 'AoT', action: Attack(strength: 42), type: ActionType.attack),
+    Creation.auto(
+      dependency: const OperationDependency(),
+      data: OperationData(
+        name: 'AoT',
+        action: Attack(strength: 42),
+        type: ActionType.attack,
+      ),
+    ),
   );
 
   final Operation o2 = await dorm.operations.repository.peek('543f2f8da023');
@@ -260,12 +274,17 @@ void main() async {
 
 ### Unique identification
 
+The default identifier type is `String`. Declare `$dorm$generateId` directly
+on the annotated class to derive an identifier from the generated model. The
+method receives the model and the initially generated identity. The examples
+below show the supported method shape.
+
 #### Simple
 
 If
 
 ```dart
-@Model(name: 'country', as: #countries, uidType: UidType.simple())
+@Model(name: 'country', as: #countries)
 abstract class _Country {
   @Field(name: 'name')
   String get name;
@@ -277,8 +296,10 @@ then
 ```dart
 void main() async {
   final Country country = await dorm.countries.repository.put(
-    CountryDependency(),
-    CountryData(name: 'Brazil'),
+    Creation.auto(
+      dependency: CountryDependency(),
+      data: CountryData(name: 'Brazil'),
+    ),
   );
   // uuid
   assert(country.id == '27f04af67a1f');
@@ -290,13 +311,23 @@ void main() async {
 If
 
 ```dart
-@Model(name: 'state', as: #states, uidType: UidType.composite())
+@Model(
+  name: 'state',
+  as: #states,
+  primaryKey: [
+    ExistingIdSpec(referTo: #countryId),
+    ExistingIdSpec(referTo: #stateCode),
+  ],
+)
 abstract class _State {
+  @Field(name: 'country-id')
+  String get countryId;
+
+  @Field(name: 'state-code')
+  String get stateCode;
+
   @Field(name: 'name')
   String get name;
-
-  @ForeignField(name: 'country-id', referTo: _Country)
-  String get countryId;
 }
 ```
 
@@ -304,12 +335,15 @@ then
 
 ```dart
 void main() async {
-  final State state = await dorm.states.repository.put(
-    StateDependency(countryId: '27f04af67a1f'),
-    StateData(name: 'Rio de Janeiro'),
+  final State state = await dorm.states.repository.push(
+    State(
+      id: CompositeKey(['27f04af67a1f', 'RJ']),
+      name: 'Rio de Janeiro',
+      countryId: '27f04af67a1f',
+      stateCode: 'RJ',
+    ),
   );
-  // ${countryId}_uuid
-  assert(country.id == '27f04af67a1f_367f1672f637');
+  assert(state.id == CompositeKey(['27f04af67a1f', 'RJ']));
 }
 ```
 
@@ -318,8 +352,10 @@ void main() async {
 If
 
 ```dart
-@Model(name: 'capital', as: #capitals, uidType: UidType.sameAs(_Country))
+@Model(name: 'capital', as: #capitals)
 abstract class _Capital {
+  static String $dorm$generateId(_Capital model, String id) => model.countryId;
+
   @Field(name: 'name')
   String get name;
 
@@ -333,8 +369,10 @@ then
 ```dart
 void main() async {
   final Capital capital = await dorm.capitals.repository.put(
-    CapitalDependency(countryId: '27f04af67a1f'),
-    CapitalData(name: 'Brasilia'),
+    Creation.auto(
+      dependency: CapitalDependency(countryId: '27f04af67a1f'),
+      data: CapitalData(name: 'Brasilia'),
+    ),
   );
   // countryId
   assert(capital.id == '27f04af67a1f');
@@ -346,19 +384,10 @@ void main() async {
 If
 
 ```dart
-CustomUidValue _identifyCitizen(Object data) {
-  data as _Citizen;
-  if (data.isForeigner) {
-    return CustomUidValue.value(data.visaCode!);
-  }
-  if (data.socialSecurity != null) {
-    return CustomUidValue.value(data.socialSecurity);
-  }
-  return const CustomUidValue.simple();
-}
-
-@Model(name: 'citizen', as: #citizens, uidType: UidType.custom(_identifyCitizen))
+@Model(name: 'citizen', as: #citizens)
 abstract class _Citizen {
+  static String $dorm$generateId(_Citizen data, String id) =>
+      data.visaCode ?? data.socialSecurity ?? id;
   @Field(name: 'name')
   String get name;
 
@@ -381,32 +410,43 @@ then
 ```dart
 void main() async {
   final Citizen c1 = await dorm.citizens.repository.put(
-    CitizenDependency(countryId: '27f04af67a1f'),
-    CitizenData(
-      name: 'Rodrigo Maia',
-      isForeigner: true,
-      visaCode: '4bb6',
-      socialSecurity: '11111111111',
+    Creation.auto(
+      dependency: CitizenDependency(countryId: '27f04af67a1f'),
+      data: CitizenData(
+        name: 'Rodrigo Maia',
+        isForeigner: true,
+        visaCode: '4bb6',
+        socialSecurity: '11111111111',
+      ),
     ),
   );
   // visaCode
   assert(c1.id == '4bb6');
 
   final Citizen c2 = await dorm.citizens.repository.put(
-    CitizenDependency(countryId: '27f04af67a1f'),
-    CitizenData(
-      name: 'Arthur Lira',
-      isForeigner: false,
-      visaCode: null,
-      socialSecurity: '22222222222',
+    Creation.auto(
+      dependency: CitizenDependency(countryId: '27f04af67a1f'),
+      data: CitizenData(
+        name: 'Arthur Lira',
+        isForeigner: false,
+        visaCode: null,
+        socialSecurity: '22222222222',
+      ),
     ),
   );
   // socialSecurity
   assert(c2.id == '22222222222');
 
   final Citizen c3 = await dorm.citizens.repository.put(
-    CitizenDependency(countryId: '27f04af67a1f'),
-    CitizenData(name: 'Capivara Filó', isForeigner: false, visaCode: null, socialSecurity: null),
+    Creation.auto(
+      dependency: CitizenDependency(countryId: '27f04af67a1f'),
+      data: CitizenData(
+        name: 'Capivara Filó',
+        isForeigner: false,
+        visaCode: null,
+        socialSecurity: null,
+      ),
+    ),
   );
   // uuid
   assert(c3.id == 'b2a6304807a0');

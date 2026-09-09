@@ -86,33 +86,36 @@ abstract class BatchMerge<InputValue, OutputKey, OutputValue>
       (leftModels) async {
         await Future.wait(_childSubscriptions.map((s) => s.cancel()));
 
-        final List<Stream<Join<OutputKey?, OutputValue>>> streams =
-            parse(leftModels);
+        final List<Stream<Join<OutputKey?, OutputValue>>> streams = parse(
+          leftModels,
+        );
         _snapshots = List.filled(streams.length, null);
         if (streams.isEmpty) {
           _controller.add([]);
           _childSubscriptions = [];
         } else {
-          _childSubscriptions.addAll(List.generate(streams.length, (i) {
-            return streams[i].listen(
-              (snapshot) {
-                _snapshots[i] = snapshot;
+          _childSubscriptions.addAll(
+            List.generate(streams.length, (i) {
+              return streams[i].listen(
+                (snapshot) {
+                  _snapshots[i] = snapshot;
 
-                final List<Join<OutputKey, OutputValue>> joins = [];
-                for (Join<OutputKey?, OutputValue>? snapshot in _snapshots) {
-                  if (snapshot == null) return;
+                  final List<Join<OutputKey, OutputValue>> joins = [];
+                  for (Join<OutputKey?, OutputValue>? snapshot in _snapshots) {
+                    if (snapshot == null) return;
 
-                  final OutputKey? outputKey = snapshot.left;
-                  if (outputKey == null) continue;
-                  joins.add(Join(left: outputKey, right: snapshot.right));
-                }
-                _controller.add(joins);
-              },
-              onDone: () =>
-                  Future.wait(_childSubscriptions.map((s) => s.cancel())),
-              onError: (e, s) => _controller.addError(e, s),
-            );
-          }));
+                    final OutputKey? outputKey = snapshot.left;
+                    if (outputKey == null) continue;
+                    joins.add(Join(left: outputKey, right: snapshot.right));
+                  }
+                  _controller.add(joins);
+                },
+                onDone: () =>
+                    Future.wait(_childSubscriptions.map((s) => s.cancel())),
+                onError: (e, s) => _controller.addError(e, s),
+              );
+            }),
+          );
         }
       },
       onDone: () async {
@@ -161,23 +164,25 @@ class ManyToManySingleMerge<M, L, R>
 class OneToOneBatchMerge<L, R> extends BatchMerge<L, L, R> {
   final Stream<R> Function(L) _map;
 
-  OneToOneBatchMerge({
-    required super.left,
-    required Stream<R> Function(L) map,
-  }) : _map = map;
+  OneToOneBatchMerge({required super.left, required Stream<R> Function(L) map})
+    : _map = map;
 
   @override
   List<Stream<Join<L?, R>>> parse(List<L> values) {
     return values
-        .map((leftModel) => _map(leftModel)
-            .map((rightModel) => Join(left: leftModel, right: rightModel)))
+        .map(
+          (leftModel) => _map(
+            leftModel,
+          ).map((rightModel) => Join(left: leftModel, right: rightModel)),
+        )
         .toList();
   }
 }
 
-class ManyToOneBatchMerge<L, R> extends BatchMerge<R, L, List<R>> {
-  final String Function(R) onLeft;
-  final Stream<L?> Function(String) onRight;
+class ManyToOneBatchMerge<L, R, I extends Object>
+    extends BatchMerge<R, L, List<R>> {
+  final I Function(R) onLeft;
+  final Stream<L?> Function(I) onRight;
 
   ManyToOneBatchMerge({
     required super.left,
@@ -187,13 +192,16 @@ class ManyToOneBatchMerge<L, R> extends BatchMerge<R, L, List<R>> {
 
   @override
   List<Stream<Join<L?, List<R>>>> parse(List<R> values) {
-    final Map<String, List<R>> groups = {};
+    final Map<I, List<R>> groups = {};
     for (R value in values) {
       groups.putIfAbsent(onLeft(value), () => []).add(value);
     }
     return groups.entries
-        .map((entry) => onRight(entry.key)
-            .map((leftModel) => Join(left: leftModel, right: entry.value)))
+        .map(
+          (entry) => onRight(
+            entry.key,
+          ).map((leftModel) => Join(left: leftModel, right: entry.value)),
+        )
         .toList();
   }
 }

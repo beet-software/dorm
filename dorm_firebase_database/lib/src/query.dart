@@ -83,8 +83,9 @@ class Query implements BaseQuery<Query> {
   Query whereRange<T>(String key, FilterRange<T> range) {
     final T? from = range.from;
     final T? to = range.to;
-    final DateFilterUnit? unit =
-        range is DateFilterRange ? (range as DateFilterRange).unit : null;
+    final DateFilterUnit? unit = range is DateFilterRange
+        ? (range as DateFilterRange).unit
+        : null;
 
     if (from == null && to == null) return this;
     fd.Query ref = query.orderByChild(key);
@@ -113,7 +114,23 @@ class Query implements BaseQuery<Query> {
   }
 
   @override
-  Query sorted(String key) {
+  Query offset(int count) {
+    if (count < 0) {
+      throw ArgumentError.value(count, 'count', 'Offset must be non-negative.');
+    }
+    if (count == 0) return this;
+    throw UnsupportedError(
+      'Firebase Realtime Database does not provide an offset query.',
+    );
+  }
+
+  @override
+  Query sorted(String key, {bool ascending = true}) {
+    if (!ascending) {
+      throw UnsupportedError(
+        'Firebase Realtime Database does not provide descending queries.',
+      );
+    }
     return Query(query.orderByChild(key));
   }
 }

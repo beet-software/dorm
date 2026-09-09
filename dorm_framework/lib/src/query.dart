@@ -16,10 +16,14 @@
 
 import 'filter.dart';
 
+Q f<Q extends BaseQuery<Q>>(Q query) {
+  return query.whereValue('active', true).sorted('value');
+}
+
 /// Represents how to consider rows within a read or delete operation.
-abstract class BaseQuery<T> {
+abstract class BaseQuery<Q extends BaseQuery<Q>> {
   /// Includes rows where the value of its attribute [key] is equal to [value].
-  T whereValue(String key, Object? value);
+  Q whereValue(String key, Object? value);
 
   /// Includes rows where the value of its the attribute [key] is a String and
   /// starts with [prefix].
@@ -27,7 +31,7 @@ abstract class BaseQuery<T> {
   /// Note that this comparison is not guaranteed to be case-sensitive, so you
   /// should implement strategies to overcome this in engines that do not
   /// support it.
-  T whereText(String key, String prefix);
+  Q whereText(String key, String prefix);
 
   /// Includes rows where the value of its attribute [key] is a DateTime and has
   /// the same value as [date] comparing by [unit].
@@ -42,21 +46,69 @@ abstract class BaseQuery<T> {
   ///
   /// Some database engines may not have DateTime as a data type, so it's
   /// allowed to alternatively accept ISO-8601 formatted Strings.
-  T whereDate(String key, DateTime date, DateFilterUnit unit);
+  Q whereDate(String key, DateTime date, DateFilterUnit unit);
 
   /// Includes rows where the value of its attribute [key] is inside [range].
   ///
   /// [range] defines the [FilterRange.from] and [FilterRange.to] components,
   /// that can be used to delimit the comparison.
-  T whereRange<R>(String key, FilterRange<R> range);
+  Q whereRange<R>(String key, FilterRange<R> range);
 
-  /// From previous queries, includes only a [count] number of the rows.
-  ///
-  /// If [count] is positive, only the first [count] rows are included.
-  /// If [count] is negative, only the last abs([count]) rows are included.
-  /// If [count] is zero, no row is filtered (all rows are included).
-  T limit(int count);
+  /// From previous queries, includes only the first [count] rows.
+  Q limit(int count);
+
+  /// From previous queries, skips the first [count] rows.
+  Q offset(int count);
 
   /// From previous queries, sorts the query by the field [key].
-  T sorted(String key);
+  Q sorted(String key, {bool ascending = true});
+}
+
+/// Operators for scalar comparisons supported by an extended query.
+enum FilterComparisonOperator {
+  notEqual,
+  lessThan,
+  lessThanOrEqual,
+  greaterThan,
+  greaterThanOrEqual,
+}
+
+/// A query that can execute scalar comparisons and set membership filters.
+///
+/// This is an optional capability. Engines that do not implement this
+/// interface intentionally do not expose the corresponding [BaseFilter]
+/// factories through their concrete query type.
+abstract interface class ComparisonQuery<Q extends ComparisonQuery<Q>>
+    implements BaseQuery<Q> {
+  Q whereComparison(
+    String key,
+    FilterComparisonOperator operator,
+    Object? value,
+  );
+
+  Q whereSet(String key, Iterable<Object?> values, {required bool negated});
+
+  Q whereNull(String key, {required bool isNull});
+}
+
+/// A query that can combine filters with boolean conjunction or disjunction.
+abstract interface class LogicalQuery<Q extends LogicalQuery<Q>>
+    implements BaseQuery<Q> {
+  Q whereAll(Iterable<BaseFilter> filters);
+
+  Q whereAny(Iterable<BaseFilter> filters);
+}
+
+/// A query that can negate a filter expression.
+abstract interface class NegationQuery<Q extends NegationQuery<Q>>
+    implements BaseQuery<Q> {
+  Q whereNot(BaseFilter filter);
+}
+
+/// A query that can test values inside persisted collections.
+abstract interface class CollectionQuery<Q extends CollectionQuery<Q>>
+    implements BaseQuery<Q> {
+  Q whereContains(String key, Object? value);
+
+  Q whereContainsAny(String key, Iterable<Object?> values);
 }

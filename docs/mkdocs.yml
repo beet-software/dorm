@@ -1,0 +1,108 @@
+site_name: dORM
+theme:
+  name: readthedocs
+  highlightjs: true
+  hljs_languages:
+    - dart
+    - yaml
+    - json
+    - shell
+  navigation_depth: 4
+  sticky_navigation: true
+  collapse_navigation: true
+  titles_only: true
+nav:
+  - Home: index.md
+  - Quickstart:
+      - Generate a showcase project: quickstart/generate-a-showcase.md
+      - Build a small store: quickstart/index.md
+      - Create the Dart project: quickstart/installation.md
+      - Define users, profiles, and products: quickstart/declaring-models.md
+      - Generate the store API: quickstart/generating-models.md
+      - Connect the memory engine: quickstart/creating-the-engine.md
+      - Create and read a user: quickstart/create-and-read-data.md
+      - Add carts and cart items: quickstart/relations-and-cart.md
+      - Add reviews with multiple content types: quickstart/reviews-and-polymorphism.md
+      - Handle input and live reads: quickstart/forms-and-live-reads.md
+  - Operations:
+      - Apply an operation: build-the-store/overview.md
+      - Creating: build-the-store/creating.md
+      - Reading: build-the-store/reading.md
+      - Updating: build-the-store/updating.md
+      - Deleting: build-the-store/deleting.md
+      - Using filters: build-the-store/using-filters.md
+      - Using sorting: build-the-store/using-sorting.md
+      - Using pagination: build-the-store/using-pagination.md
+      - Using transactions: build-the-store/using-transactions.md
+  - Engines:
+      - Choose an engine: apply/choose-an-engine.md
+      - Run with memory: apply/use-memory.md
+      - Run with BLoC: apply/use-bloc.md
+      - Run with Firebase: apply/use-firebase.md
+      - Run with Cloud Firestore: apply/use-firestore.md
+      - Run with MySQL: apply/use-mysql.md
+      - Run with PostgreSQL: apply/use-postgres.md
+      - Run with MongoDB: apply/use-mongo.md
+      - Run with HTTP/JSON: apply/use-http.md
+      - Run with SQLite: apply/use-sqlite.md
+  - Annotations:
+      - Learn the annotations: annotations/index.md
+      - Data: annotations/data.md
+      - Model: annotations/model.md
+      - Field: annotations/field.md
+      - ModelField: annotations/model-field.md
+      - ForeignField: annotations/foreign-field.md
+      - DerivedField: annotations/derived-field.md
+      - PolymorphicData: annotations/polymorphic-data.md
+      - PolymorphicField: annotations/polymorphic-field.md
+  - Model anatomy:
+      - Start with the generated pieces: model-anatomy/index.md
+      - Data: model-anatomy/data.md
+      - Model: model-anatomy/model.md
+      - Dependency: model-anatomy/dependency.md
+      - Fields: model-anatomy/fields.md
+      - EntitySchema: model-anatomy/entity-schema.md
+      - Entity: model-anatomy/entity.md
+      - Repository: model-anatomy/repository.md
+      - Dorm: model-anatomy/dorm.md
+      - Relationship paths: model-anatomy/relations.md
+  - User guide:
+      - Best practices: user-guide/best-practices.md
+      - Migration to v2: user-guide/migration-to-v2.md
+  - Developer guide:
+      - Work on dORM locally: development/index.md
+      - Implement a custom engine: development/custom-engine.md
+      - Test an engine: development/test-an-engine.md
+  - Troubleshooting:
+      - Start troubleshooting: troubleshooting/index.md
+      - Find the failing layer: troubleshooting/error-by-layer.md
+      - Fix code generation problems: troubleshooting/code-generation-problems.md
+      - Check surprising behaviors: troubleshooting/surprising-behaviors.md
+  - Reference:
+      - Public API: reference/public-api.md
+      - Generated API: reference/generated-api.md
+      - Framework contracts: reference/framework-contracts.md
+      - Engine capabilities: reference/engine-capabilities.md
+      - Performance model: reference/performance.md
+      - Glossary: reference/glossary.md
+      - Compatibility and release status: reference/compatibility-and-release-status.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - footnotes
+  - toc:
+      permalink: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.details
+  - pymdownx.inlinehilite
+  - pymdownx.mark
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+extra_css:
+  - stylesheets/codeblocks.css

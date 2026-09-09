@@ -19,50 +19,27 @@ import 'package:meta/meta_meta.dart';
 import 'field.dart';
 import 'helpers.dart';
 
-/// Defines how a value to be included in a query should be transformed.
-enum QueryType {
-  /// Applies the [$normalizeText] transformation.
-  ///
-  /// This type of query type should only be applied in [String]s.
-  ///
-  /// This should replace diacritics with their ASCII representations, remove
-  /// spaces and remove capitalization (all uppercase or all lowercase).
-  text,
+/// Common transformations available to derived-field callbacks.
+class DerivedTransformations {
+  /// Creates the transformations helper.
+  const DerivedTransformations();
 
-  /// Applies the [$normalizeEnum] transformation.
-  ///
-  /// This type of query type can be applied in any value, but it's optimized
-  /// for [Enum]s and objects whose [Object.toString] representation is
-  /// formatted as `ClassName.value`.
-  enumeration,
+  /// Normalizes text for matching.
+  String? text(String? value) => $normalizeText(value);
+
+  /// Normalizes an enum-like value for matching.
+  String? enumeration(Object? value) => $normalizeEnum(value);
+
+  /// Formats a date as `YYYYMMDD`.
+  String? date(DateTime? value) => $normalizeDate(value);
+
+  /// Formats a local date and time as `YYYYMMDDHHmmssSSS`.
+  String? datetime(DateTime? value) => $normalizeDateTime(value);
 }
 
-/// Links a database index to a Dart field within a model class.
-@Target({TargetKind.getter})
-class QueryField extends Field {
-  /// Query tokens that the field is combined of.
-  final List<QueryToken> referTo;
-
-  /// String by which the query tokens will be joined by.
-  final String joinBy;
-
-  /// Creates a [QueryField] by its attributes.
-  const QueryField({
-    required super.name,
-    required this.referTo,
-    this.joinBy = '_',
-  });
-}
-
-/// Part of a query value.
-class QueryToken {
-  /// Name of the getter annotated with [Field] or [ForeignField] that this
-  /// token refers to.
-  final Symbol field;
-
-  /// Type of the query of this token.
-  final QueryType? type;
-
-  /// Creates a [QueryToken] by its attribute.
-  const QueryToken(this.field, [this.type]);
+/// Defines a persisted value produced by a derived-field callback.
+@Target({TargetKind.method})
+class DerivedField extends Field {
+  /// Creates a [DerivedField] by its attributes.
+  const DerivedField({super.name});
 }

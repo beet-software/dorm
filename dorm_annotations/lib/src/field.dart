@@ -14,12 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'package:dorm_annotations/dorm_annotations.dart';
 import 'package:meta/meta_meta.dart';
 
 /// Links a database column to a Dart field within a model class.
 @Target({TargetKind.getter})
 class Field {
   /// Name of the column in the underlying database.
+  ///
+  /// When omitted, the generator uses the annotated getter name.
   final String? name;
 
   /// Optional default value for the field.
@@ -38,83 +41,37 @@ class ForeignField extends Field {
   /// The class annotated with [Model] that this field references.
   final Type referTo;
 
+  /// Whether the foreign key is unique in the source model.
+  ///
+  /// A non-unique foreign key represents a many-to-one relation from the
+  /// source model to [referTo]. A unique foreign key can represent a
+  /// one-to-one relation.
+  final bool unique;
+
+  /// Name of the generated forward relationship accessor.
+  ///
+  /// When omitted, the generator removes a trailing `Id` when present.
+  final Symbol? as;
+
+  /// Name of the generated inverse relationship accessor on [referTo].
+  ///
+  /// An inverse accessor is generated only when this value is provided.
+  final Symbol? inverseAs;
+
   /// Creates a [ForeignField] by its attributes.
-  const ForeignField({required super.name, required this.referTo});
+  const ForeignField({
+    super.name,
+    required this.referTo,
+    this.unique = false,
+    this.as,
+    this.inverseAs,
+  });
 }
 
-abstract class ModelFieldOutput {
-  const factory ModelFieldOutput.using(
-    List<ModelFieldOutput> outputs,
-  ) = _UsingModelFieldOutput;
+abstract class ModelFieldType {}
 
-  const factory ModelFieldOutput.identity() = _ModelFieldOutput;
-
-  const factory ModelFieldOutput.nullable() = _NullableModelFieldOutput;
-
-  const factory ModelFieldOutput.list() = _ListModelFieldOutput;
-
-  const factory ModelFieldOutput.mapAsKey(
-    String valueToken,
-  ) = _MapAsKeyModelFieldOutput;
-
-  const factory ModelFieldOutput.mapAsValue(
-    String keyToken,
-  ) = _MapAsValueModelFieldOutput;
-
-  String apply(String token);
-}
-
-class _UsingModelFieldOutput implements ModelFieldOutput {
-  final List<ModelFieldOutput> outputs;
-
-  const _UsingModelFieldOutput(this.outputs);
-
-  @override
-  String apply(String token) {
-    for (ModelFieldOutput output in outputs) {
-      token = output.apply(token);
-    }
-    return token;
-  }
-}
-
-class _ModelFieldOutput implements ModelFieldOutput {
-  const _ModelFieldOutput();
-
-  @override
-  String apply(String token) => token;
-}
-
-class _NullableModelFieldOutput implements ModelFieldOutput {
-  const _NullableModelFieldOutput();
-
-  @override
-  String apply(String token) => '$token?';
-}
-
-class _ListModelFieldOutput implements ModelFieldOutput {
-  const _ListModelFieldOutput();
-
-  @override
-  String apply(String token) => 'List<$token>';
-}
-
-class _MapAsKeyModelFieldOutput implements ModelFieldOutput {
-  final String valueToken;
-
-  const _MapAsKeyModelFieldOutput(this.valueToken);
-
-  @override
-  String apply(String token) => 'Map<$token, $valueToken>';
-}
-
-class _MapAsValueModelFieldOutput implements ModelFieldOutput {
-  final String keyToken;
-
-  const _MapAsValueModelFieldOutput(this.keyToken);
-
-  @override
-  String apply(String token) => 'Map<$keyToken, $token>';
+class ModelFieldTemplate<T> {
+  const ModelFieldTemplate();
 }
 
 /// Links a database composite column to a Dart field within a model class.
@@ -125,12 +82,12 @@ class ModelField extends Field {
   final Type referTo;
 
   /// What kind of return type should the generated field for this getter have.
-  final ModelFieldOutput output;
+  final ModelFieldTemplate<Object?> template;
 
   /// Creates a [ModelField] by its attributes.
   const ModelField({
-    required super.name,
+    super.name,
     required this.referTo,
-    this.output = const ModelFieldOutput.identity(),
+    this.template = const ModelFieldTemplate<ModelFieldType>(),
   });
 }

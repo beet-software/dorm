@@ -1,7 +1,8 @@
 import 'dart:async';
 
-import 'package:dorm_framework/dorm_framework.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
+import 'package:dorm_bloc_database/dorm_bloc_database.dart' as dorm_bloc;
+import 'package:dorm_framework/dorm_framework.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
@@ -17,7 +18,7 @@ class _Query extends ValueNotifier<AsyncSnapshot<List<User>>> {
 
   _Query() : super(const AsyncSnapshot.waiting()) {
     _subscription = GetIt.instance
-        .get<Dorm>()
+        .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
         .users
         .repository
         .pullAll()
@@ -36,10 +37,12 @@ class _Query extends ValueNotifier<AsyncSnapshot<List<User>>> {
       // Waits one second without user input to evaluate the query
       final String query = $normalizeText(text) ?? text;
       _subscription = GetIt.instance
-          .get<Dorm>()
+          .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
           .users
           .repository
-          .pullAll(Filter.text(query, key: '_q-username'))
+          .pullAll(
+            dorm_bloc.Filter.text(query, field: UserEntity.fields.qUsername),
+          )
           .map((users) => AsyncSnapshot.withData(ConnectionState.active, users))
           .listen((snapshot) => value = snapshot);
 
@@ -61,9 +64,7 @@ class UsersScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-      providers: [
-        ChangeNotifierProvider<_Query>(create: (_) => _Query()),
-      ],
+      providers: [ChangeNotifierProvider<_Query>(create: (_) => _Query())],
       child: SafeArea(
         child: Scaffold(
           appBar: AppBar(
@@ -71,8 +72,9 @@ class UsersScreen extends StatelessWidget {
             actions: [
               IconButton(
                 onPressed: () async {
-                  await Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => const DashboardScreen()));
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const DashboardScreen()),
+                  );
                 },
                 icon: const Icon(Icons.dataset),
               ),
@@ -112,10 +114,12 @@ class UsersScreen extends StatelessWidget {
                                 leading: const Icon(Icons.person),
                                 title: Text(user.profile.name),
                                 onTap: () async {
-                                  await Navigator.of(context)
-                                      .push(MaterialPageRoute(
-                                    builder: (_) => UserScreen(userId: user.id),
-                                  ));
+                                  await Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          UserScreen(userId: user.id),
+                                    ),
+                                  );
                                 },
                                 subtitle: Text('@${user.username}'),
                                 trailing: const Icon(Icons.chevron_right),
@@ -130,16 +134,22 @@ class UsersScreen extends StatelessWidget {
           floatingActionButton: FloatingActionButton(
             child: const Icon(Icons.add),
             onPressed: () async {
-              final UserData? data =
-                  await Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => UserFormScreen(form: UserForm()),
-              ));
+              final UserData? data = await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => UserFormScreen(form: UserForm()),
+                ),
+              );
               if (data == null) return;
               await GetIt.instance
-                  .get<Dorm>()
+                  .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
                   .users
                   .repository
-                  .put(const UserDependency(), data);
+                  .put(
+                    Creation.auto(
+                      dependency: const UserDependency(),
+                      data: data,
+                    ),
+                  );
             },
           ),
         ),

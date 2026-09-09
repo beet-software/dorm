@@ -1,0 +1,95 @@
+import 'dart:io';
+
+import 'package:dorm_framework/dorm_framework.dart';
+{{{engineImport}}}
+
+import 'package:{{projectName}}/models.dart'
+    show
+        Category,
+        CategoryData,
+        CategoryDependency,
+        Dorm,
+        Product,
+        ProductData,
+        ProductEntity,
+        ProductDependency,
+        TransactionalDorm;
+
+String _requiredEnvironment(String name) {
+  final String? value = Platform.environment[name];
+  if (value == null || value.isEmpty) {
+    throw StateError('Set $name before running this example.');
+  }
+  return value;
+}
+
+Future<void> main() async {
+  {{{engineSetup}}}
+  try {
+    final Dorm<{{engineQuery}}, OffsetPageRequest> dorm = Dorm(engine);
+    print('Generated {{engine}} dORM showcase for {{projectName}}.');
+    print('Repositories: users, categories, products, carts, cartItems, reviews, wishlistItems.');
+
+    final Category category = await dorm.categories.repository.put(
+      Creation.auto<CategoryData, String>(
+        dependency: const CategoryDependency(),
+        data: const CategoryData(label: 'Office'),
+      ),
+    );
+    final Product product = await dorm.products.repository.put(
+      Creation.auto<ProductData, String>(
+        dependency: const ProductDependency(),
+        data: ProductData(
+          name: 'Desk lamp',
+          description: 'A lamp for the showcase store.',
+          price: 49.90,
+          stock: 12,
+          active: true,
+          categoryId: category.id,
+        ),
+      ),
+    );
+
+    final List<Product> filtered = await dorm.products.repository.peekAll(
+      Filter.text('Desk', field: ProductEntity.fields.name),
+      const QueryOptions(
+        orderBy: [OrderBy(ProductEntity.fields.price)],
+      ),
+    );
+    print('Filtered products: ${filtered.map((item) => item.name).toList()}');
+
+    final Page<Product> page = await dorm.products.repository.peekPage(
+      const BaseFilter.empty(),
+      const OffsetPageRequest(size: 10),
+    );
+    print('Page contains ${page.items.length} product(s); hasNext=${page.hasNext}.');
+
+    await dorm.products.repository.patch(
+      product.id,
+      (current) => current?.copyWith(name: 'Desk lamp (updated)'),
+    );
+    await dorm.products.repository.pop(product.id);
+    await dorm.categories.repository.pop(category.id);
+{{#transactions}}
+    final TransactionalDorm<{{engineQuery}}, OffsetPageRequest> txDorm =
+        TransactionalDorm(engine);
+    await txDorm.transaction((tx) async {
+      await tx.products.repository.peekAll();
+    });
+    print('The portable transaction callback completed.');
+{{/transactions}}
+{{^transactions}}
+    print('This engine does not expose the portable transaction callback.');
+{{/transactions}}
+{{#sql}}
+    await dorm.auditEntries.repository.put(
+      Creation.auto<AuditEntryData, int>(
+        dependency: const AuditEntryDependency(),
+        data: const AuditEntryData(message: 'showcase started'),
+      ),
+    );
+{{/sql}}
+  } finally {
+    {{{engineClose}}}
+  }
+}

@@ -1,8 +1,7 @@
-import 'package:dorm_framework/dorm_framework.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
+import 'package:dorm_framework/dorm_framework.dart';
 
 part 'social_network.dorm.dart';
-
 part 'social_network.g.dart';
 
 @Model(name: 'user', as: #users)
@@ -28,7 +27,7 @@ abstract class _Post {
   @Field(name: 'creation-date')
   DateTime get creationDate;
 
-  @ForeignField(name: 'user-id', referTo: _User)
+  @ForeignField(name: 'user-id', referTo: _User, inverseAs: #posts)
   String get userId;
 }
 
@@ -40,9 +39,13 @@ abstract class _Message {
   @Field(name: 'creation-date')
   DateTime get creationDate;
 
-  @ForeignField(name: 'sender-id', referTo: _User)
+  @ForeignField(name: 'sender-id', referTo: _User, inverseAs: #sentMessages)
   String get senderId;
 
-  @ForeignField(name: 'receiver-id', referTo: _User)
+  @ForeignField(
+    name: 'receiver-id',
+    referTo: _User,
+    inverseAs: #receivedMessages,
+  )
   String get receiverId;
 }

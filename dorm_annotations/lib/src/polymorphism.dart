@@ -44,7 +44,7 @@ class PolymorphicField extends Field {
 
   /// Creates a [PolymorphicField] by its attributes.
   const PolymorphicField({
-    required super.name,
+    super.name,
     required this.pivotName,
     this.pivotAs,
   });

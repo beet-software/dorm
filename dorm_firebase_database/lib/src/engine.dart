@@ -14,21 +14,23 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import 'package:dorm_firebase_database/dorm_firebase_database.dart';
 import 'package:dorm_framework/dorm_framework.dart';
 
+import 'firebase_instance.dart';
+import 'query.dart';
 import 'reference.dart';
 import 'relationship.dart';
 
-class Engine implements BaseEngine {
+class Engine implements BaseEngine<Query, OffsetPageRequest> {
   final FirebaseInstance instance;
   final String? path;
 
   const Engine(this.instance, {this.path});
 
   @override
-  BaseReference createReference() => Reference(instance, path);
+  BaseReference<Query, OffsetPageRequest> createReference() =>
+      Reference(instance, path);
 
   @override
-  BaseRelationship createRelationship() => const Relationship();
+  BaseRelationship<Query> createRelationship() => const Relationship();
 }

@@ -16,7 +16,7 @@
 
 import 'package:meta/meta_meta.dart';
 
-import 'uid_type.dart';
+import 'id.dart';
 
 /// Allows a class to be serialized.
 @Target({TargetKind.classType})
@@ -29,18 +29,22 @@ class Data {
 @Target({TargetKind.classType})
 class Model {
   /// Name of the table in the underlying database.
-  final String name;
+  final String? name;
+
+  /// Parts of the model's primary key.
+  ///
+  /// The generator supports one [GeneratedIdSpec], one
+  /// [DatabaseGeneratedIdSpec], or one or more
+  /// [ExistingIdSpec] parts. Composite generated keys are not supported.
+  final List<IdSpec> primaryKey;
 
   /// Name for the Dart repository accessor of this model.
   final Symbol? as;
 
-  /// Unique identification type for this model.
-  final UidType uidType;
-
   /// Creates a [Model] by its attributes.
   const Model({
-    required this.name,
+    this.name,
+    this.primaryKey = const [GeneratedIdSpec()],
     this.as,
-    this.uidType = const UidType.simple(),
   });
 }

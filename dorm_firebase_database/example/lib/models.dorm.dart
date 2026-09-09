@@ -1,4 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format width=80
 
 part of 'models.dart';
 
@@ -6,49 +7,27 @@ part of 'models.dart';
 // OrmGenerator
 // **************************************************************************
 
-@JsonSerializable(
-  anyMap: true,
-  explicitToJson: true,
-)
+@JsonSerializable(anyMap: true, explicitToJson: true)
 class UserData {
   factory UserData.fromJson(Map json) => _$UserDataFromJson(json);
 
   const UserData({required this.name});
 
-  @JsonKey(
-    name: 'name',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: 'name', required: true, disallowNullValue: true)
   final String name;
 
   Map<String, Object?> toJson() => _$UserDataToJson(this);
 }
 
-@JsonSerializable(
-  anyMap: true,
-  explicitToJson: true,
-)
+@JsonSerializable(anyMap: true, explicitToJson: true)
+@CopyWith(skipFields: true)
 class User extends UserData implements _User {
-  factory User.fromJson(
-    String id,
-    Map json,
-  ) =>
-      _$UserFromJson({
-        ...json,
-        '_id': id,
-      });
+  factory User.fromJson(String id, Map json) =>
+      _$UserFromJson({...json, '_id': id});
 
-  const User({
-    required this.id,
-    required super.name,
-  });
+  const User({required this.id, required super.name});
 
-  @JsonKey(
-    name: '_id',
-    required: true,
-    disallowNullValue: true,
-  )
+  @JsonKey(name: '_id', required: true, disallowNullValue: true)
   final String id;
 
   @override
@@ -61,40 +40,51 @@ class UserDependency extends Dependency<UserData> {
   const UserDependency() : super.strong();
 }
 
-class UserEntity implements Entity<UserData, User> {
+class UserFields {
+  const UserFields();
+
+  final FieldSchema id = const FieldSchema(fieldName: 'id', columnName: 'id');
+
+  final FieldSchema name = const FieldSchema(
+    fieldName: 'name',
+    columnName: 'name',
+  );
+}
+
+class UserEntity
+    implements
+        Entity<UserData, User, String, SimpleCreation<UserData, String>> {
   const UserEntity();
 
-  @override
-  final String tableName = 'users';
+  static const UserFields fields = UserFields();
+
+  static final EntitySchema _schema = EntitySchema(
+    tableName: 'users',
+    primaryKeys: [fields.id],
+    fields: [fields.name],
+    derivedFields: [],
+  );
 
   @override
-  User fromData(
-    UserDependency dependency,
-    String id,
-    UserData data,
-  ) {
-    return User(
-      id: id,
-      name: data.name,
-    );
+  EntitySchema get schema => _schema;
+
+  @override
+  PrimaryKeyCodec<String> get primaryKeyCodec => const SinglePrimaryKeyCodec();
+
+  @override
+  IdentityGenerationStrategy get identityGeneration =>
+      IdentityGenerationStrategy.engine;
+
+  @override
+  User fromData(ResolvedCreation<UserData, String> creation) {
+    return User(id: creation.id, name: creation.data.name);
   }
 
   @override
-  User convert(
-    User model,
-    UserData data,
-  ) =>
-      model.copyWith(data);
+  User convert(User model, UserData data) => model.updateWith(data);
 
   @override
-  User fromJson(
-    String id,
-    Map json,
-  ) =>
-      User.fromJson(
-        id,
-        json,
-      );
+  User fromJson(String id, Map json) => User.fromJson(id, json);
 
   @override
   String identify(User model) => model.id;
@@ -104,21 +94,27 @@ class UserEntity implements Entity<UserData, User> {
 }
 
 extension UserProperties on User {
-  User copyWith(UserData data) {
-    return User(
-      id: id,
-      name: data.name,
-    );
+  User updateWith(UserData data) {
+    return User(id: id, name: data.name);
   }
 }
 
-class Dorm {
+class Dorm<Q extends BaseQuery<Q>, P extends PageRequest> {
   const Dorm(this._engine);
 
-  final BaseEngine _engine;
+  final BaseEngine<Q, P> _engine;
 
-  DatabaseEntity<UserData, User> get users => DatabaseEntity(
-        const UserEntity(),
-        engine: _engine,
-      );
+  DatabaseEntity<UserData, User, String, Q, SimpleCreation<UserData, String>, P>
+  get users => DatabaseEntity(const UserEntity(), engine: _engine);
+}
+
+class TransactionalDorm<Q extends BaseQuery<Q>, P extends PageRequest>
+    extends Dorm<Q, P> {
+  const TransactionalDorm(this._transactionalEngine)
+    : super(_transactionalEngine);
+
+  final TransactionalEngine<Q, P> _transactionalEngine;
+
+  Future<T> transaction<T>(Future<T> Function(Dorm<Q, P>) action) =>
+      _transactionalEngine.transaction((engine) => action(Dorm<Q, P>(engine)));
 }

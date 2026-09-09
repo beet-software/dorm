@@ -14,97 +14,107 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import 'dependency.dart';
-import 'entity.dart';
-import 'filter.dart';
+import 'package:dorm_framework/dorm_framework.dart';
 
 /// Represents how to operate rows within a given database engine.
-abstract class BaseReference {
+abstract class BaseReference<Q extends BaseQuery<Q>, P extends PageRequest> {
   /// Defines how the database engine reads a single model, given its [id].
-  Future<Model?> peek<Data, Model extends Data>(
-    Entity<Data, Model> entity,
-    String id,
+  Future<Model?> peek<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    I id,
   );
 
   /// Defines how the database engine listen to the changes of a single model,
   /// given its [id].
-  Stream<Model?> pull<Data, Model extends Data>(
-    Entity<Data, Model> entity,
-    String id,
+  Stream<Model?> pull<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    I id,
   );
 
   /// Defines how the database engine reads multiple models matching a [filter].
-  Future<List<Model>> peekAll<Data, Model extends Data>(
-    Entity<Data, Model> entity,
-    Filter filter,
+  Future<List<Model>> peekAll<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    BaseFilter<Q> filter, [
+    QueryOptions options = const QueryOptions(),
+  ]);
+
+  Future<Page<Model>> peekPage<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    BaseFilter<Q> filter,
+    P request,
   );
 
   /// Defines how the database engine listen to the changes of multiple models
   /// matching a [filter].
-  Stream<List<Model>> pullAll<Data, Model extends Data>(
-    Entity<Data, Model> entity,
-    Filter filter,
-  );
+  Stream<List<Model>> pullAll<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    BaseFilter<Q> filter, [
+    QueryOptions options = const QueryOptions(),
+  ]);
 
   /// Defines how the database engine reads all the keys from the table.
-  Future<List<String>> peekAllKeys<Data, Model extends Data>(
-    Entity<Data, Model> entity,
+  Future<List<I>> peekAllKeys<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
   );
 
   /// Defines how the database engine deletes a single model, given its [id].
-  Future<void> pop<Data, Model extends Data>(
-    Entity<Data, Model> entity,
-    String id,
+  Future<void> pop<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    I id,
   );
 
   /// Defines how the database engine deletes multiple models, given their [ids].
-  Future<void> popKeys<Data, Model extends Data>(
-    Entity<Data, Model> entity,
-    Iterable<String> ids,
+  Future<void> popKeys<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    Iterable<I> ids,
   );
 
   /// Defines how the database engine updates a single [model].
-  Future<void> push<Data, Model extends Data>(
-    Entity<Data, Model> entity,
+  Future<void> push<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     Model model,
   );
 
   /// Defines how the database engine updates multiple [models].
-  Future<void> pushAll<Data, Model extends Data>(
-    Entity<Data, Model> entity,
+  Future<void> pushAll<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
     List<Model> models,
   );
 
   /// Defines how the database engine deletes multiple models matching a [filter].
-  Future<void> popAll<Data, Model extends Data>(
-    Entity<Data, Model> entity,
-    Filter filter,
+  Future<void> popAll<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    BaseFilter<Q> filter,
   );
 
   /// Defines how the database engine updates a single model using [update],
   /// given its [id].
-  Future<void> patch<Data, Model extends Data>(
-    Entity<Data, Model> entity,
-    String id,
+  Future<void> patch<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    I id,
     Model? Function(Model?) update,
   );
 
-  /// Defines how the database engine creates a single model, given a
-  /// [dependency] and its [data].
-  Future<Model> put<Data, Model extends Data>(
-    Entity<Data, Model> entity,
-    Dependency<Data> dependency,
-    Data data,
-  );
+  /// Defines how the database engine creates a single model from a
+  /// [creation] request.
+  Future<Model> put<
+    Data,
+    Model extends Data,
+    I extends Object,
+    C extends Creation<Data, I>
+  >(Entity<Data, Model, I, C> entity, C creation);
 
-  /// Defines how the database engine creates multiple models, given a
-  /// [dependency] and their [data].
-  Future<List<Model>> putAll<Data, Model extends Data>(
-    Entity<Data, Model> entity,
-    Dependency<Data> dependency,
-    List<Data> datum,
-  );
+  /// Defines how the database engine creates multiple models from
+  /// [creations].
+  Future<List<Model>> putAll<
+    Data,
+    Model extends Data,
+    I extends Object,
+    C extends Creation<Data, I>
+  >(Entity<Data, Model, I, C> entity, List<C> creations);
 
   /// Defines how the database engine drops a table.
-  Future<void> purge<Data, Model extends Data>(Entity<Data, Model> entity);
+  Future<void> purge<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+  );
 }

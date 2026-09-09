@@ -14,8 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import 'package:analyzer/dart/constant/value.dart';
-import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
 import 'package:source_gen/source_gen.dart';
 
@@ -25,17 +24,6 @@ extension AdditionalReads on ConstantReader {
   T? enumValueFrom<T extends Enum>(List<T> values) {
     if (isNull) return null;
     return values[objectValue.getField('index')!.toIntValue()!];
-  }
-
-  String get functionName {
-    final DartObject obj = objectValue;
-    final ExecutableElement element = obj.toFunctionValue()!;
-
-    final String name = element.name;
-    assert(element.isStatic);
-    final String? className = element.enclosingElement.name;
-    final String prefix = className == null ? '' : '$className.';
-    return '$prefix$name';
   }
 }
 
@@ -49,6 +37,34 @@ class $Type implements Type {
     if (!reader.isType) return null;
     return reader.typeValue.getDisplayString();
   }
+
+  DartType? get dartType {
+    if (reader.isNull || !reader.isType) return null;
+    return reader.typeValue;
+  }
+
+  @override
+  String toString() => '\$Type($name)';
+}
+
+class $ModelFieldTemplate implements ModelFieldTemplate {
+  final ConstantReader reader;
+
+  const $ModelFieldTemplate({required this.reader});
+
+  String? get name {
+    if (reader.isNull) return null;
+    final String? typeLabel = reader.objectValue.type?.getDisplayString();
+    if (typeLabel == null) return null;
+    final Match? match = RegExp(
+      'ModelFieldTemplate<(.*)>',
+    ).matchAsPrefix(typeLabel);
+    if (match == null) return null;
+    return match.group(1);
+  }
+
+  @override
+  String toString() => '\$ModelFieldTemplate($name)';
 }
 
 class $Symbol implements Symbol {
@@ -61,33 +77,35 @@ class $Symbol implements Symbol {
     if (!reader.isSymbol) return null;
     return reader.objectValue.toSymbolValue();
   }
+
+  @override
+  String toString() => '\$Symbol($name);';
 }
 
 class $ConcreteSymbol extends $Symbol {
   final String _defaultName;
 
-  const $ConcreteSymbol({
-    required super.reader,
-    required String defaultName,
-  }) : _defaultName = defaultName;
+  const $ConcreteSymbol({required super.reader, required String defaultName})
+    : _defaultName = defaultName;
 
   @override
   String get name => super.name ?? _defaultName;
 }
 
-abstract class FieldFilter {
-  static bool isA<F extends Field>(Field field) => field is F;
+extension FieldFilter on Field {
+  bool isA<F extends Field>() => this is F;
 
   /// If a field belongs to a schema.
-  static bool belongsToSchema(Field field) => field is! QueryField;
+  bool get isConcrete => this is! DerivedField;
+
+  /// If a field is generated from other model fields.
+  bool get isDerived => this is DerivedField;
 
   // If a field belongs exclusively to a dORM model class.
-  static bool belongsToModel(Field field) => field is ForeignField;
+  bool get isForeign => this is ForeignField;
 
   /// If a field belongs exclusively to a dORM data class.
-  static bool belongsToData(Field field) {
-    return belongsToSchema(field) && !belongsToModel(field);
-  }
+  bool get isNative => isConcrete && !isForeign;
 }
 
 extension FieldFiltering on Map<String, FieldOrmNode> {
@@ -99,17 +117,3 @@ extension FieldFiltering on Map<String, FieldOrmNode> {
   }
 }
 
-class $CustomUidValue implements CustomUidValue {
-  final ConstantReader reader;
-
-  const $CustomUidValue(this.reader);
-
-  @override
-  T when<T>({
-    required T Function() caseSimple,
-    required T Function() caseComposite,
-    required T Function(String id) caseValue,
-  }) {
-    throw UnimplementedError();
-  }
-}

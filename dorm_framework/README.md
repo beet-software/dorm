@@ -284,9 +284,14 @@ class SchoolEntity implements Entity<SchoolData, School> {
   @override
   Map<String, Object?> toJson(SchoolData data) => data.toJson();
 
-  // The name of this table in the database, equivalent to `CREATE TABLE schools` from SQL
+  // The persisted schema of this entity.
   @override
-  String get tableName => 'schools';
+  EntitySchema get schema => const EntitySchema(
+        tableName: 'schools',
+        primaryKeys: [
+          FieldSchema(fieldName: 'id', columnName: 'id'),
+        ],
+      );
 
   // This represents the UPDATE method, see the previous section
   @override
@@ -300,13 +305,12 @@ class SchoolEntity implements Entity<SchoolData, School> {
 
   // This represents the CREATE method, see the previous section
   @override
-  School fromData(SchoolDependency dependency, String id, SchoolData data) {
+  School fromData(ResolvedCreation<SchoolData, String> creation) {
     return School(
-      // Choose your primary key strategy here
-      id: id,
-      name: data.name,
-      phoneNumber: data.phoneNumber,
-      address: data.address,
+      id: creation.id,
+      name: creation.data.name,
+      phoneNumber: creation.data.phoneNumber,
+      address: creation.data.address,
     );
   }
 }
@@ -379,7 +383,7 @@ void main() {
   final DatabaseEntity<SchoolData, School> controller /* = ... */;
 
   // Access the table name
-  print(controller.tableName); // schools
+  print(controller.schema.tableName); // schools
 
   // Decode a row
   school = controller.fromJson('123456', {'name': 'School'});
@@ -392,9 +396,12 @@ void main() {
 
   // Create a model
   school = controller.fromData(
-    SchoolDependency(),
-    '123456',
-    SchoolData(name: 'School'),
+    ResolvedCreation(
+      dependency: SchoolDependency(),
+      id: '123456',
+      data: SchoolData(name: 'School'),
+      identitySource: CreationIdentitySource.explicit,
+    ),
   );
 
   // Update a model
@@ -411,40 +418,48 @@ This class provides a `repository` field you can use to access all the CRUD meth
 
 There are two methods available for creating: `put` and `putAll`.
 
-The `put` method receives a dependency of an object and its data. Its primary concept is
-to create a new row on the table. It returns the created model:
+The `put` method receives a `Creation` object containing a dependency, data,
+and identity strategy. Its primary concept is to create a new row on the table.
+It returns the created model:
 
 ```dart
 void main(Repository<SchoolData, School> repository) async {
   final School school = await repository.put(
-    const SchoolDependency(),
-    SchoolData(
-      name: 'Harmony Academy',
-      phoneNumber: '(555) 123-4567',
-      address: '123 Main Street, Anytown, USA',
+    Creation.auto(
+      dependency: const SchoolDependency(),
+      data: SchoolData(
+        name: 'Harmony Academy',
+        phoneNumber: '(555) 123-4567',
+        address: '123 Main Street, Anytown, USA',
+      ),
     ),
   );
 }
 ```
 
-The `putAll` method receives a dependency of an object and a collection of data. If
-you have more than two or more data views that share the same dependency, this method is
-preferred rather than calling `put` repeatedly. It returns the created models:
+The `putAll` method receives one `Creation` object per model. Each item can
+have its own dependency, data, and identity strategy. It returns the created
+models:
 
 ```dart
 void main(Repository<SchoolData, School> repository) async {
   final List<School> schools = await repository.putAll(
-    const SchoolDependency(),
     [
-      SchoolData(
-        name: 'Oakwood High School',
-        phoneNumber: '(555) 987-6543',
-        address: '456 Elm Avenue, Springfield, USA',
+      Creation.auto(
+        dependency: const SchoolDependency(),
+        data: SchoolData(
+          name: 'Oakwood High School',
+          phoneNumber: '(555) 987-6543',
+          address: '456 Elm Avenue, Springfield, USA',
+        ),
       ),
-      SchoolData(
-        name: 'Maplewood Elementary',
-        phoneNumber: '(555) 555-5555',
-        address: '789 Oak Street, Willowbrook, USA',
+      Creation.auto(
+        dependency: const SchoolDependency(),
+        data: SchoolData(
+          name: 'Maplewood Elementary',
+          phoneNumber: '(555) 555-5555',
+          address: '789 Oak Street, Willowbrook, USA',
+        ),
       ),
     ],
   );
@@ -613,14 +628,40 @@ If you want to match models whose field is equal to a certain value, you can use
 ```dart
 void main(Repository<SchoolData, School> repository) async {
   // Peek all active schools
-  await repository.peekAll(const Filter.value(true, key: 'active'));
+  await repository.peekAll(const Filter.value(true, field: FieldSchema(fieldName: 'active', columnName: 'active')));
 
   // Peek all schools that belongs to US
-  await repository.peekAll(const Filter.value('US', key: 'country-name'));
+  await repository.peekAll(const Filter.value('US', field: FieldSchema(fieldName: 'country', columnName: 'country-name')));
 }
 ```
 
-The argument passed to `key` should match the serialization field name.
+Pass the generated or manually declared `FieldSchema` for the field. Its
+`columnName` is resolved before the engine builds the query.
+
+#### Comparisons and composition
+
+The common filter set also includes text-prefix and date/range filters. Query
+implementations may expose additional typed capabilities for comparisons,
+set-membership and null checks, `allOf`/`anyOf` composition, `not`, and
+collection membership:
+
+```dart
+final BaseFilter<Query> affordable = BaseFilter.lessThan<Query>(
+  25,
+  field: ProductEntity.fields.price,
+);
+
+final BaseFilter<Query> available = BaseFilter.allOf<Query>([
+  affordable,
+  BaseFilter.isNotNull<Query>(field: ProductEntity.fields.name),
+]);
+```
+
+These factories require the concrete query to implement the corresponding
+capability interface. An engine that does not advertise a capability does not
+fall back to downloading and filtering the full collection in Dart. `text`
+continues to mean prefix matching, while `contains` is reserved for persisted
+collection values.
 
 #### By text
 
@@ -629,10 +670,10 @@ If you want to match models whose field *starts* with a certain string, you can 
 ```dart
 void main(Repository<SchoolData, School> repository) async {
   // Peek all active schools
-  await repository.peekAll(const Filter.value(true, key: 'active'));
+  await repository.peekAll(const Filter.value(true, field: FieldSchema(fieldName: 'active', columnName: 'active')));
 
   // Peek all schools that belongs to US
-  await repository.peekAll(const Filter.value('US', key: 'country-name'));
+  await repository.peekAll(const Filter.value('US', field: FieldSchema(fieldName: 'country', columnName: 'country-name')));
 }
 ```
 
@@ -646,7 +687,7 @@ void main(Repository<SchoolData, School> repository) async {
 
   // Since the stored school name is "Lincoln Elementary"
   // (note the uppercase letters and spaces), nothing will be found
-  await repository.peekAll(Filter.text(userInput, key: 'name'));
+  await repository.peekAll(Filter.text(userInput, field: FieldSchema(fieldName: 'name', columnName: 'name')));
 }
 ```
 
@@ -680,7 +721,7 @@ void main(Repository<SchoolData, School> repository) async {
 
   // Successfully finds the desired school
   final String query = userInput.toUpperCase().replaceAll(' ', '');
-  await repository.peekAll(Filter.text(query, key: '.name'));
+  await repository.peekAll(Filter.text(query, field: FieldSchema(fieldName: 'normalizedName', columnName: '.name')));
 }
 ```
 
@@ -719,16 +760,16 @@ void main() {
   Filter? filter;
 
   // Select entries occurred at 13/06/2021, 16:05:12.111
-  filter = Filter.date(dt, key: 'birth-date');
+  filter = Filter.date(dt, field: FieldSchema(fieldName: 'birthDate', columnName: 'birth-date'));
 
   // Select entries occurred at 2021
-  filter = Filter.date(dt, key: 'birth-date', unit: DateFilterUnit.year);
+  filter = Filter.date(dt, field: FieldSchema(fieldName: 'birthDate', columnName: 'birth-date'), unit: DateFilterUnit.year);
 
   // Select entries occurred at 13/06/2021
-  filter = Filter.date(dt, key: 'birth-date', unit: DateFilterUnit.day);
+  filter = Filter.date(dt, field: FieldSchema(fieldName: 'birthDate', columnName: 'birth-date'), unit: DateFilterUnit.day);
 
   // Select entries occurred at 13/06/2021, from 16:00 to 16:59
-  filter = Filter.date(dt, key: 'birth-date', unit: DateFilterUnit.hour);
+  filter = Filter.date(dt, field: FieldSchema(fieldName: 'birthDate', columnName: 'birth-date'), unit: DateFilterUnit.hour);
 }
 ```
 
@@ -739,10 +780,16 @@ For any filter, you can use its `limit` method to evaluate the only first or las
 ```dart
 void main(Repository<SchoolData, School> repository) async {
   // Peek first 10 schools
-  await repository.peekAll(const Filter.empty().limit(10));
+  await repository.peekAll(
+    const Filter.empty(),
+    const QueryOptions(limit: 10),
+  );
 
-  // Peek last 20 schools with name prefixed with DEF
-  await repository.peekAll(Filter.text('DEF', key: 'name').limit(-20));
+  // Peek 20 schools with a name prefixed with DEF
+  await repository.peekAll(
+    Filter.text('DEF', field: FieldSchema(fieldName: 'name', columnName: 'name')),
+    const QueryOptions(limit: 20),
+  );
 }
 ```
 
@@ -751,6 +798,39 @@ void main(Repository<SchoolData, School> repository) async {
 With a database entity ready to be used, we want to ask the database questions related to
 relationships between schemas, such as "What are the students of a given school?". These questions
 can be asked through the `relationships` field of a database entity.
+
+Relationship operands are `RelationSource`s. Repositories expose a
+`TableRelationPlan`, while associations created from other relationships expose a
+`CompositeRelationPlan`. Database engines may use these plans to batch or optimize
+relationship reads; callback-based relationships remain supported as a fallback.
+
+The generator also emits a typed `DormRelations` navigator when models declare
+`ForeignField`s. Direct and explicitly named inverse relations can be composed without
+writing `on` callbacks:
+
+```dart
+final Stream<List<Join<User, Product>>> products =
+    dorm.relations.users.carts.items.product.pullAll();
+```
+
+Generated paths are lazy and currently flatten the result to the root and terminal model.
+Their `RelationSpec` metadata is available to future engine-specific planners. The current
+fallback evaluates each step through the target source. Use `on` for computed, custom, or
+otherwise non-inferable relationships.
+
+For a to-one path, the generated relation name is an inner join and keeps only matching
+targets. Its `${relation}OrNull` variant is a left join and returns `Target?`, preserving
+the source when the target is missing. For an inverse to-many path, the generated relation
+name is the flattened form; its `${relation}OrEmpty` variant is terminal and returns
+`Join<Root, List<Target>>`, including roots without targets. For example:
+
+```dart
+final Stream<List<Join<CartItem, Product?>>> items =
+    dorm.relations.cartItems.productOrNull.pullAll();
+
+final Future<List<Join<User, List<Cart>>>> carts =
+    dorm.relations.users.cartsOrEmpty.peekAll();
+```
 
 #### One-to-one
 
@@ -806,7 +886,8 @@ void main() async {
   final OneToManyAssociation<School, Student> association;
   association = schoolController.relationships.oneToMany(
     studentController.repository,
-    on: (School school) => Filter.value(school.id, key: 'school-id'),
+    on: (School school) =>
+        Filter.value(school.id, field: StudentEntity.fields.schoolId),
   );
 
   final Join<School, List<Student>>? join = await association.peek('123456');

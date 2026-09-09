@@ -1,0 +1,13 @@
+import 'package:firebase_core/firebase_core.dart';
+
+class DefaultFirebaseOptions {
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'dorm-example-local-key',
+    appId: '1:000000000000:web:dormexamplelocal',
+    messagingSenderId: '000000000000',
+    projectId: 'dorm-example',
+    databaseURL: 'http://127.0.0.1:9000?ns=dorm-example',
+  );
+
+  static FirebaseOptions get currentPlatform => web;
+}

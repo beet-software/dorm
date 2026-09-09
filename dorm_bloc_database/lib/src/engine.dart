@@ -17,14 +17,24 @@
 import 'package:dorm_framework/dorm_framework.dart';
 
 import 'reference.dart';
+import 'query.dart';
 import 'relationship.dart';
 
-class Engine implements BaseEngine {
+class Engine
+    implements
+        BaseEngine<Query, OffsetPageRequest>,
+        TransactionalEngine<Query, OffsetPageRequest> {
   final Reference _reference = Reference();
 
   @override
-  BaseReference createReference() => _reference;
+  BaseReference<Query, OffsetPageRequest> createReference() => _reference;
 
   @override
-  BaseRelationship createRelationship() => const Relationship();
+  BaseRelationship<Query> createRelationship() => const Relationship();
+
+  @override
+  Future<T> transaction<T>(
+    Future<T> Function(BaseEngine<Query, OffsetPageRequest> engine) action,
+  ) =>
+      _reference.transaction(action);
 }

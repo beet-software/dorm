@@ -1,32 +1,26 @@
 name: dorm_generator
 version: 1.0.0-alpha.5
+resolution: workspace
 description: Generates code to implement the dORM framework based on annotations.
 homepage: https://github.com/beet-software/dorm/tree/main/dorm_generator
 repository: https://github.com/beet-software/dorm.git
 environment:
-  sdk: '>=3.0.5 <4.0.0'
+  sdk: '>=3.11.5 <4.0.0'
 
 dependencies:
   dartx: ^1.2.0
-  build: ^2.4.1
-  graphs: ^2.0.0
-  analyzer: ^6.4.1
-  source_gen: ^1.5.0
-  dart_style: ^2.3.6
-  code_builder: ^4.10.0
-  json_serializable: ^6.8.0
+  build: ^4.0.11
+  graphs: ^2.3.2
+  analyzer: ^14.3.0
+  source_gen: ^4.3.0
+  dart_style: ^3.1.13
+  code_builder: ^4.12.0
+  json_serializable: ^6.14.1
   dorm_annotations: ^1.0.0-alpha.3
+  copy_with_extension_gen: ^17.1.0
 dev_dependencies:
   lints: ^5.0.0
   meta: ^1.15.0
   test: ^1.25.8
-  build_test: ^2.2.2
-  build_runner: ^2.4.9
-  package_config: ^2.1.0
-  dorm_framework: ^1.0.0-alpha.6
-
-dependency_overrides:
-  dorm_annotations:
-    path: ../dorm_annotations
-  dorm_framework:
-    path: ../dorm_framework
+  build_runner: ^2.16.1
+  dorm_framework: ^1.0.0-alpha.5

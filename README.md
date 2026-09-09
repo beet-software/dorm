@@ -11,7 +11,14 @@
 [![pub package](https://img.shields.io/pub/v/dorm_generator.svg?label=dorm_generator)](https://pub.dev/packages/dorm_generator)
 
 [![pub package](https://img.shields.io/pub/v/dorm_firebase_database.svg?label=dorm_firebase_database)](https://pub.dev/packages/dorm_firebase_database)
+[![pub package](https://img.shields.io/pub/v/dorm_firestore_database.svg?label=dorm_firestore_database)](https://pub.dev/packages/dorm_firestore_database)
 [![pub package](https://img.shields.io/pub/v/dorm_bloc_database.svg?label=dorm_bloc_database)](https://pub.dev/packages/dorm_bloc_database)
+[![pub package](https://img.shields.io/pub/v/dorm_mysql_database.svg?label=dorm_mysql_database)](https://pub.dev/packages/dorm_mysql_database)
+[![pub package](https://img.shields.io/pub/v/dorm_postgres_database.svg?label=dorm_postgres_database)](https://pub.dev/packages/dorm_postgres_database)
+[![pub package](https://img.shields.io/pub/v/dorm_mongo_database.svg?label=dorm_mongo_database)](https://pub.dev/packages/dorm_mongo_database)
+[![pub package](https://img.shields.io/pub/v/dorm_http_database.svg?label=dorm_http_database)](https://pub.dev/packages/dorm_http_database)
+[![pub package](https://img.shields.io/pub/v/dorm_sqlite_database.svg?label=dorm_sqlite_database)](https://pub.dev/packages/dorm_sqlite_database)
+[![pub package](https://img.shields.io/pub/v/dorm_example.svg?label=dorm_example)](https://pub.dev/packages/dorm_example)
 
 
 A language-agnostic Object Relational Mapper library for Dart.
@@ -29,6 +36,23 @@ This ORM uses separation of concerns as the main concept of its framework:
 
 ## Getting started
 
+To create a complete starter project, use the dORM example generator:
+
+```shell
+dart pub global activate dorm_example
+dorm_example -e memory
+```
+
+The generated project contains annotated models, generated-code commands, and
+a small showcase application. Use `-e postgres`, `-e mysql`, or `-e mongo` to
+generate a Dart project with a Docker Compose service for the selected backend.
+Use `-e firestore`, `-e firebase`, or `-e http` for Flutter-specific projects;
+those profiles also generate local emulator or HTTP infrastructure that can be
+started with Docker Compose.
+
+The generator does not overwrite a non-empty output directory and does not run
+package installation or Docker commands automatically.
+
 Inside a Dart (or Flutter) project, run the following lines in your command prompt:
 
 ```shell
@@ -36,8 +60,12 @@ dart pub add dorm_framework
 dart pub add dorm_annotations
 dart pub add dev:dorm_generator
 dart pub add dev:build_runner
-# Choose a dorm_*_database package to use as engine
-dart pub add dorm_firebase_database
+# Choose one engine package. For MongoDB:
+dart pub add dorm_mongo_database
+dart pub add mongo_dart
+# For PostgreSQL, use dorm_postgres_database and postgres instead:
+# dart pub add dorm_postgres_database
+# dart pub add postgres
 dart pub get
 ```
 
@@ -96,22 +124,37 @@ Here's a step-by-step guide:
 2. Fit your schema into dORM's framework, explained by [`dorm_generator`](https://pub.dev/packages/dorm_generator)
 3. Manipulate the generated code using filters and joins, explained by [`dorm_framework`](https://pub.dev/packages/dorm_framework)
 4. Discover what database engines are available to integrate with dORM
+   - Start with pure Dart in-memory storage, explained by [`dorm_memory_database`](https://pub.dev/packages/dorm_memory_database)
    - Integrate using Firebase Realtime Database, explained by [`dorm_firebase_database`](https://pub.dev/packages/dorm_firebase_database)
+   - Integrate using Cloud Firestore, explained by [`dorm_firestore_database`](https://pub.dev/packages/dorm_firestore_database)
    - Integrate using local memory and the BLoC pattern, explained by [`dorm_bloc_database`](https://pub.dev/packages/dorm_bloc_database)
+   - Integrate using MySQL, explained by [`dorm_mysql_database`](https://pub.dev/packages/dorm_mysql_database)
+   - Integrate using PostgreSQL, explained by [`dorm_postgres_database`](https://pub.dev/packages/dorm_postgres_database)
+   - Integrate using MongoDB, explained by [`dorm_mongo_database`](https://pub.dev/packages/dorm_mongo_database)
+   - Integrate with REST-shaped HTTP/JSON APIs, explained by [`dorm_http_database`](https://pub.dev/packages/dorm_http_database)
+   - Integrate with SQLite through [`dorm_sqlite_database`](https://pub.dev/packages/dorm_sqlite_database)
    - Using another engine? Take a look at the "Implementing your own engine" section below
 
 You can find an *example/* folder inside *every* package mentioned above, containing specific examples
 on how to use them. Note that you will not learn the framework just by reading this document or exploring
 just one of the packages above. Each documentation complements the other.
 
-## Disclaimers
+## Current scope
 
-dORM does not yet handle
+dORM exposes an optional public transaction API through `TransactionalDorm`.
+Memory, BLoC, MySQL, PostgreSQL, and SQLite implement it. Firestore, Firebase
+Realtime Database, MongoDB, and HTTP do not; some of those engines still use
+backend transactions internally for individual operations.
+Repository reads support offset-based pages through `peekPage`. Current engines
+declare `OffsetPageRequest` as their accepted page type, so a statically typed
+`CursorPageRequest` call is rejected by the analyzer.
 
-- transactions
-- paginations
-
-These features may be supported in future releases.
+For creation, `Creation.auto` follows the model's declared
+`IdentityGenerationStrategy`. Memory, BLoC, Firebase, Firestore, MongoDB, and
+the default HTTP flow obtain an identity before persistence. MySQL, PostgreSQL,
+and SQLite support `DatabaseGeneratedIdSpec` for supported single-key schemas;
+HTTP can do the same when its mapping uses `HttpIdentityLocation.none` and a
+creation response codec that resolves the returned identity.
 
 ## Implementing your own engine
 
@@ -178,7 +221,10 @@ Basically,
    }
    ```
 
-   Implement every method inherited from `BaseQuery`.
+   Implement every method inherited from `BaseQuery`. Optional query
+   capabilities such as `ComparisonQuery`, `LogicalQuery`, `NegationQuery`,
+   and `CollectionQuery` can be implemented when the backend can translate
+   their operations without a client-side fallback.
 
 5. Inside *reference.dart*, add the following contents:
 

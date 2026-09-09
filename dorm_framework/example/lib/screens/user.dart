@@ -1,7 +1,8 @@
 import 'dart:async';
 
-import 'package:dorm_framework/dorm_framework.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
+import 'package:dorm_bloc_database/dorm_bloc_database.dart' as dorm_bloc;
+import 'package:dorm_framework/dorm_framework.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_bloc/flutter_form_bloc.dart';
 import 'package:get_it/get_it.dart';
@@ -18,10 +19,12 @@ class _Query extends ValueNotifier<AsyncSnapshot<List<Review>>> {
 
   _Query({required this.userId}) : super(const AsyncSnapshot.waiting()) {
     _subscription = GetIt.instance
-        .get<Dorm>()
+        .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
         .reviews
         .repository
-        .pullAll(Filter.value(userId, key: 'user-id'))
+        .pullAll(
+          dorm_bloc.Filter.value(userId, field: ReviewEntity.fields.userId),
+        )
         .map((users) => AsyncSnapshot.withData(ConnectionState.active, users))
         .listen((snapshot) => value = snapshot);
   }
@@ -32,15 +35,19 @@ class _Query extends ValueNotifier<AsyncSnapshot<List<Review>>> {
 
   void updateFilter(ReviewContentType? type) {
     _type = type;
-    final String query =
-        [userId, if (type != null) $normalizeEnum(type)].join('_');
+    final String query = [
+      userId,
+      if (type != null) $normalizeEnum(type),
+    ].join('_');
 
     value = const AsyncSnapshot.waiting();
     _subscription = GetIt.instance
-        .get<Dorm>()
+        .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
         .reviews
         .repository
-        .pullAll(Filter.text(query, key: '_q-type'))
+        .pullAll(
+          dorm_bloc.Filter.text(query, field: ReviewEntity.fields.qUserIdType),
+        )
         .map((users) => AsyncSnapshot.withData(ConnectionState.active, users))
         .listen((snapshot) => value = snapshot);
   }
@@ -64,22 +71,26 @@ class UserScreen extends StatelessWidget {
         StreamProvider<AsyncSnapshot<User?>>(
           initialData: const AsyncSnapshot.waiting(),
           create: (_) => GetIt.instance
-              .get<Dorm>()
+              .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
               .users
               .repository
               .pull(userId)
-              .map((event) =>
-                  AsyncSnapshot.withData(ConnectionState.active, event)),
+              .map(
+                (event) =>
+                    AsyncSnapshot.withData(ConnectionState.active, event),
+              ),
         ),
         StreamProvider<AsyncSnapshot<Cart?>>(
           initialData: const AsyncSnapshot.waiting(),
           create: (_) => GetIt.instance
-              .get<Dorm>()
+              .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
               .carts
               .repository
               .pull(userId)
-              .map((event) =>
-                  AsyncSnapshot.withData(ConnectionState.active, event)),
+              .map(
+                (event) =>
+                    AsyncSnapshot.withData(ConnectionState.active, event),
+              ),
         ),
         ChangeNotifierProvider<_Query>(create: (_) => _Query(userId: userId)),
       ],
@@ -100,10 +111,15 @@ class UserScreen extends StatelessWidget {
                       );
                       if (data == null) return;
                       await GetIt.instance
-                          .get<Dorm>()
+                          .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
                           .reviews
                           .repository
-                          .put(ReviewDependency(userId: userId), data);
+                          .put(
+                            Creation.auto(
+                              dependency: ReviewDependency(userId: userId),
+                              data: data,
+                            ),
+                          );
                     },
                     icon: const Icon(Icons.reviews),
                   ),
@@ -132,8 +148,9 @@ class UserScreen extends StatelessWidget {
                       const ListTile(title: Text('My reviews')),
                       Expanded(
                         child: Consumer<_Query>(
-                          child:
-                              const Center(child: CircularProgressIndicator()),
+                          child: const Center(
+                            child: CircularProgressIndicator(),
+                          ),
                           builder: (context, query, child) {
                             final AsyncSnapshot<List<Review>> snapshot =
                                 query.value;
@@ -157,12 +174,15 @@ class UserScreen extends StatelessWidget {
                                           itemBuilder: (context, i) {
                                             final Review review = reviews[i];
                                             return ListTile(
-                                              leading:
-                                                  const Icon(Icons.rate_review),
+                                              leading: const Icon(
+                                                Icons.rate_review,
+                                              ),
                                               title: Text(review.text),
-                                              subtitle: Text(DateFormat(
-                                                      'dd/MM/yyyy')
-                                                  .format(review.timestamp)),
+                                              subtitle: Text(
+                                                DateFormat(
+                                                  'dd/MM/yyyy',
+                                                ).format(review.timestamp),
+                                              ),
                                               trailing: IconButton(
                                                 icon: const Icon(
                                                   Icons.delete,
@@ -170,7 +190,12 @@ class UserScreen extends StatelessWidget {
                                                 ),
                                                 onPressed: () async {
                                                   await GetIt.instance
-                                                      .get<Dorm>()
+                                                      .get<
+                                                        Dorm<
+                                                          dorm_bloc.Query,
+                                                          OffsetPageRequest
+                                                        >
+                                                      >()
                                                       .reviews
                                                       .repository
                                                       .pop(review.id);
@@ -184,7 +209,7 @@ class UserScreen extends StatelessWidget {
                             );
                           },
                         ),
-                      )
+                      ),
                     ],
                   );
                 },
@@ -247,10 +272,7 @@ class _UserCard extends StatelessWidget {
               title: Text(user.profile.name),
               subtitle: Text('@${user.username}'),
             ),
-            ListTile(
-              trailing: const Text('email'),
-              title: Text(user.email),
-            ),
+            ListTile(trailing: const Text('email'), title: Text(user.email)),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 10),
               child: Row(
@@ -258,13 +280,22 @@ class _UserCard extends StatelessWidget {
                   OutlinedButton(
                     child: const Text('edit'),
                     onPressed: () async {
-                      final UserData? data =
-                          await Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) => UserFormScreen(form: UserForm(user)),
-                      ));
+                      final UserData? data = await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => UserFormScreen(form: UserForm(user)),
+                        ),
+                      );
                       if (data == null) return;
-                      await GetIt.instance.get<Dorm>().users.repository.push(
-                          GetIt.instance.get<Dorm>().users.convert(user, data));
+                      await GetIt.instance
+                          .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
+                          .users
+                          .repository
+                          .push(
+                            GetIt.instance
+                                .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
+                                .users
+                                .convert(user, data),
+                          );
                     },
                   ),
                   const SizedBox(width: 10),
@@ -296,7 +327,7 @@ class _UserCard extends StatelessWidget {
                       if (!(confirm ?? false)) return;
 
                       await GetIt.instance
-                          .get<Dorm>()
+                          .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
                           .users
                           .repository
                           .pop(user.id);
@@ -336,9 +367,15 @@ class _CartCard extends StatelessWidget {
         trailing: IconButton(
           icon: const Icon(Icons.add_circle),
           onPressed: () async {
-            await GetIt.instance.get<Dorm>().carts.repository.put(
-                  CartDependency(userId: userId),
-                  CartData(timestamp: DateTime.now()),
+            await GetIt.instance
+                .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
+                .carts
+                .repository
+                .put(
+                  Creation.auto(
+                    dependency: CartDependency(userId: userId),
+                    data: CartData(timestamp: DateTime.now()),
+                  ),
                 );
           },
         ),
@@ -349,8 +386,9 @@ class _CartCard extends StatelessWidget {
       title: const Text('Cart'),
       subtitle: const Text('Click here to access your cart'),
       onTap: () async {
-        await Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => CartScreen(cartId: cart.id)));
+        await Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => CartScreen(cartId: cart.id)));
       },
       trailing: IconButton(
         icon: const Icon(Icons.delete, color: Colors.red),
@@ -380,7 +418,11 @@ class _CartCard extends StatelessWidget {
           );
           if (!(confirm ?? false)) return;
 
-          await GetIt.instance.get<Dorm>().carts.repository.pop(cart.id);
+          await GetIt.instance
+              .get<Dorm<dorm_bloc.Query, OffsetPageRequest>>()
+              .carts
+              .repository
+              .pop(cart.id);
         },
       ),
     );
