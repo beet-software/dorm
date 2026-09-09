@@ -167,6 +167,8 @@ backend-specific behavior part of an application contract.
 
 - [Generate a showcase project](quickstart/generate-a-showcase.md) for a
   complete starting point.
+- [When to use dORM?](compare/data-access-approaches.md) before deciding
+  whether dORM's portability matches the application.
 - [Choose an engine](apply/choose-an-engine.md) based on the backend and
   capabilities your application needs.
 - [Build a small store](quickstart/index.md) from an empty Dart project.
