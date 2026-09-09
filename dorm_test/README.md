@@ -1,10 +1,10 @@
 # dorm_test
 
 <p>
-  <a href="https://github.com/beet-software/dorm"><img src="https://img.shields.io/badge/repository-GitHub-181717?logo=github&style=flat" alt="dORM repository"></a>
-  <a href="https://github.com/beet-software/dorm"><img src="https://img.shields.io/github/license/beet-software/dorm?style=flat" alt="License"></a>
+  <a href="https://github.com/ezgrs/dorm"><img src="https://img.shields.io/badge/repository-GitHub-181717?logo=github&style=flat" alt="dORM repository"></a>
+  <a href="https://github.com/ezgrs/dorm"><img src="https://img.shields.io/github/license/ezgrs/dorm?style=flat" alt="License"></a>
   <a href="https://ezgrs.github.io/dorm/development/test-an-engine/"><img src="https://img.shields.io/badge/development-engine%20compliance-4c8bf5?style=flat" alt="Engine compliance guide"></a>
-  <a href="https://github.com/beet-software/dorm/actions/workflows/dart.yml"><img src="https://github.com/beet-software/dorm/actions/workflows/dart.yml/badge.svg" alt="Dart CI"></a>
+  <a href="https://github.com/ezgrs/dorm/actions/workflows/dart.yml"><img src="https://github.com/ezgrs/dorm/actions/workflows/dart.yml/badge.svg" alt="Dart CI"></a>
 </p>
 
 dorm_test is the shared conformance harness for dORM engines. It is an
@@ -107,4 +107,4 @@ contract that users can observe across engines.
 
 - [Test an engine](https://ezgrs.github.io/dorm/development/test-an-engine/)
 - [Framework contracts](https://ezgrs.github.io/dorm/reference/framework-contracts/)
-- [GitHub repository](https://github.com/beet-software/dorm)
+- [GitHub repository](https://github.com/ezgrs/dorm)

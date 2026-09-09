@@ -6,9 +6,9 @@
   <a href="https://pub.dev/packages/dorm_firestore_database"><img src="https://img.shields.io/pub/popularity/dorm_firestore_database?logo=dart" alt="dorm_firestore_database popularity"></a>
   <a href="https://pub.dev/packages/dorm_firestore_database"><img src="https://img.shields.io/pub/likes/dorm_firestore_database?logo=dart" alt="dorm_firestore_database likes"></a>
   <a href="https://ezgrs.github.io/dorm/apply/use-firestore/"><img src="https://img.shields.io/badge/documentation-dORM-4c8bf5?style=flat" alt="dorm_firestore_database documentation"></a>
-  <a href="https://github.com/beet-software/dorm"><img src="https://img.shields.io/badge/repository-GitHub-181717?logo=github&style=flat" alt="dORM repository"></a>
-  <a href="https://github.com/beet-software/dorm"><img src="https://img.shields.io/github/license/beet-software/dorm?style=flat" alt="License"></a>
-  <a href="https://github.com/beet-software/dorm/actions/workflows/dart.yml"><img src="https://github.com/beet-software/dorm/actions/workflows/dart.yml/badge.svg" alt="Dart CI"></a>
+  <a href="https://github.com/ezgrs/dorm"><img src="https://img.shields.io/badge/repository-GitHub-181717?logo=github&style=flat" alt="dORM repository"></a>
+  <a href="https://github.com/ezgrs/dorm"><img src="https://img.shields.io/github/license/ezgrs/dorm?style=flat" alt="License"></a>
+  <a href="https://github.com/ezgrs/dorm/actions/workflows/dart.yml"><img src="https://github.com/ezgrs/dorm/actions/workflows/dart.yml/badge.svg" alt="Dart CI"></a>
 </p>
 
 dorm_firestore_database is a Flutter engine backed by Cloud Firestore. It
@@ -115,4 +115,4 @@ emulator configuration, generation, and Flutter commands.
 - [cloud_firestore](https://pub.dev/packages/cloud_firestore)
 - [Firebase Emulator Suite](https://firebase.google.com/docs/emulator-suite)
 - [dorm_framework](https://pub.dev/packages/dorm_framework)
-- [GitHub repository](https://github.com/beet-software/dorm)
+- [GitHub repository](https://github.com/ezgrs/dorm)

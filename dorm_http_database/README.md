@@ -6,9 +6,9 @@
   <a href="https://pub.dev/packages/dorm_http_database"><img src="https://img.shields.io/pub/popularity/dorm_http_database?logo=dart" alt="dorm_http_database popularity"></a>
   <a href="https://pub.dev/packages/dorm_http_database"><img src="https://img.shields.io/pub/likes/dorm_http_database?logo=dart" alt="dorm_http_database likes"></a>
   <a href="https://ezgrs.github.io/dorm/apply/use-http/"><img src="https://img.shields.io/badge/documentation-dORM-4c8bf5?style=flat" alt="dorm_http_database documentation"></a>
-  <a href="https://github.com/beet-software/dorm"><img src="https://img.shields.io/badge/repository-GitHub-181717?logo=github&style=flat" alt="dORM repository"></a>
-  <a href="https://github.com/beet-software/dorm"><img src="https://img.shields.io/github/license/beet-software/dorm?style=flat" alt="License"></a>
-  <a href="https://github.com/beet-software/dorm/actions/workflows/dart.yml"><img src="https://github.com/beet-software/dorm/actions/workflows/dart.yml/badge.svg" alt="Dart CI"></a>
+  <a href="https://github.com/ezgrs/dorm"><img src="https://img.shields.io/badge/repository-GitHub-181717?logo=github&style=flat" alt="dORM repository"></a>
+  <a href="https://github.com/ezgrs/dorm"><img src="https://img.shields.io/github/license/ezgrs/dorm?style=flat" alt="License"></a>
+  <a href="https://github.com/ezgrs/dorm/actions/workflows/dart.yml"><img src="https://github.com/ezgrs/dorm/actions/workflows/dart.yml/badge.svg" alt="Dart CI"></a>
 </p>
 
 dorm_http_database maps dORM repositories to a configured REST-shaped
@@ -126,4 +126,4 @@ environment configuration, generation, and Dart commands.
 - [Run with HTTP/JSON](https://ezgrs.github.io/dorm/apply/use-http/)
 - [http](https://pub.dev/packages/http)
 - [dorm_framework](https://pub.dev/packages/dorm_framework)
-- [GitHub repository](https://github.com/beet-software/dorm)
+- [GitHub repository](https://github.com/ezgrs/dorm)

@@ -1,10 +1,10 @@
 # dORM
 
 <p>
-  <a href="https://github.com/beet-software/dorm"><img src="https://img.shields.io/github/stars/beet-software/dorm?style=flat" alt="GitHub stars"></a>
-  <a href="https://github.com/beet-software/dorm"><img src="https://img.shields.io/github/license/beet-software/dorm?style=flat" alt="License"></a>
+  <a href="https://github.com/ezgrs/dorm"><img src="https://img.shields.io/github/stars/ezgrs/dorm?style=flat" alt="GitHub stars"></a>
+  <a href="https://github.com/ezgrs/dorm"><img src="https://img.shields.io/github/license/ezgrs/dorm?style=flat" alt="License"></a>
   <a href="https://ezgrs.github.io/dorm/"><img src="https://img.shields.io/badge/documentation-dORM-4c8bf5?style=flat" alt="dORM documentation"></a>
-  <a href="https://github.com/beet-software/dorm/actions/workflows/dart.yml"><img src="https://github.com/beet-software/dorm/actions/workflows/dart.yml/badge.svg" alt="Dart CI"></a>
+  <a href="https://github.com/ezgrs/dorm/actions/workflows/dart.yml"><img src="https://github.com/ezgrs/dorm/actions/workflows/dart.yml/badge.svg" alt="Dart CI"></a>
 </p>
 
 <p>
@@ -128,4 +128,4 @@ universal migration language.
 - [Annotations](https://ezgrs.github.io/dorm/annotations/)
 - [Framework contracts](https://ezgrs.github.io/dorm/reference/framework-contracts/)
 - [Implement a custom engine](https://ezgrs.github.io/dorm/development/custom-engine/)
-- [GitHub repository](https://github.com/beet-software/dorm)
+- [GitHub repository](https://github.com/ezgrs/dorm)

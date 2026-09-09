@@ -9,7 +9,7 @@ start with [Quickstart](../quickstart/index.md) or [Choose an engine](../apply/c
 Install Git and the Dart SDK, then clone the project and enter its directory:
 
 ```shell title="Clone dORM"
-git clone https://github.com/beet-software/dorm.git
+git clone https://github.com/ezgrs/dorm.git
 cd dorm
 ```
 
