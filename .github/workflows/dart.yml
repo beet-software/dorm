@@ -2,13 +2,8 @@ name: Dart
 
 on:
   push:
-    branches:
-      - main
     tags:
       - "v*"
-    paths-ignore:
-      - "docs/**"
-      - ".github/workflows/docs.yml"
 
 jobs:
   build:
