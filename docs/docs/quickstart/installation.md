@@ -1,7 +1,7 @@
 # Create the Dart project
 
 This module creates a pure Dart application and adds the packages required by
-the dORM quickstart. The example uses the memory engine, so it does not require
+the dORM quickstart. The example uses the in-memory engine, so it does not require
 a database server or a Flutter project.
 
 ## Create the Dart application
@@ -67,6 +67,6 @@ Run Pub after adding the packages:
 dart pub get
 ```
 
-At this point the project has the runtime contracts, annotations, memory
+At this point the project has the runtime contracts, annotations, in-memory
 engine, and builders needed by the rest of the quickstart. Continue with
 [Define users, profiles, and products](declaring-models.md).

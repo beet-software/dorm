@@ -47,7 +47,7 @@ dart run
 ```
 
 The program prints the email read from the repository. The records live only
-for the lifetime of this process because the memory engine is in-process.
+for the lifetime of this process because the in-memory engine is in-process.
 
 Continue the example with [carts and cart items](relations-and-cart.md),
 then use [Operations](../build-the-store/overview.md) for the reusable create,

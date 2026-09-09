@@ -69,7 +69,8 @@ final Product? product = await dorm.products.repository.peek(productId);
 
 The engine still uses Firebase. The generated code handles the mapping,
 identity, and repository boundary so that the same application operation can
-also be backed by Memory, PostgreSQL, MongoDB, Firestore, HTTP, or SQLite.
+also be backed by an in-memory engine, PostgreSQL, MongoDB, Firestore, HTTP,
+or SQLite.
 
 This does not require replacing the Firebase client. Native Firebase calls can
 remain beside dORM whenever a Firebase-specific feature is the right choice.
@@ -155,7 +156,7 @@ expressiveness.
 
 | Engine | Backend object | Runtime | Notable behavior |
 | --- | --- | --- | --- |
-| [Memory](https://pub.dev/packages/dorm_memory_database) | None | Dart | In-process state, UUID identities, reactive streams, transactions |
+| [In-memory](https://pub.dev/packages/dorm_memory_database) | None | Dart | In-process state, UUID identities, reactive streams, transactions |
 | [BLoC](https://pub.dev/packages/dorm_bloc_database) | None | Dart/Flutter | BLoC-backed in-memory state and reactive streams |
 | [Firebase](https://pub.dev/packages/dorm_firebase_database) | FirebaseInstance | Flutter | Realtime Database queries, push keys, live streams |
 | [Firestore](https://pub.dev/packages/dorm_firestore_database) | FirebaseFirestore | Flutter | Document IDs, snapshots, batches, internal patch transactions |
@@ -166,8 +167,8 @@ expressiveness.
 | [SQLite](https://pub.dev/packages/dorm_sqlite_database) | SqliteDatabase | Dart/Flutter | Local SQL storage, transactions, reactive table watches |
 
 The [engine capability reference](https://ezgrs.github.io/dorm/reference/engine-capabilities/)
-lists the current differences. Start with Memory when the goal is to learn
-the generated API without configuring a server. Choose a backend engine when
+lists the current differences. Start in-memory when the goal is to learn the
+generated API without configuring a server. Choose a backend engine when
 the application already uses that backend or needs its storage semantics.
 
 ## What dORM manages

@@ -63,8 +63,8 @@ your database client, service client, or in-memory store
     -> application features
 ```
 
-The same generated model and repository surface can be used with Memory,
-PostgreSQL, MySQL, SQLite, MongoDB, Firebase, Firestore, or HTTP. The setup
+The same generated model and repository surface can be used with an in-memory
+engine, PostgreSQL, MySQL, SQLite, MongoDB, Firebase, Firestore, or HTTP. The setup
 and capabilities change with the engine, but ordinary operations do not need
 to be rewritten just because the storage boundary changes.
 
@@ -98,7 +98,7 @@ downloading and filtering data locally.
 
 | Data source | What the application gives the engine |
 | --- | --- |
-| In-memory data | A Memory or BLoC engine instance |
+| In-memory data | An in-memory or BLoC engine instance |
 | Firebase Realtime Database | Configured Firebase services and database objects |
 | Cloud Firestore | An initialized `FirebaseFirestore` |
 | MySQL | An opened `MySQLConnection` |
@@ -138,7 +138,7 @@ available.
 
 Use [`dorm_example`](quickstart/generate-a-showcase.md) when you want a
 complete project with models, generated code, and an engine-specific setup.
-Use the Memory profile to learn the generated API without configuring a
+Use the in-memory profile to learn the generated API without configuring a
 server:
 
 ```shell

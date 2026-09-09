@@ -1,8 +1,8 @@
 # Build a small store
 
 This section builds one small pure Dart store from an empty project. It starts
-with the Memory engine so you can reach a working repository without creating
-a database, configuring credentials, or starting a server. Memory is a fast
+with the in-memory engine so you can reach a working repository without creating
+a database, configuring credentials, or starting a server. In-memory is a fast
 way to learn the generated API; it is not a recommendation that every
 production application should use in-process storage.
 
@@ -16,7 +16,7 @@ The modules use the same application throughout:
 installation
     -> annotated User, Profile, and Product models
     -> generated dORM and JSON code
-    -> memory Engine and Dorm
+    -> in-memory Engine and Dorm
     -> create and read a User
 ```
 

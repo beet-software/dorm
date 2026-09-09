@@ -46,7 +46,7 @@ the generated application.
 
 | Profile | Application | Infrastructure |
 | --- | --- | --- |
-| memory | Flutter Web | None |
+| in-memory | Flutter Web | None |
 | bloc | Flutter Web | None |
 | firebase | Flutter Web | Firebase Emulator Suite |
 | firestore | Flutter Web | Firebase Emulator Suite |
@@ -97,7 +97,7 @@ development tools remain available.
   application starts.
 - Firebase and Firestore generate local Firebase Emulator configuration.
 - HTTP generates a local in-memory Dart server and a configured HttpMapping.
-- Memory and BLoC run without an external service.
+- The in-memory and BLoC profiles run without an external service.
 
 The generated .env.example file documents required variables. It is a reference
 file; the generated application does not load it automatically.

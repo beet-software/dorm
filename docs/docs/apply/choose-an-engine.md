@@ -16,7 +16,7 @@ specific storage system.
 
 | Engine | Storage or runtime | What the application supplies |
 | --- | --- | --- |
-| Memory | Pure Dart in-process memory | A reusable `Engine()` instance |
+| In-memory | Pure Dart in-process memory | A reusable `Engine()` instance |
 | BLoC | In-memory BLoC state | A reusable `Engine()` instance |
 | Firebase | Firebase Realtime Database | Initialized Firebase services and database configuration; the showcase generator also provides a local emulator profile |
 | Firestore | Cloud Firestore | Initialized Firebase services and `FirebaseFirestore`; the showcase generator also provides a local emulator profile |
@@ -53,13 +53,13 @@ the backend needs more expressiveness than the portable surface provides.
 To create a complete project with the selected setup, use the
 [showcase project generator](../quickstart/generate-a-showcase.md). Its
 profiles follow the platform and capability boundaries listed on this page:
-Flutter profiles are generated for Memory, BLoC, Firebase, Firestore, and
+Flutter profiles are generated for in-memory, BLoC, Firebase, Firestore, and
 HTTP; pure Dart profiles are generated for PostgreSQL, MySQL, MongoDB, and
 SQLite.
 
 ## Select by runtime need
 
-Use the [memory engine](use-memory.md) for a pure Dart application that
+Use the [in-memory engine](use-memory.md) for a pure Dart application that
 needs an in-process store without a database server. Use [BLoC](use-bloc.md)
 when local state must use the BLoC integration. Use [Firebase](use-firebase.md)
 for a Flutter/Firebase Realtime Database application. Use
@@ -99,11 +99,11 @@ same application role.
 
 ## Compare the current capability boundaries
 
-| Capability | Memory | BLoC | Firebase | Firestore | MySQL | PostgreSQL | MongoDB | HTTP | SQLite |
+| Capability | In-memory | BLoC | Firebase | Firestore | MySQL | PostgreSQL | MongoDB | HTTP | SQLite |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | External server required | No | No | Firebase project or emulator | Firebase project or emulator | Yes | Yes | Yes | HTTP API | No |
 | Streams | State-backed | State-backed | Firebase value events | Firestore snapshots | Initial read only | Initial read only | Initial read only | Initial read only | SQLite table watches |
-| Filter execution | In memory | In memory | Firebase query | Firestore query | SQL query | PostgreSQL SQL query | MongoDB selector | URL parameters | SQLite SQL query |
+| Filter execution | In-memory evaluation | In-memory evaluation | Firebase query | Firestore query | SQL query | PostgreSQL SQL query | MongoDB selector | URL parameters | SQLite SQL query |
 | Comparisons and set membership | Yes | Yes | Basic filters only | Where supported by Firestore | Yes | Yes | Yes | Not declared | Yes |
 | `allOf` / `anyOf` | Yes | Yes | No | Where supported by Firestore | Yes | Yes | Yes | Not declared | Yes |
 | `not` | Yes | Yes | No | No general support | Yes | Yes | Yes | Not declared | Yes |

@@ -43,7 +43,7 @@ Run `build_runner` after creation to produce `lib/models.dorm.dart` and
 
 | Engine | Generated project | External setup |
 | --- | --- | --- |
-| Memory | Flutter Web | None |
+| In-memory | Flutter Web | None |
 | BLoC | Flutter Web | None |
 | Firebase | Flutter Web | Docker Compose with a local Firebase emulator |
 | Firestore | Flutter Web | Docker Compose with a local Firestore emulator |
@@ -116,7 +116,7 @@ The server listens on port `8080`, accepts the resource mappings generated in
 the Flutter application, and loses its data when its container restarts. The
 default `HTTP_BASE_URI` already points to this local service.
 
-## Run the Memory profile
+## Run the in-memory profile
 
 Generate and enter the project:
 

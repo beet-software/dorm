@@ -28,7 +28,7 @@ compatibility matrix.
 
 | Engine | Currently evidenced runtime |
 | --- | --- |
-| Memory | Pure Dart in-process maps and streams using `dorm_framework` and `uuid`. |
+| In-memory | Pure Dart in-process maps and streams using `dorm_framework` and `uuid`. |
 | BLoC | Pure Dart in-process state through BLoC/Cubit dependencies. |
 | Firebase | Flutter with Firebase Core, Realtime Database, and Authentication. |
 | Firestore | Flutter with Firebase Core, Cloud Firestore, and an application-configured Firebase project or emulator. |
@@ -46,7 +46,7 @@ not a promise that every operation has identical semantics across them.
 - The default generated identity shape is String.
 - Firebase reference operations require String identities.
 - Firestore reference operations use simple String document IDs and do not support composite identities.
-- Memory, BLoC, MySQL, PostgreSQL, MongoDB, HTTP, and SQLite currently generate UUID-backed String identities in their
+- The in-memory, BLoC, MySQL, PostgreSQL, MongoDB, HTTP, and SQLite engines currently generate UUID-backed String identities in their
   automatic identity paths.
 - Generated composite-key repositories accept explicit identities through
   `Creation.explicit`; `Creation.auto` is a compile-time error for those
@@ -64,10 +64,10 @@ identity details.
 | Feature | Status |
 | --- | --- |
 | CRUD | Implemented in the framework and engine paths with engine-specific behavior. |
-| Filters | Implemented by Memory, BLoC, Firebase, Firestore, MySQL, PostgreSQL, MongoDB, HTTP, and SQLite through different query representations. |
+| Filters | Implemented by the in-memory, BLoC, Firebase, Firestore, MySQL, PostgreSQL, MongoDB, HTTP, and SQLite engines through different query representations. |
 | Relationships | Implemented in the common framework and engine adapters; direct and fallback paths differ. |
-| Streams | Memory, BLoC, Firebase, Firestore, and SQLite currently provide state/value/snapshot/table-watch events; MySQL, PostgreSQL, MongoDB, and HTTP currently perform an initial read only. |
-| Transactions | `TransactionalDorm` is currently implemented by Memory, BLoC, MySQL, PostgreSQL, and SQLite. Other engines may still use internal transactions for individual operations. |
+| Streams | The in-memory, BLoC, Firebase, Firestore, and SQLite engines currently provide state/value/snapshot/table-watch events; MySQL, PostgreSQL, MongoDB, and HTTP currently perform an initial read only. |
+| Transactions | `TransactionalDorm` is currently implemented by the in-memory, BLoC, MySQL, PostgreSQL, and SQLite engines. Other engines may still use internal transactions for individual operations. |
 | Pagination | Current engines expose `OffsetPageRequest` as their page type; cursor requests are rejected by the typed repository surface. |
 | Polymorphic serialization across every engine | Current serialized behavior exists, but universal cross-engine compatibility is not established. |
 | MongoDB change streams | Not exposed by the current MongoDB engine. |

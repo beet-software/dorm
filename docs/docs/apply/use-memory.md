@@ -1,6 +1,6 @@
-# Run the store with the memory engine
+# Run the store in-memory
 
-The memory engine is a pure Dart implementation of the dORM framework. It
+The in-memory engine is a pure Dart implementation of the dORM framework. It
 stores records in the process, so it is useful for a local workflow, an
 example application, or tests that should not require a database server.
 
@@ -8,7 +8,7 @@ example application, or tests that should not require a database server.
 
 From the Dart application directory, run:
 
-```shell title="Add the memory engine"
+```shell
 dart pub add dorm_memory_database
 ```
 
@@ -59,7 +59,7 @@ identities follow the framework creation contracts described in [Create records]
 
 ## Observe in-process changes
 
-The memory engine emits the current value and later changes through `pull` and
+The in-memory engine emits the current value and later changes through `pull` and
 `pullAll`:
 
 ```dart
@@ -87,20 +87,20 @@ feature's cleanup.
 
 ## Understand the lifetime
 
-The records are lost when the process stops. The memory engine does not create
+The records are lost when the process stops. The in-memory engine does not create
 tables, persist data to a file, or connect to an external service. Move to a
 server-backed engine when the application needs storage outside the process;
 the generated repository calls remain the same while the engine setup changes.
 
 ## Apply application access control
 
-The memory engine has no external authorization boundary. Records live in the
+The in-memory engine has no external authorization boundary. Records live in the
 process that owns the engine, so access control must be applied by the
 application code that exposes or withholds the generated repository.
 
 ## Observe performance characteristics
 
-The memory engine keeps entity records in process memory. Reads materialize
+The in-memory engine keeps entity records in process memory. Reads materialize
 models and result lists from that state, while relationship paths create their
 join structures when they are read. No database round trip is involved and no
 dORM-owned result cache is exposed.

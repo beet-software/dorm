@@ -75,7 +75,7 @@ provided through Creation.explicit.
 
 ## Transactions
 
-Memory implements TransactionalDorm. The transaction context isolates changes
+The in-memory engine implements TransactionalDorm. The transaction context isolates changes
 until the callback completes:
 
 ~~~dart
@@ -123,7 +123,7 @@ dorm_example -e memory
 
 ## Links
 
-- [Run with Memory](https://ezgrs.github.io/dorm/apply/use-memory/)
+- [Run in-memory](https://ezgrs.github.io/dorm/apply/use-memory/)
 - [dorm_framework](https://pub.dev/packages/dorm_framework)
 - [dorm_annotations](https://pub.dev/packages/dorm_annotations)
 - [GitHub repository](https://github.com/ezgrs/dorm)

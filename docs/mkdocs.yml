@@ -19,7 +19,7 @@ nav:
       - Create the Dart project: quickstart/installation.md
       - Define users, profiles, and products: quickstart/declaring-models.md
       - Generate the store API: quickstart/generating-models.md
-      - Connect the memory engine: quickstart/creating-the-engine.md
+      - Connect the in-memory engine: quickstart/creating-the-engine.md
       - Create and read a user: quickstart/create-and-read-data.md
       - Add carts and cart items: quickstart/relations-and-cart.md
       - Add reviews with multiple content types: quickstart/reviews-and-polymorphism.md
@@ -36,7 +36,7 @@ nav:
       - Using transactions: build-the-store/using-transactions.md
   - Engines:
       - Choose an engine: apply/choose-an-engine.md
-      - Run with memory: apply/use-memory.md
+      - Run in-memory: apply/use-memory.md
       - Run with BLoC: apply/use-bloc.md
       - Run with Firebase: apply/use-firebase.md
       - Run with Cloud Firestore: apply/use-firestore.md

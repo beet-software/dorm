@@ -6,7 +6,7 @@ requirements.
 
 ## Capability matrix
 
-| Capability | Memory | BLoC | Firebase | Firestore | MySQL | PostgreSQL | MongoDB | HTTP | SQLite |
+| Capability | In-memory | BLoC | Firebase | Firestore | MySQL | PostgreSQL | MongoDB | HTTP | SQLite |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Storage | Dart maps | In-process state | Firebase Realtime Database | Cloud Firestore | MySQL through mysql_client | PostgreSQL through postgres | MongoDB through mongo_dart | REST-shaped HTTP/JSON API | SQLite through sqlite_async |
 | Public engine constructor | Engine() | Engine() | Engine(FirebaseInstance, {String? path}) | Engine(FirebaseFirestore, {String? parentPath}) | Engine(MySQLConnection) | Engine(SessionExecutor) | Engine(Db) | Engine({client, baseUri, mapping, headers}) | Engine(SqliteDatabase) |
@@ -29,7 +29,7 @@ requirements.
 The matrix records current behavior. It does not create a future compatibility
 promise.
 
-## Memory engine
+## In-memory engine
 
 Import:
 

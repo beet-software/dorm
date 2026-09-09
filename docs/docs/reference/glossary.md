@@ -163,7 +163,7 @@ signature and result shape.
 
 A scoped execution of multiple repository operations with commit or rollback
 semantics. `TransactionalDorm.transaction` exposes this portable capability
-for Memory, BLoC, MySQL, PostgreSQL, and SQLite. The callback receives a temporary
+for the in-memory, BLoC, MySQL, PostgreSQL, and SQLite engines. The callback receives a temporary
 `Dorm`; streams and nested transactions are not available in that context.
 Backend transactions used internally by individual operations are a separate
 scope.
