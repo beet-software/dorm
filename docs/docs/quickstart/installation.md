@@ -47,17 +47,9 @@ These packages are used during generation:
 | [`build_runner`](https://pub.dev/packages/build_runner) | Runs the dORM builder and the builders it applies in the application project. |
 
 !!! note
-    The source imports `dorm_annotations`, and that barrel reexports
-    `json_annotation`. The generated part therefore resolves its JSON
-    annotations through the import already present in `models.dart`. The
-    `dorm_generator` package applies the `json_serializable` builder when
-    generation runs, so the application does not declare that builder directly.
-
-The same applies to generated `copyWith` support. Do not add
-`copy_with_extension` or `copy_with_extension_gen` to this project. The
-annotation package supplies the copy-with annotation, and `dorm_generator`
-registers the builder that generates the `copyWith` API alongside the dORM
-and JSON parts.
+    `dorm_annotations` reexports `json_annotation` and `dorm_generator` automatically
+    applies the `json_serializable` and `copy_with_extension_gen` builders when
+    generation runs, so you don't need to add them directly to your project.
 
 ## Resolve the dependency graph
 
