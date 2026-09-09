@@ -1,125 +1,178 @@
-# dORM documentation
+# dORM: A portable ORM for Dart
 
-dORM is a Dart library for applications that already read and write data but
-have too much repeated code around that data.
+dORM is a generated, portable ORM for Dart. It reduces repeated data-access
+boilerplate while keeping the database, service, or client that your
+application already uses.
 
-It generates models and repositories from annotated Dart classes. Those
-repositories provide common create, read, update, delete, filtering, and
-relationship operations across in-memory data, Firebase, SQL databases,
-MongoDB, REST-shaped HTTP APIs, and SQLite.
+## When data access starts repeating
 
-## A helper around the code you already have
+Applications often repeat the same work around every feature:
 
-Applications often repeat the same work in several places:
-
-- convert database rows or JSON into model objects;
-- turn model objects back into data for writes;
+- convert Firebase snapshots, database rows, or JSON into models;
+- serialize models before writing them;
 - build identity lookups and filters;
 - load related records;
-- keep create, update, and delete code consistent.
+- keep create, read, update, and delete operations consistent;
+- write a second version of the same code for tests or another backend.
 
-dORM generates much of this connection between your Dart models and your data
-source. It does not take ownership of the database client, connection, pool,
-or HTTP client that your application already uses.
+The result is usually not one difficult query. It is a large amount of
+plumbing repeated around ordinary operations.
 
-!!! tip
-    Keep your current database or API code. Pass its client or connection to
-    the matching dORM engine, and move one model or one operation to the
-    generated repository first.
+For example, without a shared data-access layer, a Firebase read may include storage access,
+existence checks, casts, and model construction in the application feature:
 
-This makes gradual adoption possible. Keep native SQL, Firebase calls,
-MongoDB operations, or HTTP calls beside dORM when a backend-specific feature
-is a better fit there.
+```dart
+final snapshot = await FirebaseDatabase.instance
+    .ref('products/$productId')
+    .get();
 
-## It is more than a database-specific ORM
+if (!snapshot.exists) return null;
 
-The same framework can work with very different kinds of data sources:
-
-| Data source | What your application gives the engine |
-| --- | --- |
-| In-memory data | The memory or BLoC engine. |
-| Firebase Realtime Database | Firebase configuration and database objects. |
-| MySQL | An opened `MySQLConnection`. |
-| PostgreSQL | An opened `Connection` or `Pool`. |
-| MongoDB | An opened `mongo_dart` `Db`. |
-| REST-shaped API | An `http.Client`, base URI, and HTTP mapping. |
-| SQLite | An application-owned `sqlite_async` `SqliteDatabase`. |
-
-The engine adapts the common dORM operations to that data source:
-
-```text
-your Dart application
-    -> generated Dorm and repositories
-    -> selected dORM engine
-    -> your database, client, or in-memory state
+final raw = Map<String, Object?>.from(snapshot.value as Map);
+return Product(
+  id: productId,
+  name: raw['name']! as String,
+  price: (raw['price']! as num).toDouble(),
+);
 ```
 
-The database, driver, and connection lifecycle remain visible in your
-application. dORM gives you generated mapping and repository code without
-pretending that a relational database, a document database, Firebase, and an
-HTTP API behave identically.
+With an annotated model and the generated repository API, the feature can ask
+for the same record through the dORM operation vocabulary:
 
-## The main operations stay familiar
+```dart
+final Product? product = await dorm.products.repository.peek(productId);
+```
 
-Generated repositories expose a small set of operations for the work most
+The Firebase engine still performs the Firebase work. dORM generates the
+mapping, identity, and repository boundary so that this application code does
+not need to repeat them in every feature.
+
+This is dORM's main purpose: reduce repeated data-access boilerplate, not
+replace the backend client or hide every backend detail.
+
+## A different perspective on data access
+
+The application keeps its configured client or connection and places dORM
+around it:
+
+```text
+your database client, service client, or in-memory store
+    -> selected dORM engine
+    -> generated Dorm facade
+    -> generated repositories
+    -> application features
+```
+
+The same generated model and repository surface can be used with Memory,
+PostgreSQL, MySQL, SQLite, MongoDB, Firebase, Firestore, or HTTP. The setup
+and capabilities change with the engine, but ordinary operations do not need
+to be rewritten just because the storage boundary changes.
+
+Keep native SQL, Firebase calls, MongoDB operations, or HTTP calls beside dORM
+when a backend-specific feature is a better fit. dORM is designed for gradual
+adoption: start with one model or one repeated operation and expand from
+there.
+
+## The central trade-off
+
+!!! warning
+    dORM is more portable than a backend-specific ORM, but less expressive
+    than the native API of each backend.
+
+The common surface covers recurring application work such as:
+
+- creating and reading models;
+- updating and deleting records;
+- filtering and sorting;
+- offset pagination;
+- generated relationships;
+- selected streams and transactions, when the engine supports them.
+
+CTEs, database-specific aggregations, migrations, indexes, security rules,
+native selectors, and other backend features remain owned by the selected
+database, service, or client. dORM does not turn different backends into one
+identical database, and it does not silently emulate unsupported features by
+downloading and filtering data locally.
+
+## What the engine changes
+
+| Data source | What the application gives the engine |
+| --- | --- |
+| In-memory data | A Memory or BLoC engine instance |
+| Firebase Realtime Database | Configured Firebase services and database objects |
+| Cloud Firestore | An initialized `FirebaseFirestore` |
+| MySQL | An opened `MySQLConnection` |
+| PostgreSQL | An opened `Connection` or `Pool` |
+| MongoDB | An opened `mongo_dart` `Db` |
+| REST-shaped API | An `http.Client`, base URI, and HTTP mapping |
+| SQLite | An application-owned `sqlite_async` `SqliteDatabase` |
+
+The engine adapts the common repository operations to that source. The
+application still owns credentials, connection lifecycle, schema, migrations,
+Firebase rules, HTTP authentication, and backend-specific configuration.
+
+Read [Choose an engine](apply/choose-an-engine.md) before relying on a
+capability that is not part of the common repository surface.
+
+## What dORM provides
+
+Generated repositories use a small set of operations for the work most
 applications need:
 
 | Operation | Use it to |
 | --- | --- |
 | `put` | Create a model from data and related identities. |
 | `peek` | Read one model by its identity. |
-| `peekAll` | Read a collection, optionally with filters and read options. |
+| `peekAll` | Read a collection with filters and read options. |
+| `peekPage` | Read an offset-based page. |
 | `push` | Save a model that already has its identity. |
-| `patch` | Read a model, change it in a callback, then save or remove it. |
+| `patch` | Read, change, and save or remove a model conditionally. |
 | `pop` | Remove one model by its identity. |
-| `pull` | Subscribe to reads whose later events depend on the selected engine. |
+| `pull` | Observe a model according to the selected engine's stream behavior. |
 
-The names stay the same across engines, while the work underneath them is
-adapted to the selected data source.
+The operation names stay stable across engines. The selected engine decides
+how those operations reach storage and which additional capabilities are
+available.
 
-## What is shared and what can differ
+## Start with a working project
 
-dORM gives engines a common model and repository surface. It does not make
-every backend behave identically.
+Use [`dorm_example`](quickstart/generate-a-showcase.md) when you want a
+complete project with models, generated code, and an engine-specific setup.
+Use the Memory profile to learn the generated API without configuring a
+server:
 
-| Topic | Current behavior |
-| --- | --- |
-| Create, read, update, delete, and common filters | Available through the common repository API. |
-| Pagination | Current engines accept offset pagination. Cursor requests are not accepted by their typed APIs. |
-| Streams | Memory, BLoC, Firebase, Firestore, and SQLite can provide later changes. PostgreSQL, MongoDB, and HTTP currently emit the initial read only; MySQL streams are not fully implemented. |
-| Authorization | Configured by the application and the selected backend. |
-| Backend-specific features | Continue to belong to the native database, driver, or HTTP client when dORM does not model them. |
+```shell
+dart pub global activate dorm_example
+dorm_example --engine memory
+```
 
-Choose the engine whose data source matches your application. Then read its
-setup and behavior before relying on stream updates, batch operations, or
-relationship reads.
+When the application already has a backend, choose the matching engine and
+keep that backend's client or connection. The [Quickstart](quickstart/index.md)
+builds the same store domain progressively, and [Operations](build-the-store/overview.md)
+shows the repository tasks independently.
 
-## What dORM does not replace
+## Important boundaries
 
-dORM does not provide built-in database migrations. Database schema creation
-and schema changes remain part of your database workflow. The MySQL package
-can generate schema SQL, but that is different from a migration system.
-PostgreSQL, MongoDB, Firebase, and HTTP setup also remain application- or
+dORM does not provide a universal migration language. Schema creation,
+migrations, indexes, credentials, authorization, and security rules remain
 backend-specific.
 
-dORM provides a public transaction callback through `TransactionalDorm` for
-the Memory, BLoC, MySQL, PostgreSQL, and SQLite engines. The callback can compose
-repository reads and writes across entities and rolls back when it fails.
-Streams are not available inside the callback. Firestore, Firebase Realtime
-Database, MongoDB, and HTTP do not expose this common capability; their
-individual internal transactions, where present, remain separate from it.
+The public transaction callback is available only for engines that implement
+the transactional capability. Streams, advanced filters, identity generation,
+and relationship execution also vary by engine. See the
+[engine capability reference](reference/engine-capabilities.md) before making
+backend-specific behavior part of an application contract.
 
-If your project expects one abstraction to hide all backend details, this may
-not be a good fit. Engine differences remain visible, and advanced SQL,
-MongoDB, Firebase, or HTTP features may still require native code.
+## Continue from here
 
-## Choose a starting point
-
-- Start a new pure Dart application with [Quickstart](quickstart/index.md).
-- Connect an existing backend through [Choose an engine](apply/choose-an-engine.md).
-- Learn repository tasks in [Operations](build-the-store/overview.md).
-- Learn the source declarations in [Annotations](annotations/index.md).
-- See generated types and their roles in [Model anatomy](model-anatomy/index.md).
-- Find signatures and return values in [Public API](reference/public-api.md).
-- Start with [Troubleshooting](troubleshooting/index.md) when a command or
-  repository call fails.
+- [Generate a showcase project](quickstart/generate-a-showcase.md) for a
+  complete starting point.
+- [Choose an engine](apply/choose-an-engine.md) based on the backend and
+  capabilities your application needs.
+- [Build a small store](quickstart/index.md) from an empty Dart project.
+- [Learn the annotations](annotations/index.md) when you are ready to define
+  models.
+- [Inspect model anatomy](model-anatomy/index.md) to understand generated
+  types.
+- [Read the public API](reference/public-api.md) for signatures and return
+  values.

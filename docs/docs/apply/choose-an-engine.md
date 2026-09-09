@@ -1,8 +1,16 @@
 # Choose an engine
 
-The generated `Dorm` and repository API are shared across engines. The engine
-is the runtime boundary that turns those operations into reads, writes,
-filters, relationships, and streams for a specific storage system.
+dORM is a portable ORM: it gives recurring application operations a shared,
+generated surface while allowing the storage system to remain explicit. Choose
+an engine when you want that common surface around a backend your application
+already uses, or when you want to start with a local engine and move to a
+server-backed one later.
+
+The trade-off is deliberate. dORM is more portable than a backend-specific
+ORM, but less expressive than the native API of each backend. The generated
+`Dorm` and repository API are shared across engines; the engine turns those
+operations into reads, writes, filters, relationships, and streams for a
+specific storage system.
 
 ## Compare the setup boundary
 
@@ -29,6 +37,18 @@ owned database connection, `Db`, or HTTP client.
 
 The framework does not select an engine automatically. The generated `Dorm`
 receives the concrete engine through its constructor.
+
+## Choose by backend and capability
+
+Choose the engine that matches the backend boundary and the capabilities your
+application needs. Do not choose an engine expecting it to reproduce every
+feature of another backend. Check the capability table before relying on
+transactions, reactive streams, advanced filters, generated identities, or
+schema behavior.
+
+Use the common repository API for recurring operations. Keep native SQL,
+Firebase calls, MongoDB selectors, or HTTP-specific behavior beside dORM when
+the backend needs more expressiveness than the portable surface provides.
 
 To create a complete project with the selected setup, use the
 [showcase project generator](../quickstart/generate-a-showcase.md). Its

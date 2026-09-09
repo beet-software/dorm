@@ -1,9 +1,15 @@
 # Generate a showcase project
 
-Use `dorm_example` when you want a complete starting point instead of adding
-the dORM packages one by one. The command creates a project with annotated
-models, a generated-code workflow, the store domain used throughout the
-showcase, and setup instructions for the selected engine.
+Use `dorm_example` when you want to see the portable ORM workflow before
+connecting it to your own application. The command creates a complete project
+with annotated models, generated repositories, the store domain used
+throughout the showcase, and setup instructions for the selected engine.
+
+Choose `memory` to focus on the generated application surface without external
+infrastructure. Choose another profile when you want to see the same store
+operations connected to PostgreSQL, MySQL, MongoDB, SQLite, Firebase,
+Firestore, or HTTP. The profile changes the backend setup and capabilities;
+the recurring model and repository operations remain recognizable.
 
 ## Install the generator
 

@@ -1,4 +1,4 @@
-# dORM
+# dORM: A portable ORM for Dart
 
 <p>
   <a href="https://github.com/ezgrs/dorm"><img src="https://img.shields.io/github/stars/ezgrs/dorm?style=flat" alt="GitHub stars"></a>
@@ -26,15 +26,53 @@
   <a href="https://pub.dev/packages/dorm_sqlite_database"><img src="https://img.shields.io/pub/v/dorm_sqlite_database.svg?label=dorm_sqlite_database" alt="dorm_sqlite_database on pub.dev"></a>
 </p>
 
-dORM is a code-generated data-access layer for Dart. It keeps model
-declarations and repository operations consistent while allowing the storage
-backend to change underneath them.
+dORM is a generated, portable ORM for Dart. It reduces the repeated code
+around model conversion, identity handling, filters, relationships, and CRUD
+operations without hiding the backend that your application already uses.
 
-It is useful when an application already has a database connection, Firebase
-instance, HTTP client, or in-memory store and needs a consistent way to work
-with models. dORM receives that object through the selected engine; it does not
-require the application to replace its connection layer or adopt a second
-database client.
+When an application talks directly to Firebase, a database driver, or an HTTP
+API, the same plumbing is often repeated in every feature: read raw data,
+construct a model, serialize writes, build filters, resolve related records,
+and keep the operations consistent. dORM generates that application-facing
+surface once and lets the selected engine adapt it to the backend.
+
+The result is a different perspective on data access: keep your existing
+client or connection, add dORM around it, and adopt generated repositories one
+model or one operation at a time.
+
+## See the boilerplate disappear
+
+This is the kind of code an application may otherwise repeat around a Firebase
+read:
+
+```dart
+final snapshot = await FirebaseDatabase.instance
+    .ref('products/$productId')
+    .get();
+
+if (!snapshot.exists) return null;
+
+final raw = Map<String, Object?>.from(snapshot.value as Map);
+return Product(
+  id: productId,
+  name: raw['name']! as String,
+  price: (raw['price']! as num).toDouble(),
+);
+```
+
+With an annotated model and generated API, the application code becomes an
+operation on the repository:
+
+```dart
+final Product? product = await dorm.products.repository.peek(productId);
+```
+
+The engine still uses Firebase. The generated code handles the mapping,
+identity, and repository boundary so that the same application operation can
+also be backed by Memory, PostgreSQL, MongoDB, Firestore, HTTP, or SQLite.
+
+This does not require replacing the Firebase client. Native Firebase calls can
+remain beside dORM whenever a Firebase-specific feature is the right choice.
 
 ## Start with a working project
 
@@ -83,10 +121,35 @@ final dorm = Dorm(engine);
 final User user = await dorm.users.repository.peek(userId);
 ~~~
 
-The generated Dorm facade and model declarations can stay the same while an
-application evaluates another engine. Backend-specific capabilities still
-matter: streams, transactions, identity generation, query operators, and
-schema management are not identical across every backend.
+The generated `Dorm` facade and model declarations can stay the same while an
+application evaluates another engine. This is the main portability boundary:
+common repository operations remain stable, while backend-specific setup and
+capabilities remain explicit.
+
+```text
+backend client or connection
+    -> selected dORM engine
+    -> generated Dorm facade
+    -> generated repositories
+    -> application code
+```
+
+## The central trade-off
+
+!!! warning
+    dORM is more portable than a backend-specific ORM, but less expressive
+    than the native API of each backend.
+
+CRUD, common filters, relationships, sorting, pagination, and selected
+transaction operations can use a shared API. CTEs, database-specific
+aggregations, migrations, indexes, security rules, native selectors, and
+other backend features remain the responsibility of the database, service, or
+native client.
+
+This boundary is intentional. dORM does not turn different backends into one
+identical database. It gives recurring application operations a common home
+while allowing native code to remain available when the backend needs more
+expressiveness.
 
 ## Choose an engine
 
@@ -116,9 +179,8 @@ paginating, and traversing relationships.
 
 The selected engine still owns backend-specific concerns. The application
 configures the connection, Firebase SDK, HTTP client, schema, migrations,
-credentials, and security rules according to the backend. dORM does not turn
-different databases into one identical database, and it does not provide a
-universal migration language.
+credentials, and security rules according to the backend. dORM does not
+provide a universal migration language or replace the native client.
 
 ## Learn more
 
