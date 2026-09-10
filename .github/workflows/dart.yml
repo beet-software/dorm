@@ -87,7 +87,9 @@ jobs:
           echo "tag=v$version" >> "$GITHUB_OUTPUT"
 
       - name: Install workspace dependencies
-        run: dart pub get
+        run: |
+          dart pub get
+          git restore --source=HEAD --worktree -- pubspec.lock
 
       - name: Version and push workspace
         shell: bash
