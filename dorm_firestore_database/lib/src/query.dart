@@ -146,9 +146,12 @@ class Query
       to = '${firestoreDatePrefix(to, unit)}\uf8ff';
     }
     final List<fs.Filter> filters = <fs.Filter>[];
-    if (from != null)
+    if (from != null) {
       filters.add(fs.Filter(field, isGreaterThanOrEqualTo: from));
-    if (to != null) filters.add(fs.Filter(field, isLessThanOrEqualTo: to));
+    }
+    if (to != null) {
+      filters.add(fs.Filter(field, isLessThanOrEqualTo: to));
+    }
     return _and(filters);
   }
 
