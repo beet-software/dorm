@@ -1,7 +1,7 @@
 name: dorm_postgres_database
 version: 2.0.0-dev.3
 resolution: workspace
-description: A PostgreSQL database engine for dORM.
+description: A PostgreSQL database engine for dORM applications that need persistent, relational data with typed queries and repositories.
 homepage: https://github.com/ezgrs/dorm/tree/main/dorm_postgres_database
 repository: https://github.com/ezgrs/dorm.git
 environment:
