@@ -1,7 +1,7 @@
 name: dorm_sqlite_database
 version: 2.0.0-dev.3
 resolution: workspace
-description: A SQLite database engine for dORM.
+description: A SQLite database engine for dORM applications that need local, persistent relational data with typed queries and transactions.
 homepage: https://github.com/ezgrs/dorm/tree/main/dorm_sqlite_database
 repository: https://github.com/ezgrs/dorm.git
 
