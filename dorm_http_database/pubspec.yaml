@@ -1,7 +1,7 @@
 name: dorm_http_database
 version: 2.0.0-dev.3
 resolution: workspace
-description: An HTTP and JSON database engine for dORM.
+description: An HTTP and JSON database engine for dORM applications that access remote APIs through typed repositories and queries.
 homepage: https://github.com/ezgrs/dorm/tree/main/dorm_http_database
 repository: https://github.com/ezgrs/dorm.git
 
