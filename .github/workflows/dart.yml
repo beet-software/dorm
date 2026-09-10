@@ -4,9 +4,10 @@ on:
   push:
     branches:
       - main
+    tags:
+      - 'v*'
     paths:
       - VERSION
-  workflow_dispatch:
 
 concurrency:
   group: dorm-release
@@ -17,7 +18,7 @@ permissions:
 
 jobs:
   build:
-    if: ${{ github.event_name == 'push' || github.ref == 'refs/heads/main' }}
+    if: ${{ github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -39,7 +40,7 @@ jobs:
         run: dart analyze
 
   release:
-    if: ${{ github.event_name == 'push' || github.ref == 'refs/heads/main' }}
+    if: ${{ github.ref == 'refs/heads/main' }}
     needs:
       - build
       - verify-mongo
@@ -50,14 +51,22 @@ jobs:
       - verify-firestore-compliance
     runs-on: ubuntu-latest
     permissions:
-      actions: write
-      contents: write
+      contents: read
     outputs:
       version: ${{ steps.version.outputs.version }}
       tag: ${{ steps.version.outputs.tag }}
     steps:
+      - name: Create release GitHub App token
+        id: release-app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+
       - uses: actions/checkout@v4
         with:
+          token: ${{ steps.release-app-token.outputs.token }}
           fetch-depth: 0
       - uses: subosito/flutter-action@v2
       - uses: dart-lang/setup-dart@v1
@@ -97,16 +106,8 @@ jobs:
         env:
           RELEASE_VERSION: ${{ steps.version.outputs.version }}
           RELEASE_TAG: ${{ steps.version.outputs.tag }}
-          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          dispatch_publish() {
-            gh workflow run publish.yml \
-              --repo "$GITHUB_REPOSITORY" \
-              --ref "$RELEASE_TAG" \
-              --field tag="$RELEASE_TAG" \
-              --field version="$RELEASE_VERSION"
-          }
 
           current_version=''
           for pubspec in dorm_*/pubspec.yaml; do
@@ -138,11 +139,9 @@ jobs:
               git diff -- dorm_example/lib/src/release.dart
               exit 1
             fi
-            dispatch_publish || {
-              echo "Release tag exists, but the publish workflow could not be dispatched. Retry this workflow without creating a new tag."
-              exit 1
-            }
-            exit 0
+            echo "The release tag already exists. Trusted publishing is triggered only by the original tag push event."
+            echo "This retry cannot publish the existing version without replacing the tag. Use the one-time recovery procedure or release a new version."
+            exit 1
           fi
           if [ "$tag_status" -ne 2 ]; then
             echo "Could not determine whether $RELEASE_TAG exists remotely."
@@ -164,16 +163,21 @@ jobs:
             echo "Melos did not create the expected tag $RELEASE_TAG."
             exit 1
           }
+
+
+      - name: Push release commit and tag
+        env:
+          GH_TOKEN: ${{ steps.release-app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          gh auth setup-git
           if ! git push origin HEAD:main --follow-tags; then
             echo "Release commit/tag were created locally, but the push failed. Retry this workflow without creating a new tag."
             exit 1
           fi
-          dispatch_publish || {
-            echo "Release commit/tag were pushed, but the publish workflow could not be dispatched. Retry this workflow without creating a new tag."
-            exit 1
-          }
+
   verify-mongo:
-    if: ${{ github.event_name == 'push' || github.ref == 'refs/heads/main' }}
+    if: ${{ github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -203,7 +207,7 @@ jobs:
         run: dart analyze
 
   verify-engine-compliance:
-    if: ${{ github.event_name == 'push' || github.ref == 'refs/heads/main' }}
+    if: ${{ github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -224,7 +228,7 @@ jobs:
         run: dart test test/compliance_test.dart
 
   verify-example-generator:
-    if: ${{ github.event_name == 'push' || github.ref == 'refs/heads/main' }}
+    if: ${{ github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -242,7 +246,7 @@ jobs:
         run: dart test
 
   verify-http:
-    if: ${{ github.event_name == 'push' || github.ref == 'refs/heads/main' }}
+    if: ${{ github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -272,7 +276,7 @@ jobs:
         run: dart analyze
 
   verify-firebase-compliance:
-    if: ${{ github.event_name == 'push' || github.ref == 'refs/heads/main' }}
+    if: ${{ github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -290,7 +294,7 @@ jobs:
         run: flutter test test/compliance_test.dart
 
   verify-firestore-compliance:
-    if: ${{ github.event_name == 'push' || github.ref == 'refs/heads/main' }}
+    if: ${{ github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -306,3 +310,131 @@ jobs:
       - name: Run Firestore compliance suite
         working-directory: ./dorm_firestore_database
         run: flutter test test/compliance_test.dart
+  publish-core:
+    if: ${{ github.ref_type == 'tag' && startsWith(github.ref_name, 'v') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      matrix:
+        pkg: [dorm_framework, dorm_annotations]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+      - uses: subosito/flutter-action@v2
+      - uses: dart-lang/setup-dart@v1
+
+      - name: Install workspace dependencies
+        run: dart pub get
+
+      - name: Verify release tag matches package version
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          expected="${RELEASE_TAG#v}"
+          actual="$(sed -n 's/^version:[[:space:]]*//p' "${{ matrix.pkg }}/pubspec.yaml" | head -n 1)"
+          test "$actual" = "$expected" || {
+            echo "${{ matrix.pkg }} declares $actual, but the tag is $RELEASE_TAG."
+            exit 1
+          }
+
+      - name: Check whether version is already published
+        id: published
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          package="${{ matrix.pkg }}"
+          version="${RELEASE_TAG#v}"
+          if curl --fail --silent --show-error "https://pub.dev/api/packages/$package" |
+            jq --exit-status --arg version "$version" 'any(.versions[]?; .version == $version)' >/dev/null; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+            echo "$package $version is already published; skipping."
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Prepare package for publishing
+        if: steps.published.outputs.published != 'true'
+        run: dart run tool/prepare_package.dart --package ${{ matrix.pkg }}
+
+      - name: Publish to pub.dev
+        if: steps.published.outputs.published != 'true'
+        working-directory: ./${{ matrix.pkg }}
+        shell: bash
+        run: |
+          if grep -Eq 'sdk:[[:space:]]*flutter' pubspec.yaml; then
+            flutter pub publish --force
+          else
+            dart pub publish --force
+          fi
+
+  publish-children:
+    if: ${{ github.ref_type == 'tag' && startsWith(github.ref_name, 'v') }}
+    needs: publish-core
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      matrix:
+        pkg: [dorm_generator, dorm_firebase_database, dorm_firestore_database, dorm_bloc_database, dorm_memory_database, dorm_mysql_database, dorm_postgres_database, dorm_mongo_database, dorm_http_database, dorm_sqlite_database, dorm_example]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+      - uses: subosito/flutter-action@v2
+      - uses: dart-lang/setup-dart@v1
+
+      - name: Install workspace dependencies
+        run: dart pub get
+
+      - name: Verify release tag matches package version
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          expected="${RELEASE_TAG#v}"
+          actual="$(sed -n 's/^version:[[:space:]]*//p' "${{ matrix.pkg }}/pubspec.yaml" | head -n 1)"
+          test "$actual" = "$expected" || {
+            echo "${{ matrix.pkg }} declares $actual, but the tag is $RELEASE_TAG."
+            exit 1
+          }
+
+      - name: Check whether version is already published
+        id: published
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          package="${{ matrix.pkg }}"
+          version="${RELEASE_TAG#v}"
+          if curl --fail --silent --show-error "https://pub.dev/api/packages/$package" |
+            jq --exit-status --arg version "$version" 'any(.versions[]?; .version == $version)' >/dev/null; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+            echo "$package $version is already published; skipping."
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Prepare package for publishing
+        if: steps.published.outputs.published != 'true'
+        run: dart run tool/prepare_package.dart --package ${{ matrix.pkg }}
+
+      - name: Publish to pub.dev
+        if: steps.published.outputs.published != 'true'
+        working-directory: ./${{ matrix.pkg }}
+        shell: bash
+        run: |
+          if grep -Eq 'sdk:[[:space:]]*flutter' pubspec.yaml; then
+            flutter pub publish --force
+          else
+            dart pub publish --force
+          fi
