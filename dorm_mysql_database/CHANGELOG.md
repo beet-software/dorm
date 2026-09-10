@@ -1,3 +1,7 @@
+## 2.0.0-dev.3
+
+ - Bump version to keep all packages in the workspace in lockstep.
+
 ## 2.0.0-dev.2
 
  - **FEAT**: remove schema generator. ([6f7d52a4](https://github.com/ezgrs/dorm.git/commit/6f7d52a44851ec92c09d40f9e9acd892274cf8a7))

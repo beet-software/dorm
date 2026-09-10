@@ -1,3 +1,7 @@
+## 2.0.0-dev.3
+
+ - Bump version to keep all packages in the workspace in lockstep.
+
 ## 2.0.0-dev.2
 
  - **FIX**: remove leading dot from files because of pub publish. ([b300beeb](https://github.com/ezgrs/dorm.git/commit/b300beeb66169f1b7973c44718dfbf36d790d4f7))

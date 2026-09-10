@@ -1,5 +1,5 @@
 name: dorm_firestore_database
-version: 2.0.0-dev.2
+version: 2.0.0-dev.3
 resolution: workspace
 description: A Cloud Firestore database engine for dORM.
 homepage: https://github.com/ezgrs/dorm/tree/main/dorm_firestore_database
@@ -11,11 +11,11 @@ dependencies:
   flutter:
     sdk: flutter
   cloud_firestore: ^6.9.0
-  dorm_framework: ^2.0.0-dev.2
+  dorm_framework: ^2.0.0-dev.3
   rxdart: ^0.28.0
 
 dev_dependencies:
-  dorm_test: ^2.0.0-dev.2
+  dorm_test: ^2.0.0-dev.3
   firebase_core: ^4.14.0
   lints: ^5.0.0
   test: ^1.32.0

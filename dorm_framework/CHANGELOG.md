@@ -1,3 +1,7 @@
+## 2.0.0-dev.3
+
+ - Bump version to keep all packages in the workspace in lockstep.
+
 ## 2.0.0-dev.2
 
  - **FIX**: fix licence header. ([287219ca](https://github.com/ezgrs/dorm.git/commit/287219ca9700b537a6e13211df12139440817d9d))

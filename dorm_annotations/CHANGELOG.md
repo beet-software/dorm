@@ -1,3 +1,7 @@
+## 2.0.0-dev.3
+
+ - Bump "dorm_annotations" to `2.0.0-dev.3`.
+
 ## 2.0.0-dev.2
 
  - **DOCS**: replace beet-software/dorm -> ezgrs/dorm. ([b73b15d2](https://github.com/ezgrs/dorm.git/commit/b73b15d2fc7860c280311fb9a11299e70102392b))

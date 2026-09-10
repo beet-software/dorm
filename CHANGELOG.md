@@ -15,6 +15,45 @@ Packages with breaking changes:
 
 Packages with other changes:
 
+ - [`dorm_annotations` - `v2.0.0-dev.3`](#dorm_annotations---v200-dev3)
+
+Packages versioned in lockstep only:
+
+> Packages listed below have no changes of their own. Their versions have been bumped to keep all packages in this workspace in lockstep.
+
+ - `dorm_bloc_database` - `v2.0.0-dev.3`
+ - `dorm_example` - `v2.0.0-dev.3`
+ - `dorm_firebase_database` - `v2.0.0-dev.3`
+ - `dorm_firestore_database` - `v2.0.0-dev.3`
+ - `dorm_framework` - `v2.0.0-dev.3`
+ - `dorm_generator` - `v2.0.0-dev.3`
+ - `dorm_http_database` - `v2.0.0-dev.3`
+ - `dorm_memory_database` - `v2.0.0-dev.3`
+ - `dorm_mongo_database` - `v2.0.0-dev.3`
+ - `dorm_mysql_database` - `v2.0.0-dev.3`
+ - `dorm_postgres_database` - `v2.0.0-dev.3`
+ - `dorm_sqlite_database` - `v2.0.0-dev.3`
+ - `dorm_test` - `v2.0.0-dev.3`
+
+---
+
+#### `dorm_annotations` - `v2.0.0-dev.3`
+
+ - Bump "dorm_annotations" to `2.0.0-dev.3`.
+
+
+## 2026-09-10
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
  - [`dorm_annotations` - `v2.0.0-dev.2`](#dorm_annotations---v200-dev2)
  - [`dorm_example` - `v2.0.0-dev.2`](#dorm_example---v200-dev2)
  - [`dorm_framework` - `v2.0.0-dev.2`](#dorm_framework---v200-dev2)

@@ -15,4 +15,4 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // Updated by tool/sync_dorm_example_version.dart during a release.
-const String dormReleaseVersion = '2.0.0-dev.2';
+const String dormReleaseVersion = '2.0.0-dev.3';

@@ -1,3 +1,7 @@
+## 2.0.0-dev.3
+
+ - Bump version to keep all packages in the workspace in lockstep.
+
 ## 2.0.0-dev.2
 
  - **FEAT**: add license header. ([4f5add4a](https://github.com/ezgrs/dorm.git/commit/4f5add4a2a82e821f6e78102c4f9c6242d99d0bf))

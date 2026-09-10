@@ -1,5 +1,5 @@
 name: dorm_example
-version: 2.0.0-dev.2
+version: 2.0.0-dev.3
 description: A CLI that generates dORM example projects.
 repository: https://github.com/ezgrs/dorm.git
 homepage: https://github.com/ezgrs/dorm/tree/main/dorm_example
