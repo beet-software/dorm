@@ -16,21 +16,51 @@
 
 import 'release.dart';
 
-enum ExamplePlatform { flutter, dart }
+/// Identifies whether a generated showcase runs with Dart or Flutter.
+enum ExamplePlatform {
+  /// A Flutter Web showcase.
+  flutter,
 
+  /// A pure Dart showcase.
+  dart,
+}
+
+/// Describes the templates, dependencies, and capabilities of one engine profile.
 class ExampleProfile {
+  /// The command-line name of the engine profile.
   final String name;
+
+  /// The dORM database package used by the generated project.
   final String packageName;
+
+  /// The runtime platform of the generated project.
   final ExamplePlatform platform;
+
+  /// Whether the generated models use document-oriented features.
   final bool jsonFeatures;
+
+  /// Whether the generated project starts local infrastructure with Docker Compose.
   final bool docker;
+
+  /// Whether the profile advertises transaction support in its showcase.
   final bool transactions;
+
+  /// Whether the profile advertises reactive streams in its showcase.
   final bool reactiveStreams;
+
+  /// Whether the generated application reads required environment variables.
   final bool requiresEnvironment;
+
+  /// Whether the profile includes Firebase Emulator configuration.
   final bool firebaseEmulator;
+
+  /// Whether the profile includes a local HTTP server.
   final bool httpServer;
+
+  /// The minimum Dart SDK version rendered into the generated project.
   final String minimumDart;
 
+  /// Creates an engine profile description.
   const ExampleProfile({
     required this.name,
     required this.packageName,
@@ -45,8 +75,10 @@ class ExampleProfile {
     this.minimumDart = '3.11.5',
   });
 
+  /// Whether the generated project uses the Flutter toolchain.
   bool get isFlutter => platform == ExamplePlatform.flutter;
 
+  /// Builds the values consumed by the profile templates.
   Map<String, Object> toTemplateContext(String projectName) => {
     'engine': name,
     'enginePackage': packageName,
@@ -73,7 +105,9 @@ class ExampleProfile {
   };
 }
 
+/// Provides the engine profiles supported by the generator.
 class ExampleProfiles {
+  /// All engine profiles supported by this release.
   static const List<ExampleProfile> all = [
     ExampleProfile(
       name: 'memory',
@@ -167,6 +201,7 @@ class ExampleProfiles {
     ),
   ];
 
+  /// Finds a profile by its command-line name.
   static ExampleProfile byName(String value) {
     for (final ExampleProfile profile in all) {
       if (profile.name == value) return profile;

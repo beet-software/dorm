@@ -22,6 +22,7 @@ import 'package:path/path.dart' as p;
 import 'generator.dart';
 import 'profile.dart';
 
+/// Parses command-line arguments and generates the selected dORM showcase project.
 Future<void> runCli(List<String> arguments) async {
   final ArgParser parser = ArgParser()
     ..addOption(

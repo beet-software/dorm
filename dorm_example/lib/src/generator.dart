@@ -22,11 +22,18 @@ import 'package:path/path.dart' as p;
 
 import 'profile.dart';
 
+/// Contains the generated project location and the commands needed to run it.
 class GenerationResult {
+  /// The engine profile used to create the project.
   final ExampleProfile profile;
+
+  /// The absolute path of the generated project.
   final String path;
+
+  /// The commands that should be run after generation.
   final List<String> instructions;
 
+  /// Creates a generation result.
   const GenerationResult({
     required this.profile,
     required this.path,
@@ -34,7 +41,12 @@ class GenerationResult {
   });
 }
 
+/// Renders a complete dORM showcase project from the bundled templates.
 class ExampleGenerator {
+  /// Generates a project for [profile] in [output].
+  ///
+  /// The output directory must be empty or must not exist. [projectName] is
+  /// used as the generated Dart package name.
   Future<GenerationResult> generate(
     ExampleProfile profile,
     Directory output, {
