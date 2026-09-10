@@ -3,6 +3,100 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 2026-09-10
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`dorm_annotations` - `v2.0.0-dev.2`](#dorm_annotations---v200-dev2)
+ - [`dorm_example` - `v2.0.0-dev.2`](#dorm_example---v200-dev2)
+ - [`dorm_framework` - `v2.0.0-dev.2`](#dorm_framework---v200-dev2)
+ - [`dorm_http_database` - `v2.0.0-dev.2`](#dorm_http_database---v200-dev2)
+ - [`dorm_mongo_database` - `v2.0.0-dev.2`](#dorm_mongo_database---v200-dev2)
+ - [`dorm_mysql_database` - `v2.0.0-dev.2`](#dorm_mysql_database---v200-dev2)
+ - [`dorm_postgres_database` - `v2.0.0-dev.2`](#dorm_postgres_database---v200-dev2)
+ - [`dorm_sqlite_database` - `v2.0.0-dev.2`](#dorm_sqlite_database---v200-dev2)
+
+Packages versioned in lockstep only:
+
+> Packages listed below have no changes of their own. Their versions have been bumped to keep all packages in this workspace in lockstep.
+
+ - `dorm_bloc_database` - `v2.0.0-dev.2`
+ - `dorm_firebase_database` - `v2.0.0-dev.2`
+ - `dorm_firestore_database` - `v2.0.0-dev.2`
+ - `dorm_generator` - `v2.0.0-dev.2`
+ - `dorm_memory_database` - `v2.0.0-dev.2`
+ - `dorm_test` - `v2.0.0-dev.2`
+
+---
+
+#### `dorm_annotations` - `v2.0.0-dev.2`
+
+ - **DOCS**: replace beet-software/dorm -> ezgrs/dorm. ([b73b15d2](https://github.com/ezgrs/dorm.git/commit/b73b15d2fc7860c280311fb9a11299e70102392b))
+ - **DOCS**: standardize READMEs. ([0b9bc0c5](https://github.com/ezgrs/dorm.git/commit/0b9bc0c58b0c286cd1bef66885a0ad908c51525a))
+ - **DOCS**: add LICENSE file to all repos. ([379c7631](https://github.com/ezgrs/dorm.git/commit/379c7631cb66824691fde003db7f2588f8f29da4))
+
+#### `dorm_example` - `v2.0.0-dev.2`
+
+ - **FIX**: remove leading dot from files because of pub publish. ([b300beeb](https://github.com/ezgrs/dorm.git/commit/b300beeb66169f1b7973c44718dfbf36d790d4f7))
+ - **FEAT**: make dorm versions dynamic. ([6a6e5590](https://github.com/ezgrs/dorm.git/commit/6a6e559059832bec5b0d1a18308160784fef0404))
+ - **FEAT**: add license header. ([bd45d53b](https://github.com/ezgrs/dorm.git/commit/bd45d53b8993eb2f0259fe6600293165d5a7eb22))
+ - **DOCS**: replace "Memory" with "in-memory". ([c3df27c2](https://github.com/ezgrs/dorm.git/commit/c3df27c23e9620cc68300d039d3beb8c0b88e9ec))
+ - **DOCS**: replace beet-software/dorm -> ezgrs/dorm. ([b73b15d2](https://github.com/ezgrs/dorm.git/commit/b73b15d2fc7860c280311fb9a11299e70102392b))
+ - **DOCS**: standardize READMEs. ([0b9bc0c5](https://github.com/ezgrs/dorm.git/commit/0b9bc0c58b0c286cd1bef66885a0ad908c51525a))
+ - **DOCS**: add LICENSE file to all repos. ([379c7631](https://github.com/ezgrs/dorm.git/commit/379c7631cb66824691fde003db7f2588f8f29da4))
+
+#### `dorm_framework` - `v2.0.0-dev.2`
+
+ - **FIX**: fix licence header. ([287219ca](https://github.com/ezgrs/dorm.git/commit/287219ca9700b537a6e13211df12139440817d9d))
+ - **DOCS**: replace beet-software/dorm -> ezgrs/dorm. ([b73b15d2](https://github.com/ezgrs/dorm.git/commit/b73b15d2fc7860c280311fb9a11299e70102392b))
+ - **DOCS**: standardize READMEs. ([0b9bc0c5](https://github.com/ezgrs/dorm.git/commit/0b9bc0c58b0c286cd1bef66885a0ad908c51525a))
+ - **DOCS**: add LICENSE file to all repos. ([379c7631](https://github.com/ezgrs/dorm.git/commit/379c7631cb66824691fde003db7f2588f8f29da4))
+
+#### `dorm_http_database` - `v2.0.0-dev.2`
+
+ - **FEAT**: add license header. ([30ebe8f3](https://github.com/ezgrs/dorm.git/commit/30ebe8f3adc9978b0527fe78677a162da199a57c))
+ - **DOCS**: replace beet-software/dorm -> ezgrs/dorm. ([b73b15d2](https://github.com/ezgrs/dorm.git/commit/b73b15d2fc7860c280311fb9a11299e70102392b))
+ - **DOCS**: standardize READMEs. ([0b9bc0c5](https://github.com/ezgrs/dorm.git/commit/0b9bc0c58b0c286cd1bef66885a0ad908c51525a))
+ - **DOCS**: add LICENSE file to all repos. ([379c7631](https://github.com/ezgrs/dorm.git/commit/379c7631cb66824691fde003db7f2588f8f29da4))
+
+#### `dorm_mongo_database` - `v2.0.0-dev.2`
+
+ - **FEAT**: add license header. ([60aa589b](https://github.com/ezgrs/dorm.git/commit/60aa589b2bb4d7ae30cfd4b1654f1c0bc0f005f4))
+ - **DOCS**: replace beet-software/dorm -> ezgrs/dorm. ([b73b15d2](https://github.com/ezgrs/dorm.git/commit/b73b15d2fc7860c280311fb9a11299e70102392b))
+ - **DOCS**: standardize READMEs. ([0b9bc0c5](https://github.com/ezgrs/dorm.git/commit/0b9bc0c58b0c286cd1bef66885a0ad908c51525a))
+ - **DOCS**: add LICENSE file to all repos. ([379c7631](https://github.com/ezgrs/dorm.git/commit/379c7631cb66824691fde003db7f2588f8f29da4))
+
+#### `dorm_mysql_database` - `v2.0.0-dev.2`
+
+ - **FEAT**: remove schema generator. ([6f7d52a4](https://github.com/ezgrs/dorm.git/commit/6f7d52a44851ec92c09d40f9e9acd892274cf8a7))
+ - **FEAT**: add license header. ([abe8bae6](https://github.com/ezgrs/dorm.git/commit/abe8bae62ab5854ee8b648dfd5cf6e958cdd0caf))
+ - **DOCS**: replace beet-software/dorm -> ezgrs/dorm. ([b73b15d2](https://github.com/ezgrs/dorm.git/commit/b73b15d2fc7860c280311fb9a11299e70102392b))
+ - **DOCS**: standardize READMEs. ([0b9bc0c5](https://github.com/ezgrs/dorm.git/commit/0b9bc0c58b0c286cd1bef66885a0ad908c51525a))
+ - **DOCS**: add README. ([d4c78343](https://github.com/ezgrs/dorm.git/commit/d4c78343ac5f225cf988d01b7d0370f266520bd5))
+
+#### `dorm_postgres_database` - `v2.0.0-dev.2`
+
+ - **FEAT**: add license header. ([16b8c3ac](https://github.com/ezgrs/dorm.git/commit/16b8c3acb266d5aea3c04dd376895133f12892e9))
+ - **DOCS**: replace beet-software/dorm -> ezgrs/dorm. ([b73b15d2](https://github.com/ezgrs/dorm.git/commit/b73b15d2fc7860c280311fb9a11299e70102392b))
+ - **DOCS**: standardize READMEs. ([0b9bc0c5](https://github.com/ezgrs/dorm.git/commit/0b9bc0c58b0c286cd1bef66885a0ad908c51525a))
+ - **DOCS**: add LICENSE file to all repos. ([379c7631](https://github.com/ezgrs/dorm.git/commit/379c7631cb66824691fde003db7f2588f8f29da4))
+
+#### `dorm_sqlite_database` - `v2.0.0-dev.2`
+
+ - **FEAT**: add license header. ([4f5add4a](https://github.com/ezgrs/dorm.git/commit/4f5add4a2a82e821f6e78102c4f9c6242d99d0bf))
+ - **DOCS**: replace beet-software/dorm -> ezgrs/dorm. ([b73b15d2](https://github.com/ezgrs/dorm.git/commit/b73b15d2fc7860c280311fb9a11299e70102392b))
+ - **DOCS**: standardize READMEs. ([0b9bc0c5](https://github.com/ezgrs/dorm.git/commit/0b9bc0c58b0c286cd1bef66885a0ad908c51525a))
+ - **DOCS**: add LICENSE file to all repos. ([379c7631](https://github.com/ezgrs/dorm.git/commit/379c7631cb66824691fde003db7f2588f8f29da4))
+
+
 ## 2026-09-09
 
 ### Changes

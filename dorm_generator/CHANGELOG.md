@@ -1,3 +1,7 @@
+## 2.0.0-dev.2
+
+ - Bump version to keep all packages in the workspace in lockstep.
+
 ## 2.0.0-dev.1
 
  - **REFACTOR**: make OrmGenerator constant-able. ([5c45047a](https://github.com/ezgrs/dorm.git/commit/5c45047ac109fe0b800111ddbecbaf16a488dbbc))

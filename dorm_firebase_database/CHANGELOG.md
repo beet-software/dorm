@@ -1,3 +1,7 @@
+## 2.0.0-dev.2
+
+ - Bump version to keep all packages in the workspace in lockstep.
+
 ## 2.0.0-dev.1
 
  - **FIX**: fix code generation by updating dependencies. ([a5921c77](https://github.com/ezgrs/dorm.git/commit/a5921c779dd8e29a25e3166b7a495b09071852af))

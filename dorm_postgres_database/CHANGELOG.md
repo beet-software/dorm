@@ -1,3 +1,10 @@
+## 2.0.0-dev.2
+
+ - **FEAT**: add license header. ([16b8c3ac](https://github.com/ezgrs/dorm.git/commit/16b8c3acb266d5aea3c04dd376895133f12892e9))
+ - **DOCS**: replace beet-software/dorm -> ezgrs/dorm. ([b73b15d2](https://github.com/ezgrs/dorm.git/commit/b73b15d2fc7860c280311fb9a11299e70102392b))
+ - **DOCS**: standardize READMEs. ([0b9bc0c5](https://github.com/ezgrs/dorm.git/commit/0b9bc0c58b0c286cd1bef66885a0ad908c51525a))
+ - **DOCS**: add LICENSE file to all repos. ([379c7631](https://github.com/ezgrs/dorm.git/commit/379c7631cb66824691fde003db7f2588f8f29da4))
+
 ## 2.0.0-dev.1
 
  - **REFACTOR**: replace StringBuffer with code_builder. ([e4886895](https://github.com/ezgrs/dorm.git/commit/e48868950d39ba68774350148db892b05e5a5c21))

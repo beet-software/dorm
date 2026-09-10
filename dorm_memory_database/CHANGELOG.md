@@ -1,3 +1,7 @@
+## 2.0.0-dev.2
+
+ - Bump version to keep all packages in the workspace in lockstep.
+
 ## 2.0.0-dev.1
 
  - **FEAT**: improve filtering API. ([2b7014bf](https://github.com/ezgrs/dorm.git/commit/2b7014bfc9569f8bbd2b079f3d286ac4a3471435))

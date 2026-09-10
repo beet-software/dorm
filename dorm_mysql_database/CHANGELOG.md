@@ -1,3 +1,11 @@
+## 2.0.0-dev.2
+
+ - **FEAT**: remove schema generator. ([6f7d52a4](https://github.com/ezgrs/dorm.git/commit/6f7d52a44851ec92c09d40f9e9acd892274cf8a7))
+ - **FEAT**: add license header. ([abe8bae6](https://github.com/ezgrs/dorm.git/commit/abe8bae62ab5854ee8b648dfd5cf6e958cdd0caf))
+ - **DOCS**: replace beet-software/dorm -> ezgrs/dorm. ([b73b15d2](https://github.com/ezgrs/dorm.git/commit/b73b15d2fc7860c280311fb9a11299e70102392b))
+ - **DOCS**: standardize READMEs. ([0b9bc0c5](https://github.com/ezgrs/dorm.git/commit/0b9bc0c58b0c286cd1bef66885a0ad908c51525a))
+ - **DOCS**: add README. ([d4c78343](https://github.com/ezgrs/dorm.git/commit/d4c78343ac5f225cf988d01b7d0370f266520bd5))
+
 ## 2.0.0-dev.1
 
  - **REFACTOR**: remove conditional of custom types. ([0600d4de](https://github.com/ezgrs/dorm.git/commit/0600d4de72e0f6415dbbd159688f57bcf34547bf))
