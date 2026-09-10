@@ -1,3 +1,8 @@
+## 2.0.0-dev.4
+
+ - **FIX**: change example pubspec's name to avoid conflict. ([a14e9ace](https://github.com/ezgrs/dorm.git/commit/a14e9acec359f78ce6108efb46a5bc5a0c3c3e97))
+ - **DOCS**: add example on pub.dev standards. ([5dd402d7](https://github.com/ezgrs/dorm.git/commit/5dd402d7d020f90c4a50a504936a60817f92330e))
+
 ## 2.0.0-dev.3
 
  - Bump "dorm_annotations" to `2.0.0-dev.3`.

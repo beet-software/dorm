@@ -1,3 +1,9 @@
+## 2.0.0-dev.4
+
+ - **FEAT**: replace sqlite3.dart import with common.dart. ([8ee4f897](https://github.com/ezgrs/dorm.git/commit/8ee4f897e4e2795bc8a5199a35b4ea8cef652a4a))
+ - **DOCS**: make pubspec's description longer. ([171ff0c1](https://github.com/ezgrs/dorm.git/commit/171ff0c156fcbee43aa7fe8280cc86d2c9c8aa0d))
+ - **DOCS**: add example on pub.dev standards. ([f4b4c1ee](https://github.com/ezgrs/dorm.git/commit/f4b4c1eefdb4bfcbe1c64bf6b54e50ab9d19fb08))
+
 ## 2.0.0-dev.3
 
  - Bump version to keep all packages in the workspace in lockstep.

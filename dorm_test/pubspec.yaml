@@ -1,6 +1,6 @@
 name: dorm_test
 publish_to: none
-version: 2.0.0-dev.3
+version: 2.0.0-dev.4
 resolution: workspace
 description: Shared conformance tests for dORM database engines.
 repository: https://github.com/ezgrs/dorm.git
@@ -9,7 +9,7 @@ environment:
   sdk: '>=3.11.5 <4.0.0'
 
 dependencies:
-  dorm_framework: ^2.0.0-dev.3
+  dorm_framework: ^2.0.0-dev.4
   test: ^1.32.0
 
 dev_dependencies:

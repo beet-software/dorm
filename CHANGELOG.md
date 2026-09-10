@@ -15,6 +15,66 @@ Packages with breaking changes:
 
 Packages with other changes:
 
+ - [`dorm_annotations` - `v2.0.0-dev.4`](#dorm_annotations---v200-dev4)
+ - [`dorm_example` - `v2.0.0-dev.4`](#dorm_example---v200-dev4)
+ - [`dorm_mysql_database` - `v2.0.0-dev.4`](#dorm_mysql_database---v200-dev4)
+ - [`dorm_sqlite_database` - `v2.0.0-dev.4`](#dorm_sqlite_database---v200-dev4)
+
+Packages versioned in lockstep only:
+
+> Packages listed below have no changes of their own. Their versions have been bumped to keep all packages in this workspace in lockstep.
+
+ - `dorm_bloc_database` - `v2.0.0-dev.4`
+ - `dorm_firebase_database` - `v2.0.0-dev.4`
+ - `dorm_firestore_database` - `v2.0.0-dev.4`
+ - `dorm_framework` - `v2.0.0-dev.4`
+ - `dorm_generator` - `v2.0.0-dev.4`
+ - `dorm_http_database` - `v2.0.0-dev.4`
+ - `dorm_memory_database` - `v2.0.0-dev.4`
+ - `dorm_mongo_database` - `v2.0.0-dev.4`
+ - `dorm_postgres_database` - `v2.0.0-dev.4`
+ - `dorm_test` - `v2.0.0-dev.4`
+
+---
+
+#### `dorm_annotations` - `v2.0.0-dev.4`
+
+ - **FIX**: change example pubspec's name to avoid conflict. ([a14e9ace](https://github.com/ezgrs/dorm.git/commit/a14e9acec359f78ce6108efb46a5bc5a0c3c3e97))
+ - **DOCS**: add example on pub.dev standards. ([5dd402d7](https://github.com/ezgrs/dorm.git/commit/5dd402d7d020f90c4a50a504936a60817f92330e))
+
+#### `dorm_example` - `v2.0.0-dev.4`
+
+ - **FEAT**: improte CLI output. ([58176e3d](https://github.com/ezgrs/dorm.git/commit/58176e3d9995b68bbe0e753d465680dee65687fa))
+ - **FEAT**: change default directory to engine's name. ([4bdfb1aa](https://github.com/ezgrs/dorm.git/commit/4bdfb1aa4fc512b27d056e7610d6c4aa27d1886e))
+ - **DOCS**: add dartdocs. ([9e59630b](https://github.com/ezgrs/dorm.git/commit/9e59630b5e0739671ac1aa27df4b081f28424580))
+ - **DOCS**: make pubspec's description longer. ([a18bafe6](https://github.com/ezgrs/dorm.git/commit/a18bafe62dff7212efefb55be008756532e86b25))
+ - **DOCS**: add example on pub.dev standards. ([91558925](https://github.com/ezgrs/dorm.git/commit/91558925acf3b3edaced4d6c12f645d507c4bbcd))
+ - **DOCS**: specify minimum Flutter version for examples. ([730f2bcf](https://github.com/ezgrs/dorm.git/commit/730f2bcf74155a29812b5eec8a7dc54e7895b471))
+
+#### `dorm_mysql_database` - `v2.0.0-dev.4`
+
+ - **FIX**: remove firstDayOfMonth and lastDayOfMonth from DateTime. ([11560166](https://github.com/ezgrs/dorm.git/commit/11560166ce33bc1f9e9bc19bb3953621a8e5692a))
+ - **DOCS**: make pubspec's description longer. ([f4cd7519](https://github.com/ezgrs/dorm.git/commit/f4cd751911d1042a8e0d4d417c117c5200b3cd17))
+
+#### `dorm_sqlite_database` - `v2.0.0-dev.4`
+
+ - **FEAT**: replace sqlite3.dart import with common.dart. ([8ee4f897](https://github.com/ezgrs/dorm.git/commit/8ee4f897e4e2795bc8a5199a35b4ea8cef652a4a))
+ - **DOCS**: make pubspec's description longer. ([171ff0c1](https://github.com/ezgrs/dorm.git/commit/171ff0c156fcbee43aa7fe8280cc86d2c9c8aa0d))
+ - **DOCS**: add example on pub.dev standards. ([f4b4c1ee](https://github.com/ezgrs/dorm.git/commit/f4b4c1eefdb4bfcbe1c64bf6b54e50ab9d19fb08))
+
+
+## 2026-09-10
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
  - [`dorm_annotations` - `v2.0.0-dev.3`](#dorm_annotations---v200-dev3)
 
 Packages versioned in lockstep only:

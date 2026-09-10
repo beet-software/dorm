@@ -1,3 +1,8 @@
+## 2.0.0-dev.4
+
+ - **FIX**: remove firstDayOfMonth and lastDayOfMonth from DateTime. ([11560166](https://github.com/ezgrs/dorm.git/commit/11560166ce33bc1f9e9bc19bb3953621a8e5692a))
+ - **DOCS**: make pubspec's description longer. ([f4cd7519](https://github.com/ezgrs/dorm.git/commit/f4cd751911d1042a8e0d4d417c117c5200b3cd17))
+
 ## 2.0.0-dev.3
 
  - Bump version to keep all packages in the workspace in lockstep.

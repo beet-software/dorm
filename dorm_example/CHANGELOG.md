@@ -1,3 +1,12 @@
+## 2.0.0-dev.4
+
+ - **FEAT**: improte CLI output. ([58176e3d](https://github.com/ezgrs/dorm.git/commit/58176e3d9995b68bbe0e753d465680dee65687fa))
+ - **FEAT**: change default directory to engine's name. ([4bdfb1aa](https://github.com/ezgrs/dorm.git/commit/4bdfb1aa4fc512b27d056e7610d6c4aa27d1886e))
+ - **DOCS**: add dartdocs. ([9e59630b](https://github.com/ezgrs/dorm.git/commit/9e59630b5e0739671ac1aa27df4b081f28424580))
+ - **DOCS**: make pubspec's description longer. ([a18bafe6](https://github.com/ezgrs/dorm.git/commit/a18bafe62dff7212efefb55be008756532e86b25))
+ - **DOCS**: add example on pub.dev standards. ([91558925](https://github.com/ezgrs/dorm.git/commit/91558925acf3b3edaced4d6c12f645d507c4bbcd))
+ - **DOCS**: specify minimum Flutter version for examples. ([730f2bcf](https://github.com/ezgrs/dorm.git/commit/730f2bcf74155a29812b5eec8a7dc54e7895b471))
+
 ## 2.0.0-dev.3
 
  - Bump version to keep all packages in the workspace in lockstep.
