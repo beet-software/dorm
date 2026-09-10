@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - VERSION
+  workflow_dispatch:
 
 concurrency:
   group: dorm-release
@@ -16,6 +17,7 @@ permissions:
 
 jobs:
   build:
+    if: ${{ github.event_name == 'push' || github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -37,6 +39,7 @@ jobs:
         run: dart analyze
 
   release:
+    if: ${{ github.event_name == 'push' || github.ref == 'refs/heads/main' }}
     needs:
       - build
       - verify-mongo
@@ -60,7 +63,7 @@ jobs:
 
       - name: Prepare main branch
         run: |
-          git switch --create main "${GITHUB_SHA}"
+          git switch --force-create main "${GITHUB_SHA}"
           git fetch origin main
           git branch --set-upstream-to=origin/main main
 
@@ -148,6 +151,7 @@ jobs:
             exit 1
           fi
   publish-children:
+    if: ${{ github.event_name == 'push' || github.ref == 'refs/heads/main' }}
     needs:
       - release
       - publish-core
@@ -192,6 +196,7 @@ jobs:
           fi
 
   publish-core:
+    if: ${{ github.event_name == 'push' || github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -242,6 +247,7 @@ jobs:
           fi
 
   verify-mongo:
+    if: ${{ github.event_name == 'push' || github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -271,6 +277,7 @@ jobs:
         run: dart analyze
 
   verify-engine-compliance:
+    if: ${{ github.event_name == 'push' || github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -291,6 +298,7 @@ jobs:
         run: dart test test/compliance_test.dart
 
   verify-example-generator:
+    if: ${{ github.event_name == 'push' || github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -308,6 +316,7 @@ jobs:
         run: dart test
 
   verify-http:
+    if: ${{ github.event_name == 'push' || github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -337,6 +346,7 @@ jobs:
         run: dart analyze
 
   verify-firebase-compliance:
+    if: ${{ github.event_name == 'push' || github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -354,6 +364,7 @@ jobs:
         run: flutter test test/compliance_test.dart
 
   verify-firestore-compliance:
+    if: ${{ github.event_name == 'push' || github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
