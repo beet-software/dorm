@@ -1,7 +1,7 @@
 name: dorm_firebase_database
 version: 2.0.0-dev.3
 resolution: workspace
-description: A firebase_database database engine for dORM.
+description: A Firebase Realtime Database engine for dORM applications that need persistent, remotely synchronized data.
 homepage: https://github.com/ezgrs/dorm/tree/main/dorm_firebase_database
 repository: https://github.com/ezgrs/dorm.git
 environment:
