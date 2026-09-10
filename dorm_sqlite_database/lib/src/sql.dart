@@ -17,7 +17,7 @@
 import 'dart:convert';
 
 import 'package:dorm_framework/dorm_framework.dart';
-import 'package:sqlite3/sqlite3.dart';
+import 'package:sqlite3/common.dart';
 
 String quoteIdentifier(String value) => '"${value.replaceAll('"', '""')}"';
 
