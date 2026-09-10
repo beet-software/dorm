@@ -122,6 +122,7 @@ jobs:
             git fetch --tags
             git checkout --detach "$RELEASE_TAG"
             dart run tool/sync_dorm_example_version.dart
+            git restore --source=HEAD --worktree -- pubspec.lock
             if ! git diff --quiet; then
               echo "Existing tag $RELEASE_TAG does not contain the expected generated release files."
               git diff -- dorm_example/lib/src/release.dart
@@ -143,6 +144,7 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           dart run melos version --all --manual-version="dorm_annotations:$RELEASE_VERSION" --yes
           dart run tool/sync_dorm_example_version.dart
+          git restore --source=HEAD --worktree -- pubspec.lock
           git diff --exit-code
           test "$(git tag --list "$RELEASE_TAG")" = "$RELEASE_TAG" || {
             echo "Melos did not create the expected tag $RELEASE_TAG."
