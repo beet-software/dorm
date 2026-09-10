@@ -85,6 +85,9 @@ flutter analyze
 flutter run -d chrome
 ~~~
 
+Flutter profiles require Flutter **3.47.1 or newer**. Pure Dart profiles do
+not have this Flutter requirement.
+
 Docker Compose starts infrastructure only. The Dart or Flutter application runs
 on the host so that local environment variables, browser access, and Flutter
 development tools remain available.

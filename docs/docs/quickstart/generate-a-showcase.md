@@ -62,6 +62,10 @@ starts infrastructure only. The generated Flutter application continues to
 run on the host, so browser access and hot reload remain part of the normal
 Flutter workflow.
 
+Flutter profiles require Flutter **3.47.1 or newer**. This requirement comes
+from the `build_runner`/analyzer dependency chain used by the generated
+project; pure Dart profiles are not affected.
+
 ## Run the Firebase profile locally
 
 Generate the Flutter project and start its local emulator:

@@ -44,6 +44,9 @@ flutter pub get
 dart run build_runner build
 flutter run -d chrome{{#httpServer}} --dart-define=HTTP_BASE_URI=http://localhost:8080/api/{{/httpServer}}
 ```
+
+Flutter profiles require Flutter **3.47.1 or newer** because of the
+`build_runner` and analyzer dependency constraints.
 {{/isFlutter}}
 {{^isFlutter}}
 Install dependencies, generate the model API, and run the Dart showcase:
