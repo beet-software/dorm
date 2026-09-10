@@ -35,6 +35,7 @@ nav:
       - Using sorting: build-the-store/using-sorting.md
       - Using pagination: build-the-store/using-pagination.md
       - Using transactions: build-the-store/using-transactions.md
+      - Using synchronization: build-the-store/using-synchronization.md
   - Engines:
       - Choose an engine: apply/choose-an-engine.md
       - Run in-memory: apply/use-memory.md
@@ -84,6 +85,7 @@ nav:
       - Public API: reference/public-api.md
       - Generated API: reference/generated-api.md
       - Framework contracts: reference/framework-contracts.md
+      - Synchronize engines: reference/synchronization.md
       - Engine capabilities: reference/engine-capabilities.md
       - Performance model: reference/performance.md
       - Glossary: reference/glossary.md

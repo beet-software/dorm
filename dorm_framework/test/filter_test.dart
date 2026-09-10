@@ -199,6 +199,13 @@ void main() {
     expect(query.operations, ['date:created_at=$value:month']);
   });
 
+  test('rebuilds a backend filter from its structured expression', () {
+    final BaseFilter<_Query> filter = BaseFilter.fromExpression(
+      const ValueFilterExpression('status', 'active'),
+    );
+
+    expect(filter.accept(_Query()).operations, ['value:status=active']);
+  });
   test('query options are applied after the filter', () {
     final _Query query =
         const QueryOptions(

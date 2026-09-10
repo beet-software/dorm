@@ -177,8 +177,9 @@ class _EntityReference<
 }
 
 /// A [BaseReference] implementation backed by Dart maps and streams.
-class Reference implements BaseReference<Query, OffsetPageRequest> {
+class Reference implements ChangeTrackedReference<Query, OffsetPageRequest> {
   final Map<String, Object> _references = {};
+  int _sequence = 0;
   bool _transactionActive = false;
 
   Reference();
@@ -440,6 +441,149 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
     Entity<Data, Model, I, Creation<Data, I>> entity,
   ) async {
     _access(entity).purge();
+  }
+
+  MutationRecord _record<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    Model model,
+  ) {
+    return MutationRecord(
+      key: entity.primaryKeyCodec.encode(entity.identify(model)),
+      data: Map<String, Object?>.from(entity.toJson(model)),
+    );
+  }
+
+  MutationChangeSet _change<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    MutationRequest request,
+    MutationKind kind,
+    Iterable<MutationRecord> records,
+  ) {
+    return MutationChangeSet(
+      operationId: request.operationId ?? _uuid.v4(),
+      sequence: request.sequence ?? ++_sequence,
+      tableName: entity.schema.tableName,
+      kind: kind,
+      records: List<MutationRecord>.unmodifiable(records),
+    );
+  }
+
+  @override
+  Future<MutationResult<Object?>> mutate<
+    Data,
+    Model extends Data,
+    I extends Object,
+    C extends Creation<Data, I>
+  >(Entity<Data, Model, I, C> entity, MutationRequest request) async {
+    switch (request) {
+      case final PutMutation mutation:
+        final Model model = await put(entity, mutation.creation as C);
+        return MutationResult(
+          value: model,
+          changeSet: _change(entity, mutation, MutationKind.put, [
+            _record(entity, model),
+          ]),
+        );
+      case final PutAllMutation mutation:
+        final List<Model> models = await putAll(
+          entity,
+          (mutation.creations as Iterable<C>).toList(),
+        );
+        return MutationResult(
+          value: models,
+          changeSet: _change(
+            entity,
+            mutation,
+            MutationKind.putAll,
+            models.map((model) => _record(entity, model)),
+          ),
+        );
+      case final PushMutation mutation:
+        final Model model = mutation.model as Model;
+        await push(entity, model);
+        return MutationResult(
+          value: null,
+          changeSet: _change(entity, mutation, MutationKind.push, [
+            _record(entity, model),
+          ]),
+        );
+      case final PushAllMutation mutation:
+        final List<Model> models = (mutation.models as Iterable<Model>)
+            .toList();
+        await pushAll(entity, models);
+        return MutationResult(
+          value: null,
+          changeSet: _change(
+            entity,
+            mutation,
+            MutationKind.pushAll,
+            models.map((model) => _record(entity, model)),
+          ),
+        );
+      case final PopMutation mutation:
+        final I id = mutation.id as I;
+        await pop(entity, id);
+        return MutationResult(
+          value: null,
+          changeSet: _change(entity, mutation, MutationKind.pop, [
+            MutationRecord(key: entity.primaryKeyCodec.encode(id)),
+          ]),
+        );
+      case final PopKeysMutation mutation:
+        final List<I> ids = (mutation.ids as Iterable<I>).toList();
+        await popKeys(entity, ids);
+        return MutationResult(
+          value: null,
+          changeSet: _change(
+            entity,
+            mutation,
+            MutationKind.popKeys,
+            ids.map(
+              (id) => MutationRecord(key: entity.primaryKeyCodec.encode(id)),
+            ),
+          ),
+        );
+      case final PopAllMutation mutation:
+        final BaseFilter<Query> filter = mutation.filter as BaseFilter<Query>;
+        final List<Model> models = await peekAll(entity, filter);
+        await popAll(entity, filter);
+        return MutationResult(
+          value: null,
+          changeSet: _change(
+            entity,
+            mutation,
+            MutationKind.popAll,
+            models.map(
+              (model) => MutationRecord(
+                key: entity.primaryKeyCodec.encode(entity.identify(model)),
+              ),
+            ),
+          ),
+        );
+      case final PatchMutation<Model, I> mutation:
+        final I id = mutation.id;
+        await patch(entity, id, mutation.update);
+        final Model? updated = await peek(entity, id);
+        return MutationResult(
+          value: updated,
+          changeSet: _change(entity, mutation, MutationKind.patch, [
+            MutationRecord(
+              key: entity.primaryKeyCodec.encode(id),
+              data: updated == null
+                  ? null
+                  : Map<String, Object?>.from(entity.toJson(updated)),
+            ),
+          ]),
+        );
+      case final PurgeMutation mutation:
+        await purge(entity);
+        return MutationResult(
+          value: null,
+          changeSet: _change(entity, mutation, MutationKind.purge, const []),
+        );
+      default:
+        throw ArgumentError.value(request, 'request', 'Unsupported mutation.');
+    }
   }
 }
 

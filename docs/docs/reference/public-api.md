@@ -20,6 +20,7 @@ Use these package entry points for application code:
 | PostgreSQL engine | `package:dorm_postgres_database/dorm_postgres_database.dart` |
 | HTTP engine | `package:dorm_http_database/dorm_http_database.dart` |
 | SQLite engine | `package:dorm_sqlite_database/dorm_sqlite_database.dart` |
+| Synchronization | `package:dorm_sync/dorm_sync.dart` |
 | Showcase generator | `package:dorm_example/dorm_example.dart` and the `dorm_example` executable |
 
 The project generator is installed as a Dart executable rather than imported
@@ -38,6 +39,22 @@ Concrete classes below `lib/src/` are not automatically part of the barrel
 surface. A class being importable by an internal package path does not by
 itself establish a supported application API.
 
+## Synchronization API
+
+The optional `dorm_sync` package exports the composed engine and its target and
+outbox contracts:
+
+| API | Purpose |
+| --- | --- |
+| `SynchronizedEngine<Q, P>` | Reads from one primary and delivers writes to replicas. |
+| `EngineSyncTarget<Q, P>` | Adapts a `ChangeTrackedEngine` for primary mutations and replica delivery. |
+| `EngineReplicaTarget<Q, P>` | Adapts a normal `BaseEngine` for finite reads and materialized delivery. |
+| `SyncOutbox` | Persists, acknowledges, retries, and observes replica deliveries. |
+| `MemorySyncOutbox` | Process-local outbox for tests and non-durable use. |
+| `SyncOperationResolver` | Rebuilds typed appliers after durable outbox rehydration. |
+
+See [Synchronize database engines](synchronization.md) for setup and
+semantics. The composed engine does not implement `TransactionalEngine`.
 ## Annotations and generated-facing APIs
 
 Use the dedicated [Annotations](../annotations/index.md) reference for

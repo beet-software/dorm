@@ -12,6 +12,7 @@
   <a href="https://pub.dev/packages/dorm_annotations"><img src="https://img.shields.io/pub/v/dorm_annotations.svg?label=dorm_annotations" alt="dorm_annotations on pub.dev"></a>
   <a href="https://pub.dev/packages/dorm_generator"><img src="https://img.shields.io/pub/v/dorm_generator.svg?label=dorm_generator" alt="dorm_generator on pub.dev"></a>
   <a href="https://pub.dev/packages/dorm_example"><img src="https://img.shields.io/pub/v/dorm_example.svg?label=dorm_example" alt="dorm_example on pub.dev"></a>
+  <a href="https://pub.dev/packages/dorm_sync"><img src="https://img.shields.io/pub/v/dorm_sync.svg?label=dorm_sync" alt="dorm_sync on pub.dev"></a>
 </p>
 
 <p>
@@ -110,7 +111,9 @@ The public packages have separate responsibilities:
   declarations into the model and repository API used by the application.
 - [dorm_framework](https://pub.dev/packages/dorm_framework) defines the
   common types for creation, reading, filtering, relationships, pagination,
-  and transactions.
+  synchronization contracts, and transactions.
+- [dorm_sync](https://pub.dev/packages/dorm_sync) composes a primary with
+  replicas with finite-read fallback and at-least-once write delivery.
 - A dorm_*_database package adapts those contracts to a backend.
 
 The application creates the backend object and passes it to the engine:
@@ -121,6 +124,11 @@ final dorm = Dorm(engine);
 
 final User user = await dorm.users.repository.peek(userId);
 ~~~
+
+For a unidirectional primary-to-replica setup, wrap adapted change-tracking
+targets in `SynchronizedEngine` from `dorm_sync`. Reads remain on the primary
+unless a finite-read fallback policy classifies its error as available for a
+replica; streams and distributed transactions are intentionally not switched. See [Synchronize database engines](docs/docs/reference/synchronization.md) for the delivery, outbox, fallback, and identity rules.
 
 The generated `Dorm` facade and model declarations can stay the same while an
 application evaluates another engine. This is the main portability boundary:

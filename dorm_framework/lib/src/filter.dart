@@ -291,6 +291,11 @@ abstract class BaseFilter<Q extends BaseQuery<Q>> {
 
   FilterExpression get expression;
 
+  /// Rebuilds a filter from its engine-neutral expression.
+  static BaseFilter<Q> fromExpression<Q extends BaseQuery<Q>>(
+    FilterExpression expression,
+  ) => _ExpressionFilter<Q>(expression);
+
   Q accept(Q query);
 }
 
@@ -645,4 +650,141 @@ class _NumericRangeFilter<Q extends BaseQuery<Q>>
 class _DateRangeFilter<Q extends BaseQuery<Q>>
     extends _RangeFilter<DateTime?, Q> {
   const _DateRangeFilter(super.range, {required super.field});
+}
+
+class _ExpressionFilter<Q extends BaseQuery<Q>> implements BaseFilter<Q> {
+  const _ExpressionFilter(this._expression);
+
+  final FilterExpression _expression;
+
+  @override
+  FilterExpression get expression => _expression;
+
+  @override
+  Q accept(Q query) => _accept(_expression, query);
+}
+
+Q _accept<Q extends BaseQuery<Q>>(FilterExpression expression, Q query) {
+  return switch (expression) {
+    EmptyFilterExpression() => query,
+    ValueFilterExpression(:final field, :final value) => query.whereValue(
+      field,
+      value,
+    ),
+    TextFilterExpression(:final field, :final prefix) => query.whereText(
+      field,
+      prefix,
+    ),
+    DateFilterExpression(:final field, :final value, :final unit) =>
+      query.whereDate(field, value, unit),
+    RangeFilterExpression(:final field, :final range) => query.whereRange(
+      field,
+      range,
+    ),
+    ComparisonFilterExpression(:final field, :final operator, :final value) =>
+      _comparison(query, field, operator, value),
+    SetFilterExpression(:final field, :final values, :final negated) =>
+      _comparisonSet(query, field, values, negated),
+    NullFilterExpression(:final field, :final isNull) => _comparisonNull(
+      query,
+      field,
+      isNull,
+    ),
+    ContainsFilterExpression(:final field, :final value) => _collection(
+      query,
+      field,
+      value,
+    ),
+    ContainsAnyFilterExpression(:final field, :final values) => _collectionAny(
+      query,
+      field,
+      values,
+    ),
+    AllFilterExpression(:final filters) => _logicalAll(query, filters),
+    AnyFilterExpression(:final filters) => _logicalAny(query, filters),
+    NotFilterExpression(:final filter) => _logicalNot(query, filter),
+  };
+}
+
+Q _comparison<Q extends BaseQuery<Q>>(
+  Q query,
+  String field,
+  FilterComparisonOperator operator,
+  Object? value,
+) {
+  if (query is ComparisonQuery<dynamic>) {
+    return (query as dynamic).whereComparison(field, operator, value) as Q;
+  }
+  throw UnsupportedError('This query does not support comparison filters.');
+}
+
+Q _comparisonSet<Q extends BaseQuery<Q>>(
+  Q query,
+  String field,
+  Iterable<Object?> values,
+  bool negated,
+) {
+  if (query is ComparisonQuery<dynamic>) {
+    return (query as dynamic).whereSet(field, values, negated: negated) as Q;
+  }
+  throw UnsupportedError('This query does not support set filters.');
+}
+
+Q _comparisonNull<Q extends BaseQuery<Q>>(Q query, String field, bool isNull) {
+  if (query is ComparisonQuery<dynamic>) {
+    return (query as dynamic).whereNull(field, isNull: isNull) as Q;
+  }
+  throw UnsupportedError('This query does not support null filters.');
+}
+
+Q _collection<Q extends BaseQuery<Q>>(Q query, String field, Object? value) {
+  if (query is CollectionQuery<dynamic>) {
+    return (query as dynamic).whereContains(field, value) as Q;
+  }
+  throw UnsupportedError('This query does not support collection filters.');
+}
+
+Q _collectionAny<Q extends BaseQuery<Q>>(
+  Q query,
+  String field,
+  Iterable<Object?> values,
+) {
+  if (query is CollectionQuery<dynamic>) {
+    return (query as dynamic).whereContainsAny(field, values) as Q;
+  }
+  throw UnsupportedError('This query does not support collection filters.');
+}
+
+Q _logicalAll<Q extends BaseQuery<Q>>(
+  Q query,
+  Iterable<FilterExpression> expressions,
+) {
+  if (query is LogicalQuery<dynamic>) {
+    return (query as dynamic).whereAll(
+          expressions.map(BaseFilter.fromExpression<Q>),
+        )
+        as Q;
+  }
+  throw UnsupportedError('This query does not support conjunction filters.');
+}
+
+Q _logicalAny<Q extends BaseQuery<Q>>(
+  Q query,
+  Iterable<FilterExpression> expressions,
+) {
+  if (query is LogicalQuery<dynamic>) {
+    return (query as dynamic).whereAny(
+          expressions.map(BaseFilter.fromExpression<Q>),
+        )
+        as Q;
+  }
+  throw UnsupportedError('This query does not support disjunction filters.');
+}
+
+Q _logicalNot<Q extends BaseQuery<Q>>(Q query, FilterExpression expression) {
+  if (query is NegationQuery<dynamic>) {
+    return (query as dynamic).whereNot(BaseFilter.fromExpression<Q>(expression))
+        as Q;
+  }
+  throw UnsupportedError('This query does not support negation filters.');
 }

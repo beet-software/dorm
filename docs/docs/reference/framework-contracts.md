@@ -281,6 +281,35 @@ regular `BaseEngine<Q, P>` cannot be passed to its constructor without a
 cast or type erasure. The in-memory, BLoC, MySQL, PostgreSQL, and SQLite engines currently implement
 the capability.
 
+## Synchronization capability
+
+Synchronization is an optional capability layered above `BaseEngine`. A primary
+engine must implement `ChangeTrackedEngine<Q, P>` and return a
+`ChangeTrackedReference<Q, P>`. The reference executes a mutation and reports a
+`MutationResult` containing both the ordinary operation result and an exact
+`MutationChangeSet`.
+
+A change set contains the operation kind, entity table name, ordered sequence,
+operation id, affected encoded identities, and final serialized data where
+applicable. This allows a replica to apply the result without executing the
+primary callback or recomputing a primary filter.
+
+The `dorm_sync` package composes these contracts through
+`SynchronizedEngine<Q, P>`. Its target interfaces intentionally separate
+capabilities:
+
+- `SyncReadTarget` supports finite reads and streams;
+- `SyncApplyTarget` applies materialized change sets;
+- `SyncReadApplyTarget` combines read and apply behavior for replicas;
+- `SyncMutationTarget` adds primary change-tracked mutations.
+
+`EngineSyncTarget` adapts a change-tracked primary. `EngineReplicaTarget`
+adapts a regular `BaseEngine` for read fallback and materialized delivery.
+The composed engine is not a `TransactionalEngine`; replica delivery is
+ordered and at-least-once, not a distributed transaction.
+
+See [Synchronize database engines](synchronization.md) for the outbox,
+fallback, identity, relationship, retry, and lifecycle semantics.
 ## Error contract
 
 There is no common dORM exception class. Contract users can observe ordinary

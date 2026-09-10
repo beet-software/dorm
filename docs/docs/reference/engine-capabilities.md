@@ -29,6 +29,31 @@ requirements.
 The matrix records current behavior. It does not create a future compatibility
 promise.
 
+## Synchronization composition
+
+`dorm_sync` is an optional composition layer, not a storage backend. It can
+wrap a change-tracking primary and one or more read/apply replicas regardless
+of whether the concrete engines are in-memory, SQL, Firebase, HTTP, or another
+backend.
+
+The current generic requirements are:
+
+| Role | Required capability |
+| --- | --- |
+| Primary | `ChangeTrackedEngine<Q, P>` through `EngineSyncTarget`. |
+| Replica with fallback reads | `BaseEngine<Q, P>` through `EngineReplicaTarget`. |
+| Durable pending work | Application-provided `SyncOutbox`. |
+| Fallback decision | Application-provided `SyncFallbackPolicy`. |
+
+`SynchronizedEngine` keeps the primary query and page types as its public
+types. Each target converts the structured framework filter expression and
+page request to its own query representation. This preserves portability but
+does not guarantee the same backend-specific query plan or query count.
+
+Synchronization is one-way and eventually consistent. It does not add
+distributed transactions, conflict resolution, replica-to-primary changes,
+automatic identity conversion, or a built-in durable outbox. See
+[Synchronize database engines](synchronization.md) for the complete behavior.
 ## In-memory engine
 
 Import:

@@ -49,6 +49,8 @@ shows how these types are produced.
   `purge`.
 - [Using filters](using-filters.md) covers conditions,
   ordering, limits, and offset pages.
+- [Using synchronization](using-synchronization.md) composes a primary
+  engine with replicas, fallback reads, and an outbox.
 
 All of these pages reuse the store model and the engine setup introduced in the
 learning path.

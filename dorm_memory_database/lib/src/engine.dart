@@ -23,12 +23,16 @@ import 'relationship.dart';
 /// An in-memory dORM engine with no external database connection.
 class Engine
     implements
-        BaseEngine<Query, OffsetPageRequest>,
+        ChangeTrackedEngine<Query, OffsetPageRequest>,
         TransactionalEngine<Query, OffsetPageRequest> {
   final Reference _reference = Reference();
 
   @override
   BaseReference<Query, OffsetPageRequest> createReference() => _reference;
+
+  @override
+  ChangeTrackedReference<Query, OffsetPageRequest>
+  createChangeTrackedReference() => _reference;
 
   @override
   BaseRelationship<Query> createRelationship() => const Relationship();

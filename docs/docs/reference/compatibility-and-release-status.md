@@ -68,6 +68,7 @@ identity details.
 | Relationships | Implemented in the common framework and engine adapters; direct and fallback paths differ. |
 | Streams | The in-memory, BLoC, Firebase, Firestore, and SQLite engines currently provide state/value/snapshot/table-watch events; MySQL, PostgreSQL, MongoDB, and HTTP currently perform an initial read only. |
 | Transactions | `TransactionalDorm` is currently implemented by the in-memory, BLoC, MySQL, PostgreSQL, and SQLite engines. Other engines may still use internal transactions for individual operations. |
+| Synchronization | `dorm_sync` provides one-way primary-to-replica delivery with an injectable outbox; durable persistence and backend-wide support are not established by the current tests. |
 | Pagination | Current engines expose `OffsetPageRequest` as their page type; cursor requests are rejected by the typed repository surface. |
 | Polymorphic serialization across every engine | Current serialized behavior exists, but universal cross-engine compatibility is not established. |
 | MongoDB change streams | Not exposed by the current MongoDB engine. |

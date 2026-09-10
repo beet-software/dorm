@@ -21,6 +21,7 @@ workspace:
   - dorm_sqlite_database
   - dorm_test
   - dorm_example
+  - dorm_sync
 
 dev_dependencies:
   melos: ^8.6.0
