@@ -31,14 +31,16 @@ dorm_example --help
 
 ## Generate a project
 
-Choose one engine and, optionally, an output directory:
+Choose one engine and, optionally, an output directory. Without `--output`, the
+directory name defaults to the selected engine:
 
 ~~~shell
 dorm_example --engine memory
 dorm_example --engine postgres --output store_example
 ~~~
 
-The output directory must be empty or must not exist. The generator does not
+For example, `dorm_example --engine memory` creates `memory/`. The output
+directory must be empty or must not exist. The generator does not
 overwrite existing files, run pub get, run build_runner, start Docker, or start
 the generated application.
 

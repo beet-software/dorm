@@ -33,8 +33,8 @@ Future<void> runCli(List<String> arguments) async {
     ..addOption(
       'output',
       abbr: 'o',
-      defaultsTo: 'dorm_example',
-      help: 'Directory where the project will be created.',
+      help:
+          'Directory where the project will be created (defaults to the engine name).',
     )
     ..addFlag('help', abbr: 'h', negatable: false, help: 'Show this help.');
 
@@ -62,7 +62,7 @@ Future<void> runCli(List<String> arguments) async {
     return;
   }
 
-  final String output = p.normalize(results['output'] as String);
+  final String output = p.normalize(results['output'] as String? ?? engine);
   final String projectName = p.basename(p.absolute(output));
   try {
     final ExampleProfile profile = ExampleProfiles.byName(engine);

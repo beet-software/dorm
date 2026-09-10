@@ -31,7 +31,8 @@ dorm_example -e memory
 dorm_example -e postgres -o store_example
 ```
 
-The default destination is `dorm_example`. The generator refuses to write into
+The default destination is the selected engine name, such as `memory` or
+`postgres`. The generator refuses to write into
 a non-empty directory, so select a new directory or remove the existing
 project before generating another one.
 
