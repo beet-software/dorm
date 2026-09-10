@@ -1,0 +1,140 @@
+name: Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to publish
+        required: true
+        type: string
+      version:
+        description: Package version to publish
+        required: true
+        type: string
+
+concurrency:
+  group: dorm-publish-${{ inputs.tag }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish-core:
+    if: ${{ github.ref_type == 'tag' && startsWith(github.ref_name, 'v') && github.ref_name == inputs.tag }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      matrix:
+        pkg: [dorm_framework, dorm_annotations]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+      - uses: subosito/flutter-action@v2
+      - uses: dart-lang/setup-dart@v1
+
+      - name: Install workspace dependencies
+        run: dart pub get
+
+      - name: Verify release tag matches package version
+        shell: bash
+        run: |
+          expected="${{ inputs.version }}"
+          actual="$(sed -n 's/^version:[[:space:]]*//p' "${{ matrix.pkg }}/pubspec.yaml" | head -n 1)"
+          test "$actual" = "$expected" || {
+            echo "${{ matrix.pkg }} declares $actual, but the release input is $expected."
+            exit 1
+          }
+
+      - name: Check whether version is already published
+        id: published
+        shell: bash
+        run: |
+          set -euo pipefail
+          package="${{ matrix.pkg }}"
+          version="${{ inputs.version }}"
+          if curl --fail --silent --show-error "https://pub.dev/api/packages/$package" |
+            jq --exit-status --arg version "$version" '.versions[]?.version == $version' >/dev/null; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+            echo "$package $version is already published; skipping."
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Prepare package for publishing
+        if: steps.published.outputs.published != 'true'
+        run: dart run tool/prepare_package.dart --package ${{ matrix.pkg }}
+
+      - name: Publish to pub.dev
+        if: steps.published.outputs.published != 'true'
+        working-directory: ./${{ matrix.pkg }}
+        shell: bash
+        run: |
+          if grep -Eq 'sdk:[[:space:]]*flutter' pubspec.yaml; then
+            flutter pub publish --force
+          else
+            dart pub publish --force
+          fi
+
+  publish-children:
+    if: ${{ github.ref_type == 'tag' && startsWith(github.ref_name, 'v') && github.ref_name == inputs.tag }}
+    needs: publish-core
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      matrix:
+        pkg: [dorm_generator, dorm_firebase_database, dorm_firestore_database, dorm_bloc_database, dorm_memory_database, dorm_mysql_database, dorm_postgres_database, dorm_mongo_database, dorm_http_database, dorm_sqlite_database, dorm_example]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+      - uses: subosito/flutter-action@v2
+      - uses: dart-lang/setup-dart@v1
+
+      - name: Install workspace dependencies
+        run: dart pub get
+
+      - name: Verify release tag matches package version
+        shell: bash
+        run: |
+          expected="${{ inputs.version }}"
+          actual="$(sed -n 's/^version:[[:space:]]*//p' "${{ matrix.pkg }}/pubspec.yaml" | head -n 1)"
+          test "$actual" = "$expected" || {
+            echo "${{ matrix.pkg }} declares $actual, but the release input is $expected."
+            exit 1
+          }
+
+      - name: Check whether version is already published
+        id: published
+        shell: bash
+        run: |
+          set -euo pipefail
+          package="${{ matrix.pkg }}"
+          version="${{ inputs.version }}"
+          if curl --fail --silent --show-error "https://pub.dev/api/packages/$package" |
+            jq --exit-status --arg version "$version" '.versions[]?.version == $version' >/dev/null; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+            echo "$package $version is already published; skipping."
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Prepare package for publishing
+        if: steps.published.outputs.published != 'true'
+        run: dart run tool/prepare_package.dart --package ${{ matrix.pkg }}
+
+      - name: Publish to pub.dev
+        if: steps.published.outputs.published != 'true'
+        working-directory: ./${{ matrix.pkg }}
+        shell: bash
+        run: |
+          if grep -Eq 'sdk:[[:space:]]*flutter' pubspec.yaml; then
+            flutter pub publish --force
+          else
+            dart pub publish --force
+          fi
