@@ -36,7 +36,8 @@ Future<void> runCli(List<String> arguments) async {
       help:
           'Directory where the project will be created (defaults to the engine name).',
     )
-    ..addFlag('help', abbr: 'h', negatable: false, help: 'Show this help.');
+    ..addFlag('help', abbr: 'h', negatable: false, help: 'Show this help.')
+    ..addFlag('no-color', negatable: false, help: 'Disable colored output.');
 
   late ArgResults results;
   try {
@@ -48,6 +49,7 @@ Future<void> runCli(List<String> arguments) async {
     return;
   }
 
+  final _Console console = _Console(noColor: results['no-color'] as bool);
   if (results['help'] as bool) {
     stdout.writeln('Generate a dORM showcase project.');
     stdout.writeln(parser.usage);
@@ -56,30 +58,73 @@ Future<void> runCli(List<String> arguments) async {
 
   final String? engine = results['engine'] as String?;
   if (engine == null) {
-    stderr.writeln('An engine is required. Use --engine or -e.');
+    console.error('An engine is required. Use --engine or -e.');
     stderr.writeln(parser.usage);
+    exitCode = 64;
+    return;
+  }
+
+  final ExampleProfile profile;
+  try {
+    profile = ExampleProfiles.byName(engine);
+  } on Object catch (error) {
+    console.error('Could not select the engine: $error');
     exitCode = 64;
     return;
   }
 
   final String output = p.normalize(results['output'] as String? ?? engine);
   final String projectName = p.basename(p.absolute(output));
+  console.info('Generating the ${profile.name} example...');
+
   try {
-    final ExampleProfile profile = ExampleProfiles.byName(engine);
     final GenerationResult result = await ExampleGenerator().generate(
       profile,
       Directory(output),
       projectName: projectName,
     );
-    stdout.writeln(
-      'Generated ${result.profile.name} example in ${result.path}.',
-    );
-    stdout.writeln();
+    console.success('Generated the ${result.profile.name} example.');
+    console.info('Location: ${result.path}');
+    console.info('Next steps:');
     for (final String instruction in result.instructions) {
-      stdout.writeln(instruction);
+      console.command(instruction);
     }
   } on Object catch (error) {
-    stderr.writeln('Could not generate the project: $error');
+    console.error('Could not generate the project: $error');
     exitCode = 1;
+  }
+}
+
+class _Console {
+  final bool _colorAllowed;
+  final bool _useColor;
+
+  _Console({required bool noColor})
+    : _colorAllowed = !noColor && !Platform.environment.containsKey('NO_COLOR'),
+      _useColor =
+          !noColor &&
+          stdout.hasTerminal &&
+          !Platform.environment.containsKey('NO_COLOR');
+
+  void info(String message) {
+    stdout.writeln(_paint('ℹ $message', '\x1B[36m'));
+  }
+
+  void success(String message) {
+    stdout.writeln(_paint('✓ $message', '\x1B[32m'));
+  }
+
+  void command(String command) {
+    stdout.writeln('  ${_paint('\$ ', '\x1B[32m')}$command');
+  }
+
+  void error(String message) {
+    final bool useColor = stderr.hasTerminal && _colorAllowed;
+    stderr.writeln(_paint('✗ $message', '\x1B[31m', enabled: useColor));
+  }
+
+  String _paint(String message, String color, {bool? enabled}) {
+    if (!(enabled ?? _useColor)) return message;
+    return '$color$message\x1B[0m';
   }
 }

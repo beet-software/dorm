@@ -29,6 +29,9 @@ Check the available options:
 dorm_example --help
 ~~~
 
+The CLI uses colors in interactive terminals and omits them in redirected
+output. Use `--no-color` or set `NO_COLOR` when plain output is preferred.
+
 ## Generate a project
 
 Choose one engine and, optionally, an output directory. Without `--output`, the

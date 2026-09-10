@@ -224,7 +224,7 @@ class ExampleGenerator {
   }
 
   List<String> _instructions(ExampleProfile profile, String output) {
-    final String cd = 'cd ${Directory(output).absolute.path}';
+    final String cd = 'cd "${Directory(output).absolute.path}"';
     final List<String> result = [cd];
     if (profile.docker) result.add('docker compose up -d');
     result.add(profile.isFlutter ? 'flutter pub get' : 'dart pub get');
