@@ -1,7 +1,7 @@
 name: dorm_mongo_database
 version: 2.0.0-dev.3
 resolution: workspace
-description: A MongoDB database engine for dORM.
+description: A MongoDB database engine for dORM applications that need persistent, document-oriented data with typed queries and repositories.
 homepage: https://github.com/ezgrs/dorm/tree/main/dorm_mongo_database
 repository: https://github.com/ezgrs/dorm.git
 environment:
