@@ -34,10 +34,12 @@ String _toSqlDateFormat(
     };
   }
 
+  final DateTime firstDayOfMonth = DateTime(dt.year, dt.month, 1);
+  final DateTime lastDayOfMonth = DateTime(dt.year, dt.month + 1, 0);
   final DateTime date = DateTime(
     dt.year,
     clamp(DateFilterUnit.month, DateTime.january, DateTime.december),
-    clamp(DateFilterUnit.day, dt.firstDayOfMonth.day, dt.lastDayOfMonth.day),
+    clamp(DateFilterUnit.day, firstDayOfMonth.day, lastDayOfMonth.day),
     clamp(DateFilterUnit.hour, 0, 23),
     clamp(DateFilterUnit.minute, 0, 59),
     clamp(DateFilterUnit.second, 0, 59),
