@@ -17,6 +17,7 @@
 import 'package:dorm_framework/dorm_framework.dart';
 import 'package:postgres/postgres.dart';
 
+import 'errors.dart';
 import 'query.dart';
 import 'reference.dart';
 import 'relationship.dart';
@@ -24,18 +25,24 @@ import 'relationship.dart';
 class Engine
     implements
         BaseEngine<Query, OffsetPageRequest>,
-        TransactionalEngine<Query, OffsetPageRequest> {
+        TransactionalEngine<Query, OffsetPageRequest>,
+        ErrorAwareEngine {
   final SessionExecutor executor;
+
+  @override
+  DormErrorMapper get errorMapper => const PostgresErrorMapper();
+
   bool _transactionActive = false;
 
   Engine(this.executor);
 
   @override
   BaseReference<Query, OffsetPageRequest> createReference() =>
-      Reference(executor);
+      ErrorMappedReference(Reference(executor), errorMapper);
 
   @override
-  BaseRelationship<Query> createRelationship() => Relationship(executor);
+  BaseRelationship<Query> createRelationship() =>
+      ErrorMappedRelationship(Relationship(executor), errorMapper);
 
   @override
   Future<T> transaction<T>(
@@ -46,7 +53,7 @@ class Engine
     }
     _transactionActive = true;
     _TransactionEngine? transactionEngine;
-    return executor
+    final Future<T> transaction = executor
         .runTx((session) {
           transactionEngine = _TransactionEngine(executor, session);
           return action(transactionEngine!);
@@ -55,10 +62,16 @@ class Engine
           transactionEngine?.active = false;
           _transactionActive = false;
         });
+    return mapDormErrors(
+      () => transaction,
+      errorMapper,
+      operation: 'transaction',
+    );
   }
 }
 
-class _TransactionEngine implements BaseEngine<Query, OffsetPageRequest> {
+class _TransactionEngine
+    implements BaseEngine<Query, OffsetPageRequest>, ErrorAwareEngine {
   final SessionExecutor executor;
   final TxSession session;
   bool active = true;
@@ -66,15 +79,24 @@ class _TransactionEngine implements BaseEngine<Query, OffsetPageRequest> {
   _TransactionEngine(this.executor, this.session);
 
   @override
+  DormErrorMapper get errorMapper => const PostgresErrorMapper();
+
+  @override
   BaseReference<Query, OffsetPageRequest> createReference() {
     _checkActive();
-    return Reference(executor, session: session);
+    return ErrorMappedReference(
+      Reference(executor, session: session),
+      errorMapper,
+    );
   }
 
   @override
   BaseRelationship<Query> createRelationship() {
     _checkActive();
-    return Relationship(executor, session: session);
+    return ErrorMappedRelationship(
+      Relationship(executor, session: session),
+      errorMapper,
+    );
   }
 
   void _checkActive() {

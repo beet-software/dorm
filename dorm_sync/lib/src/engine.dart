@@ -26,6 +26,11 @@ import 'target.dart';
 /// Decides whether a finite primary-read failure may use a replica.
 typedef SyncFallbackPolicy = bool Function(Object error, StackTrace stackTrace);
 
+/// Returns whether a portable dORM database error represents an unavailable
+/// primary, allowing finite reads to use a replica.
+bool isDormAvailabilityFailure(Object error, StackTrace stackTrace) =>
+    error is DormDatabaseException && error.isAvailabilityFailure;
+
 /// Coordinates primary mutations and ordered replica delivery.
 class SyncCoordinator {
   /// Creates a synchronization coordinator.
@@ -204,7 +209,7 @@ class SynchronizedEngine<Q extends BaseQuery<Q>, P extends PageRequest>
     required SyncMutationTarget primary,
     required Iterable<SyncReadApplyTarget> replicas,
     required SyncOutbox outbox,
-    required SyncFallbackPolicy fallback,
+    SyncFallbackPolicy? fallback,
     SyncOperationResolver? resolver,
     int? maxAttempts,
   }) : _coordinator = SyncCoordinator(
@@ -214,7 +219,7 @@ class SynchronizedEngine<Q extends BaseQuery<Q>, P extends PageRequest>
          resolver: resolver,
          maxAttempts: maxAttempts,
        ),
-       _fallback = fallback {
+       _fallback = fallback ?? isDormAvailabilityFailure {
     final Set<String> ids = {
       _coordinator.primary.id,
       ..._coordinator.replicas.map((target) => target.id),

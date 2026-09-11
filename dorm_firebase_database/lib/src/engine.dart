@@ -16,21 +16,26 @@
 
 import 'package:dorm_framework/dorm_framework.dart';
 
+import 'errors.dart';
 import 'firebase_instance.dart';
 import 'query.dart';
 import 'reference.dart';
 import 'relationship.dart';
 
-class Engine implements BaseEngine<Query, OffsetPageRequest> {
+class Engine implements BaseEngine<Query, OffsetPageRequest>, ErrorAwareEngine {
   final FirebaseInstance instance;
   final String? path;
 
   const Engine(this.instance, {this.path});
 
   @override
-  BaseReference<Query, OffsetPageRequest> createReference() =>
-      Reference(instance, path);
+  DormErrorMapper get errorMapper => const FirebaseDatabaseErrorMapper();
 
   @override
-  BaseRelationship<Query> createRelationship() => const Relationship();
+  BaseReference<Query, OffsetPageRequest> createReference() =>
+      ErrorMappedReference(Reference(instance, path), errorMapper);
+
+  @override
+  BaseRelationship<Query> createRelationship() =>
+      ErrorMappedRelationship(const Relationship(), errorMapper);
 }

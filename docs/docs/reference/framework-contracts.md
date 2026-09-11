@@ -312,9 +312,17 @@ See [Synchronize database engines](synchronization.md) for the outbox,
 fallback, identity, relationship, retry, and lifecycle semantics.
 ## Error contract
 
-There is no common dORM exception class. Contract users can observe ordinary
-Dart errors, engine SDK errors, database client errors, and stream errors.
-Identity codec mismatches produce StateError in existing key operations;
-explicit creation identities are validated against the entity schema and use
-ArgumentError for incompatible values. Engines retain UnsupportedError for
-automatic composite creation when the generated static contract is bypassed.
+Supported external engines normalize provider failures as
+`DormDatabaseException`. Its `DormErrorKind` describes the portable category,
+while `cause`, `stackTrace`, and `providerCode` preserve native diagnostics.
+`DormRetryability` is independent from the category, so an application does
+not have to assume that every conflict or transaction failure is safe to retry.
+
+`ErrorAwareEngine` is optional. An external engine that does not implement it
+continues to expose its native errors. Validation failures raised by dORM
+before a provider call, including `ArgumentError`, `StateError`,
+`UnsupportedError`, and `FormatException`, are not converted.
+
+Missing records are still represented by normal results: `peek` returns `null`
+and collection reads return empty lists. See [Portable database errors](errors.md)
+for the public fields and provider mapping policy.

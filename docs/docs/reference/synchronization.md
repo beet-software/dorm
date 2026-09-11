@@ -58,17 +58,16 @@ final synchronizedEngine =
       primary: primaryTarget,
       replicas: [replicaTarget],
       outbox: MemorySyncOutbox(),
-      fallback: (error, stackTrace) {
-        return error is DatabaseUnavailableException;
-      },
     );
 
 final dorm = Dorm(synchronizedEngine);
 ~~~
 
-DatabaseUnavailableException above is an application-defined example. dORM
-does not provide one common availability exception. The fallback callback must
-classify errors using the concrete backend's error types.
+The default policy accepts only `DormDatabaseException` values whose kind is
+unavailable or `timeout`. It does not fall back for unknown, authorization,
+validation, conflict, or programming errors. Supply `fallback` when the
+application has a provider-specific availability rule or wants different
+behavior. See [Portable database errors](errors.md) for the complete contract.
 
 The primary target must be a SyncMutationTarget. EngineSyncTarget is the
 standard adapter for a ChangeTrackedEngine, which can report the exact result

@@ -17,6 +17,7 @@
 import 'package:dorm_framework/dorm_framework.dart';
 import 'package:mysql_client/mysql_client.dart';
 
+import 'errors.dart';
 import 'query.dart';
 import 'reference.dart';
 import 'relationship.dart';
@@ -24,18 +25,23 @@ import 'relationship.dart';
 class Engine
     implements
         BaseEngine<Query, OffsetPageRequest>,
-        TransactionalEngine<Query, OffsetPageRequest> {
+        TransactionalEngine<Query, OffsetPageRequest>,
+        ErrorAwareEngine {
   final MySQLConnection connection;
   bool _transactionActive = false;
 
   Engine(this.connection);
 
   @override
-  BaseReference<Query, OffsetPageRequest> createReference() =>
-      Reference(connection);
+  DormErrorMapper get errorMapper => const MySqlErrorMapper();
 
   @override
-  BaseRelationship<Query> createRelationship() => Relationship(connection);
+  BaseReference<Query, OffsetPageRequest> createReference() =>
+      ErrorMappedReference(Reference(connection), errorMapper);
+
+  @override
+  BaseRelationship<Query> createRelationship() =>
+      ErrorMappedRelationship(Relationship(connection), errorMapper);
 
   @override
   Future<T> transaction<T>(
@@ -46,7 +52,7 @@ class Engine
     }
     _transactionActive = true;
     _TransactionEngine? transactionEngine;
-    return connection
+    final Future<T> transaction = connection
         .transactional((transactionConnection) {
           transactionEngine = _TransactionEngine(transactionConnection);
           return action(transactionEngine!);
@@ -55,25 +61,37 @@ class Engine
           transactionEngine?.active = false;
           _transactionActive = false;
         });
+    return mapDormErrors(
+      () => transaction,
+      errorMapper,
+      operation: 'transaction',
+    );
   }
 }
 
-class _TransactionEngine implements BaseEngine<Query, OffsetPageRequest> {
+class _TransactionEngine
+    implements BaseEngine<Query, OffsetPageRequest>, ErrorAwareEngine {
   final MySQLConnection connection;
   bool active = true;
 
   _TransactionEngine(this.connection);
 
   @override
+  DormErrorMapper get errorMapper => const MySqlErrorMapper();
+
+  @override
   BaseReference<Query, OffsetPageRequest> createReference() {
     _checkActive();
-    return Reference(connection, transactionScoped: true);
+    return ErrorMappedReference(
+      Reference(connection, transactionScoped: true),
+      errorMapper,
+    );
   }
 
   @override
   BaseRelationship<Query> createRelationship() {
     _checkActive();
-    return Relationship(connection);
+    return ErrorMappedRelationship(Relationship(connection), errorMapper);
   }
 
   void _checkActive() {

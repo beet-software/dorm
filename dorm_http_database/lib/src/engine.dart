@@ -17,17 +17,21 @@
 import 'package:dorm_framework/dorm_framework.dart';
 import 'package:http/http.dart' as http;
 
+import 'errors.dart';
 import 'mapping.dart';
 import 'query.dart';
 import 'reference.dart';
 import 'relationship.dart';
 
 /// An HTTP/JSON engine for REST-shaped APIs.
-class Engine implements BaseEngine<Query, OffsetPageRequest> {
+class Engine implements BaseEngine<Query, OffsetPageRequest>, ErrorAwareEngine {
   final http.Client client;
   final Uri baseUri;
   final HttpMapping mapping;
   final Map<String, String> headers;
+
+  @override
+  DormErrorMapper get errorMapper => const HttpErrorMapper();
 
   /// Creates an engine using an application-owned HTTP [client].
   const Engine({
@@ -38,13 +42,22 @@ class Engine implements BaseEngine<Query, OffsetPageRequest> {
   });
 
   @override
-  BaseReference<Query, OffsetPageRequest> createReference() => Reference(
-    client: client,
-    baseUri: baseUri,
-    mapping: mapping,
-    headers: headers,
-  );
+  BaseReference<Query, OffsetPageRequest> createReference() =>
+      ErrorMappedReference(
+        Reference(
+          client: client,
+          baseUri: baseUri,
+          mapping: mapping,
+          headers: headers,
+        ),
+        errorMapper,
+        mapFormatExceptions: true,
+      );
 
   @override
-  BaseRelationship<Query> createRelationship() => const Relationship();
+  BaseRelationship<Query> createRelationship() => ErrorMappedRelationship(
+    const Relationship(),
+    errorMapper,
+    mapFormatExceptions: true,
+  );
 }

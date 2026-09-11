@@ -75,6 +75,21 @@ class _FailingPeekTarget
   ) => throw StateError('primary unavailable');
 }
 
+class _PortableUnavailablePeekTarget
+    extends EngineSyncTarget<Query<Object>, OffsetPageRequest> {
+  _PortableUnavailablePeekTarget(Engine engine) : super(engine, id: 'primary');
+
+  @override
+  Future<Model?> peek<Data, Model extends Data, I extends Object>(
+    Entity<Data, Model, I, Creation<Data, I>> entity,
+    I id,
+  ) => throw const DormDatabaseException(
+    kind: DormErrorKind.unavailable,
+    retryability: DormRetryability.unknown,
+    message: 'primary unavailable',
+  );
+}
+
 class _FailingApplyTarget
     extends EngineSyncTarget<Query<Object>, OffsetPageRequest> {
   _FailingApplyTarget(this.shouldFail, Engine engine)
@@ -421,5 +436,31 @@ void main() {
     );
     expect(replicated?.text, 'after');
     expect(await outbox.pending(), isEmpty);
+  });
+  test('uses the portable availability policy by default', () async {
+    await replica.createReference().push(
+      entity,
+      const _Note(id: 'portable-fallback', text: 'replica'),
+    );
+    final MemorySyncOutbox fallbackOutbox = MemorySyncOutbox();
+    final SynchronizedEngine<Query<Object>, OffsetPageRequest> fallbackEngine =
+        SynchronizedEngine<Query<Object>, OffsetPageRequest>(
+          primary: _PortableUnavailablePeekTarget(primary),
+          replicas: [
+            EngineReplicaTarget<Query<Object>, OffsetPageRequest>(
+              replica,
+              id: 'replica',
+            ),
+          ],
+          outbox: fallbackOutbox,
+        );
+
+    final _Note? result = await fallbackEngine.createReference().peek(
+      entity,
+      'portable-fallback',
+    );
+
+    expect(result?.text, 'replica');
+    await fallbackOutbox.close();
   });
 }

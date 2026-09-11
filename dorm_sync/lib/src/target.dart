@@ -207,6 +207,29 @@ Future<void> applyChangeSet<Data, Model extends Data, I extends Object>(
   }
 }
 
+ChangeTrackedReference<Q, P> _mappedChangeTrackedReference<
+  Q extends BaseQuery<Q>,
+  P extends PageRequest
+>(ChangeTrackedEngine<Q, P> engine) {
+  final ChangeTrackedReference<Q, P> reference = engine
+      .createChangeTrackedReference();
+  if (engine case final ErrorAwareEngine aware) {
+    return ErrorMappedChangeTrackedReference(reference, aware.errorMapper);
+  }
+  return reference;
+}
+
+BaseReference<Q, P> _mappedReference<
+  Q extends BaseQuery<Q>,
+  P extends PageRequest
+>(BaseEngine<Q, P> engine) {
+  final BaseReference<Q, P> reference = engine.createReference();
+  if (engine case final ErrorAwareEngine aware) {
+    return ErrorMappedReference(reference, aware.errorMapper);
+  }
+  return reference;
+}
+
 /// Adapts a [ChangeTrackedEngine] to a complete synchronization target.
 class EngineSyncTarget<Q extends BaseQuery<Q>, P extends PageRequest>
     with _SyncReadAdapter<Q, P>
@@ -219,7 +242,7 @@ class EngineSyncTarget<Q extends BaseQuery<Q>, P extends PageRequest>
     P Function(PageRequest request)? mapPage,
   }) : _compileFilter = compileFilter ?? BaseFilter.fromExpression,
        _mapPage = mapPage ?? ((request) => request as P),
-       _reference = engine.createChangeTrackedReference();
+       _reference = _mappedChangeTrackedReference(engine);
 
   /// Underlying engine.
   final ChangeTrackedEngine<Q, P> engine;
@@ -274,7 +297,7 @@ class EngineReplicaTarget<Q extends BaseQuery<Q>, P extends PageRequest>
     P Function(PageRequest request)? mapPage,
   }) : _compileFilter = compileFilter ?? BaseFilter.fromExpression,
        _mapPage = mapPage ?? ((request) => request as P),
-       _reference = engine.createReference();
+       _reference = _mappedReference(engine);
 
   /// Underlying engine.
   final BaseEngine<Q, P> engine;

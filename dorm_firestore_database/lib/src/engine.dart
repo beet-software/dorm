@@ -17,21 +17,29 @@
 import 'package:cloud_firestore/cloud_firestore.dart' as fs;
 import 'package:dorm_framework/dorm_framework.dart';
 
+import 'errors.dart';
 import 'query.dart';
 import 'reference.dart';
 import 'relationship.dart';
 
 /// A dORM engine backed by Cloud Firestore.
-class Engine implements BaseEngine<Query, OffsetPageRequest> {
+class Engine implements BaseEngine<Query, OffsetPageRequest>, ErrorAwareEngine {
   final fs.FirebaseFirestore firestore;
   final String? parentPath;
+
+  @override
+  DormErrorMapper get errorMapper => const FirestoreErrorMapper();
 
   const Engine(this.firestore, {this.parentPath});
 
   @override
   BaseReference<Query, OffsetPageRequest> createReference() =>
-      Reference(firestore, parentPath: parentPath);
+      ErrorMappedReference(
+        Reference(firestore, parentPath: parentPath),
+        errorMapper,
+      );
 
   @override
-  BaseRelationship<Query> createRelationship() => const Relationship();
+  BaseRelationship<Query> createRelationship() =>
+      ErrorMappedRelationship(const Relationship(), errorMapper);
 }

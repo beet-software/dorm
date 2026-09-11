@@ -17,6 +17,7 @@
 import 'package:dorm_framework/dorm_framework.dart';
 import 'package:sqlite_async/sqlite_async.dart';
 
+import 'errors.dart';
 import 'query.dart';
 import 'reference.dart';
 import 'relationship.dart';
@@ -24,18 +25,23 @@ import 'relationship.dart';
 class Engine
     implements
         BaseEngine<Query, OffsetPageRequest>,
-        TransactionalEngine<Query, OffsetPageRequest> {
+        TransactionalEngine<Query, OffsetPageRequest>,
+        ErrorAwareEngine {
   final SqliteDatabase database;
   bool _transactionActive = false;
 
   Engine(this.database);
 
   @override
-  BaseReference<Query, OffsetPageRequest> createReference() =>
-      Reference(database);
+  DormErrorMapper get errorMapper => const SqliteErrorMapper();
 
   @override
-  BaseRelationship<Query> createRelationship() => const Relationship();
+  BaseReference<Query, OffsetPageRequest> createReference() =>
+      ErrorMappedReference(Reference(database), errorMapper);
+
+  @override
+  BaseRelationship<Query> createRelationship() =>
+      ErrorMappedRelationship(const Relationship(), errorMapper);
 
   @override
   Future<T> transaction<T>(
@@ -46,7 +52,7 @@ class Engine
     }
     _transactionActive = true;
     _TransactionEngine? transactionEngine;
-    final T result = await database
+    final Future<T> transaction = database
         .writeTransaction((context) {
           transactionEngine = _TransactionEngine(database, context);
           return action(transactionEngine!);
@@ -55,11 +61,16 @@ class Engine
           transactionEngine?.active = false;
           _transactionActive = false;
         });
-    return result;
+    return mapDormErrors(
+      () => transaction,
+      errorMapper,
+      operation: 'transaction',
+    );
   }
 }
 
-class _TransactionEngine implements BaseEngine<Query, OffsetPageRequest> {
+class _TransactionEngine
+    implements BaseEngine<Query, OffsetPageRequest>, ErrorAwareEngine {
   final SqliteDatabase database;
   final SqliteWriteContext context;
   bool active = true;
@@ -67,15 +78,21 @@ class _TransactionEngine implements BaseEngine<Query, OffsetPageRequest> {
   _TransactionEngine(this.database, this.context);
 
   @override
+  DormErrorMapper get errorMapper => const SqliteErrorMapper();
+
+  @override
   BaseReference<Query, OffsetPageRequest> createReference() {
     _checkActive();
-    return Reference(database, transaction: context);
+    return ErrorMappedReference(
+      Reference(database, transaction: context),
+      errorMapper,
+    );
   }
 
   @override
   BaseRelationship<Query> createRelationship() {
     _checkActive();
-    return const Relationship();
+    return ErrorMappedRelationship(const Relationship(), errorMapper);
   }
 
   void _checkActive() {

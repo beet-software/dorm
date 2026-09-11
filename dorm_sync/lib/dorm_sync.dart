@@ -17,6 +17,7 @@
 /// Optional primary-to-replica synchronization for dORM.
 library;
 
-export 'src/engine.dart' show SynchronizedEngine, SyncFallbackPolicy;
+export 'src/engine.dart'
+    show SynchronizedEngine, SyncFallbackPolicy, isDormAvailabilityFailure;
 export 'src/outbox.dart';
 export 'src/target.dart';

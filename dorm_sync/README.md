@@ -3,8 +3,8 @@
 dorm_sync composes dORM engines into a unidirectional primary-to-replica
 setup.
 
-The primary handles all reads and application writes. Finite reads can use a
-client-provided fallback policy when the primary is unavailable. Writes are
+The primary handles all reads and application writes. Finite reads use a portable fallback policy for unavailable or timed-out
+primaries; applications can provide a custom policy. Writes are
 recorded as exact change sets and delivered to replicas through an injectable
 at-least-once outbox. Streams stay connected to the primary and distributed
 transactions are not provided.
@@ -18,7 +18,6 @@ Example:
       primary: primaryTarget,
       replicas: [replicaTarget],
       outbox: MemorySyncOutbox(),
-      fallback: (_, _) => false,
     );
 
     final dorm = Dorm(engine);

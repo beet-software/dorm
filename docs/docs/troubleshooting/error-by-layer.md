@@ -78,15 +78,16 @@ repository call is made.
 
 ## Inspect the original backend error
 
-The engine delegates database, driver, Firebase, and HTTP failures instead of
-wrapping all of them in one dORM exception class. Keep the original exception
+Supported external engines expose database, driver, Firebase, and HTTP failures
+as `DormDatabaseException`. The exception keeps the original provider error
 and stack trace at the application boundary:
 
 ```dart
 try {
   await dorm.products.repository.push(product);
-} catch (error, stackTrace) {
-  print('Product write failed: $error');
+} on DormDatabaseException catch (error, stackTrace) {
+  print('Product write failed: ${error.kind}');
+  print(error.cause);
   print(stackTrace);
 }
 ```
@@ -95,7 +96,6 @@ A failure can occur while dORM builds a query, while the driver executes it,
 or while the backend applies its own schema, permission, or constraint rules.
 The selected engine page identifies the connection and configuration values
 that must exist before the operation can succeed.
-
 ## Handle stream errors through the stream API
 
 Errors from a source, relationship callback, mapping step, or backend listener
@@ -111,9 +111,10 @@ final subscription = dorm.users.repository.pullAll().listen(
 );
 ```
 
-The error may remain backend-specific. The relationship layer does not add a
-universal exception type or error envelope.
-
+Supported external engines use `DormDatabaseException` for provider failures
+from relationships and streams. Engines without `ErrorAwareEngine` and dORM
+validation errors remain native Dart or provider errors. See
+[Portable database errors](../reference/errors.md).
 ## Check engine-specific callback behavior
 
 `patch` combines a read, a callback, and a write or removal. Error propagation

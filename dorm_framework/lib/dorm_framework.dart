@@ -17,6 +17,7 @@
 export 'src/dependency.dart';
 export 'src/creation.dart';
 export 'src/engine.dart';
+export 'src/errors.dart';
 export 'src/entity.dart';
 export 'src/filter.dart';
 export 'src/identity.dart';

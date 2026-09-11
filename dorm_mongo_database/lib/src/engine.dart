@@ -17,19 +17,24 @@
 import 'package:dorm_framework/dorm_framework.dart';
 import 'package:mongo_dart/mongo_dart.dart';
 
+import 'errors.dart';
 import 'query.dart';
 import 'reference.dart';
 import 'relationship.dart';
 
-class Engine implements BaseEngine<Query, OffsetPageRequest> {
+class Engine implements BaseEngine<Query, OffsetPageRequest>, ErrorAwareEngine {
   final Db database;
 
   const Engine(this.database);
 
   @override
-  BaseReference<Query, OffsetPageRequest> createReference() =>
-      Reference(database);
+  DormErrorMapper get errorMapper => const MongoErrorMapper();
 
   @override
-  BaseRelationship<Query> createRelationship() => Relationship(database);
+  BaseReference<Query, OffsetPageRequest> createReference() =>
+      ErrorMappedReference(Reference(database), errorMapper);
+
+  @override
+  BaseRelationship<Query> createRelationship() =>
+      ErrorMappedRelationship(Relationship(database), errorMapper);
 }

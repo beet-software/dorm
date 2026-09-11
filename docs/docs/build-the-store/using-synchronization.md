@@ -131,21 +131,16 @@ final SynchronizedEngine<Query<Object>, OffsetPageRequest> engine = Synchronized
   primary: primaryTarget,
   replicas: [replicaTarget],
   outbox: outbox,
-  fallback: (error, stackTrace) {
-    // TODO Implement accordingly
-    return true;
-  },
 );
 
 final Dorm<Query<Object>, OffsetPageRequest> dorm = Dorm(engine);
 ~~~
 
-The `fallback` callback should return _true_ only for errors that mean the
-primary cannot currently answer a read, such as a temporary connection
-problem. It should return _false_ for invalid filters, permission errors,
-errors caused by an incompatible data structure, and programming errors.
-
-Since dORM does not define one error class for every database, the application must recognize the errors produced by its selected engine and implement the fallback accordingly.
+By default, dORM falls back only for a portable `DormDatabaseException` whose
+kind is unavailable or `timeout`. It does not hide permission, validation,
+conflict, unknown, or programming errors. You can provide a `fallback` callback
+when your application needs a different policy. See [Portable database errors](../reference/errors.md)
+for the categories and provider details available to the callback.
 
 ## What happens when the application writes
 
@@ -318,7 +313,6 @@ final SynchronizedEngine<Query<Object>, OffsetPageRequest> engine = Synchronized
   primary: primaryTarget,
   replicas: [replicaTarget],
   outbox: durableOutbox,
-  fallback: (_, __) => false,
   resolver: resolver,
 );
 ~~~
@@ -386,7 +380,6 @@ final SynchronizedEngine<Query<Object>, OffsetPageRequest> engine = Synchronized
   primary: primaryTarget,
   replicas: [replicaTarget],
   outbox: durableOutbox,
-  fallback: (_, _) => false,
   maxAttempts: 5,
 );
 ~~~
