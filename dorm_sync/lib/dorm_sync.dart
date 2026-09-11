@@ -14,7 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-/// Optional primary-to-replica synchronization for dORM.
+/// Optional primary-to-replica synchronization for dORM applications.
+///
+/// Configure a primary target, zero or more replica targets, and an outbox
+/// to keep application writes ordered and retryable across engines.
 library;
 
 export 'src/engine.dart'

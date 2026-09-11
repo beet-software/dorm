@@ -1,16 +1,14 @@
-﻿name: dorm_sync
-version: 2.0.0-dev.2
+name: dorm_sync
+version: 2.0.0-dev.4
 resolution: workspace
-description: Engine-agnostic primary and replica synchronization for dORM applications.
+description: Primary-to-replica synchronization for dORM applications with fallback reads, ordered delivery, and retryable outbox storage.
 homepage: https://github.com/ezgrs/dorm/tree/main/dorm_sync
 repository: https://github.com/ezgrs/dorm.git
 environment:
   sdk: '>=3.11.5 <4.0.0'
 dependencies:
-  dorm_framework: ^2.0.0-dev.2
+  dorm_framework: ^2.0.0-dev.4
 dev_dependencies:
-  lints: ^5.0.0
+  lints: "^5.0.0"
   test: ^1.32.0
-  dorm_memory_database: ^2.0.0-dev.2
-
-
+  dorm_memory_database: ^2.0.0-dev.4

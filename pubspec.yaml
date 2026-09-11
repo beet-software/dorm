@@ -64,3 +64,10 @@ melos:
     generate:
       description: Run build_runner in workspace packages that depend on it.
       run: melos exec -c 1 --depends-on build_runner -- "dart run build_runner build"
+
+    pub:dry-run:
+      description: Validate publication contents for every publishable workspace package.
+      exec: dart pub publish --dry-run
+      packageFilters:
+        ignore:
+          - dorm_test

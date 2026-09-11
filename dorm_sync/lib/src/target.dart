@@ -79,7 +79,7 @@ abstract interface class SyncApplyTarget {
   );
 }
 
-/// A target that can be used for reads and replica delivery.
+/// A target that supports reads and materialized change-set delivery.
 abstract interface class SyncReadApplyTarget
     implements SyncReadTarget, SyncApplyTarget {}
 
