@@ -2,7 +2,7 @@
 
 dORM generates the concrete Dart types that connect annotated source declarations to the framework repository API. The generator runs as a `build_runner` builder and writes `.dorm.dart` files beside the annotated source.
 
-This module assumes that `lib/models.dart` contains the `User`, `Profile`, and
+This module assumes that <i>lib/models.dart</i> contains the `User`, `Profile`, and
 `Product` declarations from [Define users, profiles, and products](declaring-models.md).
 
 ## Start from an annotated source file
@@ -20,12 +20,12 @@ The two files are parts of the same Dart library. dORM writes the ORM types to `
 
 From the project directory:
 
-```shell title="Generate the store API"
+```shell
 dart pub get
 dart run build_runner build
 ```
 
-Run the command from the directory that contains the application's `pubspec.yaml`.
+Run the command from the directory that contains the application's <i>pubspec.yaml</i>.
 
 ## Generated files
 
@@ -33,8 +33,8 @@ For a source file named `models.dart`, generation produces:
 
 | File | Producer | Role |
 | --- | --- | --- |
-| `models.dorm.dart` | `dorm_generator` | dORM data/model classes, dependencies, schema metadata, entities, `Dorm`, and generated relationship paths |
-| `models.g.dart` | `json_serializable` | JSON serialization helpers used by generated data and model classes |
+| <i>models.dorm.dart</i> | `dorm_generator` | dORM data/model classes, dependencies, schema metadata, entities, `Dorm`, and generated relationship paths |
+| <i>models.g.dart</i> | `json_serializable` | JSON serialization helpers used by generated data and model classes |
 
 Both files are Dart `part` files of `models.dart`. They are compiled together with the source library.
 
@@ -46,7 +46,7 @@ For the annotated `_User` declaration, the dORM generator creates these public t
 | --- | --- |
 | `UserData` | Field and embedded-data values used as create/update input |
 | `User` | Identified model; it extends `UserData` and contains the generated `id` |
-| `UserDependency` | Dependency value supplied when creating a `User` |
+| `UserDependency` | `Dependency` value supplied when creating a `User` |
 | `UserFields` | Field metadata used by filters and relationships |
 | `UserEntity` | Schema, identity, conversion, and serialization adapter |
 | `Dorm` | Database access object containing generated `DatabaseEntity` accessors |

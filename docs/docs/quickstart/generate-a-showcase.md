@@ -36,13 +36,13 @@ The default destination is the selected engine name, such as `memory` or
 a non-empty directory, so select a new directory or remove the existing
 project before generating another one.
 
-The generated project contains the annotated source in `lib/models.dart`.
-Run `build_runner` after creation to produce `lib/models.dorm.dart` and
-`lib/models.g.dart`; those files are derived from the annotated source.
+The generated project contains the annotated source in <i>lib/models.dart</i>.
+Run `build_runner` after creation to produce <i>lib/models.dorm.dart</i> and
+<i>lib/models.g.dart</i>; those files are derived from the annotated source.
 
 ## Choose a project profile
 
-| Engine | Generated project | External setup |
+| `Engine` | Generated project | External setup |
 | --- | --- | --- |
 | In-memory | Flutter Web | None |
 | BLoC | Flutter Web | None |
@@ -63,9 +63,9 @@ starts infrastructure only. The generated Flutter application continues to
 run on the host, so browser access and hot reload remain part of the normal
 Flutter workflow.
 
-Flutter profiles require Flutter **3.47.1 or newer**. This requirement comes
-from the `build_runner`/analyzer dependency chain used by the generated
-project; pure Dart profiles are not affected.
+Flutter profiles require a Flutter SDK compatible with the generated project
+and its `build_runner`/analyzer dependency chain. Pure Dart profiles are not
+affected.
 
 ## Run the Firebase profile locally
 
@@ -200,10 +200,10 @@ JSON-oriented annotations such as `ModelField`, `PolymorphicField`, and
 
 Start with these files:
 
-- `lib/models.dart`: the source of the model and relationship declarations;
-- `lib/models.dorm.dart`: generated entities, repositories, schema metadata,
+- <i>lib/models.dart</i>: the source of the model and relationship declarations;
+- <i>lib/models.dorm.dart</i>: generated entities, repositories, schema metadata,
   and the `Dorm` facade;
-- `lib/models.g.dart`: generated JSON and copy-with support;
+- <i>lib/models.g.dart</i>: generated JSON and copy-with support;
 - `README.md`: commands and backend-specific setup;
 - `docker-compose.yml`, `.env.example`, and `sql/schema.sql` for service-backed
   profiles.
@@ -212,5 +212,5 @@ For SQLite, the generated Dart program reads the final `sql/schema.sql` file at
 startup and executes it before creating the engine. Run the program from the
 generated project root so that this relative path resolves correctly.
 
-Edit `lib/models.dart` when changing the domain. Regenerate the derived files
+Edit <i>lib/models.dart</i> when changing the domain. Regenerate the derived files
 after every annotation or field change.

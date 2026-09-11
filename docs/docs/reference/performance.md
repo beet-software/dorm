@@ -9,7 +9,7 @@ performance guarantees.
 A repository operation crosses generated conversion and engine execution:
 
 1. application values are represented as creation data or a model;
-2. Entity and EntitySchema resolve identity and stored field metadata;
+2. `Entity` and `EntitySchema` resolve identity and stored field metadata;
 3. the engine builds and executes its query or write;
 4. serialized results are reconstructed as models or collections.
 
@@ -29,7 +29,7 @@ prepared-statement policy.
 ## Relationships
 
 Relationship paths are lazy: declaring a path does not read data. Work begins
-when a peek or pull method is called.
+when a `peek` or `pull` method is called.
 
 A direct relation plan may group reads or use a database join. A portable
 readable-operation fallback may issue one or more additional reads per path
@@ -47,11 +47,11 @@ external-change notifications.
 
 The common stream contract fixes result shape and error delivery, not event
 frequency, backend listener cost, or cross-engine update latency. Streams also
-remain attached to their selected source in SynchronizedEngine.
+remain attached to their selected source in `SynchronizedEngine`.
 
 ## Fallback and synchronization
 
-SynchronizedEngine performs finite primary reads first. A classified fallback
+`SynchronizedEngine` performs finite primary reads first. A classified fallback
 can add the cost of trying one or more replicas. Empty and null results do not
 trigger fallback.
 
@@ -71,5 +71,5 @@ workload in the target application, including representative data size,
 relationship depth, page size, provider indexes, and network conditions.
 
 See [Engine and platform support](engine-support.md) and the selected
-[engine guide](../apply/choose-an-engine.md) before treating an implementation
+[engine guide](../engines/index.md) before treating an implementation
 detail as a portability guarantee.

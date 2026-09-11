@@ -6,7 +6,7 @@ The first version of the store has three model concepts:
 - `Profile` is embedded data inside a user;
 - `Product` is a stored catalog entity with a decimal price.
 
-Keep all three declarations in `lib/models.dart`. The next page will generate
+Keep all three declarations in <i>lib/models.dart</i>. The next page will generate
 the concrete Dart types and repositories from this file.
 
 ## Add the decimal value type
@@ -14,13 +14,13 @@ the concrete Dart types and repositories from this file.
 The product model uses `Decimal` for its price. Add the package before writing
 the import:
 
-```shell title="Add the product value type"
+```shell
 dart pub add decimal
 ```
 
 ## Create the annotated source file
 
-Create `lib/models.dart` with the imports and generated parts:
+Create <i>lib/models.dart</i> with the imports and generated parts:
 
 ```dart title="lib/models.dart"
 import 'package:decimal/decimal.dart';

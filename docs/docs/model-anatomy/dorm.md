@@ -1,4 +1,4 @@
-# Generated Dorm
+# Generated `Dorm`
 
 `Dorm` is the generated application-facing facade. It receives an engine and
 exposes one generated entity accessor for each annotated `@Model`.

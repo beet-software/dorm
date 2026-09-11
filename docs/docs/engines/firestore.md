@@ -13,13 +13,13 @@ Firestore instance before constructing the engine.
 
 From a Flutter project, run:
 
-```shell title="Add the Cloud Firestore engine"
+```shell
 flutter pub add dorm_firestore_database
 ```
 
 Add the Firebase SDK packages that your application imports directly:
 
-```shell title="Add the Firebase SDK packages"
+```shell
 flutter pub add firebase_core
 flutter pub add cloud_firestore
 ```
@@ -231,7 +231,7 @@ showcase generator, use the Firebase CLI flow below.
 Start the emulator from the Flutter project that contains your Firebase
 configuration:
 
-```shell title="Start the Firestore Emulator"
+```shell
 firebase emulators:start --only firestore
 ```
 

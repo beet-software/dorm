@@ -173,7 +173,7 @@ Choose dORM when:
 - common operations matter more than exposing every backend-specific operator;
 - tests should exercise generated repositories without requiring a service.
 
-The selected engine still matters. Read [Choose an engine](../apply/choose-an-engine.md)
+The selected engine still matters. Read [Choose an engine](../engines/index.md)
 and the [engine and platform support table](../reference/engine-support.md) before
 depending on streams, transactions, advanced filters, identity generation, or
 relationship behavior.
@@ -230,6 +230,6 @@ access:
 8. Expand the dORM boundary only while the common surface remains useful.
 
 Continue with [Build a small store](../quickstart/index.md) to create a
-project, [Operations](../build-the-store/overview.md) to learn the repository
-operations, or [Choose an engine](../apply/choose-an-engine.md) to compare
+project, [Operations](../operations/index.md) to learn the repository
+operations, or [Choose an engine](../engines/index.md) to compare
 backend setup and capabilities.

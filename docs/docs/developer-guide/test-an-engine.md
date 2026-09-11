@@ -95,8 +95,9 @@ The first failing command usually identifies the layer to inspect:
 | Generation fails | Annotated source, parts, or generator validation. |
 | Analysis fails | Dart types, imports, or stale generated output. |
 | Shared compliance test fails | The framework contract or the adapter lifecycle. |
-| Engine-specific unit test fails | Query translation, serialization, or driver behavior. |
+| `Engine`-specific unit test fails | Query translation, serialization, or driver behavior. |
 | Integration test fails | Connection, credentials, schema, service, or backend state. |
 
-Keep the original exception and stack trace. dORM does not convert all engine
-and driver failures into one shared exception class.
+Keep the original exception and stack trace. An official external engine maps
+recognized provider failures to `DormDatabaseException`; a custom engine may
+keep its native provider errors.

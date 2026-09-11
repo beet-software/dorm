@@ -27,8 +27,9 @@ const ForeignField({
 - `name` is the stored foreign-key field name. If omitted, the getter name is
   used.
 - `referTo` identifies the target model.
-- `unique` records relationship cardinality metadata. It is not a physical
-  database uniqueness constraint.
+- `unique` records whether the relationship points to one or many records. It
+  is metadata for generated relationships, not a physical database uniqueness
+  constraint.
 - `as` names the generated forward relationship accessor on the class that
   declares the field.
 - `inverseAs` requests an inverse accessor on the model named by `referTo`.

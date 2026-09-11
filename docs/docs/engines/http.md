@@ -8,13 +8,13 @@ discover routes or infer an API contract from a URL.
 
 From the Dart application directory, execute:
 
-```shell title="Add the HTTP engine"
+```shell
 dart pub add dorm_http_database
 ```
 
 Add the HTTP package because the application creates and owns the client:
 
-```shell title="Add the HTTP client package"
+```shell
 dart pub add http
 ```
 
@@ -73,7 +73,7 @@ The default endpoints are:
 | single delete | `DELETE` | `users/{id}` |
 | filtered delete | `DELETE` | `users` |
 | key read | `GET` | `users` |
-| purge | `DELETE` | `users` |
+| `purge` | `DELETE` | `users` |
 
 Configure `createAll`, `updateAll`, and `deleteKeys` when the application uses
 `putAll`, `pushAll`, or `popKeys`. Those operations fail with
@@ -113,7 +113,7 @@ The create request then omits the identity from both the route and the JSON
 body. The response must contain either the scalar identity or the complete
 created object:
 
-```dart title="Configure a backend-generated identity"
+```dart
 final HttpResourceMapping users = HttpResourceMapping(
   path: 'users',
   identityLocation: HttpIdentityLocation.none,

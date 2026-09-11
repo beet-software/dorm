@@ -1,7 +1,8 @@
 # Read records
 
-Use one-shot repository methods when the application needs a completed result.
-Use stream methods when it needs a subscription whose lifetime it controls.
+Use a one-shot repository method when the application needs one completed result.
+Use a stream method when it needs to keep listening for values and controls how
+long that subscription stays active.
 
 ## Read one identity
 

@@ -15,7 +15,7 @@ focuses on adding the review flow to the store.
 
 Declare the shared content type and each variant in the annotated source:
 
-```dart title="Declare review content variants in lib/models.dart"
+```dart
 abstract class _ReviewContent {}
 
 @PolymorphicData(name: 'product', as: #product)
@@ -41,7 +41,7 @@ abstract class _UserReviewContent implements _ReviewContent {
 
 Connect the variants to the review with a pivot field:
 
-```dart title="Connect variants to the Review model"
+```dart
 @Model(name: 'Reviews', as: #reviews)
 abstract class _Review {
   @Field(name: 'text')
@@ -64,7 +64,7 @@ the supported polymorphic declaration in detail.
 
 Regenerate the generated parts after changing these declarations:
 
-```shell title="Regenerate the review model API"
+```shell
 dart run build_runner build
 ```
 
@@ -115,7 +115,7 @@ The generated derived field uses the enum normalization used by dORM. Use the ge
 
 ## Keep embedded data and polymorphic data distinct
 
-`Profile` is embedded data: `User` always has one `profile` value with a fixed shape. Review content is polymorphic data: the `type` discriminator selects one of several generated shapes.
+`Profile` is embedded data: `User` always has one `profile` value with a fixed shape. `Review` content is polymorphic data: the `type` discriminator selects one of several generated shapes.
 
 Both forms become generated Dart values and JSON-serializable fields. They differ in how the generated model determines the fields available for a record: `Profile` has one fixed schema, while `ReviewContent` dispatches through `ReviewContentType`.
 

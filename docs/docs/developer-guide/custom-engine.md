@@ -8,7 +8,7 @@ This guide assumes that the model and repository flow is already understood. It 
 
 Create a Dart package and add the framework:
 
-```shell title="Create a custom engine package"
+```shell
 dart create -t package dorm_example_database
 cd dorm_example_database
 dart pub add dorm_framework
@@ -17,7 +17,7 @@ dart pub add dev:lints
 
 The package name is not part of the framework contract. The current engine packages use the `dorm_<backend>_database` naming convention.
 
-Create the implementation under `lib/src/` and expose the public entry point from `lib/dorm_example_database.dart`.
+Create the implementation under <i>lib/src/</i> and expose the public entry point from <i>lib/dorm_example_database.dart</i>.
 
 ## Implement the supported engine boundary
 
@@ -54,7 +54,7 @@ class Engine implements BaseEngine<Query, OffsetPageRequest> {
 }
 ```
 
-`DatabaseEntity` calls `createReference` and `createRelationship` when it is constructed. Repository calls then delegate to those created objects.
+`DatabaseEntity` calls `createReference` and `createRelationship` when it is constructed. `Repository` calls then delegate to those created objects.
 
 ## Implement the backend query value
 
@@ -141,7 +141,7 @@ class Reference implements BaseReference<Query, OffsetPageRequest> {
 
 Each reference method receives an `Entity`. Use that entity for the model-specific operations instead of depending on generated model classes:
 
-| Entity operation | Use at the backend boundary |
+| `Entity` operation | Use at the backend boundary |
 | --- | --- |
 | `schema` | Table/storage name, field names, and foreign-key metadata |
 | `primaryKeyCodec` | Encode and decode simple or composite identities |
@@ -166,7 +166,7 @@ manyToOne
 manyToMany
 ```
 
-Each method receives readable sources and a callback that supplies a target ID or filter. Return the corresponding framework association type and `Join` result shape.
+Each method receives readable sources and a callback that supplies a target ID or filter. Return the corresponding framework `Association` type and `Join` result shape.
 
 The relationship implementation must preserve the framework cardinality semantics:
 
@@ -192,13 +192,13 @@ export 'src/filter.dart' show Filter;
 export 'src/query.dart' show Query;
 ```
 
-The current engine packages guarantee `Engine`, `Filter`, and `Query` through their barrel files. Concrete `Reference` and `Relationship` classes under `lib/src` are not the confirmed application-facing construction API. A custom package may keep those classes internal to its engine implementation.
+The current engine packages guarantee `Engine`, `Filter`, and `Query` through their barrel files. Concrete `Reference` and `Relationship` classes under <i>lib/src</i> are not the confirmed application-facing construction API. A custom package may keep those classes internal to its engine implementation.
 
 ## Validate the engine
 
 Add tests for the framework contract and run them from the custom engine package:
 
-```shell title="Analyze and test a custom engine"
+```shell
 dart pub get
 dart analyze
 dart test
@@ -223,7 +223,7 @@ Framework relationship-path tests and MySQL relationship tests demonstrate the k
 | Implement `BaseEngine`, `BaseQuery`, `BaseReference`, and `BaseRelationship` | Officially supported |
 | Implement `Entity`, `PrimaryKeyCodec`, `RelationSource`, or relation plans through their public framework contracts | Officially supported at the framework contract level |
 | Use concrete engine constructors or types that are exported by a package barrel | Possible, subject to that package's public API |
-| Import another package's `lib/src` classes or rely on generated normalization helper names | Incidental implementation use; not guaranteed |
+| Import another package's <i>lib/src</i> classes or rely on generated normalization helper names | Incidental implementation use; not guaranteed |
 | Depend on a backend's private transaction, cache, or driver behavior through an internal class | Incidental and backend-specific |
 
 Transaction support is an optional framework capability. A custom engine may

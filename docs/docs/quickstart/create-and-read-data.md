@@ -1,7 +1,7 @@
 # Create and read a user
 
 Use the generated repository to create one user and read it back. Replace the
-contents of `bin/dorm_store.dart` with this complete application:
+contents of <i>bin/dorm_store.dart</i> with this complete application:
 
 ```dart title="bin/dorm_store.dart"
 import 'package:dorm_memory_database/dorm_memory_database.dart';
@@ -41,7 +41,7 @@ The returned `User` is already identified, so its `id` can be passed to
 Run the generation command again after changing `models.dart`, then start the
 application:
 
-```shell title="Generate the model API and run the application"
+```shell
 dart run build_runner build
 dart run
 ```
@@ -50,5 +50,5 @@ The program prints the email read from the repository. The records live only
 for the lifetime of this process because the in-memory engine is in-process.
 
 Continue the example with [carts and cart items](relations-and-cart.md),
-then use [Operations](../build-the-store/overview.md) for the reusable create,
+then use [Operations](../operations/index.md) for the reusable create,
 read, update, delete, filter, sorting, and pagination tasks.

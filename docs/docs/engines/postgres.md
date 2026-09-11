@@ -8,14 +8,14 @@ not open or close that object for you.
 
 From the Dart application directory, execute:
 
-```shell title="Add the PostgreSQL engine"
+```shell
 dart pub add dorm_postgres_database
 ```
 
 Add the PostgreSQL driver because the application creates and owns the
 `Connection` or `Pool`:
 
-```shell title="Add the PostgreSQL driver"
+```shell
 dart pub add postgres
 ```
 
@@ -69,7 +69,7 @@ model.
 
 Declare the model source with `part` directives and run:
 
-```shell title="Generate the PostgreSQL model API"
+```shell
 dart run build_runner build
 ```
 
@@ -116,7 +116,7 @@ are no longer needed:
 await connection.close();
 ```
 
-The complete pure Dart example is in the package's `example/` directory and
+The complete pure Dart example is in the package's <i>example/</i> directory and
 uses `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DATABASE`,
 `POSTGRES_USERNAME`, and `POSTGRES_PASSWORD` for its endpoint values.
 
@@ -127,7 +127,7 @@ The application owns the PostgreSQL endpoint credentials and supplies them to
 The dORM engine does not provide an authentication, roles, or secrets-store
 abstraction.
 
-Filter values and model values are sent through the PostgreSQL driver's
+`Filter` values and model values are sent through the PostgreSQL driver's
 parameterized execution path. Table and column identifiers come from the
 generated schema metadata rather than from filter values.
 

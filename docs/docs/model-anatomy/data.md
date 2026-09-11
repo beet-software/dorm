@@ -1,4 +1,4 @@
-# Generated Data
+# Generated `Data`
 
 `Data` is the generated input shape for model creation and updates. It holds
 ordinary model fields, but it does not represent the model's own identity.
@@ -30,8 +30,8 @@ field values through the generated entity.
 
 An annotated `@Data` declaration can produce a reusable embedded value such as
 `Profile`. An annotated `@Model` produces a data type for the stored entity.
-The annotation forms are documented in [Annotations > Data](../annotations/data.md)
-and [Annotations > Model](../annotations/model.md).
+The annotation forms are documented in [Annotations > `Data`](../annotations/data.md)
+and [Annotations > `Model`](../annotations/model.md).
 
-The distinction between `Data` and the identified [Model](model.md) prevents
+The distinction between `Data` and the identified [`Model`](model.md) prevents
 creation input from carrying an identity that has not yet been resolved.

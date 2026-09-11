@@ -12,7 +12,7 @@ This setup has three resources that must be available before a repository call c
 
 From the Dart application's directory, run:
 
-```shell title="Add the MySQL engine"
+```shell
 dart pub add dorm_mysql_database
 dart pub add mysql_client
 dart pub add dotenv
@@ -22,7 +22,7 @@ dart pub add dotenv
 
 ## Define the connection settings
 
-Create `.env` beside the application's `pubspec.yaml`:
+Create `.env` beside the application's <i>pubspec.yaml</i>:
 
 ```dotenv title=".env"
 MYSQL_HOST=127.0.0.1
@@ -153,13 +153,13 @@ generator, not a migration history tool.
 
 Run it from the application directory:
 
-```shell title="Generate a MySQL schema"
+```shell
 dart run dorm_mysql_database:generate lib/models.dart
 ```
 
 Save the output when the database tool expects a file:
 
-```shell title="Save the generated schema"
+```shell
 dart run dorm_mysql_database:generate lib/models.dart > schema.sql
 ```
 
@@ -169,7 +169,7 @@ not read the generated `.dorm.dart` file.
 
 The normal model-generation command remains separate:
 
-```shell title="Generate the model API"
+```shell
 dart run build_runner build
 ```
 
@@ -195,7 +195,7 @@ For a MySQL `AUTO_INCREMENT` primary key, declare a single key with
 `Creation.auto` then omits the key from the `INSERT`, reads MySQL's generated
 insert ID, and returns a model containing that identity.
 
-```dart title="Declare a MySQL auto-increment key"
+```dart
 @Model(
   name: 'products',
   primaryKey: [

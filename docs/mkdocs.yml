@@ -13,7 +13,7 @@ theme:
   titles_only: true
 nav:
   - Home: index.md
-  - When to use dORM?: compare/data-access-approaches.md
+  - When to use dORM?: when-to-use/index.md
   - Quickstart:
       - Generate a showcase project: quickstart/generate-a-showcase.md
       - Build a small store: quickstart/index.md
@@ -26,28 +26,28 @@ nav:
       - Add reviews with multiple content types: quickstart/reviews-and-polymorphism.md
       - Handle input and live reads: quickstart/forms-and-live-reads.md
   - Operations:
-      - Apply an operation: build-the-store/overview.md
-      - Creating: build-the-store/creating.md
-      - Reading: build-the-store/reading.md
-      - Updating: build-the-store/updating.md
-      - Deleting: build-the-store/deleting.md
-      - Using filters: build-the-store/using-filters.md
-      - Using sorting: build-the-store/using-sorting.md
-      - Using pagination: build-the-store/using-pagination.md
-      - Using transactions: build-the-store/using-transactions.md
-      - Using synchronization: build-the-store/using-synchronization.md
-      - Handling errors: build-the-store/handling-errors.md
+      - Apply an operation: operations/index.md
+      - Creating: operations/creating.md
+      - Reading: operations/reading.md
+      - Updating: operations/updating.md
+      - Deleting: operations/deleting.md
+      - Using filters: operations/using-filters.md
+      - Using sorting: operations/using-sorting.md
+      - Using pagination: operations/using-pagination.md
+      - Using transactions: operations/using-transactions.md
+      - Using synchronization: operations/using-synchronization.md
+      - Handling errors: operations/handling-errors.md
   - Engines:
-      - Choose an engine: apply/choose-an-engine.md
-      - Run in-memory: apply/use-memory.md
-      - Run with BLoC: apply/use-bloc.md
-      - Run with Firebase: apply/use-firebase.md
-      - Run with Cloud Firestore: apply/use-firestore.md
-      - Run with MySQL: apply/use-mysql.md
-      - Run with PostgreSQL: apply/use-postgres.md
-      - Run with MongoDB: apply/use-mongo.md
-      - Run with HTTP/JSON: apply/use-http.md
-      - Run with SQLite: apply/use-sqlite.md
+      - Choose an engine: engines/index.md
+      - Run in-memory: engines/memory.md
+      - Run with BLoC: engines/bloc.md
+      - Run with Firebase: engines/firebase.md
+      - Run with Cloud Firestore: engines/firestore.md
+      - Run with MySQL: engines/mysql.md
+      - Run with PostgreSQL: engines/postgres.md
+      - Run with MongoDB: engines/mongo.md
+      - Run with HTTP/JSON: engines/http.md
+      - Run with SQLite: engines/sqlite.md
   - Annotations:
       - Learn the annotations: annotations/index.md
       - Data: annotations/data.md
@@ -74,9 +74,9 @@ nav:
       - Recipes: user-guide/recipes/index.md
       - Migration to v2: user-guide/migration-to-v2.md
   - Developer guide:
-      - Work on dORM locally: development/index.md
-      - Implement a custom engine: development/custom-engine.md
-      - Test an engine: development/test-an-engine.md
+      - Work on dORM locally: developer-guide/index.md
+      - Implement a custom engine: developer-guide/custom-engine.md
+      - Test an engine: developer-guide/test-an-engine.md
   - Troubleshooting:
       - Start troubleshooting: troubleshooting/index.md
       - Find the failing layer: troubleshooting/error-by-layer.md

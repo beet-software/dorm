@@ -4,7 +4,7 @@ Start with the point at which the problem appears. dORM has separate stages
 for dependency resolution, code generation, Dart analysis, repository calls,
 and backend execution.
 
-| Problem | Page |
+| Problem | `Page` |
 | --- | --- |
 | A command, package, or repository call fails and the layer is unclear | [Find the failing layer](error-by-layer.md) |
 | `build_runner` fails or generated files are missing | [Fix code generation problems](code-generation-problems.md) |

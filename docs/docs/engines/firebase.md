@@ -8,13 +8,13 @@ The repository API remains the same after the engine changes. The setup adds Fir
 
 From the Flutter application directory, run:
 
-```shell title="Add the Firebase Realtime Database engine"
+```shell
 flutter pub add dorm_firebase_database
 ```
 
 Add the Firebase packages that your application imports directly:
 
-```shell title="Add the Firebase SDK packages"
+```shell
 flutter pub add firebase_core
 flutter pub add firebase_database
 ```
@@ -109,7 +109,7 @@ showcase generator, use the Firebase CLI flow below.
 
 From the Flutter application directory, configure the Firebase Database Emulator with port `9000`:
 
-```shell title="Initialize Firebase emulator configuration"
+```shell
 firebase init
 ```
 
@@ -117,7 +117,7 @@ Select Realtime Database and Emulators during initialization. Use `database.rule
 
 Start the emulator in a separate terminal:
 
-```shell title="Start the Realtime Database Emulator"
+```shell
 firebase emulators:start --only database
 ```
 
@@ -151,7 +151,7 @@ The selected `OfflineMode` affects how the adapter obtains snapshots while conne
 
 After changing annotated models, regenerate the generated parts before launching Flutter:
 
-```shell title="Regenerate and run the Firebase application"
+```shell
 flutter pub run build_runner build
 flutter run
 ```

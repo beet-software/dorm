@@ -32,7 +32,7 @@ application's dependency-management approach.
 
 ## Keep model declarations in a dedicated library
 
-For a new application, use `lib/models.dart` as the default location for
+For a new application, use <i>lib/models.dart</i> as the default location for
 annotated models. Keep the generated parts beside that source file:
 
 ```text
@@ -45,7 +45,7 @@ lib/
 This location and filename are conventions, not generator requirements. An
 annotated Dart library can live anywhere in the application and can use any
 filename. The generated files follow the source library's path and basename;
-for example, `lib/catalog/product.dart` uses `product.dorm.dart` and
+for example, <i>lib/catalog/product.dart</i> uses `product.dorm.dart` and
 `product.g.dart` in the same directory. Update the `part` directives to match
 the names you choose:
 
@@ -54,7 +54,7 @@ part 'product.dorm.dart';
 part 'product.g.dart';
 ```
 
-Use `lib/models.dart` when one central model library keeps the project easier
+Use <i>lib/models.dart</i> when one central model library keeps the project easier
 to navigate. Choose a different path when the application groups models by
 feature or bounded context.
 

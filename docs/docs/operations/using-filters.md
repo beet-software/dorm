@@ -5,7 +5,7 @@ filtered removals. Pass the generated `FieldSchema` for the field being
 queried. This keeps the Dart field name and its persisted name together.
 
 This guide assumes that the generated `User` and `Product` types are available
-and that `Dorm` is initialized as shown in [Operations in a generated repository](overview.md).
+and that `Dorm` is initialized as shown in [Operations in a generated repository](index.md).
 
 ## Match a stored value
 
@@ -72,7 +72,7 @@ final List<Product> matches = await dorm.products.repository.peekAll(
 query implementation. The callback determines which model fields contribute to
 the searchable value and how those values are normalized.
 
-## Filter dates and ranges
+## `Filter` dates and ranges
 
 Use a date filter when the comparison is made at a specific date unit:
 
@@ -188,7 +188,7 @@ pagination, security rules, ordering, and request behavior. For a backend with
 limited query composition, use a supported single condition or make any local
 second-stage filtering explicit in application code.
 
-## Filter collection fields
+## `Filter` collection fields
 
 `contains` and `containsAny` apply to fields whose stored representation is a
 collection:
@@ -209,7 +209,7 @@ full-text search. Use `Filter.text` for a persisted prefix-search field.
 Collection filters are not part of the minimum portable filter set. Check the
 engine and platform support table before using them in code that may switch engines.
 
-## Filter a relation source
+## `Filter` a relation source
 
 The same value-filter API applies when reading related records directly. For
 example, read the items belonging to one cart by filtering `cart-id`:

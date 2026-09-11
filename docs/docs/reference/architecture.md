@@ -6,32 +6,12 @@ backend-specific behavior without reading every implementation.
 
 ## The execution path
 
-~~~text
-annotations
-    |
-    v
-dorm_generator + build_runner
-    |
-    v
-Data / Model / Dependency / Fields / Entity / Repository / Dorm
-    |
-    v
-generated repository operation
-    |
-    v
-Entity + EntitySchema + FieldSchema
-    |
-    v
-BaseEngine
-    |
-    +--> BaseReference + BaseQuery + BaseRelationship
-    |
-    v
-concrete engine
-    |
-    v
-memory store, SQL database, Firebase, MongoDB, HTTP API, or SQLite
-~~~
+An annotated source declaration is processed by `dorm_generator` through
+`build_runner`. The generated `Data`, `Model`, `Dependency`, `Fields`,
+`Entity`, `Repository`, and `Dorm` types turn an application call into an
+engine operation. The `EntitySchema` and `FieldSchema` provide the storage
+metadata; `BaseEngine` creates the `BaseReference`, `BaseQuery`, and
+`BaseRelationship` implementations that the selected backend executes.
 
 The generated layer keeps application-facing types consistent. The engine
 decides how those operations are represented and executed by its backend.
@@ -42,37 +22,37 @@ decides how those operations are represented and executed by its backend.
 | --- | --- |
 | Annotation | Declares model shape, fields, identities, relationships, and generated metadata. |
 | Generator | Converts declarations into source code during build time. |
-| Data | Carries fields supplied when creating or updating a value. |
-| Model | Adds the resolved identity to a data value. |
-| Dependency | Carries the related identities required to construct a model. |
-| Fields | Exposes generated field metadata for filters, ordering, and relationship paths. |
-| Entity | Converts data and identities and exposes the engine-neutral schema. |
-| EntitySchema | Describes stored fields, primary keys, foreign keys, and derived metadata. |
-| Repository | Provides the application operation surface for one entity. |
-| Engine | Connects framework contracts to one storage technology. |
+| `Data` | Carries fields supplied when creating or updating a value. |
+| `Model` | Adds the resolved identity to a data value. |
+| `Dependency` | Carries the related identities required to construct a model. |
+| `Fields` | Exposes generated field metadata for filters, ordering, and relationship paths. |
+| `Entity` | Converts data and identities and exposes the engine-neutral schema. |
+| `EntitySchema` | Describes stored fields, primary keys, foreign keys, and derived metadata. |
+| `Repository` | Provides the application operation surface for one entity. |
+| `Engine` | Connects framework contracts to one storage technology. |
 | Backend | Stores, queries, streams, or serves the serialized values. |
 
-Dorm is the generated object that groups the DatabaseEntity accessors. A
-DatabaseEntity combines an Entity with an engine and exposes its repository
+`Dorm` is the generated object that groups the `DatabaseEntity` accessors. A
+`DatabaseEntity` combines an `Entity` with an engine and exposes its repository
 and relationships.
 
 ## Build-time generation, runtime execution
 
 dORM uses build-time generation. The application edits annotated source and
-runs build_runner; it does not discover model metadata through runtime
+runs `build_runner`; it does not discover model metadata through runtime
 reflection.
 
 The generated files are part of the application source graph:
 
-- *.dorm.dart contains dORM types and metadata;
-- *.g.dart contains JSON serialization helpers.
+- <i>*.dorm.dart</i> contains dORM types and metadata;
+- <i>*.g.dart</i> contains JSON serialization helpers.
 
 The generated code is an implementation of the declared model contract. It
 does not replace the annotated source as the place where models are changed.
 
 ## Schema metadata is the portable boundary
 
-EntitySchema, FieldSchema, foreign-key metadata, and primary-key codecs
+`EntitySchema`, `FieldSchema`, foreign-key metadata, and primary-key codecs
 describe the stored shape without choosing SQL, Firebase paths, MongoDB
 selectors, HTTP parameters, or another provider format.
 
@@ -103,12 +83,12 @@ the same query plan across engines.
 
 ## Optional capabilities
 
-The common BaseEngine contract is deliberately small. Additional behavior is
+The common `BaseEngine` contract is deliberately small. Additional behavior is
 advertised through separate capabilities:
 
-- TransactionalEngine exposes the portable transaction facade;
-- ChangeTrackedEngine exposes exact mutation change sets for synchronization;
-- ErrorAwareEngine exposes portable provider-error classification.
+- `TransactionalEngine` exposes the portable transaction facade;
+- `ChangeTrackedEngine` exposes exact mutation change sets for synchronization;
+- `ErrorAwareEngine` exposes portable provider-error classification.
 
 An engine that does not implement a capability remains usable through the
 common surface, but the corresponding generated or composed feature is not
@@ -136,9 +116,9 @@ distributed transaction.
 
 ## Boundary rules
 
-- Application code should import package barrels, not lib/src paths.
+- Application code should import package barrels, not paths under *lib/src/*.
 - Generated files should be regenerated, not manually edited.
-- Engine implementations may use provider APIs internally; those APIs are not
+- `Engine` implementations may use provider APIs internally; those APIs are not
   automatically part of the dORM contract.
 - A behavior shared by the framework must not depend on one provider's error,
   query, identity, or transaction model.
@@ -146,4 +126,4 @@ distributed transaction.
   before it is documented as a capability.
 
 See [Public surface](public-surface.md), [Framework contracts](framework-contracts.md),
-and [Implement a custom engine](../development/custom-engine.md).
+and [Implement a custom engine](../developer-guide/custom-engine.md).

@@ -7,13 +7,13 @@ The application creates, opens, and closes the MongoDB `Db` instance.
 
 From the Dart application directory, execute:
 
-```shell title="Add the MongoDB engine"
+```shell
 dart pub add dorm_mongo_database
 ```
 
 Add the MongoDB driver because the application creates and owns the `Db`:
 
-```shell title="Add the MongoDB driver"
+```shell
 dart pub add mongo_dart
 ```
 

@@ -1,12 +1,12 @@
 # Connect the in-memory engine
 
-The annotated source and generated parts now exist in `lib/models.dart`. The
+The annotated source and generated parts now exist in <i>lib/models.dart</i>. The
 next step is to construct the in-memory engine and pass it to the generated
 `Dorm` facade.
 
 ## Create one engine instance
 
-Create `bin/dorm_store.dart` with the engine and generated model library:
+Create <i>bin/dorm_store.dart</i> with the engine and generated model library:
 
 ```dart title="bin/dorm_store.dart"
 import 'package:dorm_memory_database/dorm_memory_database.dart';

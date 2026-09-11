@@ -1,4 +1,4 @@
-# Generated Repository
+# Generated `Repository`
 
 Each generated entity exposes a repository. The repository combines the
 generated entity mapping with the reference and relationship implementations
@@ -27,5 +27,5 @@ The repository delegates backend work. It does not directly build SQL,
 MongoDB selectors, Firebase queries, or HTTP requests. Those operations belong
 to the engine's reference and query implementations.
 
-Use [Apply an operation](../build-the-store/overview.md) for task-oriented
+Use [Apply an operation](../operations/index.md) for task-oriented
 operation details and [Public surface](../reference/public-surface.md) for signatures.

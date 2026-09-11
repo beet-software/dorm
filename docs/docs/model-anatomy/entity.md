@@ -1,4 +1,4 @@
-# Generated Entity
+# Generated `Entity`
 
 The generated `UserEntity` is the mapping object between one generated model
 and the engine-independent framework contracts.

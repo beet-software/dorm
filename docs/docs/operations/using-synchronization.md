@@ -22,14 +22,8 @@ The feature uses three roles:
 - The **outbox** is a list of changes waiting to reach replicas. It allows a
   failed delivery to be inspected and tried again.
 
-The direction is always:
-
-~~~text
-application -> primary storage
-                    |
-                    v
-                 outbox -> replica storage
-~~~
+The application writes to the primary storage first. dORM records a pending
+delivery in the outbox, then sends the same result to each replica.
 
 The primary and replicas can use different dORM engines, but they must agree
 on the entities and identities that they share.

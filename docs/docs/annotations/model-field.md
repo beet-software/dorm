@@ -27,7 +27,7 @@ const ModelField({
 with a nullable or collection-shaped `ModelFieldType` when the nested value has
 that shape:
 
-```dart title="Nullable nested model"
+```dart
 @ModelField(
   name: 'profile',
   referTo: _Profile,
@@ -36,7 +36,7 @@ that shape:
 get profile;
 ```
 
-```dart title="List of nested models"
+```dart
 @ModelField(
   name: 'students',
   referTo: _Student,

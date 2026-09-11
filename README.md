@@ -189,8 +189,8 @@ provide a universal migration language or replace the native client.
 
 - [dORM documentation](https://ezgrs.github.io/dorm/)
 - [Quickstart](https://ezgrs.github.io/dorm/quickstart/)
-- [Choose an engine](https://ezgrs.github.io/dorm/apply/choose-an-engine/)
+- [Choose an engine](https://ezgrs.github.io/dorm/engines/)
 - [Annotations](https://ezgrs.github.io/dorm/annotations/)
 - [Framework contracts](https://ezgrs.github.io/dorm/reference/framework-contracts/)
-- [Implement a custom engine](https://ezgrs.github.io/dorm/development/custom-engine/)
+- [Implement a custom engine](https://ezgrs.github.io/dorm/developer-guide/custom-engine/)
 - [GitHub repository](https://github.com/ezgrs/dorm)

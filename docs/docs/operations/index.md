@@ -4,6 +4,10 @@ The generated store model gives each entity a repository. The repository uses
 the same operation vocabulary for every engine, while the selected engine
 performs the storage-specific work.
 
+A repository is the object you call to work with one kind of record. First
+choose whether you want to create, read, change, or remove data; then use the
+operation that matches that action.
+
 ## Choose an operation by the data transition
 
 | Task | Operation | Main input or result |
@@ -11,15 +15,15 @@ performs the storage-specific work.
 | Create a model | `put` | `Creation` → identified `Model` |
 | Create several models | `putAll` | `List<Creation>` → models |
 | Read one model | `peek` | Identity → `Future<Model?>` |
-| Read a collection | `peekAll` | Filter/options → `Future<List<Model>>` |
-| Read a page | `peekPage` | Filter/page request → `Page<Model>` |
+| Read a collection | `peekAll` | `Filter`/options → `Future<List<Model>>` |
+| Read a page | `peekPage` | `Filter`/page request → `Page<Model>` |
 | Observe one model | `pull` | Identity → `Stream<Model?>` |
-| Observe a collection | `pullAll` | Filter/options → `Stream<List<Model>>` |
+| Observe a collection | `pullAll` | `Filter`/options → `Stream<List<Model>>` |
 | Replace an identified model | `push` | Complete `Model` |
 | Change or remove conditionally | `patch` | Identity and callback |
 | Remove one model | `pop` | Identity |
 | Remove several identities | `popKeys` | List of identities |
-| Remove matching models | `popAll` | Filter |
+| Remove matching models | `popAll` | `Filter` |
 | Remove every model | `purge` | No input |
 
 ## Open a repository

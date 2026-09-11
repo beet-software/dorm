@@ -6,7 +6,7 @@ continuation metadata. The current engines expose offset pagination through
 
 ## Read an offset page
 
-```dart title="Read the third page of products"
+```dart
 final Page<Product> page = await dorm.products.repository.peekPage(
   Filter.empty(),
   OffsetPageRequest(

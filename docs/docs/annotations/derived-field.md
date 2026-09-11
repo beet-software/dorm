@@ -29,7 +29,7 @@ abstract class _User {
 The generated model has a `qUsername` getter and persists its value at
 `_query/username`. Query the generated field metadata:
 
-```dart title="Querying a derived field"
+```dart
 final users = await dorm.users.repository.peekAll(
   Filter.text(
     'ADA',
@@ -59,7 +59,7 @@ the project's serialization and database engine.
 The callback controls composition directly. There is no token list and no
 automatic separator:
 
-```dart title="Combining model properties"
+```dart
 @DerivedField(name: '_query/address')
 static String $dorm$derived$qAddress(
   _Address model,
@@ -69,7 +69,7 @@ static String $dorm$derived$qAddress(
 
 Use the generated field in a query through its `FieldSchema`:
 
-```dart title="Filtering the combined value"
+```dart
 final addresses = await dorm.addresses.repository.peekAll(
   Filter.value(
     '99950_13',
@@ -91,7 +91,7 @@ callback decides how a null source should be represented.
 | `date` | Formats a date as `YYYYMMDD`. |
 | `datetime` | Formats local date and time as `YYYYMMDDHHmmssSSS`. |
 
-```dart title="Normalizing a date"
+```dart
 @DerivedField(name: '_query/created-at')
 static String $dorm$derived$qCreatedAt(
   _Event model,
@@ -113,4 +113,4 @@ is written when the model is persisted.
 expression. When source properties change, the model must be persisted again so
 the stored derived value is updated.
 
-Use [Using filters](../build-the-store/using-filters.md) for query examples.
+Use [Using filters](../operations/using-filters.md) for query examples.

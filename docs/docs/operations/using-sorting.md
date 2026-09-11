@@ -8,7 +8,7 @@ returned records.
 
 Pass `QueryOptions` as the optional second argument to `peekAll`:
 
-```dart title="Sort by product name"
+```dart
 final List<Product> products = await dorm.products.repository.peekAll(
   Filter.empty(),
   QueryOptions(

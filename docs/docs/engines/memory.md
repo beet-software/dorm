@@ -55,7 +55,7 @@ final User? loaded = await dorm.users.repository.peek(created.id);
 ```
 
 Simple generated identities use UUID strings. Explicit identities and composite
-identities follow the framework creation contracts described in [Create records](../build-the-store/creating.md).
+identities follow the framework creation contracts described in [Create records](../operations/creating.md).
 
 ## Observe in-process changes
 

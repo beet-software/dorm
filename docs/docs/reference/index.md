@@ -21,14 +21,14 @@ The reference is organized by decision rather than by package:
 
 ## How this section relates to the rest of the docs
 
-- [Operations](../build-the-store/overview.md) explains how to perform a task
+- [Operations](../operations/index.md) explains how to perform a task
   in an application.
 - [Model anatomy](../model-anatomy/index.md) explains the generated pieces in
   learning order.
 - [Annotations](../annotations/index.md) explains how to declare models.
-- [Engines](../apply/choose-an-engine.md) explains how to configure a concrete
+- [Engines](../engines/index.md) explains how to configure a concrete
   backend.
-- [Developer guide](../development/index.md) explains how to contribute to or
+- [Developer guide](../developer-guide/index.md) explains how to contribute to or
   implement engines.
 - This section records the contracts and decisions that connect those guides.
 
@@ -40,7 +40,7 @@ reference cannot explain.
 ## Reading guarantees
 
 A statement in this section is a framework guarantee only when it is described
-as part of a framework contract. Engine-specific tables and notes describe the
+as part of a framework contract. `Engine`-specific tables and notes describe the
 current implementation and tested behavior of that engine. They do not make a
 promise about another backend.
 

@@ -6,9 +6,9 @@ This page uses a pure Dart application and the generated store models from [Gene
 
 ## Add the engine package
 
-From the directory containing your application's `pubspec.yaml`, run:
+From the directory containing your application's <i>pubspec.yaml</i>, run:
 
-```shell title="Add the BLoC engine"
+```shell
 dart pub add dorm_bloc_database
 ```
 
@@ -34,7 +34,7 @@ final Dorm<Query, OffsetPageRequest> dorm = Dorm(engine);
 
 `Engine()` creates the in-memory reference used by the generated `Dorm`. Reuse this `Dorm` instance when different parts of the application need to observe the same records. A separate `Engine()` creates a separate in-memory store.
 
-## Run the User and Product flow
+## Run the `User` and `Product` flow
 
 The repository calls do not change for the BLoC engine:
 
@@ -112,9 +112,9 @@ The engine does not expose a database-server connection or a migration step. The
 
 For a composite primary key, pass the final identity explicitly through `Creation.explicit`:
 
-Add this model declaration to `lib/models.dart` and regenerate the model API:
+Add this model declaration to <i>lib/models.dart</i> and regenerate the model API:
 
-```dart title="Add a composite-key model to lib/models.dart"
+```dart
 @Model(
   name: 'CartItems',
   as: #cartItems,
@@ -157,7 +157,7 @@ time because dORM does not generate multiple key components implicitly.
 
 For a Dart console application, regenerate the model and run the program from the application directory:
 
-```shell title="Regenerate and run the BLoC application"
+```shell
 dart run build_runner build
 dart run
 ```

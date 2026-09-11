@@ -20,16 +20,16 @@ unlisted server versions, provider configurations, or future implementations.
 | Relationship execution | Portable | Portable | Readable operations | Readable operations | Plans plus readable fallback | Plans plus readable fallback | Plans plus readable fallback | Readable operations | Readable operations |
 | Portable provider errors | No capability | No capability | Firebase mapper | Firebase mapper | MySQL mapper | PostgreSQL mapper | MongoDB mapper | HTTP mapper | SQLite mapper |
 
-## Engine notes
+## `Engine` notes
 
 ### Memory and BLoC
 
-Both engines keep state in the Engine instance and require no external
+Both engines keep state in the `Engine` instance and require no external
 service. Their reads and relationships are evaluated in process. Memory uses
 Dart maps and streams; BLoC exposes state-backed streams through its BLoC
 dependencies.
 
-See [Run in-memory](../apply/use-memory.md) and [Run with BLoC](../apply/use-bloc.md).
+See [Run in-memory](../engines/memory.md) and [Run with BLoC](../engines/bloc.md).
 
 ### Firebase Realtime Database
 
@@ -37,18 +37,18 @@ Reference identities are String values. Firebase initialization, authentication,
 and offline mode belong to the Flutter application. Value events are provided
 by Realtime Database.
 
-The current popAll path is not a common all-or-nothing transaction guarantee.
-See [Run with Firebase](../apply/use-firebase.md).
+The current `popAll` path is not a common all-or-nothing transaction guarantee.
+See [Run with Firebase](../engines/firebase.md).
 
 ### Cloud Firestore
 
 Document IDs are simple String identities. Firestore snapshots and internal
 batches/transactions are available to the implementation, but there is no
-public TransactionalDorm capability. Composite identities, migrations,
+public `TransactionalDorm` capability. Composite identities, migrations,
 aggregation, and general cursor pagination are not part of the current dORM
 surface.
 
-See [Run with Cloud Firestore](../apply/use-firestore.md).
+See [Run with Cloud Firestore](../engines/firestore.md).
 
 ### MySQL and PostgreSQL
 
@@ -57,12 +57,12 @@ SQL and require application-created tables. MySQL and PostgreSQL expose the
 portable transaction facade.
 
 Their direct relationship sources can use plans that group work, while custom
-or composite sources may use readable operations. Their current pull and
-pullAll implementations perform an initial read rather than subscribing to
+or composite sources may use readable operations. Their current `pull` and
+`pullAll` implementations perform an initial read rather than subscribing to
 later database changes.
 
-See [Run with MySQL](../apply/use-mysql.md) and
-[Run with PostgreSQL](../apply/use-postgres.md).
+See [Run with MySQL](../engines/mysql.md) and
+[Run with PostgreSQL](../engines/postgres.md).
 
 ### MongoDB
 
@@ -71,7 +71,7 @@ with MongoDB ObjectId or the _id field. Identified writes use replacement
 upserts. The current engine does not expose public transactions, change
 streams, aggregation, migrations, or native selector APIs.
 
-See [Run with MongoDB](../apply/use-mongo.md).
+See [Run with MongoDB](../engines/mongo.md).
 
 ### HTTP
 
@@ -84,26 +84,26 @@ HTTP exposes initial-read streams, readable-operation relationships, and
 portable HTTP errors. It does not expose transactions, cursor pagination,
 polling, or server-event streams.
 
-See [Run with HTTP/JSON](../apply/use-http.md).
+See [Run with HTTP/JSON](../engines/http.md).
 
 ### SQLite
 
-SQLite uses an application-owned SqliteDatabase and supports SQL filters,
+SQLite uses an application-owned `SqliteDatabase` and supports SQL filters,
 offset pages, composite identities, table-watch streams, and the portable
 transaction facade. The application prepares the database schema and owns its
 lifecycle.
 
-The SQLite dependency uses dart:ffi in its current implementation. It is not
+The SQLite dependency uses `dart:ffi` in its current implementation. It is not
 Wasm-compatible through the default path, even when the package can be used on
 other supported platforms.
 
-See [Run with SQLite](../apply/use-sqlite.md).
+See [Run with SQLite](../engines/sqlite.md).
 
 ## Synchronization composition
 
-dorm_sync is a composition layer, not another storage backend. A primary must
-provide ChangeTrackedEngine through EngineSyncTarget. A replica may use a normal
-BaseEngine through EngineReplicaTarget.
+`dorm_sync` is a composition layer, not another storage backend. A primary must
+provide `ChangeTrackedEngine` through `EngineSyncTarget`. A replica may use a normal
+`BaseEngine` through `EngineReplicaTarget`.
 
 The composed engine uses the primary query and page types publicly. Structured
 filters and page requests are adapted to each target. Synchronization is

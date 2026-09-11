@@ -8,7 +8,7 @@ Extend the store with carts and the items inside them:
 - a `Product` can appear in many cart items.
 
 The generated relation paths follow these foreign fields. Add the following
-declarations to the same `lib/models.dart` file used in the earlier Quickstart
+declarations to the same <i>lib/models.dart</i> file used in the earlier Quickstart
 pages, after the `User` and `Product` declarations:
 
 ```dart title="lib/models.dart"
@@ -41,7 +41,7 @@ identity. `CartItem` keeps its own generated identity and receives the cart and
 product identities through its generated dependency type. Regenerate the model
 parts after adding these declarations:
 
-```shell title="Regenerate the cart model API"
+```shell
 dart run build_runner build
 ```
 

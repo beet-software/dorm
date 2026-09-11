@@ -243,5 +243,5 @@ data on the client.
 - [Model anatomy](https://ezgrs.github.io/dorm/model-anatomy/)
 - [dorm_annotations](https://pub.dev/packages/dorm_annotations)
 - [dorm_generator](https://pub.dev/packages/dorm_generator)
-- [Choose an engine](https://ezgrs.github.io/dorm/apply/choose-an-engine/)
+- [Choose an engine](https://ezgrs.github.io/dorm/engines/)
 - [GitHub repository](https://github.com/ezgrs/dorm)

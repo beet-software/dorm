@@ -1,4 +1,4 @@
-# Generated EntitySchema
+# Generated `EntitySchema`
 
 `EntitySchema` is the engine-neutral description of one stored entity. The
 generated entity exposes it through `UserEntity.schema`.

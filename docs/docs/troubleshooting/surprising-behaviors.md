@@ -9,7 +9,7 @@ application code.
 `pull` and `pullAll` have the same names across engines, but their event
 sources differ:
 
-| Engine | Current behavior |
+| `Engine` | Current behavior |
 | --- | --- |
 | In-memory and BLoC | Backed by in-process state changes. |
 | Firebase | Backed by Realtime Database value events. Offline configuration changes which local and remote events are available. |
@@ -44,7 +44,7 @@ Remember that `Filter.text` is a prefix filter. It is not a substring search,
 regular expression, or full-text search. `Filter.contains` applies to a
 persisted collection and is not a text operator.
 
-## Creation of composite identities is restricted by type
+## `Creation` of composite identities is restricted by type
 
 Generated entities expose different creation types according to their primary
 key shape:
@@ -57,7 +57,7 @@ key shape:
   that static restriction and reach the runtime `UnsupportedError` guard;
 - Firebase reference operations require identity values of type `String`.
 
-Use [Create records](../build-the-store/creating.md) and
+Use [Create records](../operations/creating.md) and
 [`@Model`](../annotations/model.md) when the identity declaration or creation
 operation is unclear.
 
@@ -83,7 +83,7 @@ produce the same generated name.
 
 When generation reports a duplicate relation path, change the names in the
 annotated source and regenerate. Do not rename the getter directly in a
-`*.dorm.dart` file. See [ForeignField](../annotations/foreign-field.md).
+<i>*.dorm.dart</i> file. See [`ForeignField`](../annotations/foreign-field.md).
 
 ## Derived and polymorphic values have backend-sensitive representations
 
@@ -97,13 +97,13 @@ serialized representation. The generated JSON-compatible shape is observable,
 but its stability as one universal wire format across all engines is
 `UNKNOWN`.
 
-See [DerivedField](../annotations/derived-field.md),
-[PolymorphicField](../annotations/polymorphic-field.md), and
+See [`DerivedField`](../annotations/derived-field.md),
+[`PolymorphicField`](../annotations/polymorphic-field.md), and
 [Model anatomy](../model-anatomy/entity.md) for the relevant mapping rules.
 
 ## Import the documented public surface
 
-Concrete classes under a package's `lib/src/` directory may be importable by a
+Concrete classes under a package's <i>lib/src/</i> directory may be importable by a
 package URI without being re-exported by the package barrel. Use the documented
 barrel imports in application code:
 
@@ -113,7 +113,7 @@ package:dorm_memory_database/dorm_memory_database.dart
 package:dorm_postgres_database/dorm_postgres_database.dart
 ```
 
-Importing an internal `lib/src/` class does not establish a supported public
+Importing an internal <i>lib/src/</i> class does not establish a supported public
 contract.
 
 ## Keep mismatches qualified

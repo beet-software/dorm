@@ -1,11 +1,12 @@
 # Find the failing layer
 
-dORM does not convert every failure into one common exception type. The first
-useful step is to identify when the failure occurs.
+Recognized provider failures are exposed as `DormDatabaseException`. Validation
+and unsupported-operation errors can still be ordinary Dart or provider errors. The
+first useful step is to identify when the failure occurs.
 
 | Symptom | Inspect first |
 | --- | --- |
-| A package or command cannot be resolved | The directory containing the intended `pubspec.yaml`. |
+| A package or command cannot be resolved | The directory containing the intended <i>pubspec.yaml</i>. |
 | `build_runner` stops while reading annotations | The annotated source and generated `part` declarations. |
 | The analyzer rejects a repository call | Generated types, identity types, or stale generated output. |
 | A repository call fails after reaching storage | The selected engine, driver, credentials, schema, or backend rules. |
@@ -25,14 +26,14 @@ application uses the Flutter toolchain and must initialize Firebase before
 constructing its dORM engine. The engine pages contain the backend-specific
 startup sequence:
 
-- [Run in-memory](../apply/use-memory.md)
-- [Run with BLoC](../apply/use-bloc.md)
-- [Run with Firebase](../apply/use-firebase.md)
-- [Run with MySQL](../apply/use-mysql.md)
-- [Run with PostgreSQL](../apply/use-postgres.md)
-- [Run with MongoDB](../apply/use-mongo.md)
-- [Run with HTTP/JSON](../apply/use-http.md)
-- [Run with SQLite](../apply/use-sqlite.md)
+- [Run in-memory](../engines/memory.md)
+- [Run with BLoC](../engines/bloc.md)
+- [Run with Firebase](../engines/firebase.md)
+- [Run with MySQL](../engines/mysql.md)
+- [Run with PostgreSQL](../engines/postgres.md)
+- [Run with MongoDB](../engines/mongo.md)
+- [Run with HTTP/JSON](../engines/http.md)
+- [Run with SQLite](../engines/sqlite.md)
 
 ## Separate generation from runtime
 
@@ -62,7 +63,7 @@ final List<Product> products = await dorm.products.repository.peekAll();
 list when nothing matches. A `pull` stream can emit `null` when its watched
 record is absent or removed.
 
-Identity and operation failures use ordinary Dart errors in the current API:
+Validation failures that happen before a provider call remain ordinary Dart errors:
 
 | Error | Observed condition |
 | --- | --- |
@@ -71,7 +72,7 @@ Identity and operation failures use ordinary Dart errors in the current API:
 | `StateError` | A primary-key codec returns values that do not match the schema or key contract. |
 | Dart type error | A backend value, serialized field, identity, or custom entity violates its declared type. |
 
-For creation and identity rules, use [Create records](../build-the-store/creating.md)
+For creation and identity rules, use [Create records](../operations/creating.md)
 and [`@Model`](../annotations/model.md). Composite-key repositories accept
 explicit creation; `Creation.auto` is rejected by the generated type before a
 repository call is made.

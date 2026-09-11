@@ -92,7 +92,7 @@ downloading and filtering data locally.
 
 ## What the engine changes
 
-| Data source | What the application gives the engine |
+| `Data` source | What the application gives the engine |
 | --- | --- |
 | In-memory data | An in-memory or BLoC engine instance |
 | Firebase Realtime Database | Configured Firebase services and database objects |
@@ -107,7 +107,7 @@ The engine adapts the common repository operations to that source. The
 application still owns credentials, connection lifecycle, schema, migrations,
 Firebase rules, HTTP authentication, and backend-specific configuration.
 
-Read [Choose an engine](apply/choose-an-engine.md) before relying on a
+Read [Choose an engine](engines/index.md) before relying on a
 capability that is not part of the common repository surface.
 
 ## What dORM provides
@@ -144,7 +144,7 @@ dorm_example --engine memory
 
 When the application already has a backend, choose the matching engine and
 keep that backend's client or connection. The [Quickstart](quickstart/index.md)
-builds the same store domain progressively, and [Operations](build-the-store/overview.md)
+builds the same store domain progressively, and [Operations](operations/index.md)
 shows the repository tasks independently.
 
 ## Important boundaries
@@ -163,9 +163,9 @@ backend-specific behavior part of an application contract.
 
 - [Generate a showcase project](quickstart/generate-a-showcase.md) for a
   complete starting point.
-- [When to use dORM?](compare/data-access-approaches.md) before deciding
+- [When to use dORM?](when-to-use/index.md) before deciding
   whether dORM's portability matches the application.
-- [Choose an engine](apply/choose-an-engine.md) based on the backend and
+- [Choose an engine](engines/index.md) based on the backend and
   capabilities your application needs.
 - [Build a small store](quickstart/index.md) from an empty Dart project.
 - [Learn the annotations](annotations/index.md) when you are ready to define

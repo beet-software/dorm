@@ -1,4 +1,4 @@
-# Generated Dependency
+# Generated `Dependency`
 
 `Dependency` carries identities of related models while a new model is being
 constructed. It keeps foreign identities separate from the ordinary fields in
@@ -33,7 +33,7 @@ A strong dependency has no related IDs. A weak dependency carries IDs of other
 models required by the new model. The generated entity receives the dependency
 through `ResolvedCreation` and uses it to construct the identified model.
 
-See [ForeignField](../annotations/foreign-field.md) for the declarations that
-produce dependency properties, [@Model](../annotations/model.md) for identity
-specifications, and [Create records](../build-the-store/creating.md) for
+See [`ForeignField`](../annotations/foreign-field.md) for the declarations that
+produce dependency properties, [`@Model`](../annotations/model.md) for identity
+specifications, and [Create records](../operations/creating.md) for
 creation rules.

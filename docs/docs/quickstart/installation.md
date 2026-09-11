@@ -9,16 +9,16 @@ a database server or a Flutter project.
 Install the [Dart SDK](https://dart.dev/get-dart), then create and enter a new
 console application:
 
-```shell title="Create the application"
+```shell
 dart create -t console-simple dorm_store
 cd dorm_store
 ```
 
-Run the remaining commands from the directory that contains `pubspec.yaml`.
+Run the remaining commands from the directory that contains <i>pubspec.yaml</i>.
 
 ## Add the runtime packages
 
-```shell title="Add dORM runtime packages"
+```shell
 dart pub add dorm_framework
 dart pub add dorm_annotations
 dart pub add dorm_memory_database
@@ -34,7 +34,7 @@ Each package has a separate role in the application:
 
 ## Add the development packages
 
-```shell title="Add code-generation packages"
+```shell
 dart pub add --dev dorm_generator
 dart pub add --dev build_runner
 ```
@@ -55,7 +55,7 @@ These packages are used during generation:
 
 Run Pub after adding the packages:
 
-```shell title="Resolve packages"
+```shell
 dart pub get
 ```
 

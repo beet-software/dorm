@@ -2,8 +2,8 @@
 
 dORM generation produces two Dart part files:
 
-- `*.dorm.dart`, written by `dorm_generator`;
-- `*.g.dart`, written by `json_serializable`.
+- <i>*.dorm.dart</i>, written by `dorm_generator`;
+- <i>*.g.dart</i>, written by `json_serializable`.
 
 Both files belong to the annotated source library. A problem in either file
 can prevent the model API from compiling.
@@ -23,7 +23,7 @@ not either generated file.
 
 ## Run generation from the application directory
 
-Run the command from the directory containing the `pubspec.yaml` that declares
+Run the command from the directory containing the <i>pubspec.yaml</i> that declares
 the model and generator dependencies:
 
 ```shell
@@ -38,7 +38,7 @@ flutter pub get
 flutter pub run build_runner build
 ```
 
-If build_runner reports conflicting outputs, run:
+If `build_runner` reports conflicting outputs, run:
 
 ```shell
 dart run build_runner build --delete-conflicting-outputs
@@ -71,8 +71,8 @@ Generated relation accessors use `ForeignField.as` and
 paths can therefore produce the same generated name.
 
 If generation reports a duplicate path, change the names in the annotation and
-regenerate. Do not rename the generated getter directly in `*.dorm.dart`.
-See [ForeignField](../annotations/foreign-field.md) for the naming rules.
+regenerate. Do not rename the generated getter directly in <i>*.dorm.dart</i>.
+See [`ForeignField`](../annotations/foreign-field.md) for the naming rules.
 
 ## Check identity declarations
 
@@ -82,7 +82,7 @@ entities accept explicit `CompositeKey` creation, so `Creation.auto` is
 rejected by the generated type.
 
 If the declaration is valid but an operation fails, inspect
-[Create records](../build-the-store/creating.md) and the selected engine page.
+[Create records](../operations/creating.md) and the selected engine page.
 This separates a generation error from a runtime identity or backend error.
 
 ## Regenerate after source changes
@@ -108,8 +108,8 @@ errors that describe stale code rather than the current model.
 ## Distinguish dORM output from JSON output
 
 If generated repositories, entities, or `Dorm` are missing, inspect the
-`*.dorm.dart` stage and the dORM generator dependencies. If `toJson`,
-`fromJson`, or JSON helper classes are missing, inspect the `*.g.dart` stage and
+<i>*.dorm.dart</i> stage and the dORM generator dependencies. If `toJson`,
+`fromJson`, or JSON helper classes are missing, inspect the <i>*.g.dart</i> stage and
 the `json_serializable` builder.
 
 The two builders run in the same source library, so generation must complete

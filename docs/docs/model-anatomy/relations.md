@@ -28,6 +28,6 @@ fields, and target fields. An engine can use a structured relation plan or
 resolve the path through ordinary readable repository operations.
 
 The relation names come from `ForeignField.as` and
-`ForeignField.inverseAs`. See [ForeignField](../annotations/foreign-field.md)
+`ForeignField.inverseAs`. See [`ForeignField`](../annotations/foreign-field.md)
 and [Add carts and cart items](../quickstart/relations-and-cart.md)
 for the declarations behind these generated paths.

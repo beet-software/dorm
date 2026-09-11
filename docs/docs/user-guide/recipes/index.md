@@ -24,7 +24,7 @@ identity.
 The form itself is not part of this recipe. Assume the previous screen passed
 an input object through navigation:
 
-```dart title="Arguments passed to an edit route"
+```dart
 class EditProductInput {
   const EditProductInput({
     required this.name,
@@ -41,7 +41,7 @@ class EditProductInput {
 Read the input in the destination screen, create `ProductData`, and persist an
 identified model:
 
-```dart title="Convert route input before saving"
+```dart
 Future<void> saveProductFromRoute(
   Dorm dorm,
   Product current,
@@ -69,7 +69,7 @@ Use `patch` when the new value depends on what is currently stored. This avoids
 the non-atomic read, application callback, and write sequence that would occur
 if the calls were assembled manually:
 
-```dart title="Apply a change to the current record"
+```dart
 Future<void> renameProduct(Dorm dorm, String productId) {
   return dorm.products.repository.patch(productId, (current) {
     if (current == null) {
@@ -89,7 +89,7 @@ existing record. When the identity does not exist, the callback receives
 
 Use `copyWith` when only selected model fields change. Use `updateWith` when a
 complete `Data` value came from a form, route, command, or another application
-boundary. See [Update records](../../build-the-store/updating.md) for the
+boundary. See [Update records](../../operations/updating.md) for the
 complete update contract.
 
 ## Refresh a list without creating a stream
@@ -98,7 +98,7 @@ Use `peekAll` when the feature needs a completed result and controls when the
 read happens. This is useful after a navigation result, a successful write, or
 an explicit refresh action:
 
-```dart title="Load and refresh a collection"
+```dart
 Future<List<Product>> loadProducts(Dorm dorm) {
   return dorm.products.repository.peekAll(
     const Filter.empty(),
@@ -127,7 +127,7 @@ Keep the state of a search field separate from the query object. Resolve every
 field through generated metadata so the query uses the persisted name selected
 by the model declaration:
 
-```dart title="Build a product query from screen state"
+```dart
 Future<List<Product>> searchProducts(
   Dorm dorm, {
   required String searchText,
@@ -157,7 +157,7 @@ construct a typed filter with `FieldSchema`, and pass it to the repository.
 When several conditions must be combined, use `Filter.allOf` only with an
 engine that declares logical-filter support:
 
-```dart title="Combine conditions when the engine supports it"
+```dart
 final Filter filter = Filter.allOf([
   Filter.text(
     'keyboard',
@@ -180,7 +180,7 @@ Pagination becomes inconsistent when the page number changes but the filter or
 ordering is forgotten. Keep those values together and reset the offset when a
 new search starts:
 
-```dart title="Load one offset page"
+```dart
 class ProductListState {
   const ProductListState({
     this.search = '',
@@ -216,7 +216,7 @@ Future<Page<Product>> loadProductPage(
 When the search text changes, create a new state with `page: 0`. When the user
 advances, increment the page only when the previous result has `hasNext`:
 
-```dart title="Move to the next page"
+```dart
 if (currentPage.hasNext) {
   state = ProductListState(
     search: state.search,
@@ -226,7 +226,7 @@ if (currentPage.hasNext) {
 ```
 
 The current engines accept `OffsetPageRequest`. Keep the ordering stable for
-every page request. See [Using pagination](../../build-the-store/using-pagination.md)
+every page request. See [Using pagination](../../operations/using-pagination.md)
 for the page contract.
 
 ## Render a live collection in Flutter
@@ -235,7 +235,7 @@ Use `pullAll` when the screen must receive the initial collection and later
 events. Create the stream once for the screen rather than rebuilding it on
 every `build` call:
 
-```dart title="Subscribe from a StatefulWidget"
+```dart
 class ProductList extends StatefulWidget {
   const ProductList({required this.dorm, super.key});
 
@@ -297,7 +297,7 @@ A relation path is useful when the screen needs each source record paired with
 its related value. The following pattern keeps a cart item even when its
 product cannot be read:
 
-```dart title="Read related values while preserving the source"
+```dart
 final List<Join<CartItem, Product?>> rows = await dorm
     .relations
     .cartItems
@@ -325,7 +325,7 @@ chained for deeper reads.
 Create the parent first when its generated identity is needed by child
 dependencies. Then pass one `Creation` per child to `putAll`:
 
-```dart title="Create a parent and its children"
+```dart
 final Cart cart = await dorm.carts.repository.put(
   Creation.auto(
     dependency: CartDependency(userId: user.id),
@@ -356,7 +356,7 @@ own identity. When the parent and children must commit or roll back together,
 run both repository operations through the temporary `tx` context supplied by
 `TransactionalDorm`:
 
-```dart title="Compose the writes in a supported transaction"
+```dart
 final TransactionalDorm txDorm = TransactionalDorm(engine);
 
 await txDorm.transaction((tx) async {
@@ -381,5 +381,5 @@ await txDorm.transaction((tx) async {
 
 Use the transaction form only with an engine that implements
 `TransactionalEngine`. Obtain every repository from `tx`; do not mix the
-outer `dorm` facade into the callback. See [Using transactions](../../build-the-store/using-transactions.md)
+outer `dorm` facade into the callback. See [Using transactions](../../operations/using-transactions.md)
 for the transaction context rules.
