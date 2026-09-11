@@ -1,244 +1,183 @@
-# Framework contracts and abstractions
+# Framework contracts
 
-The framework package defines engine-neutral types. Generated entities and
-repositories use these contracts; concrete engines provide the storage
-behavior.
+This page is the normative reference for the engine-neutral contracts in
+dorm_framework. It describes the behavior an engine must preserve and the
+capabilities it may add. Use [Implement a custom engine](../development/custom-engine.md)
+for the implementation sequence.
 
-## Entity and schema contracts
+## Entity and schema
 
-### Entity<Data, Model extends Data, I extends Object, C extends Creation<Data, I>>
+An Entity connects generated values to storage metadata and identity conversion.
+It provides:
 
-An entity maps generated data/model values to an engine-neutral schema and
-identity:
+- an EntitySchema;
+- a PrimaryKeyCodec;
+- conversion between serialized data and models;
+- construction from a resolved creation;
+- extraction of an identity from a model.
 
-| Member | Signature shape | Result |
-| --- | --- | --- |
-| schema | EntitySchema get schema | Field, foreign-key, and primary-key metadata. |
-| primaryKeyCodec | PrimaryKeyCodec<I> get primaryKeyCodec | Identity-to-key-field conversion. |
-| fromJson | Model fromJson(I id, Map data) | Model reconstructed from stored data and identity. |
-| toJson | Map<String, Object?> toJson(Data data) | Data converted to stored field values. |
-| convert | Model convert(Model model, Data data) | Existing model updated from data. |
-| fromData | Model fromData(ResolvedCreation<Data, I>) | Model constructed from a resolved dependency, identity, and data. |
-| identityGeneration | IdentityGenerationStrategy get identityGeneration | How `Creation.auto` obtains the final identity: `engine`, `database`, or `explicit`. |
-| identify | I identify(Model model) | Identity extracted from a model. |
+EntitySchema contains the stored fields, ordered primary keys, foreign-key
+metadata, and derived-field metadata. FieldSchema is the metadata value passed
+to filters and ordering. The framework, not an engine-specific query class,
+owns the logical field name and stored name relationship.
 
-Generated entities implement this interface.
+A simple identity has one primary-key field and uses a single-key codec. A
+composite identity has multiple ordered fields and uses CompositeKey with a
+composite codec. The order and shape must agree between the entity, engine,
+serialized data, and any synchronization target.
 
-### DatabaseEntity
+## Repository operations
 
-DatabaseEntity<Data, Model, I, Q, C, P> combines one Entity with a
-BaseEngine<Q, P>. It exposes the repository whose `put` and `putAll` methods
-accept `C` and whose `peekPage` accepts `P`, together with:
+A generated Repository combines read, write, and removal contracts for one
+entity. The repository keeps the entity's data, model, identity, query, and
+page types visible to the analyzer.
 
-- repository;
-- relationships;
-- delegated entity conversion and identity methods.
+### Reads
 
-Generated Dorm classes create one DatabaseEntity accessor per annotated model.
-
-### Schema types
-
-| Type | Role |
+| Operation | Contract |
 | --- | --- |
-| EntitySchema | Entity name, fields, primary-key fields, and foreign-key metadata. |
-| FieldSchema | Stored field name, Dart name/type metadata, and field properties. |
-| ForeignKeySchema | Foreign-field metadata, target entity, and uniqueness. |
-| PrimaryKeyCodec<I> | Encodes and decodes identity values. |
-| SinglePrimaryKeyCodec<I> | Encodes one identity value and requires one decoded value. |
-| CompositePrimaryKeyCodec | Encodes/decodes CompositeKey. |
-| CompositeKey | Ordered collection of composite identity values. |
+| peek | Returns one model or null when the identity is absent. |
+| peekAll | Returns every matching model, or an empty list when no model matches. |
+| peekPage | Returns one Page using the entity's accepted PageRequest type. |
+| peekAllKeys | Returns the stored identities. |
+| pull | Streams one model or null. |
+| pullAll | Streams matching model lists. |
 
-EntitySchema.primaryKeys is the ordered list of primary-key fields. It contains
-one item for a simple key and multiple items for a composite key.
+Absence is a normal result. An engine must not convert an absent record or an
+empty collection into a notFound error.
 
-## Repository contracts
+A stream's later events are determined by the engine. The common contract
+defines the result shape, not a universal guarantee that every engine observes
+external database changes.
 
-Repository<Data, Model, I, Q, C, P> combines SingleReadOperation,
-BatchReadOperation, ModelRepository, and DataRepository. `C` is the creation
-type and `P` is the page-request type accepted by that entity.
+### Writes and removal
 
-### Read contracts
-
-~~~dart
-Future<Model?> peek(I id);
-Future<List<Model>> peekAll([
-  BaseFilter<Q> filter,
-  QueryOptions options,
-]);
-Future<Page<Model>> peekPage(BaseFilter<Q> filter, P request);
-Stream<Model?> pull(I id);
-Stream<List<Model>> pullAll([
-  BaseFilter<Q> filter,
-  QueryOptions options,
-]);
-Future<List<I>> peekAllKeys();
-~~~
-
-peek returns null for an absent identity. Collection reads return lists.
-Streams expose the corresponding single or collection result shape. The
-current MySQL implementation emits an initial read without a live database
-listener.
-
-### Write and removal contracts
-
-~~~dart
-Future<Model> put(C creation);
-Future<List<Model>> putAll(List<C> creations);
-Future<void> push(Model model);
-Future<void> pushAll(List<Model> models);
-Future<void> patch(I id, Model? Function(Model?) update);
-Future<void> pop(I id);
-Future<void> popKeys(Iterable<I> ids);
-Future<void> popAll(BaseFilter<Q> filter);
-Future<void> purge();
-~~~
-
-put creates a model from a creation request. Simple-key entities use
-`SimpleCreation<Data, I>` and accept both factory results. Composite-key
-entities use `ExplicitCreation<Data, CompositeKey>`, so automatic creation is
-rejected at compile time by the generated contract. `Creation.auto` follows
-the identity strategy declared by the entity, while `Creation.explicit`
-supplies the final identity. push persists an already identified model. patch receives the
-current model or null; returning null removes the record.
-
-The framework documentation describes popKeys, popAll, pushAll, and patch as
-operations expected to be atomic where the selected engine provides that
-behavior. `TransactionalDorm` is the separate public contract for composing
-multiple repository operations; engines that do not implement it retain their
-individual operation semantics.
-
-## Filter and query contracts
-
-### BaseQuery<Q extends BaseQuery<Q>>
-
-Concrete queries implement:
-
-~~~dart
-Q whereValue(String key, Object? value);
-Q whereText(String key, String prefix);
-Q whereDate(String key, DateTime date, DateFilterUnit unit);
-Q whereRange<T>(String key, FilterRange<T> range);
-Q limit(int count);
-Q offset(int count);
-Q sorted(String key, {bool ascending = true});
-~~~
-
-The concrete query determines how these operations become in-memory
-predicates, Firebase query clauses, or SQL.
-
-Optional query capabilities extend `BaseQuery` without changing the portable
-contract:
-
-```dart
-abstract interface class ComparisonQuery<Q extends ComparisonQuery<Q>>
-    implements BaseQuery<Q> {
-  Q whereComparison(String key, FilterComparisonOperator operator, Object? value);
-  Q whereSet(String key, Iterable<Object?> values, {required bool negated});
-  Q whereNull(String key, {required bool isNull});
-}
-
-abstract interface class LogicalQuery<Q extends LogicalQuery<Q>>
-    implements BaseQuery<Q> {
-  Q whereAll(Iterable<BaseFilter> filters);
-  Q whereAny(Iterable<BaseFilter> filters);
-}
-```
-
-`NegationQuery` and `CollectionQuery` provide the corresponding `whereNot`,
-`whereContains`, and `whereContainsAny` operations. A query advertises a
-capability by implementing the interface; the structured filter factories use
-the same generic bound. This keeps unsupported operations from being silently
-translated into a different query.
-
-### BaseFilter<Q>
-
-A filter applies a condition or modifier through Q accept(Q query).
-Factories cover empty, value, text, text-range, numeric-range, date, and
-date-range filters. Capability-based factories add scalar comparisons, set
-membership, null checks, collection membership, and `allOf`, `anyOf`, and
-`not` composition. `allOf([])` is the empty filter; `anyOf([])` throws
-`ArgumentError`.
-
-QueryOptions applies OrderBy, limit, and offset to a query. PageRequest
-describes an offset or cursor page, and Page contains the returned items and
-continuation metadata. Current engine contracts use `OffsetPageRequest` as
-`P`. A `CursorPageRequest` passed through a statically typed current engine
-repository is rejected by the analyzer.
-
-Values remain structured parameters passed to the engine. The framework does
-not define regex, full-text, aggregation, geospatial, JSON-path, or arbitrary
-backend-selector filters, and it does not fall back to client-side filtering
-when an engine cannot translate a supported capability.
-
-Structured filters require a `FieldSchema` and resolve its `columnName` before
-calling `BaseQuery`. `OrderBy` also requires a `FieldSchema`. The `BaseQuery`
-contract receives the resolved storage name as a string because it is the
-engine-level query construction contract.
-
-The structured constructors are equivalent to:
-
-```dart
-Filter.value(value, field: entityField);
-Filter.text(prefix, field: entityField);
-Filter.textRange(range, field: entityField);
-Filter.numericRange(range, field: entityField);
-Filter.dateRange(range, field: entityField);
-Filter.date(date, field: entityField);
-const OrderBy(entityField);
-```
-
-For fields that are not generated, create the metadata explicitly:
-
-```dart
-const FieldSchema(
-  fieldName: 'externalName',
-  columnName: 'external_name',
-)
-```
-
-## Relationship contracts
-
-### Sources and plans
-
-RelationSource combines single and batch readable operations with a
-RelationPlan and optional EntitySchema.
-
-| Type | Role |
+| Operation | Contract |
 | --- | --- |
-| RelationPlan | Describes how an association source can be executed. |
-| TableRelationPlan | Describes a direct entity/table source and key decoding. |
-| CompositeRelationPlan | Marks a source produced by another relationship. |
-| RelationSpec | Describes one generated path step and its cardinality/fields. |
-| Join<L, R> | Carries a left model and related result. |
+| put | Resolves a creation request, persists the result, and returns the final model. |
+| putAll | Resolves and persists each creation request and returns the final models. |
+| push | Persists an already identified model. |
+| pushAll | Persists identified models. |
+| patch | Supplies the current model to a callback; a null callback result removes it. |
+| pop | Removes one identity. |
+| popKeys | Removes the supplied identities. |
+| popAll | Removes the identities selected by the primary operation's filter. |
+| purge | Removes all records for the entity. |
 
-### Associations
+Creation.auto follows the identity strategy declared by the entity. An engine
+may generate the identity, ask the database to generate it, or require an
+explicit identity according to that strategy. Creation.explicit always
+supplies the final identity.
 
-The type aliases describe result cardinalities:
+The framework defines operation results and callback behavior. Atomicity,
+isolation, and the number of backend statements remain engine capabilities
+unless an operation or transaction contract states otherwise.
+
+## Filters, queries, and pages
+
+BaseFilter is a structured value. It resolves a FieldSchema and applies a
+FilterExpression to a concrete BaseQuery. The framework does not parse SQL,
+Firebase paths, MongoDB selectors, or arbitrary URL strings.
+
+BaseQuery provides the portable operations needed by all engines:
+
+- value equality;
+- text-prefix matching;
+- date comparison;
+- range comparison;
+- sorting;
+- limit;
+- offset.
+
+Optional query interfaces advertise extra filter families:
+
+| Capability | Adds |
+| --- | --- |
+| ComparisonQuery | scalar comparisons, set membership, and null checks |
+| LogicalQuery | allOf and anyOf composition |
+| NegationQuery | not |
+| CollectionQuery | contains and containsAny |
+
+A concrete query must implement a capability before its corresponding
+structured filter factory is available. An engine must reject an unsupported
+capability rather than silently broadening or moving the filter to an
+undocumented client-side path.
+
+QueryOptions carries ordering and read-window options. PageRequest and Page
+carry pagination input and continuation metadata. Current official engines use
+OffsetPageRequest as their typed page request; cursor pagination is not a
+portable promise.
+
+## Relationships
+
+BaseRelationship creates one-to-one, one-to-many, many-to-one, and many-to-many
+associations from RelationSource values.
+
+RelationSource provides readable operations and may provide a RelationPlan.
+A direct table plan can let an engine optimize a relationship, but readable
+operations remain the portable semantic baseline.
+
+Relationship result types distinguish:
+
+- a missing source;
+- a missing required related value;
+- a nullable related value;
+- an empty related collection;
+- a populated related collection.
+
+RelationPath evaluates lazily. Declaring a path does not execute a query; reads
+occur when a peek or pull operation is called. The framework does not promise a
+fixed query count or a native join for every backend.
+
+## Transactions
+
+TransactionalEngine is an optional capability:
 
 ~~~dart
-OneToOneAssociation<L, I, R, Q>  // R?
-OneToManyAssociation<L, I, R, Q> // List<R>
-ManyToOneAssociation<L, I, R, J, Q>
-ManyToManyAssociation<M, I, L, R, Q> // (L?, R?)
+Future<T> transaction<T>(
+  Future<T> Function(BaseEngine<Q, P> engine) action,
+);
 ~~~
 
-BaseRelationship<Q> creates the association forms from readable sources and
-callbacks that determine related identities or filters.
+TransactionalDorm is generated for an engine type that satisfies this
+capability. The callback uses a temporary Dorm bound to the transaction
+context, so repository operations can share the same local transaction.
 
-### RelationPath
+Streams are unavailable in the transaction context and nested transactions are
+not supported by the current generated facade. Engines that do not implement
+TransactionalEngine remain valid BaseEngine implementations.
 
-RelationPath<Context, Root, Current, Q> accumulates generated relationship
-steps. It reads lazily: related data is requested when peekAll or pullAll is
-called. Results are Join<Root, Current> values.
+A backend may use an internal transaction for one operation without exposing
+the public transaction capability. Those are separate guarantees.
 
-Generated path variants retain cardinality-specific behavior:
+## Synchronization
 
-- required to-one paths omit a root without a related value;
-- nullable to-one paths retain the root with null;
-- to-many paths flatten related values;
-- empty-preserving to-many paths retain an empty list.
+ChangeTrackedEngine is an optional capability used by dorm_sync. Its mutation
+result contains the normal operation result and an exact MutationChangeSet.
+
+The change set records the affected identities and final serialized data so a
+replica can apply the primary result without re-running a callback or
+recalculating a filter. SynchronizedEngine is not a TransactionalEngine and
+does not provide distributed atomicity.
+
+See [Synchronization protocol](synchronization.md) for the outbox and delivery
+rules.
+
+## Errors
+
+Official external engines may implement ErrorAwareEngine and map provider
+failures to DormDatabaseException. The mapper preserves the native cause,
+stack trace, operation, engine, and provider code.
+
+Validation errors raised before a provider call remain ordinary Dart errors.
+An engine without ErrorAwareEngine may continue to propagate provider-native
+errors.
+
+See [Portable errors](errors.md) and [Handling errors](../build-the-store/handling-errors.md).
 
 ## Engine boundary
+
+A custom engine supplies:
 
 ~~~dart
 abstract class BaseEngine<Q extends BaseQuery<Q>, P extends PageRequest> {
@@ -247,82 +186,11 @@ abstract class BaseEngine<Q extends BaseQuery<Q>, P extends PageRequest> {
 }
 ~~~
 
-BaseReference<Q, P> implements the storage operation surface, and
-BaseRelationship<Q> implements relationship associations. A custom engine
-implements these contracts and exposes a concrete Engine.
+The reference implements the repository operation surface. The query
+implements the engine's query representation. The relationship implementation
+must preserve the framework result shape even when it uses a backend-native
+plan.
 
-See [Implement a custom engine](../development/custom-engine.md) for the
-extension boundary and [Engine capability reference](engine-capabilities.md)
-for concrete implementations.
-
-## Transaction capability
-
-An engine that supports the portable transaction API also implements:
-
-~~~dart
-abstract interface class TransactionalEngine<
-  Q extends BaseQuery<Q>,
-  P extends PageRequest
-> implements BaseEngine<Q, P> {
-  Future<T> transaction<T>(
-    Future<T> Function(BaseEngine<Q, P> engine) action,
-  );
-}
-~~~
-
-The generator emits `TransactionalDorm<Q, P>` for the same model set as
-`Dorm<Q, P>`. Its `transaction` callback receives a temporary `Dorm<Q, P>`
-whose repositories use the active engine context. The callback can compose
-repository reads, writes, relationships, and pages. `pull` and `pullAll` are
-not available in that context and nested transactions are rejected.
-
-`TransactionalDorm` requires `TransactionalEngine<Q, P>` statically. A
-regular `BaseEngine<Q, P>` cannot be passed to its constructor without a
-cast or type erasure. The in-memory, BLoC, MySQL, PostgreSQL, and SQLite engines currently implement
-the capability.
-
-## Synchronization capability
-
-Synchronization is an optional capability layered above `BaseEngine`. A primary
-engine must implement `ChangeTrackedEngine<Q, P>` and return a
-`ChangeTrackedReference<Q, P>`. The reference executes a mutation and reports a
-`MutationResult` containing both the ordinary operation result and an exact
-`MutationChangeSet`.
-
-A change set contains the operation kind, entity table name, ordered sequence,
-operation id, affected encoded identities, and final serialized data where
-applicable. This allows a replica to apply the result without executing the
-primary callback or recomputing a primary filter.
-
-The `dorm_sync` package composes these contracts through
-`SynchronizedEngine<Q, P>`. Its target interfaces intentionally separate
-capabilities:
-
-- `SyncReadTarget` supports finite reads and streams;
-- `SyncApplyTarget` applies materialized change sets;
-- `SyncReadApplyTarget` combines read and apply behavior for replicas;
-- `SyncMutationTarget` adds primary change-tracked mutations.
-
-`EngineSyncTarget` adapts a change-tracked primary. `EngineReplicaTarget`
-adapts a regular `BaseEngine` for read fallback and materialized delivery.
-The composed engine is not a `TransactionalEngine`; replica delivery is
-ordered and at-least-once, not a distributed transaction.
-
-See [Synchronize database engines](synchronization.md) for the outbox,
-fallback, identity, relationship, retry, and lifecycle semantics.
-## Error contract
-
-Supported external engines normalize provider failures as
-`DormDatabaseException`. Its `DormErrorKind` describes the portable category,
-while `cause`, `stackTrace`, and `providerCode` preserve native diagnostics.
-`DormRetryability` is independent from the category, so an application does
-not have to assume that every conflict or transaction failure is safe to retry.
-
-`ErrorAwareEngine` is optional. An external engine that does not implement it
-continues to expose its native errors. Validation failures raised by dORM
-before a provider call, including `ArgumentError`, `StateError`,
-`UnsupportedError`, and `FormatException`, are not converted.
-
-Missing records are still represented by normal results: `peek` returns `null`
-and collection reads return empty lists. See [Portable database errors](errors.md)
-for the public fields and provider mapping policy.
+The custom engine guide and the shared conformance tests are the practical
+extension boundary. Internal concrete classes from official engines are not
+required application APIs.

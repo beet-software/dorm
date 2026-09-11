@@ -30,5 +30,5 @@ The generated data value is distinct from the generated model:
 - `Data` contains values supplied by an application command;
 - `Model` contains the persisted identity and model fields.
 
-See the [generated API reference](../reference/generated-api.md) for the types
+See the [Generated output contract](../reference/generated-contract.md) for the types
 produced from an annotated data declaration.

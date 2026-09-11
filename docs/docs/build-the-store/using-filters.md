@@ -146,7 +146,7 @@ These operators are capability-based. The concrete `Query` type must implement
 the corresponding framework capability. Write the type argument explicitly when
 Dart cannot infer it from the repository, as in the examples above.
 
-The engine capability table shows which engines expose comparison and set
+The engine and platform support table shows which engines expose comparison and set
 filters.
 
 ## Combine conditions
@@ -207,7 +207,7 @@ the supplied values. These operators do not perform substring search or
 full-text search. Use `Filter.text` for a persisted prefix-search field.
 
 Collection filters are not part of the minimum portable filter set. Check the
-engine capability table before using them in code that may switch engines.
+engine and platform support table before using them in code that may switch engines.
 
 ## Filter a relation source
 

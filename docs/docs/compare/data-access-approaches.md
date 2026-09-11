@@ -174,7 +174,7 @@ Choose dORM when:
 - tests should exercise generated repositories without requiring a service.
 
 The selected engine still matters. Read [Choose an engine](../apply/choose-an-engine.md)
-and the [engine capability table](../reference/engine-capabilities.md) before
+and the [engine and platform support table](../reference/engine-support.md) before
 depending on streams, transactions, advanced filters, identity generation, or
 relationship behavior.
 

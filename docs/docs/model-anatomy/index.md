@@ -4,7 +4,7 @@ An annotated source model produces several generated components. Each one has
 a separate role in the path from application input to backend storage.
 
 Use these pages after [Annotations](../annotations/index.md) when you need to
-understand the generated pieces, or use the [Generated API reference](../reference/generated-api.md)
+understand the generated pieces, or use the [Generated output contract](../reference/generated-contract.md)
 when you already know which type or member you need.
 
 ## Follow the generated pieces

@@ -171,7 +171,7 @@ final Filter filter = Filter.allOf([
 ```
 
 Do not silently download the whole collection to emulate a query unsupported
-by the selected backend. Check the [engine capability table](../../reference/engine-capabilities.md)
+by the selected backend. Check the [engine and platform support table](../../reference/engine-support.md)
 before composing optional filter operators.
 
 ## Keep pagination state with the query state
@@ -288,7 +288,7 @@ class _ProductListState extends State<ProductList> {
 
 The first event is the current result. Later events depend on the selected
 engine. Some engines provide reactive streams, while others emit only the
-initial read. Confirm the behavior in the [engine capability table](../../reference/engine-capabilities.md)
+initial read. Confirm the behavior in the [engine and platform support table](../../reference/engine-support.md)
 before treating the stream as live synchronization.
 
 ## Load a model together with related records

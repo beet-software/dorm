@@ -34,4 +34,4 @@ not create or close an application-owned database connection, pool, client, or
 database object.
 
 See [Creating the engine](../quickstart/creating-the-engine.md) for setup and
-[Generated API](../reference/generated-api.md) for generated class signatures.
+[Generated output contract](../reference/generated-contract.md) for generated class signatures.

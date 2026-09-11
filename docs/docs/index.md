@@ -156,7 +156,7 @@ backend-specific.
 The public transaction callback is available only for engines that implement
 the transactional capability. Streams, advanced filters, identity generation,
 and relationship execution also vary by engine. See the
-[engine capability reference](reference/engine-capabilities.md) before making
+[engine and platform support reference](reference/engine-support.md) before making
 backend-specific behavior part of an application contract.
 
 ## Continue from here
@@ -172,5 +172,5 @@ backend-specific behavior part of an application contract.
   models.
 - [Inspect model anatomy](model-anatomy/index.md) to understand generated
   types.
-- [Read the public API](reference/public-api.md) for signatures and return
+- [Read the public surface](reference/public-surface.md) for signatures and return
   values.

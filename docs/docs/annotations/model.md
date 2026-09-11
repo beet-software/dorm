@@ -153,7 +153,7 @@ type. The identity is part of the generated `Model`, while the generated
 Each `@Model` produces generated data and model types, an entity with schema
 metadata, a repository accessor, and a relationship root when related fields
 are present. The generated accessors and repository types are described in the
-[generated API reference](../reference/generated-api.md).
+[Generated output contract](../reference/generated-contract.md).
 
 Use [`@Field`](field.md), [`@ModelField`](model-field.md), and
 [`@ForeignField`](foreign-field.md) on the model getters to describe its

@@ -1,53 +1,75 @@
-# Performance model
+# Execution and performance model
 
-This page records observable execution behavior that is common across the
-current architecture. It does not contain benchmark results or performance
-targets.
+This page explains predictable sources of work in the current dORM
+architecture. It contains no benchmark results, latency targets, or universal
+performance guarantees.
 
 ## What every operation crosses
 
-Repository calls first use generated entity mapping to turn application values
-into the representation expected by the selected engine. The engine performs
-the query or storage operation, then the generated mapping turns the result
-back into a model or collection for the application.
+A repository operation crosses generated conversion and engine execution:
 
-Writes can allocate serialized maps and identity values. Reads can allocate
-model objects, result lists, and deserialized nested values. These are code-
-level observations, not measurements of elapsed time or memory usage.
+1. application values are represented as creation data or a model;
+2. Entity and EntitySchema resolve identity and stored field metadata;
+3. the engine builds and executes its query or write;
+4. serialized results are reconstructed as models or collections.
 
-## Relationship reads can add work
+This can allocate serialized maps, identity values, model objects, result lists,
+and nested values. These are execution characteristics, not measurements.
 
-Generated relationship paths are assembled lazily. The first backend read
-occurs when `peekAll` or `pullAll` is called. Each path step can then read a
-related source and create `Join`, list, map, and identity structures.
+## Remote work and local work
 
-An engine may recognize a direct relation plan and group some reads. When it
-cannot use a plan, the relationship layer can fall back to readable repository
-operations. The common API does not promise a fixed number of backend calls
-for every relationship path.
+A filter may be evaluated by an in-memory engine, translated to a backend query,
+or represented as HTTP parameters. The common API does not promise that every
+engine performs the same amount of work or uses the same index.
 
-## Caching and benchmarks
+SQL and provider-native query plans are owned by the selected backend. The
+framework does not expose a universal query planner, index advisor, cache, or
+prepared-statement policy.
 
-The framework does not expose a general query-result cache, relationship cache,
-prepared-statement cache, or application-controlled performance policy. Driver
-pooling and connection reuse remain properties of the supplied backend object.
+## Relationships
 
-The repository contains no benchmark suite, timing assertion, workload target,
-or published throughput/latency result. Engine-specific pages describe the
-allocation, batching, request, transaction, and stream behavior visible in
-their implementations.
+Relationship paths are lazy: declaring a path does not read data. Work begins
+when a peek or pull method is called.
 
-## Read the selected engine's behavior
+A direct relation plan may group reads or use a database join. A portable
+readable-operation fallback may issue one or more additional reads per path
+step or per parent. Therefore relationship result shape is portable, but query
+count is not.
 
-The amount of work depends on the engine:
+When relationship query count matters, use the engine support matrix and the
+engine-specific guide before choosing a model shape or relation plan.
 
-- in-memory engines copy or materialize state according to their state model;
-- Firebase maps operations to snapshots and backend events;
-- SQL engines construct statements and may use internal or public transaction
-  boundaries;
-- MongoDB uses document operations and replacement writes;
-- HTTP relationships can issue additional requests and batch operations require
-  configured batch endpoints.
+## Streams
 
-Use the dedicated engine page for the backend-specific details before treating
-an operation's current execution path as a property of all engines.
+Streams can be state-backed, provider-backed, table-watch based, or initial
+read only. A backend that returns an initial read does not provide live
+external-change notifications.
+
+The common stream contract fixes result shape and error delivery, not event
+frequency, backend listener cost, or cross-engine update latency. Streams also
+remain attached to their selected source in SynchronizedEngine.
+
+## Fallback and synchronization
+
+SynchronizedEngine performs finite primary reads first. A classified fallback
+can add the cost of trying one or more replicas. Empty and null results do not
+trigger fallback.
+
+A write can perform the primary operation, outbox insertion, and later replica
+delivery. Replica delivery may be retried because synchronization is
+at-least-once. This is a consistency and reliability tradeoff, not a universal
+latency guarantee.
+
+## Caching and measurement
+
+dORM does not expose a general query-result cache, relationship cache, or
+application-wide performance policy. Connection pooling, prepared statements,
+provider caches, and indexes belong to the supplied backend.
+
+The repository has no published throughput or latency benchmark. Measure the
+workload in the target application, including representative data size,
+relationship depth, page size, provider indexes, and network conditions.
+
+See [Engine and platform support](engine-support.md) and the selected
+[engine guide](../apply/choose-an-engine.md) before treating an implementation
+detail as a portability guarantee.

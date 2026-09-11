@@ -47,4 +47,4 @@ the subscription when the consumer no longer needs it.
 
 Use `pullAll` for the collection equivalent. The first emitted value is a list
 of models. Whether later changes are emitted depends on the engine; compare the
-engine capability table before relying on live updates.
+engine and platform support table before relying on live updates.

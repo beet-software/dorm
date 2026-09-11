@@ -28,4 +28,4 @@ MongoDB selectors, Firebase queries, or HTTP requests. Those operations belong
 to the engine's reference and query implementations.
 
 Use [Apply an operation](../build-the-store/overview.md) for task-oriented
-operation details and [Public API](../reference/public-api.md) for signatures.
+operation details and [Public surface](../reference/public-surface.md) for signatures.

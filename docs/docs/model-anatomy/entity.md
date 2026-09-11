@@ -28,5 +28,5 @@ database connection. The engine supplies the backend reference that invokes
 these mapping operations.
 
 See [Framework contracts](../reference/framework-contracts.md) for the public
-conversion signatures and [Generated API](../reference/generated-api.md) for
+conversion signatures and [Generated output contract](../reference/generated-contract.md) for
 the generated entity surface.

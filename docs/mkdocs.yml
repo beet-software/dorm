@@ -83,15 +83,17 @@ nav:
       - Fix code generation problems: troubleshooting/code-generation-problems.md
       - Check surprising behaviors: troubleshooting/surprising-behaviors.md
   - Reference:
-      - Public API: reference/public-api.md
-      - Generated API: reference/generated-api.md
+      - Reference overview: reference/index.md
+      - Architecture and boundaries: reference/architecture.md
+      - Public surface: reference/public-surface.md
+      - Generated output contract: reference/generated-contract.md
       - Framework contracts: reference/framework-contracts.md
+      - Engine and platform support: reference/engine-support.md
       - Portable errors: reference/errors.md
-      - Synchronize engines: reference/synchronization.md
-      - Engine capabilities: reference/engine-capabilities.md
-      - Performance model: reference/performance.md
+      - Synchronization protocol: reference/synchronization.md
+      - Execution and performance model: reference/performance.md
       - Glossary: reference/glossary.md
-      - Compatibility and release status: reference/compatibility-and-release-status.md
+      - Release status: reference/release-status.md
 
 markdown_extensions:
   - admonition
