@@ -17,6 +17,7 @@ dependencies:
   firebase_core: ^4.14.0
   firebase_database: ^12.5.0
   dorm_framework: ^2.0.0-dev.4
+  dorm_migrations: ^2.0.0-dev.4
   rxdart: ^0.28.0
 dev_dependencies:
   dorm_test: ^2.0.0-dev.4

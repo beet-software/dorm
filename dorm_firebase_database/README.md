@@ -86,7 +86,7 @@ backend read.
 
 The package does not implement the portable TransactionalDorm capability.
 Firebase-specific operations and security rules remain application concerns.
-There is no dORM schema generator or migration system.
+Use `FirebaseDatabaseMigrationAdapter` from `dorm_migrations` for ordered data migrations. Structural field operations are no-ops; backfills read and update existing records in pages with checkpoints. The adapter uses a persistent lease but does not provide one transaction for an entire migration. See the [migration guide](https://ezgrs.github.io/dorm/operations/using-migrations/) for the safe workflow.
 
 ## Streams
 
@@ -96,8 +96,9 @@ from the Realtime Database.
 ## Schema, errors, and limitations
 
 The Firebase SDK, Firebase project, emulator, authentication, and security
-rules are configured outside this package. Errors from the SDK are propagated
-to the application. The engine accepts String identities and does not provide
+rules are configured outside this package. Provider failures are exposed
+through the portable `DormDatabaseException` contract; inspect `cause` and
+`providerCode` when Firebase-specific details are needed. The engine accepts String identities and does not provide
 automatic composite-key generation.
 
 ## Run the example

@@ -19,6 +19,7 @@ export 'package:firebase_core/firebase_core.dart'
 export 'package:firebase_database/firebase_database.dart' show FirebaseDatabase;
 
 export 'src/engine.dart' show Engine;
+export 'src/migration.dart';
 export 'src/filter.dart' show Filter;
 export 'src/firebase_instance.dart';
 export 'src/offline.dart' show OfflineMode;

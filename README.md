@@ -143,11 +143,11 @@ store supplied by the application.
 
 > dORM is more portable than a backend-specific ORM, but less expressive than the native API of each backend.
 
-CRUD, common filters, relationships, sorting, pagination, and selected
-transaction operations can use a shared API. CTEs, database-specific
-aggregations, migrations, indexes, security rules, native selectors, and
-other backend features remain the responsibility of the database, service, or
-native client.
+CRUD, common filters, relationships, sorting, pagination, selected
+transaction operations, and the logical migration operations in
+`dorm_migrations` can use shared contracts. CTEs, database-specific
+aggregations, indexes, security rules, native selectors, and other backend
+features remain the responsibility of the database, service, or native client.
 
 This boundary is intentional: dORM does not turn different backends into one
 identical database. It gives recurring application operations a common home
@@ -168,7 +168,7 @@ expressiveness.
 | [PostgreSQL](https://pub.dev/packages/dorm_postgres_database) | SessionExecutor | Dart | Parameterized SQL, Connection/Pool, upserts |
 | [SQLite](https://pub.dev/packages/dorm_sqlite_database) | SqliteDatabase | Dart/Flutter | Local SQL storage, transactions, reactive table watches |
 
-The [engine capability reference](https://ezgrs.github.io/dorm/reference/engine-capabilities/)
+The [engine capability reference](https://ezgrs.github.io/dorm/reference/engine-support/)
 lists the current differences. Start in-memory when the goal is to learn the
 generated API without configuring a server. Choose a backend engine when
 the application already uses that backend or needs its storage semantics.
@@ -181,9 +181,10 @@ vocabulary for creating, reading, updating, deleting, filtering, sorting,
 paginating, and traversing relationships.
 
 The selected engine still owns backend-specific concerns. The application
-configures the connection, Firebase SDK, HTTP client, schema, migrations,
-credentials, and security rules according to the backend. dORM does not
-provide a universal migration language or replace the native client.
+configures the connection, Firebase SDK, HTTP client, schema, credentials, and
+security rules according to the backend. When migrations are supported,
+`dorm_migrations` supplies ordered logical operations; provider-specific
+indexes and deployment details remain application concerns.
 
 ## Learn more
 
@@ -192,5 +193,6 @@ provide a universal migration language or replace the native client.
 - [Choose an engine](https://ezgrs.github.io/dorm/engines/)
 - [Annotations](https://ezgrs.github.io/dorm/annotations/)
 - [Framework contracts](https://ezgrs.github.io/dorm/reference/framework-contracts/)
+- [Use migrations](https://ezgrs.github.io/dorm/operations/using-migrations/)
 - [Implement a custom engine](https://ezgrs.github.io/dorm/developer-guide/custom-engine/)
 - [GitHub repository](https://github.com/ezgrs/dorm)

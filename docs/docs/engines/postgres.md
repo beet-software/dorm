@@ -52,7 +52,7 @@ finished.
 ## Create the tables
 
 Create tables with PostgreSQL SQL before using the repositories. The package
-does not expose a schema generator or migration command.
+does not infer migrations from generated schemas. Use `PostgresMigrationAdapter` with `dorm_migrations` for explicit, ordered SQL migrations.
 
 For a generated model with a `String` identity and a `String` field, the table
 contains a primary-key column and the mapped model columns. Foreign fields

@@ -100,9 +100,7 @@ The four framework relationship forms use readable-operation fallbacks. A
 relationship can therefore perform multiple Firestore reads. `parentPath` can
 place entity collections under a document such as tenants/acme.
 
-The application owns Firestore rules, indexes, initialization, and data
-migration. This package does not generate a schema, migrations, aggregation
-queries, or arbitrary native selectors.
+The application owns Firestore rules, indexes, and initialization. Use `FirestoreMigrationAdapter` from `dorm_migrations` for ordered migrations; structural field operations are no-ops and data changes run in pages with checkpoints. The adapter uses a persistent lease but does not provide one transaction for an entire migration. See the [migration guide](https://ezgrs.github.io/dorm/operations/using-migrations/) for the safe workflow.
 
 ## Run the example
 

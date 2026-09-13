@@ -24,6 +24,8 @@ dev_dependencies:
   lints: ^5.1.1
 
 dependency_overrides:
+  dorm_migrations:
+    path: ../../dorm_migrations
   meta: 1.18.3
   dorm_annotations:
     path: ../../dorm_annotations

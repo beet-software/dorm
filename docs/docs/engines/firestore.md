@@ -251,7 +251,5 @@ layer.
 
 ## Firestore-specific boundaries
 
-The engine currently does not provide schema generation, migrations,
-aggregation, collection-group queries, native selector access, index
-management, or a public transaction object. Firestore batches and transactions
+The optional `FirestoreMigrationAdapter` supports ordered migrations. Structural field operations are no-ops and data operations scan documents. The engine does not provide aggregation, collection-group queries, native selector access, index management, or a public transaction object. Firestore batches and transactions
 are used internally where the operation mapping requires them.

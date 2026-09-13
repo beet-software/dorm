@@ -178,6 +178,11 @@ drop columns, record migrations, create indexes, or represent every complex
 `@ModelField` and polymorphic value. Apply the generated SQL with the MySQL
 tooling used by the application.
 
+For explicit, ordered migrations, add `dorm_migrations` and run a
+`MigrationRunner` with `MySqlMigrationAdapter`. The adapter records completed
+versions and translates the portable operations to MySQL SQL; it does not infer
+changes by comparing the generated schema with the live database.
+
 ## Configure credentials and database permissions
 
 The application creates the `MySQLConnection` and supplies its credentials.

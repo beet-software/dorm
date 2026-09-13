@@ -78,7 +78,7 @@ dart run dorm_mysql_database:generate lib/models.dart > schema.sql
 
 Apply the generated SQL with the database tooling used by the application. The
 command creates definitions; it does not compare a live schema, track
-migrations, create indexes, or update an existing database.
+migrations, create indexes, or update an existing database. For ordered migration history, use `MySqlMigrationAdapter` from `dorm_migrations`. It applies explicit SQL operations, uses a backend advisory lock, and isolates migration operations because DDL may commit implicitly. See the [migration guide](https://ezgrs.github.io/dorm/operations/using-migrations/) for generation, review, and recovery.
 
 The normal model generation command remains separate:
 
@@ -134,8 +134,9 @@ subscribe to later MySQL changes.
 ## Schema, errors, and limitations
 
 Model and filter values are passed as driver parameters. Table and column
-identifiers come from generated schema metadata. Errors from mysql_client and
-the MySQL server are propagated without a dORM-specific error hierarchy.
+identifiers come from generated schema metadata. Provider failures are exposed
+through the portable `DormDatabaseException` contract; inspect `cause` and
+`providerCode` when MySQL-specific details are needed.
 
 ## Run an example
 

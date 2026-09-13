@@ -106,9 +106,8 @@ PostgreSQL changes.
 
 ## Schema, errors, and limitations
 
-dorm_postgres_database does not generate schemas or migrations. Create and
-migrate tables through the SQL and deployment workflow used by the application.
-Driver and PostgreSQL errors are propagated without a new dORM error hierarchy.
+The package does not infer migrations from generated schemas. Use `PostgresMigrationAdapter` from `dorm_migrations` for explicit, ordered SQL migrations, or keep using the application SQL deployment workflow. The adapter uses a backend advisory lock and groups a migration with its history record in one transaction when the provider honors it. See the [migration guide](https://ezgrs.github.io/dorm/operations/using-migrations/).
+Provider failures are exposed through the portable `DormDatabaseException` contract; inspect `cause` and `providerCode` when PostgreSQL-specific details are needed.
 
 ## Run the example
 

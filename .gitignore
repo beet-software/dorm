@@ -129,3 +129,6 @@ fabric.properties
 !dorm_*/CHANGELOG.md
 */LICENSE
 !dorm_*/LICENSE
+
+# Generated migration index
+**/migrations/index.dart

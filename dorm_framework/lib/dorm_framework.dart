@@ -21,6 +21,7 @@ export 'src/errors.dart';
 export 'src/entity.dart';
 export 'src/filter.dart';
 export 'src/identity.dart';
+export 'src/migration.dart';
 export 'src/query.dart';
 export 'src/read_options.dart';
 export 'src/primary_key.dart';

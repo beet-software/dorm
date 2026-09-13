@@ -55,8 +55,7 @@ try {
 }
 ~~~
 
-The application owns the database and decides when schema or migration SQL is
-executed. The engine does not create a schema automatically.
+The application owns the database and decides when schema changes are applied. Use `SqliteMigrationAdapter` from `dorm_migrations` for ordered portable migrations. It groups a migration with its history record in the database transaction when the provider honors it; the engine does not create a schema automatically. See the [migration guide](https://ezgrs.github.io/dorm/operations/using-migrations/).
 
 ## Identities, filters, pages, and relationships
 
@@ -90,9 +89,7 @@ reads depends on the relation plan and fallback path.
 
 ## Schema, errors, and limitations
 
-Use SQL or sqlite_async migration facilities from the application. This package
-does not generate schema or migration history. SQLite and sqlite_async errors
-are propagated without a dORM-specific error hierarchy.
+Use `SqliteMigrationAdapter` with `dorm_migrations` for explicit, ordered migrations, or use sqlite_async directly when native operations are required. The adapter records history in a reserved table and rejects unsupported SQLite alterations.
 
 ## Run an example
 

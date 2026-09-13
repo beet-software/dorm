@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dorm_framework/dorm_framework.dart';
+import 'package:dorm_migrations/dorm_migrations.dart';
 import 'package:dorm_sqlite_database/dorm_sqlite_database.dart';
 import 'package:sqlite_async/sqlite_async.dart';
 import 'package:test/test.dart';
@@ -132,5 +133,45 @@ void main() {
 
     expect(model.id, greaterThan(0));
     expect((await reference.peek(_GeneratedEntity(), model.id))?.name, 'value');
+  });
+  test('applies and records SQLite migrations', () async {
+    final Migration migration = Migration(
+      version: 1,
+      name: 'create-users',
+      operations: [
+        CreateEntityOperation(
+          entity: const MigrationEntityDefinition(
+            entityName: 'users',
+            tableName: 'users',
+            fields: [
+              MigrationFieldDefinition(
+                fieldName: 'id',
+                columnName: 'id',
+                type: MigrationValueType.integer,
+                nullable: false,
+              ),
+              MigrationFieldDefinition(
+                fieldName: 'name',
+                columnName: 'name',
+                type: MigrationValueType.text,
+                nullable: false,
+              ),
+            ],
+            primaryKeys: ['id'],
+          ),
+        ),
+      ],
+    );
+    final MigrationRunner runner = MigrationRunner(
+      Engine(database).migrationAdapter,
+    );
+
+    await runner.run([migration]);
+    final result = await database.getAll('SELECT * FROM users');
+    final MigrationRunResult retry = await runner.run([migration]);
+
+    expect(result, isEmpty);
+    expect(retry.applied, isEmpty);
+    expect(retry.skipped.single.version, 1);
   });
 }

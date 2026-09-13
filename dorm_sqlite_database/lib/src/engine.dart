@@ -18,6 +18,7 @@ import 'package:dorm_framework/dorm_framework.dart';
 import 'package:sqlite_async/sqlite_async.dart';
 
 import 'errors.dart';
+import 'migration.dart';
 import 'query.dart';
 import 'reference.dart';
 import 'relationship.dart';
@@ -26,7 +27,8 @@ class Engine
     implements
         BaseEngine<Query, OffsetPageRequest>,
         TransactionalEngine<Query, OffsetPageRequest>,
-        ErrorAwareEngine {
+        ErrorAwareEngine,
+        MigrationCapableEngine {
   final SqliteDatabase database;
   bool _transactionActive = false;
 
@@ -34,6 +36,9 @@ class Engine
 
   @override
   DormErrorMapper get errorMapper => const SqliteErrorMapper();
+
+  @override
+  MigrationAdapter get migrationAdapter => SqliteMigrationAdapter(database);
 
   @override
   BaseReference<Query, OffsetPageRequest> createReference() =>

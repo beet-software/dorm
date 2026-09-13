@@ -88,7 +88,8 @@ advertised through separate capabilities:
 
 - `TransactionalEngine` exposes the portable transaction facade;
 - `ChangeTrackedEngine` exposes exact mutation change sets for synchronization;
-- `ErrorAwareEngine` exposes portable provider-error classification.
+- `ErrorAwareEngine` exposes portable provider-error classification;
+- `MigrationCapableEngine` exposes ordered structural and data migrations.
 
 An engine that does not implement a capability remains usable through the
 common surface, but the corresponding generated or composed feature is not

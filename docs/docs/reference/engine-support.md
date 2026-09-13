@@ -1,8 +1,9 @@
 # Engine and platform support
 
 This page is the canonical comparison of the official engines. It records
-current behavior verified by the packages and tests; it is not a promise about
-unlisted server versions, provider configurations, or future implementations.
+behavior verified by the packages and tests; it is not a promise about
+unlisted provider versions, server configurations, permissions, or future
+implementations.
 
 ## Capability matrix
 
@@ -17,49 +18,77 @@ unlisted server versions, provider configurations, or future implementations.
 | Pagination | Offset | Offset | Offset with client-side skipping | Offset with client-side skipping | Offset | Offset | Offset | Offset | Offset |
 | Streams | State-backed | State-backed | Realtime value events | Document/query snapshots | Initial read | Initial read | Initial read | Initial read | Table watches |
 | Public transactions | Yes | Yes | No | No | Yes | Yes | No | No | Yes |
+| Persistent migrations | No | No | Document adapter | Document adapter | SQL adapter | SQL adapter | No | No | SQL adapter |
+| Migration paging/checkpoints | No | No | Stable pages | Stable pages | Set-based SQL | Set-based SQL | Not applicable | Not applicable | Set-based SQL |
+| Migration schema inspection | No | No | No | No | Tables and fields | Tables and fields | No | No | Tables and fields |
+| Migration transaction | Not applicable | Not applicable | None | None | Operation | Migration | Not applicable | Not applicable | Migration |
+| Migration lock | Not applicable | Not applicable | Persistent lease | Persistent lease | Backend advisory lock | Backend advisory lock | Not applicable | Not applicable | Local lock |
+| Migration history compaction | Not applicable | Not applicable | Adapter support | Adapter support | Adapter support | Adapter support | Not applicable | Not applicable | Adapter support |
+| Migration indexes | Not applicable | Not applicable | Unsupported | Unsupported | Explicit | Explicit | Not applicable | Not applicable | Explicit |
+| Unique constraints | Not applicable | Not applicable | Unsupported | Unsupported | Explicit | Explicit | Not applicable | Not applicable | Unsupported |
+| Foreign keys | Not applicable | Not applicable | Unsupported | Unsupported | Explicit | Explicit | Not applicable | Not applicable | Unsupported |
+| Check constraints | Not applicable | Not applicable | Unsupported | Unsupported | Explicit | Explicit | Not applicable | Not applicable | Unsupported |
+| Views | Not applicable | Not applicable | Unsupported | Unsupported | Explicit | Explicit | Not applicable | Not applicable | Explicit |
+| Triggers | Not applicable | Not applicable | Unsupported | Unsupported | Explicit | Explicit | Not applicable | Not applicable | Explicit |
+| Sequences | Not applicable | Not applicable | Unsupported | Unsupported | Unsupported | Explicit | Not applicable | Not applicable | Unsupported |
+| Provider-specific schema | Not applicable | Not applicable | Unsupported | Unsupported | Explicit SQL | Explicit SQL | Not applicable | Not applicable | Explicit SQL |
 | Relationship execution | Portable | Portable | Readable operations | Readable operations | Plans plus readable fallback | Plans plus readable fallback | Plans plus readable fallback | Readable operations | Readable operations |
 | Portable provider errors | No capability | No capability | Firebase mapper | Firebase mapper | MySQL mapper | PostgreSQL mapper | MongoDB mapper | HTTP mapper | SQLite mapper |
 
-## `Engine` notes
+The migration rows describe the optional adapter, not the regular repository
+engine. A backend marked `Unsupported` rejects that operation through the
+portable migration contract. See [Migration protocol](migrations.md) for the
+operation and failure rules.
+
+## Engine notes
 
 ### Memory and BLoC
 
 Both engines keep state in the `Engine` instance and require no external
-service. Their reads and relationships are evaluated in process. Memory uses
-Dart maps and streams; BLoC exposes state-backed streams through its BLoC
-dependencies.
+service. Their reads and relationships are evaluated in process. They do not
+have persistent schema migration history. Use them to exercise application
+behavior without a database deployment.
 
 See [Run in-memory](../engines/memory.md) and [Run with BLoC](../engines/bloc.md).
 
 ### Firebase Realtime Database
 
-Reference identities are String values. Firebase initialization, authentication,
-and offline mode belong to the Flutter application. Value events are provided
-by Realtime Database.
+Reference identities are String values. Firebase initialization,
+authentication, offline mode, and rules belong to the Flutter application.
 
-The current `popAll` path is not a common all-or-nothing transaction guarantee.
+The `FirebaseDatabaseMigrationAdapter` treats structural field declarations as
+no-ops and scans records for data changes. It uses stable paging, checkpoints,
+and a persistent lease in a reserved path. It does not provide one transaction
+for an entire migration; data operations must be safe to retry.
+
 See [Run with Firebase](../engines/firebase.md).
 
 ### Cloud Firestore
 
 Document IDs are simple String identities. Firestore snapshots and internal
-batches/transactions are available to the implementation, but there is no
-public `TransactionalDorm` capability. Composite identities, migrations,
-aggregation, and general cursor pagination are not part of the current dORM
-surface.
+batches are available to the implementation, but there is no public
+`TransactionalDorm` capability.
+
+The `FirestoreMigrationAdapter` treats structural field declarations as no-ops
+and changes existing documents in pages. It uses checkpoints and a persistent
+lease in a reserved document. Large operations are not one global transaction.
 
 See [Run with Cloud Firestore](../engines/firestore.md).
 
 ### MySQL and PostgreSQL
 
 Both SQL engines translate structured metadata and filters to parameterized
-SQL and require application-created tables. MySQL and PostgreSQL expose the
-portable transaction facade.
+SQL and require application-created tables. Their migration adapters use SQL
+DDL/DML and keep history in a reserved table.
 
-Their direct relationship sources can use plans that group work, while custom
-or composite sources may use readable operations. Their current `pull` and
-`pullAll` implementations perform an initial read rather than subscribing to
-later database changes.
+`MySqlMigrationAdapter` uses a backend advisory lock and isolates each migration
+operation because DDL may implicitly commit. `PostgresMigrationAdapter` uses a
+backend advisory lock and groups a migration with its history record in one
+transaction when the provider honors it.
+
+Both adapters inspect SQL tables and fields through `MigrationSchemaInspector`.
+Indexes, constraints, views, triggers, sequences, and provider-specific
+statements remain explicit operations with provider-specific support.
 
 See [Run with MySQL](../engines/mysql.md) and
 [Run with PostgreSQL](../engines/postgres.md).
@@ -67,22 +96,19 @@ See [Run with MySQL](../engines/mysql.md) and
 ### MongoDB
 
 MongoDB stores identities in schema-declared fields and does not replace them
-with MongoDB ObjectId or the _id field. Identified writes use replacement
-upserts. The current engine does not expose public transactions, change
-streams, aggregation, migrations, or native selector APIs.
+with MongoDB ObjectId or the `_id` field. The current engine does not expose
+persistent migrations, public transactions, or a migration adapter.
+
+Create collections and indexes with MongoDB tools or application code when
+needed.
 
 See [Run with MongoDB](../engines/mongo.md).
 
 ### HTTP
 
 The application supplies an HTTP client, base URI, and resource mappings.
-Mappings define routes, JSON envelopes, batch operations, and query
-parameters. Missing configured batch endpoints are unsupported rather than
-silently emulated.
-
-HTTP exposes initial-read streams, readable-operation relationships, and
-portable HTTP errors. It does not expose transactions, cursor pagination,
-polling, or server-event streams.
+HTTP does not provide persistent migration history. Schema changes and
+deployment state remain server concerns.
 
 See [Run with HTTP/JSON](../engines/http.md).
 
@@ -90,20 +116,21 @@ See [Run with HTTP/JSON](../engines/http.md).
 
 SQLite uses an application-owned `SqliteDatabase` and supports SQL filters,
 offset pages, composite identities, table-watch streams, and the portable
-transaction facade. The application prepares the database schema and owns its
-lifecycle.
+transaction facade.
 
-The SQLite dependency uses `dart:ffi` in its current implementation. It is not
-Wasm-compatible through the default path, even when the package can be used on
-other supported platforms.
+`SqliteMigrationAdapter` groups each migration with its history record in the
+database transaction when the provider honors it. It can inspect tables and
+fields, but provider-specific constraints and unsupported alterations remain
+explicit. The SQLite dependency uses `dart:ffi` in its default path and is not
+Wasm-compatible through that path.
 
 See [Run with SQLite](../engines/sqlite.md).
 
 ## Synchronization composition
 
 `dorm_sync` is a composition layer, not another storage backend. A primary must
-provide `ChangeTrackedEngine` through `EngineSyncTarget`. A replica may use a normal
-`BaseEngine` through `EngineReplicaTarget`.
+provide `ChangeTrackedEngine` through `EngineSyncTarget`; a replica may use a
+normal `BaseEngine` through `EngineReplicaTarget`.
 
 The composed engine uses the primary query and page types publicly. Structured
 filters and page requests are adapted to each target. Synchronization is

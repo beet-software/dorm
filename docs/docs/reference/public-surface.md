@@ -23,6 +23,7 @@ Application code should import these package barrels:
 | `dorm_http_database` | `package:dorm_http_database/dorm_http_database.dart` | REST-shaped HTTP/JSON engine. |
 | `dorm_sqlite_database` | `package:dorm_sqlite_database/dorm_sqlite_database.dart` | SQLite engine. |
 | `dorm_sync` | `package:dorm_sync/dorm_sync.dart` | Optional primary-to-replica synchronization. |
+| `dorm_migrations` | `package:dorm_migrations/dorm_migrations.dart` | Optional ordered migration contracts and adapters. |
 | `dorm_example` | `package:dorm_example/dorm_example.dart` and the `dorm_example` executable | Showcase project generator. |
 
 The generated application imports the annotations, framework, generator, and

@@ -150,6 +150,42 @@ not supported by the current generated facade. Engines that do not implement
 A backend may use an internal transaction for one operation without exposing
 the public transaction capability. Those are separate guarantees.
 
+## Migrations
+
+Migrations are an optional capability. `MigrationCapableEngine` exposes a
+`MigrationAdapter`; `BaseEngine` does not require it because in-memory and
+server-facing engines may not own a persistent schema.
+
+A `MigrationAdapter` applies the sealed `MigrationOperation` hierarchy, stores
+completed versions, and protects the complete run with a lock. The runner must
+record a `Migration` only after all of its operations finish. Failed operations
+may be retried, so adapters and migrations must be idempotent.
+
+A migration adapter may additionally implement `TransactionalMigrationAdapter`.
+Its `MigrationTransactionMode` declares whether the runner groups a complete
+migration, each operation, or no migration work in a transaction. The adapter
+must not claim a stronger boundary than its provider guarantees.
+Each `MigrationOperation` exposes a `MigrationOperationSafety` classification.
+The `dorm_migrations` runner uses this classification to reject destructive
+pending operations unless the caller explicitly opts in.
+The portable contract separates structural operations such as
+`AddFieldOperation` and `RenameFieldOperation` from data operations such as
+`BackfillFieldOperation` and `CopyFieldOperation`. A document backend may treat
+a structural field operation as a no-op, but it must execute the corresponding
+data operation when existing records need to change.
+
+`TransformFieldOperation` is the portable contract for typed changes to existing values. Its filter is a `FilterExpression`, its transformation is declarative, and its batch size is a paging hint for adapters that support pages. Arbitrary Dart callbacks are outside this contract. Before a field is tightened, projects may use `MigrationRunner.operationValidator` to perform data-specific validation immediately before `AlterFieldOperation`.
+
+
+The framework does not infer historical renames from the current
+`EntitySchema`, does not promise distributed atomicity, and does not require a
+backend to support every operation. Unsupported operations must fail
+explicitly. Foreign keys are explicit operations with named local and referenced
+fields; their enforcement and referential actions remain backend capabilities. Check constraints are also explicit; their expressions use provider syntax and are not
+translated by the framework.
+
+See [Migration protocol](migrations.md) for the execution rules and backend
+semantics.
 ## Synchronization
 
 `ChangeTrackedEngine` is an optional capability used by `dorm_sync`. Its mutation

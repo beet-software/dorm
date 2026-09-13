@@ -25,6 +25,8 @@ import 'package:dartx/dartx.dart';
 import 'package:dorm_annotations/dorm_annotations.dart';
 import 'package:source_gen/source_gen.dart';
 
+import 'migration_schema.dart';
+
 import 'utils/custom_types.dart';
 import 'utils/orm_node.dart';
 import 'visitors.dart';
@@ -67,6 +69,7 @@ class _PrimaryKeyNaming {
   final String fieldName;
   final String columnName;
   final cb.Reference type;
+  final String dartType;
   final bool generated;
   final bool databaseGenerated;
 
@@ -74,6 +77,7 @@ class _PrimaryKeyNaming {
     required this.fieldName,
     required this.columnName,
     required this.type,
+    required this.dartType,
     required this.generated,
     this.databaseGenerated = false,
   });
@@ -148,6 +152,10 @@ class ModelNaming extends Naming<ModelOrmNode> {
           $Type type => type.name ?? 'String',
           _ => generated.type.toString(),
         }),
+        dartType: switch (generated.type) {
+          $Type type => type.name ?? 'String',
+          _ => generated.type.toString(),
+        },
         generated: true,
       ),
       DatabaseGeneratedIdSpec generated => _PrimaryKeyNaming(
@@ -157,6 +165,10 @@ class ModelNaming extends Naming<ModelOrmNode> {
           $Type type => type.name ?? 'String',
           _ => generated.type.toString(),
         }),
+        dartType: switch (generated.type) {
+          $Type type => type.name ?? 'String',
+          _ => generated.type.toString(),
+        },
         generated: true,
         databaseGenerated: true,
       ),
@@ -192,6 +204,7 @@ class ModelNaming extends Naming<ModelOrmNode> {
       fieldName: fieldName,
       columnName: field.annotation.name ?? fieldName,
       type: cb.Reference(field.type),
+      dartType: field.type,
       generated: false,
     );
   }
@@ -2801,3 +2814,106 @@ class OrmGenerator extends Generator {
   }
 }
 
+/// Builds the normalized schema used by the migration CLI.
+SchemaSnapshot buildMigrationSchema(
+  LibraryReader library, {
+  MigrationConfig config = const MigrationConfig(),
+}) {
+  final Map<String, FieldedOrmNode<Object>> nodes = parseLibrary(library);
+  final Map<String, String> tablesByModel = {};
+  for (final MapEntry<String, FieldedOrmNode<Object>> entry in nodes.entries) {
+    final ClassOrmNode<Object> annotation = entry.value.annotation;
+    if (annotation is ModelOrmNode) {
+      final ModelNaming naming = ModelNaming(
+        name: entry.key,
+        node: annotation,
+        fields: entry.value.fields,
+      );
+      tablesByModel[naming.modelName] = naming.tableName;
+      tablesByModel[entry.key] = naming.tableName;
+    }
+  }
+
+  final List<SchemaEntity> entities = [];
+  for (final MapEntry<String, FieldedOrmNode<Object>> entry in nodes.entries) {
+    final ClassOrmNode<Object> annotation = entry.value.annotation;
+    if (annotation is! ModelOrmNode) continue;
+    final ModelNaming naming = ModelNaming(
+      name: entry.key,
+      node: annotation,
+      fields: entry.value.fields,
+    );
+    final List<SchemaField> fields = [];
+    for (final MapEntry<String, FieldOrmNode> fieldEntry
+        in entry.value.fields.entries) {
+      final FieldOrmNode field = fieldEntry.value;
+      if (!field.annotation.isConcrete) continue;
+      final String dartType = field.type;
+      final ForeignField? foreign = field.annotation is ForeignField
+          ? field.annotation as ForeignField
+          : null;
+      final String fieldName = field.annotation.name ?? fieldEntry.key;
+      fields.add(
+        SchemaField(
+          name: fieldEntry.key,
+          columnName: fieldName,
+          dartType: dartType,
+          logicalType: _migrationLogicalType(dartType),
+          nullable: !field.required,
+          modelDefault: field.annotation.defaultValue?.toString(),
+          foreignTable: foreign == null
+              ? null
+              : tablesByModel[_typeName(foreign.referTo)],
+          foreignField: foreign == null ? null : 'id',
+          unique: foreign?.unique ?? false,
+          typeOverrides:
+              config.typeOverrides[naming.tableName]?[fieldName] ??
+              const <String, String>{},
+        ),
+      );
+    }
+    for (final _PrimaryKeyNaming key in naming._primaryKeys) {
+      if (fields.any((field) => field.columnName == key.columnName)) continue;
+      fields.add(
+        SchemaField(
+          name: key.fieldName,
+          columnName: key.columnName,
+          dartType: key.dartType,
+          logicalType: _migrationLogicalType(key.dartType),
+          nullable: false,
+        ),
+      );
+    }
+    entities.add(
+      SchemaEntity(
+        name: naming.modelName,
+        tableName: naming.tableName,
+        fields: fields,
+        primaryKeys: naming._primaryKeys.map((key) => key.columnName).toList(),
+      ),
+    );
+  }
+  entities.sort((a, b) => a.tableName.compareTo(b.tableName));
+  return SchemaSnapshot(entities: entities);
+}
+
+String _typeName(Type type) {
+  final String value = type.toString();
+  return value.split('<').first.split('.').last;
+}
+
+String _migrationLogicalType(String original) {
+  final String type = original.replaceAll('?', '').trim();
+  if (type == 'String') return 'text';
+  if (type == 'int') return 'integer';
+  if (type == 'double' || type == 'num') return 'real';
+  if (type == 'bool') return 'boolean';
+  if (type == 'DateTime') return 'dateTime';
+  if (type == 'Uint8List' || type.endsWith('.Uint8List')) return 'binary';
+  if (type == 'Map' || type.startsWith('Map<')) return 'json';
+  if (type == 'List' || type.startsWith('List<')) return 'json';
+  throw MigrationSchemaException(
+    'Cannot infer a portable migration type for Dart type "$original". '
+    'Use a supported scalar, Map, List, or Uint8List.',
+  );
+}

@@ -56,8 +56,6 @@ The following are not established by the repository as universal guarantees:
 - cross-engine compatibility when identity types, key counts, codecs, or
   serialized schemas differ.
 
-When a release depends on one of these facts, document the specific tested
-environment in the relevant engine guide or mark the decision as:
-
-> HUMAN DECISION REQUIRED: compatibility has not been established by the
-> repository.
+When a release depends on one of these facts, verify the specific environment
+in the relevant engine guide before shipping. Do not assume that an untested
+provider, server, platform, or generated member has the same behavior.

@@ -23,6 +23,8 @@ dev_dependencies:
     path: ../../dorm_generator
 
 dependency_overrides:
+  dorm_migrations:
+    path: ../../dorm_migrations
   meta: 1.18.3
   dorm_framework:
     path: ../../dorm_framework

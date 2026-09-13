@@ -15,5 +15,6 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 export 'src/engine.dart' show Engine;
+export 'src/migration.dart';
 export 'src/filter.dart' show Filter;
 export 'src/query.dart' show Query;

@@ -230,18 +230,20 @@ engine-specific behavior in separate tests.
 
 ## Important boundaries
 
-dorm_framework does not create schemas or migrations. It does not make every
-backend transactional or reactive. A stream may represent a live subscription
-or only the initial read, depending on the engine. Query features must be
-supported by the selected backend; dORM does not silently download and filter
-data on the client.
+dorm_framework does not execute schemas or migrations itself. It exposes
+optional migration contracts for `dorm_migrations`, while each adapter owns the
+backend-specific execution. It does not make every backend transactional or
+reactive. A stream may represent a live subscription or only the initial read,
+depending on the engine. Query features must be supported by the selected backend;
+dORM does not silently download and filter data on the client.
 
 ## Learn more
 
 - [Framework contracts](https://ezgrs.github.io/dorm/reference/framework-contracts/)
-- [Public API](https://ezgrs.github.io/dorm/reference/public-api/)
+- [Public API](https://ezgrs.github.io/dorm/reference/public-surface/)
 - [Model anatomy](https://ezgrs.github.io/dorm/model-anatomy/)
 - [dorm_annotations](https://pub.dev/packages/dorm_annotations)
 - [dorm_generator](https://pub.dev/packages/dorm_generator)
 - [Choose an engine](https://ezgrs.github.io/dorm/engines/)
+- [Migration protocol](https://ezgrs.github.io/dorm/reference/migrations/)
 - [GitHub repository](https://github.com/ezgrs/dorm)

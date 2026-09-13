@@ -17,12 +17,17 @@
 import 'package:dorm_framework/dorm_framework.dart';
 
 import 'errors.dart';
+import 'migration.dart';
 import 'firebase_instance.dart';
 import 'query.dart';
 import 'reference.dart';
 import 'relationship.dart';
 
-class Engine implements BaseEngine<Query, OffsetPageRequest>, ErrorAwareEngine {
+class Engine
+    implements
+        BaseEngine<Query, OffsetPageRequest>,
+        ErrorAwareEngine,
+        MigrationCapableEngine {
   final FirebaseInstance instance;
   final String? path;
 
@@ -30,6 +35,10 @@ class Engine implements BaseEngine<Query, OffsetPageRequest>, ErrorAwareEngine {
 
   @override
   DormErrorMapper get errorMapper => const FirebaseDatabaseErrorMapper();
+
+  @override
+  MigrationAdapter get migrationAdapter =>
+      FirebaseDatabaseMigrationAdapter(instance, path: path);
 
   @override
   BaseReference<Query, OffsetPageRequest> createReference() =>

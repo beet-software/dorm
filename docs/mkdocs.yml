@@ -36,6 +36,7 @@ nav:
       - Using pagination: operations/using-pagination.md
       - Using transactions: operations/using-transactions.md
       - Using synchronization: operations/using-synchronization.md
+      - Using migrations: operations/using-migrations.md
       - Handling errors: operations/handling-errors.md
   - Engines:
       - Choose an engine: engines/index.md
@@ -88,6 +89,7 @@ nav:
       - Public surface: reference/public-surface.md
       - Generated output contract: reference/generated-contract.md
       - Framework contracts: reference/framework-contracts.md
+      - Migration protocol: reference/migrations.md
       - Engine and platform support: reference/engine-support.md
       - Portable errors: reference/errors.md
       - Synchronization protocol: reference/synchronization.md

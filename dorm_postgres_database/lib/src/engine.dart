@@ -18,6 +18,7 @@ import 'package:dorm_framework/dorm_framework.dart';
 import 'package:postgres/postgres.dart';
 
 import 'errors.dart';
+import 'migration.dart';
 import 'query.dart';
 import 'reference.dart';
 import 'relationship.dart';
@@ -26,11 +27,15 @@ class Engine
     implements
         BaseEngine<Query, OffsetPageRequest>,
         TransactionalEngine<Query, OffsetPageRequest>,
-        ErrorAwareEngine {
+        ErrorAwareEngine,
+        MigrationCapableEngine {
   final SessionExecutor executor;
 
   @override
   DormErrorMapper get errorMapper => const PostgresErrorMapper();
+
+  @override
+  MigrationAdapter get migrationAdapter => PostgresMigrationAdapter(executor);
 
   bool _transactionActive = false;
 

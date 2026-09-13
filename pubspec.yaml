@@ -22,6 +22,7 @@ workspace:
   - dorm_test
   - dorm_example
   - dorm_sync
+  - dorm_migrations
 
 dev_dependencies:
   melos: ^8.6.0

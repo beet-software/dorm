@@ -5,7 +5,7 @@
   <a href="https://pub.dev/packages/dorm_generator"><img src="https://img.shields.io/pub/points/dorm_generator?logo=dart" alt="dorm_generator pub points"></a>
   <a href="https://pub.dev/packages/dorm_generator"><img src="https://img.shields.io/pub/popularity/dorm_generator?logo=dart" alt="dorm_generator popularity"></a>
   <a href="https://pub.dev/packages/dorm_generator"><img src="https://img.shields.io/pub/likes/dorm_generator?logo=dart" alt="dorm_generator likes"></a>
-  <a href="https://ezgrs.github.io/dorm/reference/generated-api/"><img src="https://img.shields.io/badge/documentation-dORM-4c8bf5?style=flat" alt="dorm_generator documentation"></a>
+  <a href="https://ezgrs.github.io/dorm/reference/generated-contract/"><img src="https://img.shields.io/badge/documentation-dORM-4c8bf5?style=flat" alt="dorm_generator documentation"></a>
   <a href="https://github.com/ezgrs/dorm"><img src="https://img.shields.io/badge/repository-GitHub-181717?logo=github&style=flat" alt="dORM repository"></a>
   <a href="https://github.com/ezgrs/dorm"><img src="https://img.shields.io/github/license/ezgrs/dorm?style=flat" alt="License"></a>
   <a href="https://github.com/ezgrs/dorm/actions/workflows/dart.yml"><img src="https://github.com/ezgrs/dorm/actions/workflows/dart.yml/badge.svg" alt="Dart CI"></a>
@@ -188,6 +188,30 @@ serialization path of that engine.
 
 - [Annotations](https://pub.dev/packages/dorm_annotations)
 - [Framework](https://pub.dev/packages/dorm_framework)
-- [Generated API reference](https://ezgrs.github.io/dorm/reference/generated-api/)
+- [Generated API reference](https://ezgrs.github.io/dorm/reference/generated-contract/)
 - [Code generation troubleshooting](https://ezgrs.github.io/dorm/troubleshooting/code-generation-problems/)
 - [GitHub repository](https://github.com/ezgrs/dorm)
+
+## Generate schema migrations
+
+The optional migration CLI compares analyzed models with a versioned snapshot and
+writes a reviewed Dart migration. It never connects to a database:
+
+```shell
+dart run dorm_generator:migrate initialize --input lib/models.dart
+dart run dorm_generator:migrate diff --input lib/models.dart --name add-active
+dart run dorm_generator:migrate index
+```
+
+The default snapshot is *migrations/schema.json*. Versioned migration sources
+are written under *migrations/*. The generated *migrations/index.dart* is
+ignored and can be rebuilt after a fresh clone or in CI. The optional
+*dorm.yaml* supplies SQL type overrides and other generator inputs; it is not a
+replacement for reviewing the generated migration.
+
+Data operations such as `CopyFieldOperation` and
+`RemoveFieldValueOperation` must be added to the generated Dart migration.
+They are not configured through *dorm.yaml*.
+
+For the complete workflow, safety rules, and recovery guidance, see [Use
+migrations](https://ezgrs.github.io/dorm/operations/using-migrations/).

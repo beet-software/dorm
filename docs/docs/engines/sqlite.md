@@ -106,6 +106,4 @@ transaction context.
 web support requires SQLite WASM and worker assets. Declare Boolean columns as
 `BOOLEAN` so the engine can restore SQLite integer values as Dart `bool` values.
 
-The engine does not expose SQLite-native statements, indexes, migrations, or
-connection management through the dORM API. Use the supplied `SqliteDatabase`
-directly for those operations when they are part of application setup.
+The optional `SqliteMigrationAdapter` exposes the portable migration contract through `dorm_migrations`. It handles explicit SQL DDL/DML and records history in a reserved table. Use the supplied `SqliteDatabase` directly for indexes, connection management, or SQLite features outside that contract.

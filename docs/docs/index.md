@@ -149,9 +149,9 @@ shows the repository tasks independently.
 
 ## Important boundaries
 
-dORM does not provide a universal migration language. Schema creation,
-migrations, indexes, credentials, authorization, and security rules remain
-backend-specific.
+The optional `dorm_migrations` package provides ordered logical operations for
+supported engines. Physical schema creation, indexes, credentials,
+authorization, and security rules remain backend-specific.
 
 The public transaction callback is available only for engines that implement
 the transactional capability. Streams, advanced filters, identity generation,

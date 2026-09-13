@@ -53,6 +53,7 @@ shows how these types are produced.
   `purge`.
 - [Using filters](using-filters.md) covers conditions,
   ordering, limits, and offset pages.
+- [Using migrations](using-migrations.md) compares model schemas and generates reviewed Dart migrations.
 - [Using synchronization](using-synchronization.md) composes a primary
   engine with replicas, fallback reads, and an outbox.
 

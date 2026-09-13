@@ -18,6 +18,7 @@ import 'package:dorm_framework/dorm_framework.dart';
 import 'package:mysql_client/mysql_client.dart';
 
 import 'errors.dart';
+import 'migration.dart';
 import 'query.dart';
 import 'reference.dart';
 import 'relationship.dart';
@@ -26,7 +27,8 @@ class Engine
     implements
         BaseEngine<Query, OffsetPageRequest>,
         TransactionalEngine<Query, OffsetPageRequest>,
-        ErrorAwareEngine {
+        ErrorAwareEngine,
+        MigrationCapableEngine {
   final MySQLConnection connection;
   bool _transactionActive = false;
 
@@ -34,6 +36,9 @@ class Engine
 
   @override
   DormErrorMapper get errorMapper => const MySqlErrorMapper();
+
+  @override
+  MigrationAdapter get migrationAdapter => MySqlMigrationAdapter(connection);
 
   @override
   BaseReference<Query, OffsetPageRequest> createReference() =>

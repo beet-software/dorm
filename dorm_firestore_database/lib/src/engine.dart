@@ -18,17 +18,26 @@ import 'package:cloud_firestore/cloud_firestore.dart' as fs;
 import 'package:dorm_framework/dorm_framework.dart';
 
 import 'errors.dart';
+import 'migration.dart';
 import 'query.dart';
 import 'reference.dart';
 import 'relationship.dart';
 
 /// A dORM engine backed by Cloud Firestore.
-class Engine implements BaseEngine<Query, OffsetPageRequest>, ErrorAwareEngine {
+class Engine
+    implements
+        BaseEngine<Query, OffsetPageRequest>,
+        ErrorAwareEngine,
+        MigrationCapableEngine {
   final fs.FirebaseFirestore firestore;
   final String? parentPath;
 
   @override
   DormErrorMapper get errorMapper => const FirestoreErrorMapper();
+
+  @override
+  MigrationAdapter get migrationAdapter =>
+      FirestoreMigrationAdapter(firestore, parentPath: parentPath);
 
   const Engine(this.firestore, {this.parentPath});
 

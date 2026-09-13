@@ -1,0 +1,15 @@
+name: dorm_migrations
+version: 2.0.0-dev.4
+resolution: workspace
+description: Portable, ordered database migrations for dORM engines with backend-specific execution and resumable history.
+homepage: https://github.com/ezgrs/dorm/tree/main/dorm_migrations
+repository: https://github.com/ezgrs/dorm.git
+environment:
+  sdk: '>=3.11.5 <4.0.0'
+dependencies:
+  args: ^2.7.0
+  crypto: ^3.0.7
+  dorm_framework: ^2.0.0-dev.4
+dev_dependencies:
+  lints: '>=5.0.0 <7.0.0'
+  test: ^1.32.0
