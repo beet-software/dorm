@@ -16,8 +16,6 @@ abstract class _User {
   _Profile get profile;
 {{/jsonFeatures}}
 
-  @ForeignField(name: 'cart_id', referTo: _Cart, inverseAs: #user, unique: true)
-  String? get cartId;
 }
 
 @Model(name: 'categories', as: #categories)
@@ -62,7 +60,12 @@ abstract class _Cart {
   @Field(name: 'created_at')
   DateTime get createdAt;
 
-  @ForeignField(name: 'user_id', referTo: _User, inverseAs: #cart)
+  @ForeignField(
+    name: 'user_id',
+    referTo: _User,
+    inverseAs: #cart,
+    unique: true,
+  )
   String get userId;
 }
 
