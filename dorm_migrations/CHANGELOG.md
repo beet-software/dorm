@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.0.0-dev.4
 
 - Added portable ordered migration contracts and backend adapters.
 - Added cursor-based document backfills with persistent checkpoints and retry-safe resumption.
