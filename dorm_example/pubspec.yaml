@@ -1,5 +1,5 @@
 name: dorm_example
-version: 2.0.0-dev.4
+version: 2.0.0-dev.5
 description: A command-line generator for complete Dart and Flutter dORM showcase projects backed by selectable database engine profiles.
 repository: https://github.com/ezgrs/dorm.git
 homepage: https://github.com/ezgrs/dorm/tree/main/dorm_example

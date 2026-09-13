@@ -1,3 +1,8 @@
+## 2.0.0-dev.5
+
+ - **FEAT**: implement migrations API. ([c4d951a8](https://github.com/ezgrs/dorm.git/commit/c4d951a80b5ce8966f0e44155204a046fb268060))
+ - **FEAT**: implement error API. ([58faa75d](https://github.com/ezgrs/dorm.git/commit/58faa75d3df33ea4b2d9c0f024a38b8bb5a8ad38))
+
 ## 2.0.0-dev.4
 
  - **FEAT**: replace sqlite3.dart import with common.dart. ([8ee4f897](https://github.com/ezgrs/dorm.git/commit/8ee4f897e4e2795bc8a5199a35b4ea8cef652a4a))

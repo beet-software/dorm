@@ -1,3 +1,10 @@
+## 2.0.0-dev.5
+
+ - **FEAT**: implement migrations API. ([c4d951a8](https://github.com/ezgrs/dorm.git/commit/c4d951a80b5ce8966f0e44155204a046fb268060))
+ - **FEAT**: improve formatting and fix path. ([d83aa019](https://github.com/ezgrs/dorm.git/commit/d83aa01987c1fef5866d1cc8919ce12545d77cbe))
+ - **FEAT**: implement error API. ([58faa75d](https://github.com/ezgrs/dorm.git/commit/58faa75d3df33ea4b2d9c0f024a38b8bb5a8ad38))
+ - **FEAT**: implement synchronization API. ([a991ac3c](https://github.com/ezgrs/dorm.git/commit/a991ac3c30d6632a7fec1060b1c73a4ebd924c1f))
+
 ## 2.0.0-dev.4
 
  - Bump version to keep all packages in the workspace in lockstep.

@@ -1,5 +1,5 @@
 name: dorm_http_database
-version: 2.0.0-dev.4
+version: 2.0.0-dev.5
 resolution: workspace
 description: An HTTP and JSON database engine for dORM applications that access remote APIs through typed repositories and queries.
 homepage: https://github.com/ezgrs/dorm/tree/main/dorm_http_database
@@ -9,11 +9,11 @@ environment:
   sdk: '>=3.11.5 <4.0.0'
 
 dependencies:
-  dorm_framework: ^2.0.0-dev.4
+  dorm_framework: ^2.0.0-dev.5
   http: ^1.6.0
   uuid: ^4.6.0
 
 dev_dependencies:
-  dorm_test: ^2.0.0-dev.4
+  dorm_test: ^2.0.0-dev.5
   lints: ^5.0.0
   test: ^1.32.0

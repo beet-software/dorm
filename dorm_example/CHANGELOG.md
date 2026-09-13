@@ -1,3 +1,7 @@
+## 2.0.0-dev.5
+
+ - **FIX**: remove cartId from User. ([6a62b309](https://github.com/ezgrs/dorm.git/commit/6a62b3093171947657228f8208f64bcf743191c4))
+
 ## 2.0.0-dev.4
 
  - **FEAT**: improte CLI output. ([58176e3d](https://github.com/ezgrs/dorm.git/commit/58176e3d9995b68bbe0e753d465680dee65687fa))

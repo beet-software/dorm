@@ -3,6 +3,109 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 2026-09-13
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`dorm_annotations` - `v2.0.0-dev.5`](#dorm_annotations---v200-dev5)
+ - [`dorm_example` - `v2.0.0-dev.5`](#dorm_example---v200-dev5)
+ - [`dorm_firebase_database` - `v2.0.0-dev.5`](#dorm_firebase_database---v200-dev5)
+ - [`dorm_firestore_database` - `v2.0.0-dev.5`](#dorm_firestore_database---v200-dev5)
+ - [`dorm_framework` - `v2.0.0-dev.5`](#dorm_framework---v200-dev5)
+ - [`dorm_generator` - `v2.0.0-dev.5`](#dorm_generator---v200-dev5)
+ - [`dorm_http_database` - `v2.0.0-dev.5`](#dorm_http_database---v200-dev5)
+ - [`dorm_memory_database` - `v2.0.0-dev.5`](#dorm_memory_database---v200-dev5)
+ - [`dorm_migrations` - `v2.0.0-dev.5`](#dorm_migrations---v200-dev5)
+ - [`dorm_mongo_database` - `v2.0.0-dev.5`](#dorm_mongo_database---v200-dev5)
+ - [`dorm_mysql_database` - `v2.0.0-dev.5`](#dorm_mysql_database---v200-dev5)
+ - [`dorm_postgres_database` - `v2.0.0-dev.5`](#dorm_postgres_database---v200-dev5)
+ - [`dorm_sqlite_database` - `v2.0.0-dev.5`](#dorm_sqlite_database---v200-dev5)
+ - [`dorm_sync` - `v2.0.0-dev.5`](#dorm_sync---v200-dev5)
+
+Packages versioned in lockstep only:
+
+> Packages listed below have no changes of their own. Their versions have been bumped to keep all packages in this workspace in lockstep.
+
+ - `dorm_bloc_database` - `v2.0.0-dev.5`
+ - `dorm_test` - `v2.0.0-dev.5`
+
+---
+
+#### `dorm_annotations` - `v2.0.0-dev.5`
+
+ - Bump "dorm_annotations" to `2.0.0-dev.5`.
+
+#### `dorm_example` - `v2.0.0-dev.5`
+
+ - **FIX**: remove cartId from User. ([6a62b309](https://github.com/ezgrs/dorm.git/commit/6a62b3093171947657228f8208f64bcf743191c4))
+
+#### `dorm_firebase_database` - `v2.0.0-dev.5`
+
+ - **FEAT**: implement migrations API. ([c4d951a8](https://github.com/ezgrs/dorm.git/commit/c4d951a80b5ce8966f0e44155204a046fb268060))
+ - **FEAT**: implement error API. ([58faa75d](https://github.com/ezgrs/dorm.git/commit/58faa75d3df33ea4b2d9c0f024a38b8bb5a8ad38))
+
+#### `dorm_firestore_database` - `v2.0.0-dev.5`
+
+ - **FEAT**: implement migrations API. ([c4d951a8](https://github.com/ezgrs/dorm.git/commit/c4d951a80b5ce8966f0e44155204a046fb268060))
+ - **FEAT**: implement error API. ([58faa75d](https://github.com/ezgrs/dorm.git/commit/58faa75d3df33ea4b2d9c0f024a38b8bb5a8ad38))
+
+#### `dorm_framework` - `v2.0.0-dev.5`
+
+ - **FEAT**: implement migrations API. ([c4d951a8](https://github.com/ezgrs/dorm.git/commit/c4d951a80b5ce8966f0e44155204a046fb268060))
+ - **FEAT**: improve formatting and fix path. ([d83aa019](https://github.com/ezgrs/dorm.git/commit/d83aa01987c1fef5866d1cc8919ce12545d77cbe))
+ - **FEAT**: implement error API. ([58faa75d](https://github.com/ezgrs/dorm.git/commit/58faa75d3df33ea4b2d9c0f024a38b8bb5a8ad38))
+ - **FEAT**: implement synchronization API. ([a991ac3c](https://github.com/ezgrs/dorm.git/commit/a991ac3c30d6632a7fec1060b1c73a4ebd924c1f))
+
+#### `dorm_generator` - `v2.0.0-dev.5`
+
+ - **FEAT**: implement migrations API. ([c4d951a8](https://github.com/ezgrs/dorm.git/commit/c4d951a80b5ce8966f0e44155204a046fb268060))
+
+#### `dorm_http_database` - `v2.0.0-dev.5`
+
+ - **FEAT**: implement error API. ([58faa75d](https://github.com/ezgrs/dorm.git/commit/58faa75d3df33ea4b2d9c0f024a38b8bb5a8ad38))
+
+#### `dorm_memory_database` - `v2.0.0-dev.5`
+
+ - **FEAT**: implement synchronization API. ([a991ac3c](https://github.com/ezgrs/dorm.git/commit/a991ac3c30d6632a7fec1060b1c73a4ebd924c1f))
+
+#### `dorm_migrations` - `v2.0.0-dev.5`
+
+ - **FEAT**: implement migrations API. ([c4d951a8](https://github.com/ezgrs/dorm.git/commit/c4d951a80b5ce8966f0e44155204a046fb268060))
+
+#### `dorm_mongo_database` - `v2.0.0-dev.5`
+
+ - **FEAT**: implement error API. ([58faa75d](https://github.com/ezgrs/dorm.git/commit/58faa75d3df33ea4b2d9c0f024a38b8bb5a8ad38))
+
+#### `dorm_mysql_database` - `v2.0.0-dev.5`
+
+ - **FEAT**: implement migrations API. ([c4d951a8](https://github.com/ezgrs/dorm.git/commit/c4d951a80b5ce8966f0e44155204a046fb268060))
+ - **FEAT**: implement error API. ([58faa75d](https://github.com/ezgrs/dorm.git/commit/58faa75d3df33ea4b2d9c0f024a38b8bb5a8ad38))
+
+#### `dorm_postgres_database` - `v2.0.0-dev.5`
+
+ - **FEAT**: implement migrations API. ([c4d951a8](https://github.com/ezgrs/dorm.git/commit/c4d951a80b5ce8966f0e44155204a046fb268060))
+ - **FEAT**: implement error API. ([58faa75d](https://github.com/ezgrs/dorm.git/commit/58faa75d3df33ea4b2d9c0f024a38b8bb5a8ad38))
+
+#### `dorm_sqlite_database` - `v2.0.0-dev.5`
+
+ - **FEAT**: implement migrations API. ([c4d951a8](https://github.com/ezgrs/dorm.git/commit/c4d951a80b5ce8966f0e44155204a046fb268060))
+ - **FEAT**: implement error API. ([58faa75d](https://github.com/ezgrs/dorm.git/commit/58faa75d3df33ea4b2d9c0f024a38b8bb5a8ad38))
+
+#### `dorm_sync` - `v2.0.0-dev.5`
+
+ - **FEAT**: make package pub.dev compliant. ([9dd2746d](https://github.com/ezgrs/dorm.git/commit/9dd2746d2deda2454644aa2716e5d19678352878))
+ - **FEAT**: implement error API. ([58faa75d](https://github.com/ezgrs/dorm.git/commit/58faa75d3df33ea4b2d9c0f024a38b8bb5a8ad38))
+ - **FEAT**: implement synchronization API. ([a991ac3c](https://github.com/ezgrs/dorm.git/commit/a991ac3c30d6632a7fec1060b1c73a4ebd924c1f))
+
+
 ## 2026-09-10
 
 ### Changes

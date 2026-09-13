@@ -1,5 +1,5 @@
 name: dorm_framework
-version: 2.0.0-dev.4
+version: 2.0.0-dev.5
 resolution: workspace
 description: Exposes classes, filters and joins to implement the dORM framework.
 homepage: https://github.com/ezgrs/dorm/tree/main/dorm_framework

@@ -1,3 +1,8 @@
+## 2.0.0-dev.5
+
+ - **FEAT**: implement migrations API. ([c4d951a8](https://github.com/ezgrs/dorm.git/commit/c4d951a80b5ce8966f0e44155204a046fb268060))
+ - **FEAT**: implement error API. ([58faa75d](https://github.com/ezgrs/dorm.git/commit/58faa75d3df33ea4b2d9c0f024a38b8bb5a8ad38))
+
 ## 2.0.0-dev.4
 
  - Bump version to keep all packages in the workspace in lockstep.

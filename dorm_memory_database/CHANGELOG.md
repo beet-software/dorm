@@ -1,3 +1,7 @@
+## 2.0.0-dev.5
+
+ - **FEAT**: implement synchronization API. ([a991ac3c](https://github.com/ezgrs/dorm.git/commit/a991ac3c30d6632a7fec1060b1c73a4ebd924c1f))
+
 ## 2.0.0-dev.4
 
  - Bump version to keep all packages in the workspace in lockstep.
